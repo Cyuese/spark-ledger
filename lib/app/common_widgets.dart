@@ -50,7 +50,7 @@ class TransactionTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -77,7 +77,7 @@ class TransactionTile extends StatelessWidget {
                     formatSignedAmount(signedAmount(entry)),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: amountColor,
-                      fontSize: 17,
+                      fontSize: 15,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -152,37 +152,45 @@ class TransactionListCard extends StatelessWidget {
 }
 
 class FilterPill extends StatelessWidget {
-  const FilterPill({super.key, required this.label, this.icon});
+  const FilterPill({super.key, required this.label, this.icon, this.onTap});
 
   final String label;
   final IconData? icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black.withValues(alpha: 0.28) : Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: isDark ? Colors.white10 : veriLine),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          if (icon != null) ...<Widget>[
-            Icon(icon, size: 16),
-            const SizedBox(width: 5),
-          ],
-          Text(
-            label,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.black.withValues(alpha: 0.28) : Colors.white,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: isDark ? Colors.white10 : veriLine),
           ),
-          const SizedBox(width: 4),
-          const Icon(Icons.keyboard_arrow_down, size: 16),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (icon != null) ...<Widget>[
+                Icon(icon, size: 16),
+                const SizedBox(width: 5),
+              ],
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.keyboard_arrow_down, size: 16),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -580,9 +588,10 @@ class AccountGroupCard extends StatelessWidget {
 }
 
 class CalendarPreview extends StatefulWidget {
-  const CalendarPreview({super.key, required this.entries});
+  const CalendarPreview({super.key, required this.entries, this.onDayTap});
 
   final List<LedgerEntry> entries;
+  final ValueChanged<DateTime>? onDayTap;
 
   @override
   State<CalendarPreview> createState() => _CalendarPreviewState();
@@ -668,52 +677,82 @@ class _CalendarPreviewState extends State<CalendarPreview> {
                 return const SizedBox.shrink();
               }
               final day = index - leadingBlanks + 1;
-              final dayTotal = widget.entries
+              final dayEntries = widget.entries
                   .where(
                     (entry) =>
                         entry.occurredAt.year == _visibleMonth.year &&
                         entry.occurredAt.month == _visibleMonth.month &&
                         entry.occurredAt.day == day,
                   )
-                  .fold<double>(0, (sum, entry) => sum + signedAmount(entry));
-              final hasEntry = dayTotal != 0;
+                  .toList();
+              final income = sumByType(dayEntries, EntryType.income);
+              final expense = sumByType(dayEntries, EntryType.expense);
+              final date = DateTime(
+                _visibleMonth.year,
+                _visibleMonth.month,
+                day,
+              );
 
-              return Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color:
-                      day == now.day &&
-                          _visibleMonth.year == now.year &&
-                          _visibleMonth.month == now.month
-                      ? veriBlue.withValues(alpha: 0.18)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(veriRadiusSm),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text(
-                      '$day',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color:
-                            day == now.day &&
-                                _visibleMonth.year == now.year &&
-                                _visibleMonth.month == now.month
-                            ? veriBlue
-                            : null,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (hasEntry)
-                      Text(
-                        formatSignedAmount(dayTotal),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: dayTotal >= 0
-                              ? veriMint
-                              : const Color(0xFFE84D6A),
+              return InkWell(
+                borderRadius: BorderRadius.circular(veriRadiusSm),
+                onTap: widget.onDayTap == null
+                    ? null
+                    : () => widget.onDayTap!(date),
+                child: Container(
+                  alignment: Alignment.topCenter,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color:
+                        day == now.day &&
+                            _visibleMonth.year == now.year &&
+                            _visibleMonth.month == now.month
+                        ? veriBlue.withValues(alpha: 0.14)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(veriRadiusSm),
+                  ),
+                  child: Column(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 18,
+                        child: Text(
+                          '$day',
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color:
+                                    day == now.day &&
+                                        _visibleMonth.year == now.year &&
+                                        _visibleMonth.month == now.month
+                                    ? veriBlue
+                                    : null,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
-                  ],
+                      SizedBox(
+                        height: 14,
+                        child: expense <= 0
+                            ? const SizedBox.shrink()
+                            : Text(
+                                '-${formatAmount(expense)}',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: const Color(0xFFE84D6A),
+                                      fontSize: 9,
+                                    ),
+                              ),
+                      ),
+                      SizedBox(
+                        height: 14,
+                        child: income <= 0
+                            ? const SizedBox.shrink()
+                            : Text(
+                                '+${formatAmount(income)}',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(color: veriMint, fontSize: 9),
+                              ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

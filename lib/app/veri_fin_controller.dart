@@ -19,11 +19,13 @@ class VeriFinController extends ChangeNotifier {
   static const String _accountsKey = 'verifin.accounts.v1';
   static const String _accountGroupsKey = 'verifin.account_groups.v1';
   static const String _profileKey = 'verifin.profile.v1';
+  static const String _budgetsKey = 'verifin.monthly_budgets.v1';
 
   final LocalKeyValueStore _store;
   final List<LedgerEntry> _entries = <LedgerEntry>[];
   final List<Account> _accounts = <Account>[];
   final List<AccountGroup> _accountGroups = <AccountGroup>[];
+  final Map<String, double> _monthlyBudgets = <String, double>{};
 
   late final ValueNotifier<ThemePreference> themePreferenceListenable;
 
@@ -43,6 +45,16 @@ class VeriFinController extends ChangeNotifier {
   ThemePreference get themePreference => _themePreference;
 
   UserProfile get profile => _profile;
+
+  double monthlyBudget(DateTime month) {
+    return _monthlyBudgets[_monthKey(month)] ?? 800;
+  }
+
+  void setMonthlyBudget(DateTime month, double amount) {
+    _monthlyBudgets[_monthKey(month)] = amount <= 0 ? 0 : amount;
+    _persistBudgets();
+    notifyListeners();
+  }
 
   void setThemePreference(ThemePreference preference) {
     _themePreference = preference;
@@ -183,6 +195,7 @@ class VeriFinController extends ChangeNotifier {
     _loadAccountGroups();
     _loadAccounts();
     _loadProfile();
+    _loadBudgets();
     final rawEntries = _store.read(_entriesKey);
     if (rawEntries == null || rawEntries.isEmpty) {
       return;
@@ -280,6 +293,28 @@ class VeriFinController extends ChangeNotifier {
     }
   }
 
+  void _loadBudgets() {
+    final rawBudgets = _store.read(_budgetsKey);
+    if (rawBudgets == null || rawBudgets.isEmpty) {
+      return;
+    }
+
+    try {
+      final decoded = Map<String, Object?>.from(
+        jsonDecode(rawBudgets) as Map<dynamic, dynamic>,
+      );
+      _monthlyBudgets
+        ..clear()
+        ..addAll(
+          decoded.map(
+            (key, value) => MapEntry(key, (value as num? ?? 0).toDouble()),
+          ),
+        );
+    } on FormatException {
+      _store.delete(_budgetsKey);
+    }
+  }
+
   void _persistEntries() {
     _store.write(
       _entriesKey,
@@ -301,6 +336,10 @@ class VeriFinController extends ChangeNotifier {
     );
   }
 
+  void _persistBudgets() {
+    _store.write(_budgetsKey, jsonEncode(_monthlyBudgets));
+  }
+
   void _normalizeGroupOrder() {
     final groups = List<AccountGroup>.from(_accountGroups)
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
@@ -316,4 +355,8 @@ class VeriFinController extends ChangeNotifier {
     themePreferenceListenable.dispose();
     super.dispose();
   }
+}
+
+String _monthKey(DateTime month) {
+  return '${month.year}-${month.month.toString().padLeft(2, '0')}';
 }
