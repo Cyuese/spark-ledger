@@ -113,27 +113,25 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                     }
 
                     final isOk = value == 'OK';
-                    final isNumberKey = RegExp(r'^\d+$').hasMatch(value);
+                    final keyColor = Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest;
+                    final keyTextColor = Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.92);
                     return FilledButton.tonal(
                       key: isOk
                           ? const Key('number_pad_ok')
                           : Key('number_key_$value'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: isOk
-                            ? veriBlue
-                            : isNumberKey
-                            ? Colors.transparent
-                            : null,
-                        foregroundColor: isOk
-                            ? Colors.white
-                            : isNumberKey
-                            ? veriBlue
-                            : null,
-                        side: isNumberKey
-                            ? BorderSide(
-                                color: veriBlue.withValues(alpha: 0.42),
-                              )
-                            : null,
+                        backgroundColor: keyColor,
+                        foregroundColor: keyTextColor,
+                        disabledBackgroundColor: keyColor.withValues(
+                          alpha: 0.42,
+                        ),
+                        disabledForegroundColor: keyTextColor.withValues(
+                          alpha: 0.36,
+                        ),
                         minimumSize: const Size(64, 48),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(veriRadiusMd),

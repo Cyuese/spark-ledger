@@ -2364,122 +2364,126 @@ class AssetsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          GestureDetector(
+          Container(
             key: const Key('asset_cover_card'),
-            behavior: HitTestBehavior.opaque,
-            onLongPress: () => _changeAssetCover(context, controller),
-            child: Container(
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                color: hasAssetCover
-                    ? null
-                    : Theme.of(context).brightness == Brightness.dark
-                    ? veriSurfaceDark
-                    : veriSurfaceLight,
-                borderRadius: BorderRadius.circular(veriRadiusMd),
-                border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white.withValues(alpha: 0.10)
-                      : veriLine,
-                ),
-                image: !hasAssetCover
-                    ? null
-                    : DecorationImage(
-                        image: NetworkImage(controller.assetCoverUrl),
-                        fit: BoxFit.cover,
-                        alignment: Alignment.center,
-                      ),
-                boxShadow: <BoxShadow>[
-                  if (Theme.of(context).brightness == Brightness.light)
-                    BoxShadow(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.045),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
-                ],
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: hasAssetCover
+                  ? null
+                  : Theme.of(context).brightness == Brightness.dark
+                  ? veriSurfaceDark
+                  : veriSurfaceLight,
+              borderRadius: BorderRadius.circular(veriRadiusMd),
+              border: Border.all(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : veriLine,
               ),
-              child: Stack(
-                children: <Widget>[
-                  if (hasAssetCover)
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: <Color>[
-                              Colors.black.withValues(alpha: 0.48),
-                              veriRoyal.withValues(alpha: 0.50),
-                              Colors.black.withValues(alpha: 0.28),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+              image: !hasAssetCover
+                  ? null
+                  : DecorationImage(
+                      image: NetworkImage(controller.assetCoverUrl),
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
+                    ),
+              boxShadow: <BoxShadow>[
+                if (Theme.of(context).brightness == Brightness.light)
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.045),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+              ],
+            ),
+            child: Stack(
+              children: <Widget>[
+                if (hasAssetCover)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: <Color>[
+                            Colors.black.withValues(alpha: 0.48),
+                            veriRoyal.withValues(alpha: 0.50),
+                            Colors.black.withValues(alpha: 0.28),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
                       ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: Text(
-                                '净资产',
-                                style: TextStyle(color: assetCardMutedColor),
-                              ),
-                            ),
-                            Tooltip(
-                              message: '长按更换资产卡片背景',
-                              child: Icon(
-                                Icons.photo_size_select_actual_outlined,
-                                color: assetCardMutedColor,
-                                size: 17,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          height: 56,
-                          child: CustomPaint(
-                            painter: TrendLinePainter(
-                              color: assetCardTextColor,
-                              values: assetTrendValues,
-                              xLabels: evenMonthAxisLabels(),
-                              labelColor: assetCardMutedColor,
-                            ),
-                            child: const SizedBox.expand(),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          formatAmount(assets + liabilities),
-                          style: Theme.of(context).textTheme.displaySmall
-                              ?.copyWith(
-                                color: assetCardTextColor,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                        const SizedBox(height: 18),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Text(
-                              '资产 ${formatAmount(assets)}',
-                              style: TextStyle(color: assetCardTextColor),
-                            ),
-                            Text(
-                              '负债 ${formatAmount(liabilities.abs())}',
-                              style: TextStyle(color: assetCardTextColor),
-                            ),
-                          ],
-                        ),
-                      ],
                     ),
                   ),
-                ],
-              ),
+                Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              '净资产',
+                              style: TextStyle(color: assetCardMutedColor),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: '更换资产卡片背景',
+                            onPressed: () =>
+                                _changeAssetCover(context, controller),
+                            style: IconButton.styleFrom(
+                              fixedSize: const Size(32, 32),
+                              minimumSize: const Size(32, 32),
+                              padding: EdgeInsets.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            icon: Icon(
+                              Icons.photo_size_select_actual_outlined,
+                              color: assetCardMutedColor,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        formatAmount(assets + liabilities),
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              color: assetCardTextColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Text(
+                            '资产 ${formatAmount(assets)}',
+                            style: TextStyle(color: assetCardTextColor),
+                          ),
+                          Text(
+                            '负债 ${formatAmount(liabilities.abs())}',
+                            style: TextStyle(color: assetCardTextColor),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        height: 112,
+                        child: CustomPaint(
+                          painter: TrendLinePainter(
+                            color: assetCardTextColor,
+                            values: assetTrendValues,
+                            xLabels: evenMonthAxisLabels(),
+                            labelColor: assetCardMutedColor,
+                          ),
+                          child: const SizedBox.expand(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -3888,11 +3892,13 @@ class ReportsPage extends StatelessWidget {
                       '${formatExpenseAmount(expenseTotal)} · ${DateTime.now().month}月 · 支出',
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: <Widget>[
-                    SizedBox(
-                      width: 184,
-                      height: 184,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 360;
+                    final ringSize = compact ? 178.0 : 220.0;
+                    final content = SizedBox(
+                      width: ringSize,
+                      height: ringSize,
                       child: Stack(
                         alignment: Alignment.center,
                         children: <Widget>[
@@ -3900,14 +3906,14 @@ class ReportsPage extends StatelessWidget {
                             value: topCategory == null || expenseTotal <= 0
                                 ? 0
                                 : topCategory.amount / expenseTotal,
-                            strokeWidth: 18,
+                            strokeWidth: compact ? 18 : 22,
                             color: veriRoyal,
                             backgroundColor: Theme.of(
                               context,
                             ).colorScheme.surfaceContainerHighest,
                           ),
                           SizedBox(
-                            width: 104,
+                            width: compact ? 96 : 120,
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
@@ -3933,39 +3939,57 @@ class ReportsPage extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
+                    );
+                    final detail = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          topCategory == null ? '暂无支出记录' : '最高分类',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.48),
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          topCategory == null
+                              ? '保存记录后自动聚合分类占比'
+                              : '${topCategory.category.label} · ${(topCategory.percent * 100).toStringAsFixed(1)}%',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 8),
+                        const Divider(),
+                        Text(
+                          '本月支出会按分类自动排序。',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    );
+                    if (compact) {
+                      return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
-                            topCategory == null ? '暂无支出记录' : '最高分类',
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface
-                                      .withValues(alpha: 0.48),
-                                  fontWeight: FontWeight.w700,
-                                ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: content,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            topCategory == null
-                                ? '保存记录后自动聚合分类占比'
-                                : '${topCategory.category.label} · ${(topCategory.percent * 100).toStringAsFixed(1)}%',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 8),
-                          const Divider(),
-                          Text(
-                            '本月支出会按分类自动排序。',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
+                          const SizedBox(height: 12),
+                          detail,
                         ],
-                      ),
-                    ),
-                  ],
+                      );
+                    }
+                    return Row(
+                      children: <Widget>[
+                        content,
+                        const SizedBox(width: 16),
+                        Expanded(child: detail),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

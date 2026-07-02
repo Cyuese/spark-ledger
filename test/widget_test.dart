@@ -72,7 +72,7 @@ void main() {
     await tester.pumpWidget(const VeriFinApp());
 
     await tapBottomTab(tester, 1);
-    await tester.longPress(find.byKey(const Key('asset_cover_card')));
+    await tester.tap(find.byTooltip('更换资产卡片背景'));
     await tester.pumpAndSettle();
 
     expect(find.text('资产卡片背景'), findsOneWidget);
