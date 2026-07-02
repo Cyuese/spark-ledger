@@ -88,6 +88,17 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateEntry(LedgerEntry entry) {
+    final index = _entries.indexWhere((item) => item.id == entry.id);
+    if (index == -1) {
+      return;
+    }
+    _entries[index] = entry;
+    _entries.sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    _persistEntries();
+    notifyListeners();
+  }
+
   void addLedgerBook(String name) {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {

@@ -33,6 +33,79 @@ double sumByType(Iterable<LedgerEntry> entries, EntryType type) {
 
 bool isZeroAmount(num value) => value.abs() < 0.005;
 
+class DateWindow {
+  const DateWindow({required this.start, required this.end});
+
+  final DateTime start;
+  final DateTime end;
+
+  List<DateTime> get days {
+    final count = end.difference(start).inDays + 1;
+    return List<DateTime>.generate(
+      count,
+      (index) => start.add(Duration(days: index)),
+    );
+  }
+
+  String get label {
+    if (start.year == end.year && start.month == end.month) {
+      return '${start.month}.${start.day}-${end.month}.${end.day}';
+    }
+    return '${start.year}.${start.month}.${start.day}-${end.year}.${end.month}.${end.day}';
+  }
+}
+
+DateTime dateOnly(DateTime date) {
+  return DateTime(date.year, date.month, date.day);
+}
+
+DateWindow sevenDayWindowFor(DateTime date) {
+  final startDay = ((date.day - 1) ~/ 7) * 7 + 1;
+  final daysInMonth = DateUtils.getDaysInMonth(date.year, date.month);
+  final endDay = (startDay + 6).clamp(1, daysInMonth);
+  return DateWindow(
+    start: DateTime(date.year, date.month, startDay),
+    end: DateTime(date.year, date.month, endDay),
+  );
+}
+
+List<LedgerEntry> entriesInWindow(
+  Iterable<LedgerEntry> entries,
+  DateWindow window,
+) {
+  final start = dateOnly(window.start);
+  final endExclusive = dateOnly(window.end).add(const Duration(days: 1));
+  return entries.where((entry) {
+    final date = entry.occurredAt;
+    return !date.isBefore(start) && date.isBefore(endExclusive);
+  }).toList();
+}
+
+List<double> valuesForTypeInWindow(
+  Iterable<LedgerEntry> entries,
+  DateWindow window,
+  EntryType type,
+) {
+  final days = window.days;
+  final values = List<double>.filled(days.length, 0);
+  for (final entry in entries) {
+    if (entry.type != type) {
+      continue;
+    }
+    for (var i = 0; i < days.length; i += 1) {
+      if (DateUtils.isSameDay(entry.occurredAt, days[i])) {
+        values[i] += entry.amount;
+        break;
+      }
+    }
+  }
+  return values;
+}
+
+List<String> labelsForWindow(DateWindow window) {
+  return window.days.map((date) => '${date.month}.${date.day}').toList();
+}
+
 List<double> dailyExpenseValues(Iterable<LedgerEntry> entries, DateTime now) {
   final days = DateUtils.getDaysInMonth(now.year, now.month);
   final values = List<double>.filled(days, 0);

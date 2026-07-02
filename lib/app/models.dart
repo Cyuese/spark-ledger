@@ -121,6 +121,28 @@ class LedgerEntry {
   final String note;
   final DateTime occurredAt;
 
+  LedgerEntry copyWith({
+    String? id,
+    String? bookId,
+    EntryType? type,
+    double? amount,
+    String? categoryId,
+    String? accountId,
+    String? note,
+    DateTime? occurredAt,
+  }) {
+    return LedgerEntry(
+      id: id ?? this.id,
+      bookId: bookId ?? this.bookId,
+      type: type ?? this.type,
+      amount: amount ?? this.amount,
+      categoryId: categoryId ?? this.categoryId,
+      accountId: accountId ?? this.accountId,
+      note: note ?? this.note,
+      occurredAt: occurredAt ?? this.occurredAt,
+    );
+  }
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'id': id,

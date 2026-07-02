@@ -264,7 +264,10 @@ class HomePage extends StatelessWidget {
         )
         .toList();
     final monthExpense = sumByType(monthEntries, EntryType.expense);
-    final monthIncome = sumByType(monthEntries, EntryType.income);
+    final trendWindow = sevenDayWindowFor(now);
+    final trendEntries = entriesInWindow(monthEntries, trendWindow);
+    final trendExpense = sumByType(trendEntries, EntryType.expense);
+    final trendIncome = sumByType(trendEntries, EntryType.income);
     final recentEntries = entries.take(5).toList();
     final monthlyBudget = controller.monthlyBudget(now);
 
@@ -275,10 +278,14 @@ class HomePage extends StatelessWidget {
           const PageHeader(title: '首页', subtitle: '日常账本'),
           const SizedBox(height: 10),
           HomeTrendPanel(
-            month: now,
-            expense: monthExpense,
-            income: monthIncome,
-            values: dailyExpenseValues(monthEntries, now),
+            window: trendWindow,
+            expense: trendExpense,
+            income: trendIncome,
+            values: valuesForTypeInWindow(
+              trendEntries,
+              trendWindow,
+              EntryType.expense,
+            ),
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
@@ -394,28 +401,18 @@ class SectionHeaderAction extends StatelessWidget {
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
-            Text(
-              trailing,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.52),
+            if (trailing.isNotEmpty) ...<Widget>[
+              Text(
+                trailing,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.52),
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: veriRoyal.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const Icon(
-                Icons.chevron_right,
-                size: 17,
-                color: veriRoyal,
-              ),
-            ),
+              const SizedBox(width: 6),
+            ],
+            const _CircleArrow(),
           ],
         ),
       ),
@@ -426,14 +423,14 @@ class SectionHeaderAction extends StatelessWidget {
 class HomeTrendPanel extends StatelessWidget {
   const HomeTrendPanel({
     super.key,
-    required this.month,
+    required this.window,
     required this.expense,
     required this.income,
     required this.values,
     required this.onTap,
   });
 
-  final DateTime month;
+  final DateWindow window;
   final double expense;
   final double income;
   final List<double> values;
@@ -466,7 +463,7 @@ class HomeTrendPanel extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        '${month.year}年${month.month}月',
+                        window.label,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: mutedColor,
                           fontWeight: FontWeight.w700,
@@ -481,33 +478,7 @@ class HomeTrendPanel extends StatelessWidget {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: veriRoyal.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Text(
-                        '统计',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: veriRoyal,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      const Icon(
-                        Icons.chevron_right,
-                        color: veriRoyal,
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                ),
+                const _CircleArrow(),
               ],
             ),
             const SizedBox(height: 12),
@@ -566,11 +537,7 @@ class HomeTrendPanel extends StatelessWidget {
                   child: _TrendMetric(
                     label: '日均支出',
                     value: formatAmount(
-                      expense /
-                          DateTime.now().day.clamp(
-                            1,
-                            DateUtils.getDaysInMonth(month.year, month.month),
-                          ),
+                      expense / window.days.length.clamp(1, 7),
                     ),
                     color: veriBlue,
                     dark: isDark,
@@ -595,7 +562,7 @@ class HomeTrendPanel extends StatelessWidget {
                 painter: TrendLinePainter(
                   color: hasExpense ? veriExpense : mutedColor,
                   values: values,
-                  xLabels: monthAxisLabels(month),
+                  xLabels: labelsForWindow(window),
                   yLabels: reportAxisLabels(expense),
                   labelColor: mutedColor,
                   glow: isDark,
@@ -709,15 +676,7 @@ class BudgetPanel extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                '编辑',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: veriRoyal,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(width: 2),
-              const Icon(Icons.chevron_right, size: 16, color: veriRoyal),
+              const _CircleArrow(),
             ],
           ),
           const SizedBox(height: 10),
@@ -727,11 +686,7 @@ class BudgetPanel extends StatelessWidget {
                 child: _BudgetSideStat(
                   label: '支出',
                   value: formatExpenseAmount(expense),
-                  color: isZeroAmount(expense)
-                      ? Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.48)
-                      : veriExpense,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(
@@ -746,9 +701,10 @@ class BudgetPanel extends StatelessWidget {
                       child: CustomPaint(
                         painter: BudgetRingPainter(
                           value: ratio,
-                          trackColor: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerHighest,
+                          trackColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withValues(alpha: 0.48),
                           progressColor: ratio > 0.85
                               ? veriExpense
                               : veriWarning,
@@ -792,7 +748,7 @@ class BudgetPanel extends StatelessWidget {
                 child: _BudgetSideStat(
                   label: '剩余日均',
                   value: formatAmount(remaining / remainingDays),
-                  color: veriRoyal,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],
@@ -815,6 +771,23 @@ class BudgetPanel extends StatelessWidget {
   }
 }
 
+class _CircleArrow extends StatelessWidget {
+  const _CircleArrow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: veriRoyal.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Icon(Icons.chevron_right, size: 17, color: veriRoyal),
+    );
+  }
+}
+
 class IncomeExpenseStatsPage extends StatefulWidget {
   const IncomeExpenseStatsPage({super.key});
 
@@ -823,25 +796,28 @@ class IncomeExpenseStatsPage extends StatefulWidget {
 }
 
 class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
-  DateTime _visibleMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  DateTime _focusDate = DateTime.now();
   EntryType _type = EntryType.expense;
 
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
-    final monthEntries = controller.entries
+    final visibleMonth = DateTime(_focusDate.year, _focusDate.month);
+    final window = sevenDayWindowFor(_focusDate);
+    final scopedEntries = controller.entries
         .where(
           (entry) =>
-              entry.occurredAt.year == _visibleMonth.year &&
-              entry.occurredAt.month == _visibleMonth.month &&
+              entry.occurredAt.year == visibleMonth.year &&
+              entry.occurredAt.month == visibleMonth.month &&
               entry.type == _type,
         )
         .toList();
-    final total = monthEntries.fold<double>(
+    final windowEntries = entriesInWindow(scopedEntries, window);
+    final total = windowEntries.fold<double>(
       0,
       (sum, entry) => sum + entry.amount,
     );
-    final dayRows = _dailyStatRows(monthEntries, _visibleMonth, total);
+    final dayRows = _dailyStatRows(windowEntries, window.start, total);
     final mutedColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.52);
@@ -863,17 +839,17 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
               Row(
                 children: <Widget>[
                   _MonthSwitcher(
-                    month: _visibleMonth,
+                    month: visibleMonth,
                     onPrevious: () => setState(() {
-                      _visibleMonth = DateTime(
-                        _visibleMonth.year,
-                        _visibleMonth.month - 1,
+                      _focusDate = DateTime(
+                        _focusDate.year,
+                        _focusDate.month - 1,
                       );
                     }),
                     onNext: () => setState(() {
-                      _visibleMonth = DateTime(
-                        _visibleMonth.year,
-                        _visibleMonth.month + 1,
+                      _focusDate = DateTime(
+                        _focusDate.year,
+                        _focusDate.month + 1,
                       );
                     }),
                   ),
@@ -887,7 +863,7 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      '${_visibleMonth.month}月${_type.label}',
+                      '${window.label} ${_type.label}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -906,12 +882,12 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                       child: CustomPaint(
                         painter: TrendLinePainter(
                           color: totalColor,
-                          values: _dailyValuesForType(
-                            monthEntries,
-                            _visibleMonth,
+                          values: valuesForTypeInWindow(
+                            windowEntries,
+                            window,
                             _type,
                           ),
-                          xLabels: monthAxisLabels(_visibleMonth),
+                          xLabels: labelsForWindow(window),
                           yLabels: reportAxisLabels(total),
                           labelColor: Theme.of(
                             context,
@@ -935,7 +911,7 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                       )
                     else
                       for (final row in dayRows.indexed) ...<Widget>[
-                        _DailyStatTile(row: row.$2),
+                        _DailyStatTile(row: row.$2, type: _type),
                         if (row.$1 != dayRows.length - 1) const Divider(),
                       ],
                   ],
@@ -1117,48 +1093,71 @@ class _DailyStatRow {
 }
 
 class _DailyStatTile extends StatelessWidget {
-  const _DailyStatTile({required this.row});
+  const _DailyStatTile({required this.row, required this.type});
 
   final _DailyStatRow row;
+  final EntryType type;
 
   @override
   Widget build(BuildContext context) {
+    final amountColor = colorForType(type);
+    final amountText = switch (type) {
+      EntryType.expense => formatExpenseAmount(row.amount),
+      EntryType.income => '+${formatIncomeAmount(row.amount)}',
+      EntryType.transfer => formatAmount(row.amount),
+    };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(
         children: <Widget>[
+          VeriIconBox(
+            icon: Icons.calendar_today_outlined,
+            color: amountColor,
+            size: 28,
+          ),
+          const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              '${row.date.month.toString().padLeft(2, '0')}.${row.date.day.toString().padLeft(2, '0')}',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  '${row.date.month.toString().padLeft(2, '0')}.${row.date.day.toString().padLeft(2, '0')}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${(row.percent * 100).toStringAsFixed(0)}%',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.48),
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            formatAmount(row.amount),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFFE84D6A),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(width: 14),
-          SizedBox(
-            width: 54,
-            child: Text(
-              '${(row.percent * 100).toStringAsFixed(0)}%',
-              textAlign: TextAlign.end,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          const SizedBox(width: 14),
-          SizedBox(
-            width: 42,
-            child: Text(
-              '${row.count}笔',
-              textAlign: TextAlign.end,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Text(
+                amountText,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: amountColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '${row.count}笔',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.48),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1249,6 +1248,7 @@ class TransactionsPage extends StatefulWidget {
 class _TransactionsPageState extends State<TransactionsPage> {
   TransactionTimeFilter _timeFilter = TransactionTimeFilter.all;
   TransactionSortOrder _sortOrder = TransactionSortOrder.dateDesc;
+  DateTime _periodAnchor = DateTime.now();
   late DateTime _visibleDate = widget.initialDate ?? DateTime.now();
 
   bool get _dateMode => widget.initialDate != null;
@@ -1292,8 +1292,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 else
                   Row(
                     children: <Widget>[
-                      FilterPill(
-                        label: _timeFilter.label,
+                      _TransactionFilterBar(
+                        label: _periodLabel(),
+                        showNavigation:
+                            _timeFilter != TransactionTimeFilter.all,
+                        onPrevious: () => _movePeriod(-1),
+                        onNext: () => _movePeriod(1),
                         onTap: _pickTimeFilter,
                       ),
                       const SizedBox(width: 10),
@@ -1384,32 +1388,18 @@ class _TransactionsPageState extends State<TransactionsPage> {
           .toList();
     }
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    return scopedEntries.where((entry) {
-      final date = entry.occurredAt;
-      switch (_timeFilter) {
-        case TransactionTimeFilter.all:
-          return true;
-        case TransactionTimeFilter.year:
-          return date.year == now.year;
-        case TransactionTimeFilter.quarter:
-          final currentQuarter = ((now.month - 1) ~/ 3) + 1;
-          final entryQuarter = ((date.month - 1) ~/ 3) + 1;
-          return date.year == now.year && entryQuarter == currentQuarter;
-        case TransactionTimeFilter.month:
-          return date.year == now.year && date.month == now.month;
-        case TransactionTimeFilter.week:
-          final weekStart = today.subtract(Duration(days: today.weekday - 1));
-          return !date.isBefore(weekStart);
-        case TransactionTimeFilter.last12Months:
-          return !date.isBefore(DateTime(now.year, now.month - 11));
-        case TransactionTimeFilter.last30Days:
-          return !date.isBefore(today.subtract(const Duration(days: 29)));
-        case TransactionTimeFilter.last6Weeks:
-          return !date.isBefore(today.subtract(const Duration(days: 41)));
-      }
-    }).toList();
+    final period = _activePeriod();
+    if (period == null) {
+      return scopedEntries;
+    }
+    final endExclusive = period.end.add(const Duration(days: 1));
+    return scopedEntries
+        .where(
+          (entry) =>
+              !entry.occurredAt.isBefore(period.start) &&
+              entry.occurredAt.isBefore(endExclusive),
+        )
+        .toList();
   }
 
   List<LedgerEntry> _sortedEntries(List<LedgerEntry> entries) {
@@ -1436,7 +1426,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
       labelOf: (value) => value.label,
     );
     if (selected != null) {
-      setState(() => _timeFilter = selected);
+      setState(() {
+        _timeFilter = selected;
+        _periodAnchor = DateTime.now();
+      });
     }
   }
 
@@ -1451,6 +1444,160 @@ class _TransactionsPageState extends State<TransactionsPage> {
     if (selected != null) {
       setState(() => _sortOrder = selected);
     }
+  }
+
+  DateWindow? _activePeriod() {
+    final anchor = dateOnly(_periodAnchor);
+    switch (_timeFilter) {
+      case TransactionTimeFilter.all:
+        return null;
+      case TransactionTimeFilter.year:
+        return DateWindow(
+          start: DateTime(anchor.year),
+          end: DateTime(anchor.year, 12, 31),
+        );
+      case TransactionTimeFilter.quarter:
+        final quarter = ((anchor.month - 1) ~/ 3) + 1;
+        final startMonth = (quarter - 1) * 3 + 1;
+        return DateWindow(
+          start: DateTime(anchor.year, startMonth),
+          end: DateTime(anchor.year, startMonth + 3, 0),
+        );
+      case TransactionTimeFilter.month:
+        return DateWindow(
+          start: DateTime(anchor.year, anchor.month),
+          end: DateTime(anchor.year, anchor.month + 1, 0),
+        );
+      case TransactionTimeFilter.week:
+        final start = anchor.subtract(Duration(days: anchor.weekday - 1));
+        return DateWindow(
+          start: start,
+          end: start.add(const Duration(days: 6)),
+        );
+      case TransactionTimeFilter.last12Months:
+        return DateWindow(
+          start: DateTime(anchor.year, anchor.month - 11),
+          end: DateTime(anchor.year, anchor.month + 1, 0),
+        );
+      case TransactionTimeFilter.last30Days:
+        return DateWindow(
+          start: anchor.subtract(const Duration(days: 29)),
+          end: anchor,
+        );
+      case TransactionTimeFilter.last6Weeks:
+        final weekEnd = anchor.add(Duration(days: 7 - anchor.weekday));
+        return DateWindow(
+          start: weekEnd.subtract(const Duration(days: 41)),
+          end: weekEnd,
+        );
+    }
+  }
+
+  String _periodLabel() {
+    final now = DateTime.now();
+    final period = _activePeriod();
+    if (period == null) {
+      return _timeFilter.label;
+    }
+    final anchor = _periodAnchor;
+    switch (_timeFilter) {
+      case TransactionTimeFilter.all:
+        return _timeFilter.label;
+      case TransactionTimeFilter.year:
+        return anchor.year == now.year ? '本年' : '${anchor.year}年';
+      case TransactionTimeFilter.quarter:
+        final quarter = ((anchor.month - 1) ~/ 3) + 1;
+        return anchor.year == now.year
+            ? '季度$quarter'
+            : '${_yy(anchor.year)}.Q$quarter';
+      case TransactionTimeFilter.month:
+        return anchor.year == now.year
+            ? '${anchor.month}月'
+            : '${_yy(anchor.year)}.${anchor.month.toString().padLeft(2, '0')}';
+      case TransactionTimeFilter.week:
+        final week = isoWeekNumber(anchor);
+        final year = isoWeekYear(anchor);
+        return year == now.year ? '$week周' : '$year年$week周';
+      case TransactionTimeFilter.last12Months:
+      case TransactionTimeFilter.last30Days:
+        return '${period.start.month}.${period.start.day}-${period.end.month}.${period.end.day}';
+      case TransactionTimeFilter.last6Weeks:
+        return '${_yy(isoWeekYear(period.start))}.${isoWeekNumber(period.start).toString().padLeft(2, '0')}-${_yy(isoWeekYear(period.end))}.${isoWeekNumber(period.end).toString().padLeft(2, '0')}';
+    }
+  }
+
+  void _movePeriod(int direction) {
+    setState(() {
+      switch (_timeFilter) {
+        case TransactionTimeFilter.all:
+          break;
+        case TransactionTimeFilter.year:
+          _periodAnchor = DateTime(
+            _periodAnchor.year + direction,
+            _periodAnchor.month,
+          );
+        case TransactionTimeFilter.quarter:
+          _periodAnchor = DateTime(
+            _periodAnchor.year,
+            _periodAnchor.month + direction * 3,
+          );
+        case TransactionTimeFilter.month:
+          _periodAnchor = DateTime(
+            _periodAnchor.year,
+            _periodAnchor.month + direction,
+          );
+        case TransactionTimeFilter.week:
+          _periodAnchor = _periodAnchor.add(Duration(days: direction * 7));
+        case TransactionTimeFilter.last12Months:
+          _periodAnchor = DateTime(
+            _periodAnchor.year,
+            _periodAnchor.month + direction * 12,
+          );
+        case TransactionTimeFilter.last30Days:
+          _periodAnchor = _periodAnchor.add(Duration(days: direction * 30));
+        case TransactionTimeFilter.last6Weeks:
+          _periodAnchor = _periodAnchor.add(Duration(days: direction * 42));
+      }
+    });
+  }
+}
+
+class _TransactionFilterBar extends StatelessWidget {
+  const _TransactionFilterBar({
+    required this.label,
+    required this.showNavigation,
+    required this.onPrevious,
+    required this.onNext,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool showNavigation;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!showNavigation) {
+      return FilterPill(label: label, onTap: onTap);
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        IconButton(
+          tooltip: '上一段',
+          onPressed: onPrevious,
+          icon: const Icon(Icons.chevron_left, size: 18),
+        ),
+        FilterPill(label: label, onTap: onTap),
+        IconButton(
+          tooltip: '下一段',
+          onPressed: onNext,
+          icon: const Icon(Icons.chevron_right, size: 18),
+        ),
+      ],
+    );
   }
 }
 
@@ -1555,6 +1702,7 @@ Future<String?> _showTextInputDialog({
   required String title,
   required String label,
   String initialValue = '',
+  bool allowEmpty = false,
 }) async {
   final controller = TextEditingController(text: initialValue);
   final result = await showDialog<String>(
@@ -1580,7 +1728,7 @@ Future<String?> _showTextInputDialog({
   );
   controller.dispose();
   final trimmed = result?.trim();
-  if (trimmed == null || trimmed.isEmpty) {
+  if (trimmed == null || (!allowEmpty && trimmed.isEmpty)) {
     return null;
   }
   return trimmed;
@@ -1635,27 +1783,74 @@ class _DateGroupHeader extends StatelessWidget {
   }
 }
 
-class TransactionDetailPage extends StatelessWidget {
+class TransactionDetailPage extends StatefulWidget {
   const TransactionDetailPage({super.key, required this.entryId});
 
   final String entryId;
 
   @override
+  State<TransactionDetailPage> createState() => _TransactionDetailPageState();
+}
+
+class _TransactionDetailPageState extends State<TransactionDetailPage> {
+  LedgerEntry? _initialEntry;
+  late EntryType _type;
+  late double _amount;
+  late String _categoryId;
+  late String _accountId;
+  late DateTime _occurredAt;
+  late final TextEditingController _noteController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialEntry != null) {
+      return;
+    }
+    final entry = VeriFinScope.of(
+      context,
+    ).entries.where((item) => item.id == widget.entryId).firstOrNull;
+    if (entry == null) {
+      return;
+    }
+    _initialEntry = entry;
+    _type = entry.type;
+    _amount = entry.amount;
+    _categoryId = entry.categoryId;
+    _accountId = entry.accountId;
+    _occurredAt = entry.occurredAt;
+    _noteController = TextEditingController(text: entry.note);
+  }
+
+  @override
+  void dispose() {
+    if (_initialEntry != null) {
+      _noteController.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
-    final entry = controller.entries
-        .where((item) => item.id == entryId)
-        .firstOrNull;
+    final entry = _initialEntry;
     if (entry == null) {
       return const Scaffold(
         body: SafeArea(child: Center(child: Text('交易不存在'))),
       );
     }
 
-    final category = categoryById(entry.categoryId);
-    final account = accountById(controller.accounts, entry.accountId);
-    final amount = signedAmount(entry);
-    final amountColor = colorForType(entry.type);
+    final category = categoryById(_categoryId);
+    final accounts = controller.accounts
+        .where((account) => !account.hidden || account.id == _accountId)
+        .toList();
+    final account = accountById(accounts, _accountId);
+    final amountColor = colorForType(_type);
+    final amountText = switch (_type) {
+      EntryType.expense => formatExpenseAmount(_amount),
+      EntryType.income => '+${formatIncomeAmount(_amount)}',
+      EntryType.transfer => formatAmount(_amount),
+    };
 
     return Theme(
       data: buildVeriFinTheme(Brightness.dark),
@@ -1666,7 +1861,7 @@ class TransactionDetailPage extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 26),
               children: <Widget>[
                 VeriHeader(
-                  title: entry.type.label,
+                  title: _type.label,
                   showBack: true,
                   actions: <Widget>[
                     HeaderAction(
@@ -1675,69 +1870,95 @@ class TransactionDetailPage extends StatelessWidget {
                       destructive: true,
                       onPressed: () => _confirmDeleteEntry(context, entry),
                     ),
+                    HeaderAction(
+                      icon: Icons.check,
+                      tooltip: '保存交易',
+                      onPressed: accounts.isEmpty ? null : _save,
+                    ),
                   ],
                 ),
-                const SizedBox(height: 18),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        formatSignedAmount(amount),
-                        style: Theme.of(context).textTheme.displayLarge
-                            ?.copyWith(
-                              color: amountColor,
-                              fontWeight: FontWeight.w800,
+                const SizedBox(height: 12),
+                VeriCard(
+                  onTap: _editAmount,
+                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              '金额',
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.42),
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
+                            const SizedBox(height: 6),
+                            Text(
+                              amountText,
+                              style: Theme.of(context).textTheme.displayLarge
+                                  ?.copyWith(
+                                    color: amountColor,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Icon(
-                      category.icon,
-                      size: 34,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.28),
-                    ),
-                  ],
+                      VeriIconBox(
+                        icon: category.icon,
+                        color: amountColor,
+                        size: 38,
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 10),
                 VeriCard(
                   child: Column(
                     children: <Widget>[
-                      DetailInfoRow(label: '分类', value: category.label),
+                      DetailInfoRow(
+                        label: '类型',
+                        value: _type.label,
+                        onTap: _pickType,
+                      ),
+                      DetailInfoRow(
+                        label: '分类',
+                        value: category.label,
+                        onTap: _pickCategory,
+                      ),
                       DetailInfoRow(
                         label: '账户',
                         value:
                             '${account.name} (${formatAmount(controller.accountBalance(account))})',
+                        onTap: accounts.isEmpty
+                            ? null
+                            : () => _pickAccount(accounts),
                       ),
                       DetailInfoRow(
                         label: '日期',
                         value:
-                            '${formatDate(entry.occurredAt)}  ${_relativeDay(entry.occurredAt)}',
+                            '${formatDate(_occurredAt)}  ${_relativeDay(_occurredAt)}',
+                        onTap: _pickDate,
                       ),
                       DetailInfoRow(
                         label: '时间',
-                        value: formatTime(entry.occurredAt),
+                        value: formatTime(_occurredAt),
+                        onTap: _pickTime,
                       ),
                       DetailInfoRow(
                         label: '备注',
-                        value: entry.note.isEmpty ? '点击添加备注' : entry.note,
-                        placeholder: entry.note.isEmpty,
-                      ),
-                      const DetailInfoRow(
-                        label: '项目',
-                        value: '点击添加项目',
-                        placeholder: true,
-                      ),
-                      const DetailInfoRow(
-                        label: '商家',
-                        value: '点击添加商家',
-                        placeholder: true,
-                      ),
-                      const DetailInfoRow(
-                        label: '标签',
-                        value: '点击添加标签',
-                        placeholder: true,
+                        value: _noteController.text.trim().isEmpty
+                            ? '点击添加备注'
+                            : _noteController.text.trim(),
+                        placeholder: _noteController.text.trim().isEmpty,
+                        onTap: _editNote,
                       ),
                     ],
                   ),
@@ -1748,6 +1969,137 @@ class TransactionDetailPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _editAmount() async {
+    final amount = await showModalBottomSheet<double>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) =>
+          NumberPadSheet(title: '修改金额', initialAmount: _amount),
+    );
+    if (amount == null || amount <= 0 || !mounted) {
+      return;
+    }
+    setState(() => _amount = amount);
+  }
+
+  Future<void> _pickType() async {
+    final selected = await _showOptionSheet<EntryType>(
+      context: context,
+      title: '选择类型',
+      values: EntryType.values,
+      selected: _type,
+      labelOf: (value) => value.label,
+    );
+    if (selected == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _type = selected;
+      if (categoryById(_categoryId).type != _type) {
+        _categoryId = categoriesFor(_type).first.id;
+      }
+    });
+  }
+
+  Future<void> _pickCategory() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => CategoryPickerSheet(
+        categories: categoriesFor(_type),
+        selectedId: _categoryId,
+      ),
+    );
+    if (selected != null && mounted) {
+      setState(() => _categoryId = selected);
+    }
+  }
+
+  Future<void> _pickAccount(List<Account> accounts) async {
+    final selected = await _showOptionSheet<Account>(
+      context: context,
+      title: '选择账户',
+      values: accounts,
+      selected: accountById(accounts, _accountId),
+      labelOf: (value) => value.name,
+    );
+    if (selected != null && mounted) {
+      setState(() => _accountId = selected.id);
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _occurredAt,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _occurredAt = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        _occurredAt.hour,
+        _occurredAt.minute,
+      );
+    });
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_occurredAt),
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _occurredAt = DateTime(
+        _occurredAt.year,
+        _occurredAt.month,
+        _occurredAt.day,
+        picked.hour,
+        picked.minute,
+      );
+    });
+  }
+
+  Future<void> _editNote() async {
+    final note = await _showTextInputDialog(
+      context: context,
+      title: '编辑备注',
+      label: '备注',
+      initialValue: _noteController.text,
+      allowEmpty: true,
+    );
+    if (note != null && mounted) {
+      setState(() => _noteController.text = note);
+    }
+  }
+
+  void _save() {
+    final entry = _initialEntry;
+    if (entry == null) {
+      return;
+    }
+    VeriFinScope.of(context).updateEntry(
+      entry.copyWith(
+        type: _type,
+        amount: _amount,
+        categoryId: _categoryId,
+        accountId: _accountId,
+        note: _noteController.text.trim(),
+        occurredAt: _occurredAt,
+      ),
+    );
+    Navigator.of(context).pop();
   }
 }
 
@@ -1849,23 +2201,6 @@ List<_DateEntryGroup> _groupEntriesByDate(List<LedgerEntry> entries) {
       .map((entry) => _DateEntryGroup(date: entry.key, entries: entry.value))
       .toList()
     ..sort((a, b) => b.date.compareTo(a.date));
-}
-
-List<double> _dailyValuesForType(
-  List<LedgerEntry> entries,
-  DateTime month,
-  EntryType type,
-) {
-  final days = DateUtils.getDaysInMonth(month.year, month.month);
-  final values = List<double>.filled(days, 0);
-  for (final entry in entries) {
-    if (entry.type == type &&
-        entry.occurredAt.year == month.year &&
-        entry.occurredAt.month == month.month) {
-      values[entry.occurredAt.day - 1] += entry.amount;
-    }
-  }
-  return values;
 }
 
 List<_DailyStatRow> _dailyStatRows(
@@ -4319,6 +4654,19 @@ List<String> monthAxisLabels(DateTime month) {
 List<String> reportAxisLabels(double maxValue) {
   final top = maxValue <= 0 ? 100 : maxValue;
   return <String>['0', formatAmount(top / 2), formatAmount(top)];
+}
+
+String _yy(int year) => (year % 100).toString().padLeft(2, '0');
+
+int isoWeekYear(DateTime date) {
+  return date.add(Duration(days: 4 - date.weekday)).year;
+}
+
+int isoWeekNumber(DateTime date) {
+  final thursday = date.add(Duration(days: 4 - date.weekday));
+  final firstThursday = DateTime(thursday.year, 1, 4);
+  final weekOne = firstThursday.add(Duration(days: 4 - firstThursday.weekday));
+  return thursday.difference(weekOne).inDays ~/ 7 + 1;
 }
 
 List<double> accountBalanceSeries(Account account, List<LedgerEntry> entries) {

@@ -23,12 +23,13 @@ class TrendLinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const leftInset = 34.0;
+    const leftInset = 30.0;
+    const rightInset = 8.0;
     const bottomInset = 22.0;
     final chartRect = Rect.fromLTWH(
       yLabels.isEmpty ? 0 : leftInset,
       0,
-      size.width - (yLabels.isEmpty ? 0 : leftInset),
+      size.width - (yLabels.isEmpty ? rightInset : leftInset + rightInset),
       size.height - (xLabels.isEmpty ? 0 : bottomInset),
     );
     final axisColor = labelColor ?? Colors.white.withValues(alpha: 0.45);
