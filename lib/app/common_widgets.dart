@@ -6,14 +6,15 @@ import 'ledger_math.dart';
 import 'models.dart';
 
 class TransactionTile extends StatelessWidget {
-  const TransactionTile(this.entry, {super.key});
+  const TransactionTile(this.entry, {super.key, required this.accounts});
 
   final LedgerEntry entry;
+  final List<Account> accounts;
 
   @override
   Widget build(BuildContext context) {
     final category = categoryById(entry.categoryId);
-    final account = accountById(entry.accountId);
+    final account = accountById(accounts, entry.accountId);
     final amountColor = entry.type == EntryType.income ? veriMint : null;
 
     return ListTile(
@@ -204,7 +205,7 @@ class AccountGroupCard extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
                 backgroundColor: veriBlue.withValues(alpha: 0.16),
-                child: Icon(account.icon, color: veriBlue),
+                child: Icon(iconForCode(account.iconCode), color: veriBlue),
               ),
               title: Text(account.name),
               trailing: Text(

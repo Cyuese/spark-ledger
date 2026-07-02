@@ -2,29 +2,117 @@ import 'package:flutter/material.dart';
 
 import 'models.dart';
 
-const List<Account> demoAccounts = <Account>[
+const List<AccountGroup> defaultAccountGroups = <AccountGroup>[
+  AccountGroup(id: 'online', name: '网络支付', iconCode: 'wallet', sortOrder: 0),
+  AccountGroup(id: 'credit', name: '信用账户', iconCode: 'credit', sortOrder: 1),
+];
+
+const List<Account> defaultAccounts = <Account>[
   Account(
     id: 'alipay',
     name: '支付宝',
-    group: '网络支付',
+    type: AccountType.onlinePayment,
+    groupId: 'online',
     initialBalance: 895.32,
-    icon: Icons.account_balance_wallet,
+    iconCode: 'alipay',
+    note: '',
+    includeInAssets: true,
+    hidden: false,
   ),
   Account(
     id: 'wechat',
     name: '微信',
-    group: '网络支付',
+    type: AccountType.onlinePayment,
+    groupId: 'online',
     initialBalance: 0,
-    icon: Icons.chat_bubble_outline,
+    iconCode: 'wechat',
+    note: '',
+    includeInAssets: true,
+    hidden: false,
   ),
   Account(
     id: 'huabei',
     name: '花呗',
-    group: '信用账户',
+    type: AccountType.creditCard,
+    groupId: 'credit',
     initialBalance: -53.71,
-    icon: Icons.credit_card,
+    iconCode: 'credit',
+    note: '',
+    includeInAssets: true,
+    hidden: false,
   ),
 ];
+
+const UserProfile defaultUserProfile = UserProfile(
+  nickname: 'Veri Fin',
+  bio: '完全免费 · 数据自主',
+  avatarDataUrl: '',
+);
+
+const List<String> accountIconCodes = <String>[
+  'wallet',
+  'alipay',
+  'wechat',
+  'credit',
+  'bank',
+  'cash',
+  'investment',
+  'savings',
+  'card',
+  'folder',
+];
+
+IconData iconForCode(String code) {
+  switch (code) {
+    case 'alipay':
+      return Icons.account_balance_wallet;
+    case 'wechat':
+      return Icons.chat_bubble_outline;
+    case 'credit':
+      return Icons.credit_card;
+    case 'bank':
+      return Icons.account_balance;
+    case 'cash':
+      return Icons.payments;
+    case 'investment':
+      return Icons.trending_up;
+    case 'savings':
+      return Icons.savings;
+    case 'card':
+      return Icons.payment;
+    case 'folder':
+      return Icons.folder_outlined;
+    case 'wallet':
+    default:
+      return Icons.account_balance_wallet_outlined;
+  }
+}
+
+String iconLabelForCode(String code) {
+  switch (code) {
+    case 'alipay':
+      return '支付';
+    case 'wechat':
+      return '微信';
+    case 'credit':
+      return '信用';
+    case 'bank':
+      return '银行';
+    case 'cash':
+      return '现金';
+    case 'investment':
+      return '投资';
+    case 'savings':
+      return '储蓄';
+    case 'card':
+      return '卡片';
+    case 'folder':
+      return '分组';
+    case 'wallet':
+    default:
+      return '钱包';
+  }
+}
 
 const List<Category> demoCategories = <Category>[
   Category(
@@ -132,9 +220,9 @@ Category categoryById(String id) {
   );
 }
 
-Account accountById(String id) {
-  return demoAccounts.firstWhere(
+Account accountById(List<Account> accounts, String id) {
+  return accounts.firstWhere(
     (account) => account.id == id,
-    orElse: () => demoAccounts.first,
+    orElse: () => accounts.isEmpty ? defaultAccounts.first : accounts.first,
   );
 }

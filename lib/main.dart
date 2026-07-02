@@ -245,7 +245,14 @@ class HomePage extends StatelessWidget {
                     description: '点击右下角加号开始第一笔记账。',
                   )
                 else
-                  ...todayEntries.take(5).map(TransactionTile.new),
+                  ...todayEntries
+                      .take(5)
+                      .map(
+                        (entry) => TransactionTile(
+                          entry,
+                          accounts: controller.accounts,
+                        ),
+                      ),
               ],
             ),
           ),
@@ -312,8 +319,10 @@ class AssetsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
+    final accounts = controller.accounts;
+    final groups = controller.accountGroups;
     final balances = <Account, double>{
-      for (final account in demoAccounts)
+      for (final account in accounts)
         account: controller.accountBalance(account),
     };
     final assets = balances.values
@@ -376,21 +385,18 @@ class AssetsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          AccountGroupCard(
-            title: '网络支付',
-            accounts: demoAccounts
-                .where((account) => account.group == '网络支付')
-                .toList(),
-            balances: balances,
-          ),
-          const SizedBox(height: 16),
-          AccountGroupCard(
-            title: '信用账户',
-            accounts: demoAccounts
-                .where((account) => account.group == '信用账户')
-                .toList(),
-            balances: balances,
-          ),
+          for (final group in groups) ...<Widget>[
+            AccountGroupCard(
+              title: group.name,
+              accounts: accounts
+                  .where(
+                    (account) => account.groupId == group.id && !account.hidden,
+                  )
+                  .toList(),
+              balances: balances,
+            ),
+            const SizedBox(height: 16),
+          ],
         ],
       ),
     );
@@ -625,7 +631,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   late double _amount = widget.initialAmount;
   EntryType _type = EntryType.expense;
   late String _categoryId = categoriesFor(_type).first.id;
-  String _accountId = demoAccounts.first.id;
+  String _accountId = defaultAccounts.first.id;
   DateTime _occurredAt = DateTime.now();
   final TextEditingController _noteController = TextEditingController();
 
@@ -637,10 +643,15 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final accounts = controller.accounts.isEmpty
+        ? defaultAccounts
+        : controller.accounts;
+    if (!accounts.any((account) => account.id == _accountId)) {
+      _accountId = accounts.first.id;
+    }
     final categories = categoriesFor(_type);
-    final selectedAccount = demoAccounts.firstWhere(
-      (account) => account.id == _accountId,
-    );
+    final selectedAccount = accountById(accounts, _accountId);
 
     return Scaffold(
       body: SafeArea(
@@ -738,7 +749,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.wallet),
                     ),
-                    items: demoAccounts
+                    items: accounts
                         .map(
                           (account) => DropdownMenuItem<String>(
                             value: account.id,
@@ -781,7 +792,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                         onPressed: _pickTime,
                       ),
                       Chip(
-                        avatar: Icon(selectedAccount.icon, size: 18),
+                        avatar: Icon(
+                          iconForCode(selectedAccount.iconCode),
+                          size: 18,
+                        ),
                         label: Text(selectedAccount.name),
                       ),
                     ],
