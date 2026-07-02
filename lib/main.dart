@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app/app_theme.dart';
 import 'app/avatar_picker.dart';
@@ -50,6 +51,16 @@ class _VeriFinAppState extends State<VeriFinApp> {
           return MaterialApp(
             title: 'Veri Fin',
             debugShowCheckedModeBanner: false,
+            locale: const Locale('zh', 'CN'),
+            supportedLocales: const <Locale>[
+              Locale('zh', 'CN'),
+              Locale('en', 'US'),
+            ],
+            localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
             themeMode: themePreference.themeMode,
             theme: buildVeriFinTheme(Brightness.light),
             darkTheme: buildVeriFinTheme(Brightness.dark),
@@ -1250,8 +1261,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   TransactionSortOrder _sortOrder = TransactionSortOrder.dateDesc;
   DateTime _periodAnchor = DateTime.now();
   late DateTime _visibleDate = widget.initialDate ?? DateTime.now();
-
-  bool get _dateMode => widget.initialDate != null;
+  late bool _dateMode = widget.initialDate != null;
 
   @override
   Widget build(BuildContext context) {
@@ -1278,16 +1288,28 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 ),
                 const SizedBox(height: 8),
                 if (_dateMode)
-                  _DateFilterBar(
-                    date: _visibleDate,
-                    onPrevious: () => setState(() {
-                      _visibleDate = _visibleDate.subtract(
-                        const Duration(days: 1),
-                      );
-                    }),
-                    onNext: () => setState(() {
-                      _visibleDate = _visibleDate.add(const Duration(days: 1));
-                    }),
+                  Row(
+                    children: <Widget>[
+                      _DateFilterBar(
+                        date: _visibleDate,
+                        onPrevious: () => setState(() {
+                          _visibleDate = _visibleDate.subtract(
+                            const Duration(days: 1),
+                          );
+                        }),
+                        onNext: () => setState(() {
+                          _visibleDate = _visibleDate.add(
+                            const Duration(days: 1),
+                          );
+                        }),
+                        onTap: _pickTimeFilter,
+                      ),
+                      const SizedBox(width: 10),
+                      FilterPill(
+                        label: _sortOrder.label,
+                        onTap: _pickSortOrder,
+                      ),
+                    ],
                   )
                 else
                   Row(
@@ -1427,6 +1449,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
     if (selected != null) {
       setState(() {
+        _dateMode = false;
         _timeFilter = selected;
         _periodAnchor = DateTime.now();
       });
@@ -1606,11 +1629,13 @@ class _DateFilterBar extends StatelessWidget {
     required this.date,
     required this.onPrevious,
     required this.onNext,
+    required this.onTap,
   });
 
   final DateTime date;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1621,7 +1646,7 @@ class _DateFilterBar extends StatelessWidget {
           onPressed: onPrevious,
           icon: const Icon(Icons.chevron_left),
         ),
-        FilterPill(label: '${date.month}.${date.day}', showChevron: false),
+        FilterPill(label: '${date.month}.${date.day}', onTap: onTap),
         IconButton(
           tooltip: '后一天',
           onPressed: onNext,
@@ -1638,6 +1663,7 @@ Future<T?> _showOptionSheet<T>({
   required List<T> values,
   required T selected,
   required String Function(T value) labelOf,
+  bool showSelectedMarker = true,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -1664,7 +1690,7 @@ Future<T?> _showOptionSheet<T>({
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Material(
-                  color: value == selected
+                  color: showSelectedMarker && value == selected
                       ? veriRoyal.withValues(alpha: 0.12)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(veriRadiusSm),
@@ -1678,12 +1704,12 @@ Future<T?> _showOptionSheet<T>({
                     title: Text(
                       labelOf(value),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: value == selected
+                        fontWeight: showSelectedMarker && value == selected
                             ? FontWeight.w800
                             : FontWeight.w600,
                       ),
                     ),
-                    trailing: value == selected
+                    trailing: showSelectedMarker && value == selected
                         ? const Icon(Icons.check, color: veriRoyal, size: 18)
                         : null,
                     onTap: () => Navigator.of(context).pop(value),
@@ -1882,7 +1908,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                   onTap: _editAmount,
                   padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
                       Expanded(
                         child: Column(
@@ -2303,6 +2329,16 @@ class AssetsPage extends StatelessWidget {
       accounts,
       controller.entries,
     );
+    final hasAssetCover = controller.assetCoverUrl.isNotEmpty;
+    final assetCardTextColor = hasAssetCover
+        ? Colors.white
+        : Theme.of(context).colorScheme.onSurface;
+    final assetCardMutedColor = assetCardTextColor.withValues(
+      alpha: hasAssetCover ? 0.72 : 0.54,
+    );
+    final hiddenAccounts = accounts
+        .where((account) => account.hidden)
+        .toList(growable: false);
     final visibleGroups = <AccountGroup>[
       ...groups,
       AccountGroup(
@@ -2335,8 +2371,18 @@ class AssetsPage extends StatelessWidget {
             child: Container(
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
+                color: hasAssetCover
+                    ? null
+                    : Theme.of(context).brightness == Brightness.dark
+                    ? veriSurfaceDark
+                    : veriSurfaceLight,
                 borderRadius: BorderRadius.circular(veriRadiusMd),
-                image: controller.assetCoverUrl.isEmpty
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withValues(alpha: 0.10)
+                      : veriLine,
+                ),
+                image: !hasAssetCover
                     ? null
                     : DecorationImage(
                         image: NetworkImage(controller.assetCoverUrl),
@@ -2344,36 +2390,32 @@ class AssetsPage extends StatelessWidget {
                         alignment: Alignment.center,
                       ),
                 boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: veriRoyal.withValues(alpha: 0.18),
-                    blurRadius: 18,
-                    offset: const Offset(0, 10),
-                  ),
+                  if (Theme.of(context).brightness == Brightness.light)
+                    BoxShadow(
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.045),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
                 ],
               ),
               child: Stack(
                 children: <Widget>[
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: controller.assetCoverUrl.isEmpty
-                              ? const <Color>[
-                                  Color(0xFF176CBA),
-                                  veriRoyal,
-                                  veriIndigo,
-                                ]
-                              : <Color>[
-                                  Colors.black.withValues(alpha: 0.48),
-                                  veriRoyal.withValues(alpha: 0.50),
-                                  Colors.black.withValues(alpha: 0.28),
-                                ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                  if (hasAssetCover)
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: <Color>[
+                              Colors.black.withValues(alpha: 0.48),
+                              veriRoyal.withValues(alpha: 0.50),
+                              Colors.black.withValues(alpha: 0.28),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   Padding(
                     padding: const EdgeInsets.all(18),
                     child: Column(
@@ -2381,17 +2423,17 @@ class AssetsPage extends StatelessWidget {
                       children: <Widget>[
                         Row(
                           children: <Widget>[
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 '净资产',
-                                style: TextStyle(color: Colors.white70),
+                                style: TextStyle(color: assetCardMutedColor),
                               ),
                             ),
                             Tooltip(
                               message: '长按更换资产卡片背景',
                               child: Icon(
                                 Icons.photo_size_select_actual_outlined,
-                                color: Colors.white.withValues(alpha: 0.74),
+                                color: assetCardMutedColor,
                                 size: 17,
                               ),
                             ),
@@ -2402,10 +2444,10 @@ class AssetsPage extends StatelessWidget {
                           height: 56,
                           child: CustomPaint(
                             painter: TrendLinePainter(
-                              color: Colors.white,
+                              color: assetCardTextColor,
                               values: assetTrendValues,
                               xLabels: evenMonthAxisLabels(),
-                              labelColor: Colors.white.withValues(alpha: 0.56),
+                              labelColor: assetCardMutedColor,
                             ),
                             child: const SizedBox.expand(),
                           ),
@@ -2415,7 +2457,7 @@ class AssetsPage extends StatelessWidget {
                           formatAmount(assets + liabilities),
                           style: Theme.of(context).textTheme.displaySmall
                               ?.copyWith(
-                                color: Colors.white,
+                                color: assetCardTextColor,
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
@@ -2425,11 +2467,11 @@ class AssetsPage extends StatelessWidget {
                           children: <Widget>[
                             Text(
                               '资产 ${formatAmount(assets)}',
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: assetCardTextColor),
                             ),
                             Text(
                               '负债 ${formatAmount(liabilities.abs())}',
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: assetCardTextColor),
                             ),
                           ],
                         ),
@@ -2464,6 +2506,48 @@ class AssetsPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
             ],
+          ],
+          if (hiddenAccounts.isNotEmpty) ...<Widget>[
+            VeriCard(
+              onTap: () {
+                Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const HiddenAccountsPage(),
+                  ),
+                );
+              },
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.visibility_off_outlined,
+                    size: 18,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.42),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${hiddenAccounts.length}个隐藏账户',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.52),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.36),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
           ],
         ],
       ),
@@ -2556,6 +2640,7 @@ class AssetsPage extends StatelessWidget {
       title: '资产操作',
       values: const <String>['add_account', 'manage_groups'],
       selected: 'add_account',
+      showSelectedMarker: false,
       labelOf: (value) {
         return switch (value) {
           'add_account' => '添加账户',
@@ -2587,6 +2672,58 @@ class _AssetCoverPreset {
 
   final String label;
   final String url;
+}
+
+class HiddenAccountsPage extends StatelessWidget {
+  const HiddenAccountsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final accounts = controller.accounts
+        .where((account) => account.hidden)
+        .toList(growable: false);
+    final balances = <Account, double>{
+      for (final account in accounts)
+        account: controller.accountBalance(account),
+    };
+
+    return Scaffold(
+      body: SafeArea(
+        child: VeriPage(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
+            children: <Widget>[
+              const VeriHeader(title: '隐藏账户', showBack: true),
+              const SizedBox(height: 10),
+              if (accounts.isEmpty)
+                const VeriCard(
+                  child: EmptyState(
+                    icon: Icons.visibility_off_outlined,
+                    title: '暂无隐藏账户',
+                    description: '隐藏账户会在这里集中展示。',
+                  ),
+                )
+              else
+                AccountGroupCard(
+                  title: '隐藏账户',
+                  accounts: accounts,
+                  balances: balances,
+                  onAccountTap: (account) {
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (context) =>
+                            AccountDetailPage(account: account),
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class AccountGroupsPage extends StatefulWidget {
@@ -3754,8 +3891,8 @@ class ReportsPage extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     SizedBox(
-                      width: 156,
-                      height: 156,
+                      width: 184,
+                      height: 184,
                       child: Stack(
                         alignment: Alignment.center,
                         children: <Widget>[
@@ -3763,14 +3900,14 @@ class ReportsPage extends StatelessWidget {
                             value: topCategory == null || expenseTotal <= 0
                                 ? 0
                                 : topCategory.amount / expenseTotal,
-                            strokeWidth: 16,
+                            strokeWidth: 18,
                             color: veriRoyal,
                             backgroundColor: Theme.of(
                               context,
                             ).colorScheme.surfaceContainerHighest,
                           ),
                           SizedBox(
-                            width: 82,
+                            width: 104,
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
