@@ -43,6 +43,20 @@ void main() {
     expect(find.text('深色'), findsOneWidget);
   });
 
+  testWidgets('opens asset cover selector from the assets page', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+
+    await tapBottomTab(tester, 1);
+    await tester.longPress(find.byKey(const Key('asset_cover_card')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('资产卡片背景'), findsOneWidget);
+    expect(find.text('使用线上图片'), findsOneWidget);
+    expect(find.text('选择本地图片'), findsOneWidget);
+  });
+
   testWidgets('creates an entry through the quick entry flow', (
     WidgetTester tester,
   ) async {

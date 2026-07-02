@@ -1907,6 +1907,29 @@ String _relativeDay(DateTime date) {
 class AssetsPage extends StatelessWidget {
   const AssetsPage({super.key});
 
+  static const List<_AssetCoverPreset> _coverPresets = <_AssetCoverPreset>[
+    _AssetCoverPreset(
+      label: '蓝色城市',
+      url:
+          'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?auto=format&fit=crop&w=1200&q=80',
+    ),
+    _AssetCoverPreset(
+      label: '极光夜色',
+      url:
+          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+    ),
+    _AssetCoverPreset(
+      label: '金融办公',
+      url:
+          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
+    ),
+    _AssetCoverPreset(
+      label: '深蓝渐层',
+      url:
+          'https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&w=1200&q=80',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
@@ -1974,50 +1997,103 @@ class AssetsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: <Color>[Color(0xFF176CBA), veriRoyal, veriIndigo],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(veriRadiusMd),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: veriRoyal.withValues(alpha: 0.20),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Text('净资产', style: TextStyle(color: Colors.white70)),
-                const SizedBox(height: 6),
-                Text(
-                  formatAmount(assets + liabilities),
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
+          GestureDetector(
+            key: const Key('asset_cover_card'),
+            behavior: HitTestBehavior.opaque,
+            onLongPress: () => _changeAssetCover(context, controller),
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(veriRadiusMd),
+                image: controller.assetCoverUrl.isEmpty
+                    ? null
+                    : DecorationImage(
+                        image: NetworkImage(controller.assetCoverUrl),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.center,
+                      ),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: veriRoyal.withValues(alpha: 0.18),
+                    blurRadius: 18,
+                    offset: const Offset(0, 10),
                   ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text(
-                      '资产 ${formatAmount(assets)}',
-                      style: const TextStyle(color: Colors.white),
+                ],
+              ),
+              child: Stack(
+                children: <Widget>[
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: controller.assetCoverUrl.isEmpty
+                              ? const <Color>[
+                                  Color(0xFF176CBA),
+                                  veriRoyal,
+                                  veriIndigo,
+                                ]
+                              : <Color>[
+                                  Colors.black.withValues(alpha: 0.48),
+                                  veriRoyal.withValues(alpha: 0.50),
+                                  Colors.black.withValues(alpha: 0.28),
+                                ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
                     ),
-                    Text(
-                      '负债 ${formatAmount(liabilities.abs())}',
-                      style: const TextStyle(color: Colors.white),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            const Expanded(
+                              child: Text(
+                                '净资产',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ),
+                            Tooltip(
+                              message: '长按更换资产卡片背景',
+                              child: Icon(
+                                Icons.photo_size_select_actual_outlined,
+                                color: Colors.white.withValues(alpha: 0.74),
+                                size: 17,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          formatAmount(assets + liabilities),
+                          style: Theme.of(context).textTheme.displaySmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Text(
+                              '资产 ${formatAmount(assets)}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              '负债 ${formatAmount(liabilities.abs())}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -2049,6 +2125,73 @@ class AssetsPage extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _changeAssetCover(
+    BuildContext context,
+    VeriFinController controller,
+  ) async {
+    final action = await _showOptionSheet<String>(
+      context: context,
+      title: '资产卡片背景',
+      values: const <String>['online', 'custom_url', 'local', 'clear'],
+      selected: 'online',
+      labelOf: (value) {
+        return switch (value) {
+          'online' => '使用线上图片',
+          'custom_url' => '输入图片链接',
+          'local' => '选择本地图片',
+          'clear' => '清除背景图片',
+          _ => value,
+        };
+      },
+    );
+    if (action == null || !context.mounted) {
+      return;
+    }
+
+    switch (action) {
+      case 'online':
+        final selected = await _showOptionSheet<_AssetCoverPreset>(
+          context: context,
+          title: '选择线上图片',
+          values: _coverPresets,
+          selected: _coverPresets.firstWhere(
+            (item) => item.url == controller.assetCoverUrl,
+            orElse: () => _coverPresets.first,
+          ),
+          labelOf: (value) => value.label,
+        );
+        if (selected != null) {
+          controller.setAssetCoverUrl(selected.url);
+        }
+      case 'custom_url':
+        final url = await _showTextInputDialog(
+          context: context,
+          title: '自定义图片',
+          label: '图片链接',
+          initialValue: controller.assetCoverUrl.startsWith('http')
+              ? controller.assetCoverUrl
+              : '',
+        );
+        if (url != null) {
+          controller.setAssetCoverUrl(url);
+        }
+      case 'local':
+        final dataUrl = await pickAvatarDataUrl();
+        if (dataUrl != null) {
+          controller.setAssetCoverUrl(dataUrl);
+        }
+      case 'clear':
+        controller.setAssetCoverUrl('');
+    }
+  }
+}
+
+class _AssetCoverPreset {
+  const _AssetCoverPreset({required this.label, required this.url});
+
+  final String label;
+  final String url;
 }
 
 class AccountGroupsPage extends StatefulWidget {

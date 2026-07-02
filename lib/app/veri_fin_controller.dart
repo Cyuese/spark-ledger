@@ -22,6 +22,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _budgetsKey = 'verifin.monthly_budgets.v1';
   static const String _ledgerBooksKey = 'verifin.ledger_books.v1';
   static const String _activeBookKey = 'verifin.active_book.v1';
+  static const String _assetCoverKey = 'verifin.asset_cover.v1';
 
   final LocalKeyValueStore _store;
   final List<LedgerEntry> _entries = <LedgerEntry>[];
@@ -35,6 +36,7 @@ class VeriFinController extends ChangeNotifier {
   ThemePreference _themePreference = ThemePreference.system;
   UserProfile _profile = defaultUserProfile;
   String _activeBookId = defaultLedgerBookId;
+  String _assetCoverUrl = '';
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
     _entries.where((entry) => entry.bookId == _activeBookId),
@@ -60,6 +62,8 @@ class VeriFinController extends ChangeNotifier {
   ThemePreference get themePreference => _themePreference;
 
   UserProfile get profile => _profile;
+
+  String get assetCoverUrl => _assetCoverUrl;
 
   double monthlyBudget(DateTime month) {
     return _monthlyBudgets[_monthKey(month)] ?? 800;
@@ -251,6 +255,16 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setAssetCoverUrl(String value) {
+    _assetCoverUrl = value.trim();
+    if (_assetCoverUrl.isEmpty) {
+      _store.delete(_assetCoverKey);
+    } else {
+      _store.write(_assetCoverKey, _assetCoverUrl);
+    }
+    notifyListeners();
+  }
+
   void resetAllData() {
     for (final key in <String>[
       _entriesKey,
@@ -261,6 +275,7 @@ class VeriFinController extends ChangeNotifier {
       _budgetsKey,
       _ledgerBooksKey,
       _activeBookKey,
+      _assetCoverKey,
     ]) {
       _store.delete(key);
     }
@@ -278,6 +293,7 @@ class VeriFinController extends ChangeNotifier {
     _profile = defaultUserProfile;
     _themePreference = ThemePreference.system;
     _activeBookId = defaultLedgerBookId;
+    _assetCoverUrl = '';
     themePreferenceListenable.value = _themePreference;
     notifyListeners();
   }
@@ -306,6 +322,7 @@ class VeriFinController extends ChangeNotifier {
     _loadAccounts();
     _loadProfile();
     _loadBudgets();
+    _assetCoverUrl = _store.read(_assetCoverKey) ?? '';
     final rawEntries = _store.read(_entriesKey);
     if (rawEntries == null || rawEntries.isEmpty) {
       return;
