@@ -473,11 +473,33 @@ class EmptyState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         children: <Widget>[
-          Icon(icon, size: 32, color: veriBlue),
-          const SizedBox(height: 8),
-          Text(title, style: Theme.of(context).textTheme.titleSmall),
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: veriBlue.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(veriRadiusMd),
+              border: Border.all(color: veriBlue.withValues(alpha: 0.10)),
+            ),
+            child: Icon(icon, size: 24, color: veriBlue),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 4),
-          Text(description, textAlign: TextAlign.center),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.54),
+            ),
+          ),
         ],
       ),
     );

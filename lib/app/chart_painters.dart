@@ -11,6 +11,7 @@ class TrendLinePainter extends CustomPainter {
     this.xLabels = const <String>[],
     this.yLabels = const <String>[],
     this.labelColor,
+    this.glow = false,
   });
 
   final Color color;
@@ -18,6 +19,7 @@ class TrendLinePainter extends CustomPainter {
   final List<String> xLabels;
   final List<String> yLabels;
   final Color? labelColor;
+  final bool glow;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -33,9 +35,15 @@ class TrendLinePainter extends CustomPainter {
     final gridPaint = Paint()
       ..color = axisColor.withValues(alpha: 0.16)
       ..strokeWidth = 1;
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: 0.20)
+      ..strokeWidth = 8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
     final linePaint = Paint()
       ..color = color
-      ..strokeWidth = 3
+      ..strokeWidth = 2.8
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
     final fillPaint = Paint()
@@ -54,6 +62,14 @@ class TrendLinePainter extends CustomPainter {
         Offset(chartRect.left, y),
         Offset(chartRect.right, y),
         gridPaint,
+      );
+    }
+    for (var i = 0; i < 6; i += 1) {
+      final x = chartRect.left + chartRect.width * i / 5;
+      canvas.drawLine(
+        Offset(x, chartRect.top),
+        Offset(x, chartRect.bottom),
+        gridPaint..color = axisColor.withValues(alpha: 0.06),
       );
     }
 
@@ -89,9 +105,11 @@ class TrendLinePainter extends CustomPainter {
     fillPath
       ..lineTo(chartRect.right, chartRect.bottom)
       ..close();
-    canvas
-      ..drawPath(fillPath, fillPaint)
-      ..drawPath(path, linePaint);
+    canvas.drawPath(fillPath, fillPaint);
+    if (glow) {
+      canvas.drawPath(path, glowPaint);
+    }
+    canvas.drawPath(path, linePaint);
 
     _drawLabels(canvas, chartRect, xLabels, yLabels, axisColor);
   }
@@ -102,7 +120,8 @@ class TrendLinePainter extends CustomPainter {
         oldDelegate.values != values ||
         oldDelegate.xLabels != xLabels ||
         oldDelegate.yLabels != yLabels ||
-        oldDelegate.labelColor != labelColor;
+        oldDelegate.labelColor != labelColor ||
+        oldDelegate.glow != glow;
   }
 }
 

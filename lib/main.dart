@@ -409,11 +409,14 @@ class HomeTrendPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      clipBehavior: Clip.antiAlias,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF0B0D11)
-            : const Color(0xFF101827),
+        gradient: const LinearGradient(
+          colors: <Color>[Color(0xFF0C111C), Color(0xFF101A2D)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(veriRadiusMd),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         boxShadow: <BoxShadow>[
@@ -434,7 +437,7 @@ class HomeTrendPanel extends StatelessWidget {
                   '${month.month}月支出',
                   style: Theme.of(
                     context,
-                  ).textTheme.labelLarge?.copyWith(color: Colors.white54),
+                  ).textTheme.labelLarge?.copyWith(color: Colors.white60),
                 ),
               ),
               Container(
@@ -470,22 +473,30 @@ class HomeTrendPanel extends StatelessWidget {
                   '结余 ${formatSignedAmount(income - expense)}',
                   style: Theme.of(
                     context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.white38),
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white54),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              '收入 ${formatAmount(income)}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.white54),
-            ),
+          const SizedBox(height: 9),
+          Row(
+            children: <Widget>[
+              _TrendMetric(label: '收入', value: formatAmount(income)),
+              const SizedBox(width: 8),
+              _TrendMetric(
+                label: '交易',
+                value: '${values.where((v) => v > 0).length}天',
+              ),
+              const Spacer(),
+              Text(
+                '${month.month}.1 - ${month.month}.${DateUtils.getDaysInMonth(month.year, month.month)}',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: Colors.white38),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           SizedBox(
             height: 118,
             child: CustomPaint(
@@ -494,11 +505,37 @@ class HomeTrendPanel extends StatelessWidget {
                 values: values,
                 xLabels: monthAxisLabels(month),
                 labelColor: Colors.white54,
+                glow: true,
               ),
               child: const SizedBox.expand(),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TrendMetric extends StatelessWidget {
+  const _TrendMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: Text(
+        '$label $value',
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: Colors.white60),
       ),
     );
   }
@@ -657,101 +694,103 @@ class TransactionsPage extends StatelessWidget {
     final income = sumByType(entries, EntryType.income);
     final groupedEntries = _groupEntriesByDate(entries);
 
-    return Scaffold(
-      body: SafeArea(
-        child: VeriPage(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  IconButton(
-                    tooltip: '返回',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    tooltip: '搜索',
-                    onPressed: () {},
-                    icon: const Icon(Icons.search),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Wrap(
-                spacing: 10,
-                runSpacing: 8,
-                children: <Widget>[
-                  FilterPill(label: '全部时间', icon: Icons.chevron_left),
-                  FilterPill(label: '日期降序'),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Text(
-                '${entries.length}笔交易',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.28),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 18,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: <Color>[Color(0xFF455064), Color(0xFF132B3A)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(veriRadiusLg),
-                ),
-                child: Row(
+    return Theme(
+      data: buildVeriFinTheme(Brightness.dark),
+      child: Scaffold(
+        body: SafeArea(
+          child: VeriPage(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
+              children: <Widget>[
+                Row(
                   children: <Widget>[
-                    SummaryMetric(
-                      label: '支出',
-                      value: '-${formatAmount(expense)}',
-                      color: Colors.white,
+                    IconButton(
+                      tooltip: '返回',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back),
                     ),
-                    SummaryMetric(
-                      label: '收入',
-                      value: formatAmount(income),
-                      color: Colors.white,
-                    ),
-                    SummaryMetric(
-                      label: '结余',
-                      value: formatSignedAmount(income - expense),
-                      color: Colors.white,
+                    const Spacer(),
+                    IconButton(
+                      tooltip: '搜索',
+                      onPressed: () {},
+                      icon: const Icon(Icons.search),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 18),
-              if (entries.isEmpty)
-                const VeriCard(
-                  child: EmptyState(
-                    icon: Icons.receipt_long_outlined,
-                    title: '暂无交易',
-                    description: '保存交易后会在这里按日期展示。',
+                const SizedBox(height: 8),
+                Row(
+                  children: const <Widget>[
+                    FilterPill(label: '全部时间', icon: Icons.chevron_left),
+                    SizedBox(width: 10),
+                    FilterPill(label: '日期降序'),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  '${entries.length}笔交易',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.28),
+                    fontWeight: FontWeight.w800,
                   ),
-                )
-              else
-                for (final group in groupedEntries) ...<Widget>[
-                  _DateGroupHeader(entries: group.entries, date: group.date),
-                  const SizedBox(height: 8),
-                  TransactionListCard(
-                    entries: group.entries,
-                    accounts: controller.accounts,
-                    onEntryTap: (entry) => _openEntryDetail(context, entry),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 20,
                   ),
-                  const SizedBox(height: 18),
-                ],
-            ],
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: <Color>[Color(0xFF455064), Color(0xFF132B3A)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(veriRadiusLg),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      SummaryMetric(
+                        label: '支出',
+                        value: '-${formatAmount(expense)}',
+                        color: const Color(0xFFFFEEF2),
+                      ),
+                      SummaryMetric(
+                        label: '收入',
+                        value: formatAmount(income),
+                        color: const Color(0xFFEAFBF9),
+                      ),
+                      SummaryMetric(
+                        label: '结余',
+                        value: formatSignedAmount(income - expense),
+                        color: const Color(0xFFEAF1FF),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                if (entries.isEmpty)
+                  const VeriCard(
+                    child: EmptyState(
+                      icon: Icons.receipt_long_outlined,
+                      title: '暂无交易',
+                      description: '保存交易后会在这里按日期展示。',
+                    ),
+                  )
+                else
+                  for (final group in groupedEntries) ...<Widget>[
+                    _DateGroupHeader(entries: group.entries, date: group.date),
+                    const SizedBox(height: 8),
+                    TransactionListCard(
+                      entries: group.entries,
+                      accounts: controller.accounts,
+                      onEntryTap: (entry) => _openEntryDetail(context, entry),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+              ],
+            ),
           ),
         ),
       ),
@@ -830,89 +869,102 @@ class TransactionDetailPage extends StatelessWidget {
     final amount = signedAmount(entry);
     final amountColor = colorForType(entry.type);
 
-    return Scaffold(
-      body: SafeArea(
-        child: VeriPage(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 26),
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  IconButton(
-                    tooltip: '返回',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back),
-                  ),
-                  Text(
-                    entry.type.label,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
+    return Theme(
+      data: buildVeriFinTheme(Brightness.dark),
+      child: Scaffold(
+        body: SafeArea(
+          child: VeriPage(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 26),
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    IconButton(
+                      tooltip: '返回',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back),
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    tooltip: '删除交易',
-                    onPressed: () => _confirmDeleteEntry(context, entry),
-                    icon: const Icon(Icons.delete_outline),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      formatSignedAmount(amount),
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        color: amountColor,
+                    Text(
+                      entry.type.label,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: '删除交易',
+                      onPressed: () => _confirmDeleteEntry(context, entry),
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        formatSignedAmount(amount),
+                        style: Theme.of(context).textTheme.displayLarge
+                            ?.copyWith(
+                              color: amountColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                    Icon(
+                      category.icon,
+                      size: 34,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.28),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                VeriCard(
+                  child: Column(
+                    children: <Widget>[
+                      DetailInfoRow(label: '分类', value: category.label),
+                      DetailInfoRow(
+                        label: '账户',
+                        value:
+                            '${account.name} (${formatAmount(controller.accountBalance(account))})',
+                      ),
+                      DetailInfoRow(
+                        label: '日期',
+                        value:
+                            '${formatDate(entry.occurredAt)}  ${_relativeDay(entry.occurredAt)}',
+                      ),
+                      DetailInfoRow(
+                        label: '时间',
+                        value: formatTime(entry.occurredAt),
+                      ),
+                      DetailInfoRow(
+                        label: '备注',
+                        value: entry.note.isEmpty ? '点击添加备注' : entry.note,
+                        placeholder: entry.note.isEmpty,
+                      ),
+                      const DetailInfoRow(
+                        label: '项目',
+                        value: '点击添加项目',
+                        placeholder: true,
+                      ),
+                      const DetailInfoRow(
+                        label: '商家',
+                        value: '点击添加商家',
+                        placeholder: true,
+                      ),
+                      const DetailInfoRow(
+                        label: '标签',
+                        value: '点击添加标签',
+                        placeholder: true,
+                      ),
+                    ],
                   ),
-                  Icon(
-                    category.icon,
-                    size: 34,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.28),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              DetailInfoRow(label: '分类', value: category.label),
-              DetailInfoRow(
-                label: '账户',
-                value:
-                    '${account.name} (${formatAmount(controller.accountBalance(account))})',
-              ),
-              DetailInfoRow(
-                label: '日期',
-                value:
-                    '${formatDate(entry.occurredAt)}  ${_relativeDay(entry.occurredAt)}',
-              ),
-              DetailInfoRow(label: '时间', value: formatTime(entry.occurredAt)),
-              DetailInfoRow(
-                label: '备注',
-                value: entry.note.isEmpty ? '点击添加备注' : entry.note,
-                placeholder: entry.note.isEmpty,
-              ),
-              const DetailInfoRow(
-                label: '项目',
-                value: '点击添加项目',
-                placeholder: true,
-              ),
-              const DetailInfoRow(
-                label: '商家',
-                value: '点击添加商家',
-                placeholder: true,
-              ),
-              const DetailInfoRow(
-                label: '标签',
-                value: '点击添加标签',
-                placeholder: true,
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
