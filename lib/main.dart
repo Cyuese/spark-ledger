@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -3895,58 +3897,10 @@ class ReportsPage extends StatelessWidget {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final compact = constraints.maxWidth < 360;
-                    final ringSize = compact ? 126.0 : 156.0;
-                    final ringValue = topCategory == null || expenseTotal <= 0
-                        ? 0.0
-                        : topCategory.amount / expenseTotal;
-                    final content = SizedBox(
-                      width: ringSize,
-                      height: ringSize,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: <Widget>[
-                          CustomPaint(
-                            painter: BudgetRingPainter(
-                              value: ringValue,
-                              trackColor: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withValues(alpha: 0.72),
-                              progressColor: veriRoyal,
-                            ),
-                            child: const SizedBox.expand(),
-                          ),
-                          SizedBox(
-                            width: compact ? 72 : 88,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Text(
-                                  topCategory?.category.label ?? '暂无',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.labelSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  formatExpenseAmount(expenseTotal),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.labelMedium
-                                      ?.copyWith(fontWeight: FontWeight.w800),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                    return Align(
-                      alignment: Alignment.centerLeft,
-                      child: content,
+                    return _CategoryRingChart(
+                      stat: topCategory,
+                      total: expenseTotal,
+                      ringSize: compact ? 126 : 156,
                     );
                   },
                 ),
@@ -4045,6 +3999,138 @@ class ReportsPage extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _CategoryRingChart extends StatelessWidget {
+  const _CategoryRingChart({
+    required this.stat,
+    required this.total,
+    required this.ringSize,
+  });
+
+  final _CategoryStat? stat;
+  final double total;
+  final double ringSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = stat == null || total <= 0 ? 0.0 : stat!.amount / total;
+    final lineColor = stat == null ? veriRoyal : veriRoyal;
+    final mutedColor = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.56);
+
+    return SizedBox(
+      width: double.infinity,
+      height: ringSize + 26,
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _CategoryCalloutPainter(
+                label: stat?.category.label ?? '',
+                color: lineColor,
+                ringSize: ringSize,
+                textColor: mutedColor,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: ringSize,
+            height: ringSize,
+            child: Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                CustomPaint(
+                  painter: BudgetRingPainter(
+                    value: value,
+                    trackColor: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.72),
+                    progressColor: lineColor,
+                  ),
+                  child: const SizedBox.expand(),
+                ),
+                SizedBox(
+                  width: ringSize * 0.56,
+                  child: Text(
+                    formatExpenseAmount(total),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryCalloutPainter extends CustomPainter {
+  const _CategoryCalloutPainter({
+    required this.label,
+    required this.color,
+    required this.ringSize,
+    required this.textColor,
+  });
+
+  final String label;
+  final Color color;
+  final double ringSize;
+  final Color textColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (label.isEmpty) {
+      return;
+    }
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = ringSize / 2;
+    final angle = -math.pi / 5;
+    final start = center + Offset(math.cos(angle), math.sin(angle)) * radius;
+    final elbow =
+        center + Offset(math.cos(angle), math.sin(angle)) * (radius + 12);
+    final end = Offset(math.min(size.width - 78, elbow.dx + 38), elbow.dy);
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.82)
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(start, elbow, paint);
+    canvas.drawLine(elbow, end, paint);
+    canvas.drawCircle(start, 2.3, Paint()..color = color);
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      maxLines: 1,
+      ellipsis: '...',
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: math.max(42, size.width - end.dx - 8));
+    textPainter.paint(canvas, Offset(end.dx + 5, end.dy - textPainter.height));
+  }
+
+  @override
+  bool shouldRepaint(covariant _CategoryCalloutPainter oldDelegate) {
+    return oldDelegate.label != label ||
+        oldDelegate.color != color ||
+        oldDelegate.ringSize != ringSize ||
+        oldDelegate.textColor != textColor;
   }
 }
 
