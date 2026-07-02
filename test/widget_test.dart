@@ -4,10 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/main.dart';
 
 Future<void> tapBottomTab(WidgetTester tester, int index) async {
-  final nav = tester.widget<BottomNavigationBar>(
-    find.byKey(const Key('main_bottom_nav')),
-  );
-  nav.onTap!(index);
+  await tester.tap(find.byKey(Key('main_tab_$index')));
   await tester.pumpAndSettle();
 }
 

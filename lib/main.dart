@@ -103,34 +103,9 @@ class _VeriFinShellState extends State<VeriFinShell> {
               child: const Icon(Icons.add),
             )
           : null,
-      bottomNavigationBar: BottomNavigationBar(
-        key: const Key('main_bottom_nav'),
+      bottomNavigationBar: VeriBottomNav(
         currentIndex: _index,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
         onTap: (value) => setState(() => _index = value),
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            activeIcon: Icon(Icons.account_balance_wallet),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: '',
-          ),
-        ],
       ),
     );
   }
@@ -150,6 +125,117 @@ class _VeriFinShellState extends State<VeriFinShell> {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (context) => EntryDetailPage(initialAmount: amount),
+      ),
+    );
+  }
+}
+
+class VeriBottomNav extends StatelessWidget {
+  const VeriBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  static const _items = <_NavItem>[
+    _NavItem(Icons.home_outlined, Icons.home, '首页'),
+    _NavItem(
+      Icons.account_balance_wallet_outlined,
+      Icons.account_balance_wallet,
+      '资产',
+    ),
+    _NavItem(Icons.bar_chart_outlined, Icons.bar_chart, '看板'),
+    _NavItem(Icons.person_outline, Icons.person, '我的'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return DecoratedBox(
+      key: const Key('main_bottom_nav'),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0D0F12) : Colors.white,
+        border: Border(
+          top: BorderSide(color: isDark ? Colors.white10 : veriLine),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 56,
+          child: Row(
+            children: <Widget>[
+              for (var index = 0; index < _items.length; index += 1)
+                Expanded(
+                  child: _BottomNavButton(
+                    key: Key('main_tab_$index'),
+                    item: _items[index],
+                    selected: currentIndex == index,
+                    onTap: () => onTap(index),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem {
+  const _NavItem(this.icon, this.activeIcon, this.label);
+
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+}
+
+class _BottomNavButton extends StatelessWidget {
+  const _BottomNavButton({
+    super.key,
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _NavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected
+        ? veriBlue
+        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45);
+    return Tooltip(
+      message: item.label,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 24,
+        child: Semantics(
+          label: item.label,
+          selected: selected,
+          button: true,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(selected ? item.activeIcon : item.icon, color: color),
+              const SizedBox(height: 4),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: selected ? 16 : 4,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: selected ? veriBlue : Colors.transparent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -183,42 +269,78 @@ class HomePage extends StatelessWidget {
 
     return VeriPage(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 88),
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 82),
         children: <Widget>[
           PageHeader(
             title: '日常账本',
-            trailing: IconButton(
+            trailing: VeriSectionAction(
               tooltip: '搜索',
               onPressed: () {},
-              icon: const Icon(Icons.search),
+              icon: Icons.search,
             ),
           ),
-          const SizedBox(height: 12),
-          VeriCard(
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: <Color>[Color(0xFF176CBA), veriBlue, veriRoyal],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(veriRadiusMd),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: veriBlue.withValues(alpha: 0.18),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  '${now.month}月支出',
-                  style: Theme.of(context).textTheme.labelLarge,
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        '${now.month}月支出',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.labelLarge?.copyWith(color: Colors.white70),
+                      ),
+                    ),
+                    VeriSectionAction(
+                      tooltip: '查看趋势',
+                      icon: Icons.chevron_right,
+                      onPressed: () {},
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   '-${formatAmount(monthExpense)}',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: const Color(0xFFE84D6A),
-                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                Text('收入 ${formatAmount(monthIncome)}'),
-                const SizedBox(height: 12),
+                const SizedBox(height: 4),
+                Text(
+                  '收入 ${formatAmount(monthIncome)} · 结余 ${formatSignedAmount(monthIncome - monthExpense)}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                ),
+                const SizedBox(height: 10),
                 SizedBox(
-                  height: 118,
+                  height: 108,
                   child: CustomPaint(
                     painter: TrendLinePainter(
-                      color: const Color(0xFFE84D6A),
+                      color: Colors.white,
                       values: dailyExpenseValues(monthEntries, now),
                       xLabels: monthAxisLabels(now),
+                      labelColor: Colors.white70,
                     ),
                     child: const SizedBox.expand(),
                   ),
@@ -226,7 +348,7 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,7 +364,7 @@ class HomePage extends StatelessWidget {
                           ),
                         ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 if (todayEntries.isEmpty)
                   const EmptyState(
                     icon: Icons.receipt_long_outlined,
@@ -261,19 +383,19 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           VeriCard(
             child: Row(
               children: <Widget>[
                 SizedBox(
-                  width: 104,
-                  height: 104,
+                  width: 92,
+                  height: 92,
                   child: Stack(
                     alignment: Alignment.center,
                     children: <Widget>[
                       CircularProgressIndicator(
                         value: (monthExpense / 800).clamp(0, 1),
-                        strokeWidth: 8,
+                        strokeWidth: 7,
                         backgroundColor: Theme.of(
                           context,
                         ).colorScheme.surfaceContainerHigh,
@@ -284,7 +406,9 @@ class HomePage extends StatelessWidget {
                         children: <Widget>[
                           Text(
                             formatAmount((800 - monthExpense).clamp(0, 800)),
-                            style: Theme.of(context).textTheme.titleMedium
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                           Text(
@@ -296,16 +420,17 @@ class HomePage extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 24),
+                const SizedBox(width: 18),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
                         '${now.month}月预算',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text('已支出 ${formatAmount(monthExpense)}'),
                       Text('预算 800'),
                     ],
@@ -314,7 +439,7 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           CalendarPreview(entries: monthEntries),
         ],
       ),
@@ -355,13 +480,13 @@ class AssetsPage extends StatelessWidget {
 
     return VeriPage(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 88),
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 82),
         children: <Widget>[
           PageHeader(
             title: '净资产',
             trailing: PopupMenuButton<String>(
               tooltip: '资产操作',
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.add, size: 22),
               onSelected: (value) {
                 if (value == 'add_account') {
                   Navigator.of(context).push<void>(
@@ -390,22 +515,29 @@ class AssetsPage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: <Color>[veriBlue, veriRoyal, veriIndigo],
+                colors: <Color>[Color(0xFF176CBA), veriRoyal, veriIndigo],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(veriRadiusMd),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: veriRoyal.withValues(alpha: 0.20),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const Text('净资产', style: TextStyle(color: Colors.white70)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   formatAmount(assets + liabilities),
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
@@ -413,7 +545,7 @@ class AssetsPage extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
@@ -430,7 +562,7 @@ class AssetsPage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           for (final group in visibleGroups) ...<Widget>[
             if (accounts.any(
               (account) => account.groupId == group.id && !account.hidden,
@@ -452,7 +584,7 @@ class AssetsPage extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
             ],
           ],
         ],
@@ -494,7 +626,9 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                     Expanded(
                       child: Text(
                         '账户分组',
-                        style: Theme.of(context).textTheme.headlineSmall,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -507,7 +641,7 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
               ),
               Expanded(
                 child: ReorderableListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 86),
                   itemCount: groups.length,
                   // ignore: deprecated_member_use
                   onReorder: controller.reorderAccountGroup,
@@ -525,9 +659,9 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
 
                     return Padding(
                       key: ValueKey(group.id),
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(veriRadiusMd),
                         onLongPress: () =>
                             setState(() => _selectedGroupId = group.id),
                         onTap: () => setState(() {
@@ -536,17 +670,8 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                         child: VeriCard(
                           child: Row(
                             children: <Widget>[
-                              CircleAvatar(
-                                radius: 18,
-                                backgroundColor: veriBlue.withValues(
-                                  alpha: 0.16,
-                                ),
-                                child: Icon(
-                                  iconForCode(group.iconCode),
-                                  color: veriBlue,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
+                              VeriIconBox(icon: iconForCode(group.iconCode)),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,24 +682,35 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                                         context,
                                       ).textTheme.titleMedium,
                                     ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 5),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 8,
-                                        vertical: 3,
+                                        vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
                                         color: Theme.of(
                                           context,
                                         ).colorScheme.surfaceContainerHighest,
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(
+                                          veriRadiusSm,
+                                        ),
                                       ),
-                                      child: Text('${groupAccounts.length}个账户'),
+                                      child: Text(
+                                        '${groupAccounts.length}个账户',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.labelSmall,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                              Text(formatAmount(total)),
+                              Text(
+                                formatAmount(total),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
                               if (selected) const SizedBox(width: 6),
                               if (selected)
                                 const Icon(Icons.check_circle, color: veriBlue),
@@ -594,7 +730,7 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
           ? null
           : SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
                 child: Row(
                   children: <Widget>[
                     Expanded(
@@ -743,7 +879,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
           child: Form(
             key: _formKey,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
               children: <Widget>[
                 Row(
                   children: <Widget>[
@@ -755,7 +891,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     Expanded(
                       child: Text(
                         '添加账户',
-                        style: Theme.of(context).textTheme.headlineSmall,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -765,7 +903,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 DropdownButtonFormField<AccountType>(
                   initialValue: _type,
                   decoration: const InputDecoration(labelText: '账户类型'),
@@ -783,7 +921,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     }
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: '账户名称'),
@@ -794,7 +932,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 TextFormField(
                   controller: _balanceController,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -806,7 +944,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     hintText: '不填默认为 0',
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: _iconCode,
                   decoration: const InputDecoration(labelText: '账户图标'),
@@ -830,13 +968,13 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     }
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 TextField(
                   controller: _noteController,
                   maxLines: 2,
                   decoration: const InputDecoration(labelText: '账户备注'),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: _groupId,
                   decoration: const InputDecoration(labelText: '账户分组'),
@@ -915,7 +1053,7 @@ class AccountDetailPage extends StatelessWidget {
       body: SafeArea(
         child: VeriPage(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               Row(
                 children: <Widget>[
@@ -927,7 +1065,9 @@ class AccountDetailPage extends StatelessWidget {
                   Expanded(
                     child: Text(
                       currentAccount.name,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -940,7 +1080,7 @@ class AccountDetailPage extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               VeriCard(
                 child: Row(
                   children: <Widget>[
@@ -949,7 +1089,7 @@ class AccountDetailPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           const Text('当前余额'),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 6),
                           Text(
                             formatAmount(balance),
                             style: Theme.of(context).textTheme.displaySmall
@@ -961,17 +1101,20 @@ class AccountDetailPage extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Icon(iconForCode(currentAccount.iconCode), color: veriBlue),
+                    VeriIconBox(
+                      icon: iconForCode(currentAccount.iconCode),
+                      size: 36,
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               VeriCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     const SectionTitle(title: '余额趋势', trailing: '日'),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     SizedBox(
                       height: 148,
                       child: CustomPaint(
@@ -980,6 +1123,9 @@ class AccountDetailPage extends StatelessWidget {
                           values: accountBalanceSeries(currentAccount, entries),
                           xLabels: monthAxisLabels(DateTime.now()),
                           yLabels: reportAxisLabels(balance.abs()),
+                          labelColor: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.50),
                         ),
                         child: const SizedBox.expand(),
                       ),
@@ -988,13 +1134,13 @@ class AccountDetailPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               VeriCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     const SectionTitle(title: '最近交易', trailing: '+'),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     if (entries.isEmpty)
                       const EmptyState(
                         icon: Icons.receipt_long_outlined,
@@ -1014,7 +1160,7 @@ class AccountDetailPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               VeriCard(
                 child: Column(
                   children: <Widget>[
@@ -1041,7 +1187,7 @@ class AccountDetailPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               VeriCard(
                 child: Column(
                   children: <Widget>[
@@ -1108,10 +1254,10 @@ class ReportsPage extends StatelessWidget {
 
     return VeriPage(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 82),
         children: <Widget>[
           const PageHeader(title: '数据看板'),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1121,18 +1267,18 @@ class ReportsPage extends StatelessWidget {
                   trailing:
                       '-${formatAmount(expenseTotal)} · ${DateTime.now().month}月 · 支出',
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 Row(
                   children: <Widget>[
                     SizedBox(
-                      width: 168,
-                      height: 168,
+                      width: 138,
+                      height: 138,
                       child: Stack(
                         alignment: Alignment.center,
                         children: <Widget>[
                           CircularProgressIndicator(
                             value: expenseTotal > 0 ? 1 : 0,
-                            strokeWidth: 24,
+                            strokeWidth: 18,
                             color: veriBlue,
                             backgroundColor: Theme.of(
                               context,
@@ -1147,14 +1293,15 @@ class ReportsPage extends StatelessWidget {
                               ),
                               Text(
                                 '-${formatAmount(expenseTotal)}',
-                                style: Theme.of(context).textTheme.titleMedium,
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w800),
                               ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1165,7 +1312,7 @@ class ReportsPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(expenseTotal == 0 ? '暂无支出记录' : '100.0% · 一级分类'),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           const Divider(),
                           Text(
                             '保存记录后自动聚合分类占比。',
@@ -1179,7 +1326,7 @@ class ReportsPage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1188,15 +1335,18 @@ class ReportsPage extends StatelessWidget {
                   title: '日趋势',
                   trailing: '-${formatAmount(expenseTotal)}',
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 SizedBox(
-                  height: 150,
+                  height: 138,
                   child: CustomPaint(
                     painter: TrendLinePainter(
                       color: const Color(0xFFE84D6A),
                       values: dailyExpenseValues(entries, DateTime.now()),
                       xLabels: monthAxisLabels(DateTime.now()),
                       yLabels: reportAxisLabels(expenseTotal),
+                      labelColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.50),
                     ),
                     child: const SizedBox.expand(),
                   ),
@@ -1204,15 +1354,15 @@ class ReportsPage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const SectionTitle(title: '月度收支', trailing: '今年'),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 SizedBox(
-                  height: 160,
+                  height: 146,
                   child: CustomPaint(
                     painter: BarChartPainter(
                       values: monthlyExpenseValues(entries),
@@ -1230,6 +1380,9 @@ class ReportsPage extends StatelessWidget {
                         '11',
                         '12',
                       ],
+                      labelColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.50),
                     ),
                     child: const SizedBox.expand(),
                   ),
@@ -1259,7 +1412,7 @@ class ProfilePage extends StatelessWidget {
 
     return VeriPage(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 88),
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 82),
         children: <Widget>[
           PageHeader(
             title: '我的',
@@ -1275,9 +1428,9 @@ class ProfilePage extends StatelessWidget {
               icon: const Icon(Icons.settings_outlined),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           InkWell(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(veriRadiusMd),
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
@@ -1290,25 +1443,30 @@ class ProfilePage extends StatelessWidget {
                 children: <Widget>[
                   Row(
                     children: <Widget>[
-                      ProfileAvatar(profile: profile, radius: 28),
-                      const SizedBox(width: 14),
+                      ProfileAvatar(profile: profile, radius: 24),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
                               profile.nickname,
-                              style: Theme.of(context).textTheme.titleLarge,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w800),
                             ),
-                            const SizedBox(height: 4),
-                            Text(profile.bio),
+                            const SizedBox(height: 3),
+                            Text(
+                              profile.bio,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ],
                         ),
                       ),
                       const Icon(Icons.chevron_right),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   Row(
                     children: <Widget>[
                       Expanded(
@@ -1335,20 +1493,34 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           VeriCard(
-            child: GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 8,
-              children: const <Widget>[
-                ToolEntry(icon: Icons.book, label: '账本'),
+            child: Row(
+              children: <Widget>[
+                const VeriIconBox(icon: Icons.book),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '日常账本',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  '当前账本',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.55),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right, size: 18),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           VeriCard(
             child: Column(
               children: <Widget>[
@@ -1419,7 +1591,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       body: SafeArea(
         child: VeriPage(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               Row(
                 children: <Widget>[
@@ -1431,7 +1603,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                   Expanded(
                     child: Text(
                       '个人信息',
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -1441,31 +1615,31 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Center(
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(48),
+                  borderRadius: BorderRadius.circular(42),
                   onTap: _pickAvatar,
                   child: ProfileAvatar(
                     profile: controller.profile.copyWith(
                       avatarDataUrl: _avatarDataUrl,
                     ),
-                    radius: 46,
+                    radius: 40,
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
               TextField(
                 controller: _nicknameController,
                 decoration: const InputDecoration(labelText: '昵称'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               TextField(
                 controller: _bioController,
                 maxLines: 3,
                 decoration: const InputDecoration(labelText: '简介'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               VeriCard(
                 child: Row(
                   children: <Widget>[
@@ -1532,7 +1706,7 @@ class SettingsPage extends StatelessWidget {
       body: SafeArea(
         child: VeriPage(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               Row(
                 children: <Widget>[
@@ -1541,10 +1715,15 @@ class SettingsPage extends StatelessWidget {
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.arrow_back),
                   ),
-                  Text('设置', style: Theme.of(context).textTheme.headlineSmall),
+                  Text(
+                    '设置',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               VeriCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1553,7 +1732,7 @@ class SettingsPage extends StatelessWidget {
                       '主题模式',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     SegmentedButton<ThemePreference>(
                       key: const Key('theme_segmented_button'),
                       segments: ThemePreference.values
@@ -1572,7 +1751,7 @@ class SettingsPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               const VeriCard(
                 child: Column(
                   children: <Widget>[
@@ -1692,7 +1871,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           children: <Widget>[
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
                 children: <Widget>[
                   Row(
                     children: <Widget>[
@@ -1701,17 +1880,19 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(Icons.arrow_back),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text(
                         '日常账本',
-                        style: Theme.of(context).textTheme.headlineSmall,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       const Icon(Icons.keyboard_arrow_down),
                       const Spacer(),
                       TextButton(onPressed: () {}, child: const Text('设置')),
                     ],
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 12),
                   SegmentedButton<EntryType>(
                     key: const Key('entry_type_segmented_button'),
                     segments: EntryType.values
@@ -1730,13 +1911,13 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       });
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   InkWell(
                     key: const Key('detail_amount_button'),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(veriRadiusMd),
                     onTap: _editAmount,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
                         formatAmount(_amount),
                         style: Theme.of(context).textTheme.displayLarge
@@ -1747,12 +1928,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       ),
                     ),
                   ),
-                  const Divider(height: 32),
+                  const Divider(height: 24),
                   Text('分类', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: <Widget>[
                       ...categories
                           .take(8)
@@ -1773,7 +1954,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
                   Text('账户', style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
@@ -1798,7 +1979,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       }
                     },
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
                   TextField(
                     key: const Key('entry_note_field'),
                     controller: _noteController,
@@ -1809,10 +1990,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       prefixIcon: Icon(Icons.notes),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
                   Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: <Widget>[
                       ActionChip(
                         avatar: const Icon(Icons.calendar_today, size: 18),
@@ -1837,10 +2018,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
               child: SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 48,
                 child: FilledButton(
                   key: const Key('save_entry_button'),
                   onPressed: _save,

@@ -44,23 +44,28 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        20,
+        14,
         0,
-        20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
+        14,
+        14 + MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
+          Text(
+            widget.title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(veriRadiusMd),
             ),
             child: Text(
               _input.isEmpty ? '0' : _input,
@@ -70,15 +75,15 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
               ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 2.2,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 2.35,
             ),
             itemCount: keys.length,
             itemBuilder: (context, index) {
@@ -96,7 +101,7 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                   backgroundColor: isOk ? veriBlue : null,
                   foregroundColor: isOk ? Colors.white : null,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(veriRadiusMd),
                   ),
                 ),
                 onPressed: isOk && _amount <= 0
@@ -106,7 +111,8 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                     ? const Icon(Icons.backspace_outlined)
                     : Text(
                         value,
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
               );
             },
@@ -168,19 +174,24 @@ class CategoryPickerSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 18),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('全部分类', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 14),
+          Text(
+            '全部分类',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
           GridView.count(
             crossAxisCount: 3,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
             childAspectRatio: 2.6,
             children: categories
                 .map(

@@ -10,12 +10,14 @@ class TrendLinePainter extends CustomPainter {
     required this.values,
     this.xLabels = const <String>[],
     this.yLabels = const <String>[],
+    this.labelColor,
   });
 
   final Color color;
   final List<double> values;
   final List<String> xLabels;
   final List<String> yLabels;
+  final Color? labelColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -27,8 +29,9 @@ class TrendLinePainter extends CustomPainter {
       size.width - (yLabels.isEmpty ? 0 : leftInset),
       size.height - (xLabels.isEmpty ? 0 : bottomInset),
     );
+    final axisColor = labelColor ?? Colors.white.withValues(alpha: 0.45);
     final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.08)
+      ..color = axisColor.withValues(alpha: 0.16)
       ..strokeWidth = 1;
     final linePaint = Paint()
       ..color = color
@@ -90,7 +93,7 @@ class TrendLinePainter extends CustomPainter {
       ..drawPath(fillPath, fillPaint)
       ..drawPath(path, linePaint);
 
-    _drawLabels(canvas, chartRect, xLabels, yLabels);
+    _drawLabels(canvas, chartRect, xLabels, yLabels, axisColor);
   }
 
   @override
@@ -98,7 +101,8 @@ class TrendLinePainter extends CustomPainter {
     return oldDelegate.color != color ||
         oldDelegate.values != values ||
         oldDelegate.xLabels != xLabels ||
-        oldDelegate.yLabels != yLabels;
+        oldDelegate.yLabels != yLabels ||
+        oldDelegate.labelColor != labelColor;
   }
 }
 
@@ -106,10 +110,12 @@ class BarChartPainter extends CustomPainter {
   const BarChartPainter({
     required this.values,
     this.xLabels = const <String>[],
+    this.labelColor,
   });
 
   final List<double> values;
   final List<String> xLabels;
+  final Color? labelColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -119,8 +125,9 @@ class BarChartPainter extends CustomPainter {
       size.width,
       size.height - (xLabels.isEmpty ? 0 : 22),
     );
+    final axisColor = labelColor ?? Colors.white.withValues(alpha: 0.45);
     final axisPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.10)
+      ..color = axisColor.withValues(alpha: 0.18)
       ..strokeWidth = 1;
     final barPaint = Paint()
       ..shader = const LinearGradient(
@@ -150,12 +157,14 @@ class BarChartPainter extends CustomPainter {
       );
       canvas.drawRRect(rect, barPaint);
     }
-    _drawLabels(canvas, chartRect, xLabels, const <String>[]);
+    _drawLabels(canvas, chartRect, xLabels, const <String>[], axisColor);
   }
 
   @override
   bool shouldRepaint(covariant BarChartPainter oldDelegate) {
-    return oldDelegate.values != values || oldDelegate.xLabels != xLabels;
+    return oldDelegate.values != values ||
+        oldDelegate.xLabels != xLabels ||
+        oldDelegate.labelColor != labelColor;
   }
 }
 
@@ -164,11 +173,9 @@ void _drawLabels(
   Rect chartRect,
   List<String> xLabels,
   List<String> yLabels,
+  Color labelColor,
 ) {
-  final textStyle = TextStyle(
-    color: Colors.white.withValues(alpha: 0.45),
-    fontSize: 10,
-  );
+  final textStyle = TextStyle(color: labelColor, fontSize: 10);
   for (var i = 0; i < xLabels.length; i += 1) {
     final x = xLabels.length == 1
         ? chartRect.left

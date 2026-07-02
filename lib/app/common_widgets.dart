@@ -17,29 +17,119 @@ class TransactionTile extends StatelessWidget {
     final account = accountById(accounts, entry.accountId);
     final amountColor = entry.type == EntryType.income ? veriMint : null;
 
-    return ListTile(
-      dense: true,
-      visualDensity: const VisualDensity(horizontal: 0, vertical: -3),
-      contentPadding: EdgeInsets.zero,
-      minLeadingWidth: 36,
-      leading: CircleAvatar(
-        radius: 16,
-        backgroundColor: colorForType(entry.type).withValues(alpha: 0.16),
-        child: Icon(category.icon, size: 18, color: colorForType(entry.type)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: colorForType(entry.type).withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(veriRadiusSm),
+            ),
+            child: Icon(
+              category.icon,
+              size: 16,
+              color: colorForType(entry.type),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  category.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${formatTime(entry.occurredAt)} · ${account.name}'
+                  '${entry.note.isEmpty ? '' : ' · ${entry.note}'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.58),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            formatSignedAmount(signedAmount(entry)),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: amountColor,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
-      title: Text(category.label),
-      subtitle: Text(
-        '${formatTime(entry.occurredAt)} · ${account.name}'
-        '${entry.note.isEmpty ? '' : ' · ${entry.note}'}',
+    );
+  }
+}
+
+class VeriIconBox extends StatelessWidget {
+  const VeriIconBox({
+    super.key,
+    required this.icon,
+    this.color = veriBlue,
+    this.size = 30,
+  });
+
+  final IconData icon;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(veriRadiusSm),
       ),
-      trailing: Text(
-        formatSignedAmount(signedAmount(entry)),
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: amountColor,
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
+      child: Icon(icon, size: size * 0.54, color: color),
+    );
+  }
+}
+
+class VeriSectionAction extends StatelessWidget {
+  const VeriSectionAction({
+    super.key,
+    required this.icon,
+    this.onPressed,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filledTonal(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        fixedSize: const Size(32, 32),
+        minimumSize: const Size(32, 32),
+        padding: EdgeInsets.zero,
+        backgroundColor: veriBlue.withValues(alpha: 0.10),
+        foregroundColor: veriBlue,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(veriRadiusSm),
         ),
       ),
+      icon: Icon(icon, size: 18),
     );
   }
 }
@@ -63,7 +153,7 @@ class VeriPage extends StatelessWidget {
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
+          constraints: const BoxConstraints(maxWidth: veriPageMaxWidth),
           child: child,
         ),
       ),
@@ -81,19 +171,19 @@ class VeriCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0D0F12) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(veriRadiusMd),
         border: Border.all(
           color: isDark ? Colors.white10 : const Color(0xFFE8EEF4),
         ),
         boxShadow: <BoxShadow>[
           if (!isDark)
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
+              color: Colors.black.withValues(alpha: 0.045),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
             ),
         ],
       ),
@@ -117,7 +207,7 @@ class PageHeader extends StatelessWidget {
             title,
             style: Theme.of(
               context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
         ),
         ?trailing,
@@ -141,11 +231,18 @@ class SectionTitle extends StatelessWidget {
             title,
             style: Theme.of(
               context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
         ),
         if (trailing != null)
-          Text(trailing!, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            trailing!,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.62),
+            ),
+          ),
       ],
     );
   }
@@ -166,12 +263,12 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         children: <Widget>[
-          Icon(icon, size: 40, color: veriBlue),
-          const SizedBox(height: 10),
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          Icon(icon, size: 32, color: veriBlue),
+          const SizedBox(height: 8),
+          Text(title, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 4),
           Text(description, textAlign: TextAlign.center),
         ],
@@ -206,29 +303,42 @@ class AccountGroupCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SectionTitle(title: title, trailing: formatAmount(total)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           ...accounts.map(
             (account) => Material(
               color: Colors.transparent,
-              child: ListTile(
-                dense: true,
-                visualDensity: const VisualDensity(horizontal: 0, vertical: -2),
-                contentPadding: EdgeInsets.zero,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(veriRadiusSm),
                 onTap: onAccountTap == null
                     ? null
                     : () => onAccountTap!(account),
-                leading: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: veriBlue.withValues(alpha: 0.16),
-                  child: Icon(iconForCode(account.iconCode), color: veriBlue),
-                ),
-                title: Text(account.name),
-                trailing: Text(
-                  formatAmount(balances[account] ?? 0),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: (balances[account] ?? 0) < 0
-                        ? const Color(0xFFE84D6A)
-                        : veriMint,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: <Widget>[
+                      VeriIconBox(icon: iconForCode(account.iconCode)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          account.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        formatAmount(balances[account] ?? 0),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: (balances[account] ?? 0) < 0
+                                  ? const Color(0xFFE84D6A)
+                                  : veriMint,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -274,9 +384,9 @@ class _CalendarPreviewState extends State<CalendarPreview> {
               Expanded(
                 child: Text(
                   '日历视图',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               IconButton(
@@ -302,7 +412,7 @@ class _CalendarPreviewState extends State<CalendarPreview> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           const Row(
             children: <Widget>[
               _WeekdayLabel('一'),
@@ -314,14 +424,14 @@ class _CalendarPreviewState extends State<CalendarPreview> {
               _WeekdayLabel('日'),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
             ),
             itemCount: leadingBlanks + days,
             itemBuilder: (context, index) {
@@ -348,12 +458,23 @@ class _CalendarPreviewState extends State<CalendarPreview> {
                           _visibleMonth.month == now.month
                       ? veriBlue.withValues(alpha: 0.18)
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(veriRadiusSm),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Text('$day'),
+                    Text(
+                      '$day',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color:
+                            day == now.day &&
+                                _visibleMonth.year == now.year &&
+                                _visibleMonth.month == now.month
+                            ? veriBlue
+                            : null,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     if (hasEntry)
                       Text(
                         formatSignedAmount(dayTotal),
@@ -402,9 +523,9 @@ class ToolEntry extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        Icon(icon, color: veriBlue),
-        const SizedBox(height: 8),
-        Text(label),
+        Icon(icon, color: veriBlue, size: 24),
+        const SizedBox(height: 6),
+        Text(label, style: Theme.of(context).textTheme.labelLarge),
       ],
     );
   }
@@ -424,11 +545,36 @@ class SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon),
-      title: Text(title),
-      trailing: Text(trailing),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: <Widget>[
+          VeriIconBox(icon: icon, size: 28),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              trailing,
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.58),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
