@@ -347,6 +347,117 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
+  String exportDataJson() {
+    final payload = <String, Object?>{
+      'app': 'verifin',
+      'version': 1,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'data': <String, Object?>{
+        'ledgerBooks': _ledgerBooks.map((book) => book.toJson()).toList(),
+        'activeBookId': _activeBookId,
+        'entries': _entries.map((entry) => entry.toJson()).toList(),
+        'accounts': _accounts.map((account) => account.toJson()).toList(),
+        'accountGroups': _accountGroups.map((group) => group.toJson()).toList(),
+        'monthlyBudgets': Map<String, double>.from(_monthlyBudgets),
+        'profile': _profile.toJson(),
+        'themePreference': _themePreference.name,
+        'assetCoverUrl': _assetCoverUrl,
+      },
+    };
+    return const JsonEncoder.withIndent('  ').convert(payload);
+  }
+
+  void importDataJson(String rawJson) {
+    final decoded = jsonDecode(rawJson);
+    if (decoded is! Map) {
+      throw const FormatException('备份文件格式不正确');
+    }
+    final root = Map<String, Object?>.from(decoded);
+    final dataValue = root['data'] ?? root;
+    if (dataValue is! Map) {
+      throw const FormatException('备份文件缺少数据内容');
+    }
+    final data = Map<String, Object?>.from(dataValue);
+
+    final importedBooks = _decodeModelList<LedgerBook>(
+      data['ledgerBooks'],
+      LedgerBook.fromJson,
+    );
+    final nextLedgerBooks = <LedgerBook>[
+      ...(importedBooks.isEmpty ? defaultLedgerBooks : importedBooks),
+    ];
+    if (!nextLedgerBooks.any((book) => book.id == defaultLedgerBookId)) {
+      nextLedgerBooks.insert(0, defaultLedgerBooks.first);
+    }
+
+    final importedActiveBookId = data['activeBookId'] as String?;
+    final nextActiveBookId =
+        importedActiveBookId != null &&
+            nextLedgerBooks.any((book) => book.id == importedActiveBookId)
+        ? importedActiveBookId
+        : defaultLedgerBookId;
+
+    final nextEntries = _decodeModelList<LedgerEntry>(
+      data['entries'],
+      LedgerEntry.fromJson,
+    )..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    final nextAccounts = _decodeModelList<Account>(
+      data['accounts'],
+      Account.fromJson,
+    );
+    final nextAccountGroups = _decodeModelList<AccountGroup>(
+      data['accountGroups'],
+      AccountGroup.fromJson,
+    );
+    final nextMonthlyBudgets = _decodeBudgets(data['monthlyBudgets']);
+
+    final profileValue = data['profile'];
+    final nextProfile = profileValue is Map
+        ? UserProfile.fromJson(Map<String, Object?>.from(profileValue))
+        : defaultUserProfile;
+    final nextThemePreference = ThemePreference.fromStorage(
+      data['themePreference'] as String?,
+    );
+    final nextAssetCoverUrl = data['assetCoverUrl'] as String? ?? '';
+
+    _ledgerBooks
+      ..clear()
+      ..addAll(nextLedgerBooks);
+    _activeBookId = nextActiveBookId;
+    _entries
+      ..clear()
+      ..addAll(nextEntries);
+    _accounts
+      ..clear()
+      ..addAll(nextAccounts);
+    _accountGroups
+      ..clear()
+      ..addAll(nextAccountGroups);
+    _normalizeGroupOrder();
+    _monthlyBudgets
+      ..clear()
+      ..addAll(nextMonthlyBudgets);
+    _profile = nextProfile;
+    _themePreference = nextThemePreference;
+    _assetCoverUrl = nextAssetCoverUrl;
+
+    _persistLedgerBooks();
+    _store.write(_activeBookKey, _activeBookId);
+    _persistEntries();
+    _persistAccounts();
+    _persistAccountGroups();
+    _persistBudgets();
+    _store.write(_profileKey, jsonEncode(_profile.toJson()));
+    _store.write(_themeKey, _themePreference.name);
+    if (_assetCoverUrl.isEmpty) {
+      _store.delete(_assetCoverKey);
+    } else {
+      _store.write(_assetCoverKey, _assetCoverUrl);
+    }
+    themePreferenceListenable.value = _themePreference;
+    notifyListeners();
+  }
+
   double accountBalance(Account account) {
     var balance = account.initialBalance;
     for (final entry in _entries.where(
@@ -581,4 +692,34 @@ class VeriFinController extends ChangeNotifier {
 
 String _monthKey(DateTime month) {
   return '${month.year}-${month.month.toString().padLeft(2, '0')}';
+}
+
+List<T> _decodeModelList<T>(
+  Object? value,
+  T Function(Map<String, Object?> json) fromJson,
+) {
+  if (value == null) {
+    return <T>[];
+  }
+  if (value is! List) {
+    throw const FormatException('备份列表格式不正确');
+  }
+  return value.map((item) {
+    if (item is! Map) {
+      throw const FormatException('备份条目格式不正确');
+    }
+    return fromJson(Map<String, Object?>.from(item));
+  }).toList();
+}
+
+Map<String, double> _decodeBudgets(Object? value) {
+  if (value == null) {
+    return <String, double>{};
+  }
+  if (value is! Map) {
+    throw const FormatException('预算数据格式不正确');
+  }
+  return Map<String, Object?>.from(
+    value,
+  ).map((key, rawAmount) => MapEntry(key, (rawAmount as num? ?? 0).toDouble()));
 }

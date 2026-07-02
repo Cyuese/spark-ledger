@@ -7,6 +7,7 @@ import 'app/app_theme.dart';
 import 'app/avatar_picker.dart';
 import 'app/chart_painters.dart';
 import 'app/common_widgets.dart';
+import 'app/data_file_port.dart';
 import 'app/demo_data.dart';
 import 'app/entry_sheets.dart';
 import 'app/image_cropper.dart';
@@ -4757,6 +4758,28 @@ class SettingsPage extends StatelessWidget {
                 child: Column(
                   children: <Widget>[
                     SettingsRow(
+                      icon: Icons.download_outlined,
+                      title: '导出数据',
+                      trailing: 'JSON 备份',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _exportData(context, controller),
+                    ),
+                    const Divider(),
+                    SettingsRow(
+                      icon: Icons.upload_file_outlined,
+                      title: '导入数据',
+                      trailing: '从文件恢复',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _confirmImport(context, controller),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: Column(
+                  children: <Widget>[
+                    SettingsRow(
                       icon: Icons.restart_alt,
                       title: '初始化数据',
                       trailing: '删除所有本地数据',
@@ -4786,6 +4809,84 @@ class SettingsPage extends StatelessWidget {
     );
     if (selected != null) {
       controller.setThemePreference(selected);
+    }
+  }
+
+  Future<void> _exportData(
+    BuildContext context,
+    VeriFinController controller,
+  ) async {
+    final date = DateTime.now().toIso8601String().substring(0, 10);
+    try {
+      await downloadTextFile(
+        filename: 'verifin-backup-$date.json',
+        content: controller.exportDataJson(),
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('已导出本地数据备份')));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('导出失败，请稍后再试')));
+      }
+    }
+  }
+
+  Future<void> _confirmImport(
+    BuildContext context,
+    VeriFinController controller,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('导入本地备份？'),
+        content: const Text('导入会替换当前本地交易、账户、账本、预算、个人信息和设置。建议先导出当前数据。'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('选择文件'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      final content = await pickTextFile();
+      if (content == null) {
+        return;
+      }
+      if (content.trim().isEmpty) {
+        throw const FormatException('空备份文件');
+      }
+      controller.importDataJson(content);
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('已导入本地数据')));
+      }
+    } on FormatException {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('导入失败：备份文件格式不正确')));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('导入失败，请检查文件后重试')));
+      }
     }
   }
 

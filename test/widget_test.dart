@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:verifin/app/models.dart';
+import 'package:verifin/app/veri_fin_controller.dart';
+import 'package:verifin/local_storage/local_storage.dart';
 import 'package:verifin/main.dart';
 
 Future<void> tapBottomTab(WidgetTester tester, int index) async {
@@ -169,5 +172,59 @@ void main() {
     await tapBottomTab(tester, 1);
 
     expect(find.text('默认账本账户'), findsNothing);
+  });
+
+  test('exports and imports a local data backup', () {
+    final source = VeriFinController(LocalKeyValueStore());
+    final account = Account(
+      id: 'cash-test',
+      bookId: source.activeBook.id,
+      name: '现金账户',
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 100,
+      iconCode: 'wallet',
+      note: '测试账户',
+      includeInAssets: true,
+      hidden: false,
+    );
+    source
+      ..addAccount(account)
+      ..addEntry(
+        LedgerEntry(
+          id: 'entry-test',
+          bookId: source.activeBook.id,
+          type: EntryType.expense,
+          amount: 45,
+          categoryId: 'dining',
+          accountId: account.id,
+          note: '午餐',
+          occurredAt: DateTime(2026, 7, 2, 12),
+        ),
+      )
+      ..setMonthlyBudget(DateTime(2026, 7), 2400)
+      ..setThemePreference(ThemePreference.dark);
+
+    final backup = source.exportDataJson();
+    final target = VeriFinController(LocalKeyValueStore());
+    target.importDataJson(backup);
+
+    expect(target.accounts.single.name, '现金账户');
+    expect(target.entries.single.amount, 45);
+    expect(target.entries.single.note, '午餐');
+    expect(target.monthlyBudget(DateTime(2026, 7)), 2400);
+    expect(target.themePreference, ThemePreference.dark);
+
+    expect(
+      () => target.importDataJson(
+        '{"data":{"ledgerBooks":[],"entries":[],"accounts":"bad"}}',
+      ),
+      throwsFormatException,
+    );
+    expect(target.entries.single.id, 'entry-test');
+    expect(target.accounts.single.id, account.id);
+
+    source.dispose();
+    target.dispose();
   });
 }
