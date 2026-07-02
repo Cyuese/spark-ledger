@@ -20,9 +20,12 @@ class VeriFinController extends ChangeNotifier {
   static const String _accountGroupsKey = 'verifin.account_groups.v1';
   static const String _profileKey = 'verifin.profile.v1';
   static const String _budgetsKey = 'verifin.monthly_budgets.v1';
+  static const String _ledgerBooksKey = 'verifin.ledger_books.v1';
+  static const String _activeBookKey = 'verifin.active_book.v1';
 
   final LocalKeyValueStore _store;
   final List<LedgerEntry> _entries = <LedgerEntry>[];
+  final List<LedgerBook> _ledgerBooks = <LedgerBook>[];
   final List<Account> _accounts = <Account>[];
   final List<AccountGroup> _accountGroups = <AccountGroup>[];
   final Map<String, double> _monthlyBudgets = <String, double>{};
@@ -31,8 +34,20 @@ class VeriFinController extends ChangeNotifier {
 
   ThemePreference _themePreference = ThemePreference.system;
   UserProfile _profile = defaultUserProfile;
+  String _activeBookId = defaultLedgerBookId;
 
-  List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(_entries);
+  List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
+    _entries.where((entry) => entry.bookId == _activeBookId),
+  );
+
+  List<LedgerBook> get ledgerBooks => List<LedgerBook>.unmodifiable(
+    _ledgerBooks.isEmpty ? defaultLedgerBooks : _ledgerBooks,
+  );
+
+  LedgerBook get activeBook => ledgerBooks.firstWhere(
+    (book) => book.id == _activeBookId,
+    orElse: () => ledgerBooks.first,
+  );
 
   List<Account> get accounts => List<Account>.unmodifiable(_accounts);
 
@@ -67,6 +82,69 @@ class VeriFinController extends ChangeNotifier {
     _entries.insert(0, entry);
     _persistEntries();
     notifyListeners();
+  }
+
+  void addLedgerBook(String name) {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      return;
+    }
+    final now = DateTime.now();
+    final book = LedgerBook(
+      id: now.microsecondsSinceEpoch.toString(),
+      name: trimmedName,
+      createdAt: now,
+      isDefault: false,
+    );
+    _ledgerBooks.add(book);
+    _activeBookId = book.id;
+    _persistLedgerBooks();
+    _store.write(_activeBookKey, _activeBookId);
+    notifyListeners();
+  }
+
+  void renameLedgerBook(String bookId, String name) {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      return;
+    }
+    final index = _ledgerBooks.indexWhere((book) => book.id == bookId);
+    if (index == -1) {
+      return;
+    }
+    _ledgerBooks[index] = _ledgerBooks[index].copyWith(name: trimmedName);
+    _persistLedgerBooks();
+    notifyListeners();
+  }
+
+  void switchLedgerBook(String bookId) {
+    if (!_ledgerBooks.any((book) => book.id == bookId)) {
+      return;
+    }
+    _activeBookId = bookId;
+    _store.write(_activeBookKey, _activeBookId);
+    notifyListeners();
+  }
+
+  bool deleteLedgerBook(String bookId) {
+    final book = _ledgerBooks.where((item) => item.id == bookId).firstOrNull;
+    if (book == null || book.isDefault) {
+      return false;
+    }
+    _ledgerBooks.removeWhere((item) => item.id == bookId);
+    _entries.removeWhere((entry) => entry.bookId == bookId);
+    if (_activeBookId == bookId) {
+      _activeBookId = defaultLedgerBookId;
+      _store.write(_activeBookKey, _activeBookId);
+    }
+    _persistLedgerBooks();
+    _persistEntries();
+    notifyListeners();
+    return true;
+  }
+
+  int entryCountForBook(String bookId) {
+    return _entries.where((entry) => entry.bookId == bookId).length;
   }
 
   void deleteEntry(String entryId) {
@@ -173,6 +251,37 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void resetAllData() {
+    for (final key in <String>[
+      _entriesKey,
+      _themeKey,
+      _accountsKey,
+      _accountGroupsKey,
+      _profileKey,
+      _budgetsKey,
+      _ledgerBooksKey,
+      _activeBookKey,
+    ]) {
+      _store.delete(key);
+    }
+    _entries.clear();
+    _accounts
+      ..clear()
+      ..addAll(defaultAccounts);
+    _accountGroups
+      ..clear()
+      ..addAll(defaultAccountGroups);
+    _ledgerBooks
+      ..clear()
+      ..addAll(defaultLedgerBooks);
+    _monthlyBudgets.clear();
+    _profile = defaultUserProfile;
+    _themePreference = ThemePreference.system;
+    _activeBookId = defaultLedgerBookId;
+    themePreferenceListenable.value = _themePreference;
+    notifyListeners();
+  }
+
   double accountBalance(Account account) {
     var balance = account.initialBalance;
     for (final entry in _entries.where(
@@ -192,6 +301,7 @@ class VeriFinController extends ChangeNotifier {
 
   void _load() {
     _themePreference = ThemePreference.fromStorage(_store.read(_themeKey));
+    _loadLedgerBooks();
     _loadAccountGroups();
     _loadAccounts();
     _loadProfile();
@@ -214,6 +324,41 @@ class VeriFinController extends ChangeNotifier {
         );
     } on FormatException {
       _store.delete(_entriesKey);
+    }
+  }
+
+  void _loadLedgerBooks() {
+    final rawBooks = _store.read(_ledgerBooksKey);
+    if (rawBooks == null || rawBooks.isEmpty) {
+      _ledgerBooks
+        ..clear()
+        ..addAll(defaultLedgerBooks);
+    } else {
+      try {
+        final decoded = jsonDecode(rawBooks) as List<dynamic>;
+        _ledgerBooks
+          ..clear()
+          ..addAll(
+            decoded.map(
+              (item) => LedgerBook.fromJson(
+                Map<String, Object?>.from(item as Map<dynamic, dynamic>),
+              ),
+            ),
+          );
+      } on FormatException {
+        _store.delete(_ledgerBooksKey);
+        _ledgerBooks
+          ..clear()
+          ..addAll(defaultLedgerBooks);
+      }
+    }
+    if (!_ledgerBooks.any((book) => book.id == defaultLedgerBookId)) {
+      _ledgerBooks.insert(0, defaultLedgerBooks.first);
+    }
+    _activeBookId = _store.read(_activeBookKey) ?? defaultLedgerBookId;
+    if (!_ledgerBooks.any((book) => book.id == _activeBookId)) {
+      _activeBookId = defaultLedgerBookId;
+      _store.write(_activeBookKey, _activeBookId);
     }
   }
 
@@ -319,6 +464,13 @@ class VeriFinController extends ChangeNotifier {
     _store.write(
       _entriesKey,
       jsonEncode(_entries.map((entry) => entry.toJson()).toList()),
+    );
+  }
+
+  void _persistLedgerBooks() {
+    _store.write(
+      _ledgerBooksKey,
+      jsonEncode(_ledgerBooks.map((book) => book.toJson()).toList()),
     );
   }
 

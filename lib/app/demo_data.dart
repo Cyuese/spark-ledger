@@ -49,6 +49,15 @@ const UserProfile defaultUserProfile = UserProfile(
   avatarDataUrl: '',
 );
 
+final List<LedgerBook> defaultLedgerBooks = <LedgerBook>[
+  LedgerBook(
+    id: defaultLedgerBookId,
+    name: '日常账本',
+    createdAt: DateTime(2026),
+    isDefault: true,
+  ),
+];
+
 const List<String> accountIconCodes = <String>[
   'wallet',
   'alipay',

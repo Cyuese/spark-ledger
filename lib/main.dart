@@ -1542,6 +1542,42 @@ Future<T?> _showOptionSheet<T>({
   );
 }
 
+Future<String?> _showTextInputDialog({
+  required BuildContext context,
+  required String title,
+  required String label,
+  String initialValue = '',
+}) async {
+  final controller = TextEditingController(text: initialValue);
+  final result = await showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(title),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        decoration: InputDecoration(labelText: label),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(controller.text),
+          child: const Text('确认'),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
+  final trimmed = result?.trim();
+  if (trimmed == null || trimmed.isEmpty) {
+    return null;
+  }
+  return trimmed;
+}
+
 class _DateEntryGroup {
   const _DateEntryGroup({required this.date, required this.entries});
 
@@ -3133,13 +3169,20 @@ class ProfilePage extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           VeriCard(
+            onTap: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (context) => const LedgerBooksPage(),
+                ),
+              );
+            },
             child: Row(
               children: <Widget>[
                 const VeriIconBox(icon: Icons.book),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '日常账本',
+                    controller.activeBook.name,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -3147,6 +3190,7 @@ class ProfilePage extends StatelessWidget {
                 ),
                 Text(
                   '当前账本',
+                  textAlign: TextAlign.end,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -3258,6 +3302,182 @@ class _CategoryStatTile extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class LedgerBooksPage extends StatelessWidget {
+  const LedgerBooksPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final books = controller.ledgerBooks;
+
+    return Scaffold(
+      body: SafeArea(
+        child: VeriPage(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
+            children: <Widget>[
+              VeriHeader(
+                title: '账本',
+                subtitle: '当前：${controller.activeBook.name}',
+                showBack: true,
+                actions: <Widget>[
+                  HeaderAction(
+                    icon: Icons.add,
+                    tooltip: '新增账本',
+                    onPressed: () => _createBook(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: Column(
+                  children: <Widget>[
+                    for (final item in books.indexed) ...<Widget>[
+                      _LedgerBookRow(book: item.$2),
+                      if (item.$1 != books.length - 1) const Divider(),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createBook(BuildContext context) async {
+    final name = await _showTextInputDialog(
+      context: context,
+      title: '新增账本',
+      label: '账本名称',
+    );
+    if (!context.mounted || name == null) {
+      return;
+    }
+    VeriFinScope.of(context).addLedgerBook(name);
+  }
+}
+
+class _LedgerBookRow extends StatelessWidget {
+  const _LedgerBookRow({required this.book});
+
+  final LedgerBook book;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final selected = controller.activeBook.id == book.id;
+    final entryCount = controller.entryCountForBook(book.id);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        onTap: () => controller.switchLedgerBook(book.id),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: <Widget>[
+              VeriIconBox(
+                icon: book.isDefault ? Icons.book : Icons.book_outlined,
+                color: selected
+                    ? veriRoyal
+                    : Theme.of(context).colorScheme.onSurface,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      book.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${book.isDefault ? '默认账本 · ' : ''}$entryCount 笔交易',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.48),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (selected)
+                const Icon(Icons.check_circle, color: veriRoyal, size: 18),
+              PopupMenuButton<String>(
+                tooltip: '账本操作',
+                onSelected: (value) {
+                  if (value == 'rename') {
+                    _renameBook(context);
+                  }
+                  if (value == 'delete') {
+                    _deleteBook(context);
+                  }
+                },
+                itemBuilder: (context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'rename',
+                    child: Text('重命名'),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'delete',
+                    enabled: !book.isDefault,
+                    child: Text(book.isDefault ? '默认账本不可删除' : '删除'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _renameBook(BuildContext context) async {
+    final name = await _showTextInputDialog(
+      context: context,
+      title: '重命名账本',
+      label: '账本名称',
+      initialValue: book.name,
+    );
+    if (!context.mounted || name == null) {
+      return;
+    }
+    VeriFinScope.of(context).renameLedgerBook(book.id, name);
+  }
+
+  Future<void> _deleteBook(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('删除账本？'),
+        content: Text('账本「${book.name}」及其中交易会被删除，此操作无法恢复。'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || confirmed != true) {
+      return;
+    }
+    VeriFinScope.of(context).deleteLedgerBook(book.id);
   }
 }
 
@@ -3447,6 +3667,20 @@ class SettingsPage extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: Column(
+                  children: <Widget>[
+                    SettingsRow(
+                      icon: Icons.restart_alt,
+                      title: '初始化数据',
+                      trailing: '删除所有本地数据',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _confirmReset(context, controller),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -3467,6 +3701,35 @@ class SettingsPage extends StatelessWidget {
     );
     if (selected != null) {
       controller.setThemePreference(selected);
+    }
+  }
+
+  Future<void> _confirmReset(
+    BuildContext context,
+    VeriFinController controller,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('初始化所有数据？'),
+        content: const Text('这会删除本地交易、账户、账本、预算、个人信息和主题偏好，操作无法恢复。'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('初始化'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      controller.resetAllData();
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
     }
   }
 }
@@ -3797,6 +4060,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     controller.addEntry(
       LedgerEntry(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
+        bookId: controller.activeBook.id,
         type: _type,
         amount: _amount,
         categoryId: _categoryId,

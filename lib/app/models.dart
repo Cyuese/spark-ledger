@@ -103,6 +103,7 @@ enum AccountType {
 class LedgerEntry {
   const LedgerEntry({
     required this.id,
+    required this.bookId,
     required this.type,
     required this.amount,
     required this.categoryId,
@@ -112,6 +113,7 @@ class LedgerEntry {
   });
 
   final String id;
+  final String bookId;
   final EntryType type;
   final double amount;
   final String categoryId;
@@ -122,6 +124,7 @@ class LedgerEntry {
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'id': id,
+      'bookId': bookId,
       'type': type.storageValue,
       'amount': amount,
       'categoryId': categoryId,
@@ -134,6 +137,7 @@ class LedgerEntry {
   static LedgerEntry fromJson(Map<String, Object?> json) {
     return LedgerEntry(
       id: json['id'] as String,
+      bookId: json['bookId'] as String? ?? defaultLedgerBookId,
       type: EntryType.fromStorage(json['type'] as String? ?? 'expense'),
       amount: (json['amount'] as num).toDouble(),
       categoryId: json['categoryId'] as String? ?? 'dining',
@@ -142,6 +146,52 @@ class LedgerEntry {
       occurredAt:
           DateTime.tryParse(json['occurredAt'] as String? ?? '') ??
           DateTime.now(),
+    );
+  }
+}
+
+const String defaultLedgerBookId = 'default';
+
+class LedgerBook {
+  const LedgerBook({
+    required this.id,
+    required this.name,
+    required this.createdAt,
+    required this.isDefault,
+  });
+
+  final String id;
+  final String name;
+  final DateTime createdAt;
+  final bool isDefault;
+
+  LedgerBook copyWith({String? id, String? name, DateTime? createdAt}) {
+    return LedgerBook(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      isDefault: isDefault,
+    );
+  }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'id': id,
+      'name': name,
+      'createdAt': createdAt.toIso8601String(),
+      'isDefault': isDefault,
+    };
+  }
+
+  static LedgerBook fromJson(Map<String, Object?> json) {
+    final id = json['id'] as String? ?? defaultLedgerBookId;
+    return LedgerBook(
+      id: id,
+      name: json['name'] as String? ?? '日常账本',
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+      isDefault: json['isDefault'] as bool? ?? id == defaultLedgerBookId,
     );
   }
 }
