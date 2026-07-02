@@ -57,6 +57,19 @@ void main() {
     expect(find.text('选择本地图片'), findsOneWidget);
   });
 
+  testWidgets('shows neutral zero in income expense stats', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+
+    await tester.tap(find.text('支出走势'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('收支统计'), findsOneWidget);
+    expect(find.text('-0'), findsNothing);
+    expect(find.text('0'), findsWidgets);
+  });
+
   testWidgets('creates an entry through the quick entry flow', (
     WidgetTester tester,
   ) async {

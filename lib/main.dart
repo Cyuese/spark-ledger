@@ -842,6 +842,15 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
       (sum, entry) => sum + entry.amount,
     );
     final dayRows = _dailyStatRows(monthEntries, _visibleMonth, total);
+    final mutedColor = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.52);
+    final totalColor = isZeroAmount(total) ? mutedColor : colorForType(_type);
+    final totalText = switch (_type) {
+      EntryType.expense => formatExpenseAmount(total),
+      EntryType.income => formatIncomeAmount(total),
+      EntryType.transfer => formatAmount(total),
+    };
 
     return Scaffold(
       body: SafeArea(
@@ -885,10 +894,9 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      (_type == EntryType.expense ? '-' : '') +
-                          formatAmount(total),
+                      totalText,
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: colorForType(_type),
+                        color: totalColor,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -897,7 +905,7 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                       height: 180,
                       child: CustomPaint(
                         painter: TrendLinePainter(
-                          color: colorForType(_type),
+                          color: totalColor,
                           values: _dailyValuesForType(
                             monthEntries,
                             _visibleMonth,
@@ -3996,14 +4004,14 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
-    final accounts = controller.accounts.isEmpty
-        ? defaultAccounts
-        : controller.accounts;
-    if (!accounts.any((account) => account.id == _accountId)) {
+    final accounts = controller.accounts
+        .where((account) => !account.hidden)
+        .toList();
+    final hasAccounts = accounts.isNotEmpty;
+    if (hasAccounts && !accounts.any((account) => account.id == _accountId)) {
       _accountId = accounts.first.id;
     }
     final categories = categoriesFor(_type);
-    final selectedAccount = accountById(accounts, _accountId);
 
     return Scaffold(
       body: SafeArea(
@@ -4083,28 +4091,35 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                   const SizedBox(height: 18),
                   Text('账户', style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    key: const Key('account_dropdown'),
-                    initialValue: _accountId,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.wallet),
-                    ),
-                    items: accounts
-                        .map(
-                          (account) => DropdownMenuItem<String>(
-                            value: account.id,
-                            child: Text(
-                              '${account.name} (${formatAmount(account.initialBalance)})',
+                  if (hasAccounts)
+                    DropdownButtonFormField<String>(
+                      key: const Key('account_dropdown'),
+                      initialValue: _accountId,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.wallet),
+                      ),
+                      items: accounts
+                          .map(
+                            (account) => DropdownMenuItem<String>(
+                              value: account.id,
+                              child: Text(
+                                '${account.name} (${formatAmount(account.initialBalance)})',
+                              ),
                             ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _accountId = value);
-                      }
-                    },
-                  ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _accountId = value);
+                        }
+                      },
+                    )
+                  else
+                    const EmptyState(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: '没有可用账户',
+                      description: '请先在资产页添加或取消隐藏一个账户。',
+                    ),
                   const SizedBox(height: 14),
                   TextField(
                     key: const Key('entry_note_field'),
@@ -4131,13 +4146,16 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                         label: Text(formatTime(_occurredAt)),
                         onPressed: _pickTime,
                       ),
-                      Chip(
-                        avatar: Icon(
-                          iconForCode(selectedAccount.iconCode),
-                          size: 18,
+                      if (hasAccounts)
+                        Chip(
+                          avatar: Icon(
+                            iconForCode(
+                              accountById(accounts, _accountId).iconCode,
+                            ),
+                            size: 18,
+                          ),
+                          label: Text(accountById(accounts, _accountId).name),
                         ),
-                        label: Text(selectedAccount.name),
-                      ),
                     ],
                   ),
                 ],
@@ -4150,7 +4168,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 height: 48,
                 child: FilledButton(
                   key: const Key('save_entry_button'),
-                  onPressed: _save,
+                  onPressed: hasAccounts ? _save : null,
                   child: const Text('保存'),
                 ),
               ),
@@ -4240,6 +4258,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
   void _save() {
     final controller = VeriFinScope.of(context);
+    if (!controller.accounts
+        .where((account) => !account.hidden)
+        .any((account) => account.id == _accountId)) {
+      return;
+    }
     controller.addEntry(
       LedgerEntry(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
