@@ -34,10 +34,12 @@ void main() {
     await tapBottomTab(tester, 3);
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('主题模式'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('深色'));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('theme_segmented_button')), findsOneWidget);
+    expect(find.text('主题模式'), findsOneWidget);
     expect(find.text('深色'), findsOneWidget);
   });
 

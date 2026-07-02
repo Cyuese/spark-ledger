@@ -2262,6 +2262,46 @@ class AddAccountPage extends StatefulWidget {
   State<AddAccountPage> createState() => _AddAccountPageState();
 }
 
+class _SelectField extends StatelessWidget {
+  const _SelectField({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(veriRadiusMd),
+        onTap: onTap,
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: Icon(icon),
+            suffixIcon: const Icon(Icons.keyboard_arrow_down),
+          ),
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AddAccountPageState extends State<AddAccountPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -2304,22 +2344,11 @@ class _AddAccountPageState extends State<AddAccountPage> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                DropdownButtonFormField<AccountType>(
-                  initialValue: _type,
-                  decoration: const InputDecoration(labelText: '账户类型'),
-                  items: AccountType.values
-                      .map(
-                        (type) => DropdownMenuItem<AccountType>(
-                          value: type,
-                          child: Text(type.label),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _type = value);
-                    }
-                  },
+                _SelectField(
+                  label: '账户类型',
+                  value: _type.label,
+                  icon: Icons.category_outlined,
+                  onTap: _pickAccountType,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
@@ -2345,28 +2374,11 @@ class _AddAccountPageState extends State<AddAccountPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: _iconCode,
-                  decoration: const InputDecoration(labelText: '账户图标'),
-                  items: accountIconCodes
-                      .map(
-                        (code) => DropdownMenuItem<String>(
-                          value: code,
-                          child: Row(
-                            children: <Widget>[
-                              Icon(iconForCode(code)),
-                              const SizedBox(width: 8),
-                              Text(iconLabelForCode(code)),
-                            ],
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _iconCode = value);
-                    }
-                  },
+                _SelectField(
+                  label: '账户图标',
+                  value: iconLabelForCode(_iconCode),
+                  icon: iconForCode(_iconCode),
+                  onTap: _pickAccountIcon,
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -2375,26 +2387,11 @@ class _AddAccountPageState extends State<AddAccountPage> {
                   decoration: const InputDecoration(labelText: '账户备注'),
                 ),
                 const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: _groupId,
-                  decoration: const InputDecoration(labelText: '账户分组'),
-                  items: <DropdownMenuItem<String>>[
-                    const DropdownMenuItem<String>(
-                      value: 'ungrouped',
-                      child: Text('未分组'),
-                    ),
-                    ...groups.map(
-                      (group) => DropdownMenuItem<String>(
-                        value: group.id,
-                        child: Text(group.name),
-                      ),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _groupId = value);
-                    }
-                  },
+                _SelectField(
+                  label: '账户分组',
+                  value: _groupLabel(groups),
+                  icon: Icons.folder_outlined,
+                  onTap: () => _pickAccountGroup(groups),
                 ),
               ],
             ),
@@ -2402,6 +2399,78 @@ class _AddAccountPageState extends State<AddAccountPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickAccountType() async {
+    final selected = await _showOptionSheet<AccountType>(
+      context: context,
+      title: '选择账户类型',
+      values: AccountType.values,
+      selected: _type,
+      labelOf: (value) => value.label,
+    );
+    if (selected != null) {
+      setState(() => _type = selected);
+    }
+  }
+
+  Future<void> _pickAccountIcon() async {
+    final selected = await _showOptionSheet<String>(
+      context: context,
+      title: '选择账户图标',
+      values: accountIconCodes,
+      selected: _iconCode,
+      labelOf: iconLabelForCode,
+    );
+    if (selected != null) {
+      setState(() => _iconCode = selected);
+    }
+  }
+
+  Future<void> _pickAccountGroup(List<AccountGroup> groups) async {
+    final values = <String>['ungrouped', ...groups.map((group) => group.id)];
+    final selected = await _showOptionSheet<String>(
+      context: context,
+      title: '选择账户分组',
+      values: values,
+      selected: _groupId,
+      labelOf: (value) {
+        if (value == 'ungrouped') {
+          return '未分组';
+        }
+        return groups
+            .firstWhere(
+              (group) => group.id == value,
+              orElse: () => const AccountGroup(
+                id: 'ungrouped',
+                name: '未分组',
+                iconCode: 'folder',
+                sortOrder: 999,
+              ),
+            )
+            .name;
+      },
+    );
+    if (selected != null) {
+      setState(() => _groupId = selected);
+    }
+  }
+
+  String _groupLabel(List<AccountGroup> groups) {
+    if (_groupId == 'ungrouped') {
+      return '未分组';
+    }
+    return groups
+        .firstWhere(
+          (group) => group.id == _groupId,
+          orElse: () => const AccountGroup(
+            id: 'ungrouped',
+            name: '未分组',
+            iconCode: 'folder',
+            sortOrder: 999,
+          ),
+        )
+        .name;
   }
 
   void _save() {
@@ -3349,27 +3418,13 @@ class SettingsPage extends StatelessWidget {
               const SizedBox(height: 10),
               VeriCard(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(
-                      '主题模式',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 10),
-                    SegmentedButton<ThemePreference>(
-                      key: const Key('theme_segmented_button'),
-                      segments: ThemePreference.values
-                          .map(
-                            (preference) => ButtonSegment<ThemePreference>(
-                              value: preference,
-                              label: Text(preference.label),
-                            ),
-                          )
-                          .toList(),
-                      selected: <ThemePreference>{controller.themePreference},
-                      onSelectionChanged: (selection) {
-                        controller.setThemePreference(selection.first);
-                      },
+                    SettingsRow(
+                      icon: Icons.dark_mode_outlined,
+                      title: '主题模式',
+                      trailing: controller.themePreference.label,
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _pickThemePreference(context, controller),
                     ),
                   ],
                 ),
@@ -3397,6 +3452,22 @@ class SettingsPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _pickThemePreference(
+    BuildContext context,
+    VeriFinController controller,
+  ) async {
+    final selected = await _showOptionSheet<ThemePreference>(
+      context: context,
+      title: '选择主题模式',
+      values: ThemePreference.values,
+      selected: controller.themePreference,
+      labelOf: (value) => value.label,
+    );
+    if (selected != null) {
+      controller.setThemePreference(selected);
+    }
   }
 }
 

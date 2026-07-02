@@ -1048,15 +1048,19 @@ class SettingsRow extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.trailing,
+    this.onTap,
+    this.trailingIcon,
   });
 
   final IconData icon;
   final String title;
   final String trailing;
+  final VoidCallback? onTap;
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: <Widget>[
@@ -1071,7 +1075,7 @@ class SettingsRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Flexible(
+          Expanded(
             child: Text(
               trailing,
               textAlign: TextAlign.end,
@@ -1084,7 +1088,30 @@ class SettingsRow extends StatelessWidget {
               ),
             ),
           ),
+          if (trailingIcon != null) ...<Widget>[
+            const SizedBox(width: 4),
+            Icon(
+              trailingIcon,
+              size: 18,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.42),
+            ),
+          ],
         ],
+      ),
+    );
+
+    if (onTap == null) {
+      return content;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        onTap: onTap,
+        child: content,
       ),
     );
   }
