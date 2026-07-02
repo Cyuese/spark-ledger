@@ -174,6 +174,29 @@ void main() {
     expect(find.text('默认账本账户'), findsNothing);
   });
 
+  testWidgets('adds a custom category from the profile page', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+
+    await tapBottomTab(tester, 3);
+    await tester.tap(find.text('分类管理'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('分类管理'), findsOneWidget);
+    expect(find.text('餐饮'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('新增分类'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, '咖啡');
+    await tester.tap(find.text('确认'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('分类').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('咖啡'), findsOneWidget);
+  });
+
   test('exports and imports a local data backup', () {
     final source = VeriFinController(LocalKeyValueStore());
     final account = Account(
@@ -203,7 +226,8 @@ void main() {
         ),
       )
       ..setMonthlyBudget(DateTime(2026, 7), 2400)
-      ..setThemePreference(ThemePreference.dark);
+      ..setThemePreference(ThemePreference.dark)
+      ..addCategory(type: EntryType.expense, label: '咖啡', iconCode: 'dining');
 
     final backup = source.exportDataJson();
     final target = VeriFinController(LocalKeyValueStore());
@@ -214,6 +238,7 @@ void main() {
     expect(target.entries.single.note, '午餐');
     expect(target.monthlyBudget(DateTime(2026, 7)), 2400);
     expect(target.themePreference, ThemePreference.dark);
+    expect(target.categories.any((category) => category.label == '咖啡'), isTrue);
 
     expect(
       () => target.importDataJson(

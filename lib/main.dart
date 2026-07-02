@@ -343,6 +343,7 @@ class HomePage extends StatelessWidget {
                     TransactionTile(
                       item.$2,
                       accounts: controller.accounts,
+                      categories: controller.categories,
                       onTap: () => _openEntryDetail(context, item.$2),
                     ),
                     if (item.$1 != recentEntries.length - 1)
@@ -1388,6 +1389,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     TransactionListCard(
                       entries: group.entries,
                       accounts: controller.accounts,
+                      categories: controller.categories,
                       onEntryTap: (entry) => _openEntryDetail(context, entry),
                     ),
                     const SizedBox(height: 18),
@@ -1675,54 +1677,78 @@ Future<T?> _showOptionSheet<T>({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
     ),
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 10),
-            for (final value in values)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Material(
-                  color: showSelectedMarker && value == selected
-                      ? veriRoyal.withValues(alpha: 0.12)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(veriRadiusSm),
-                  child: ListTile(
-                    minTileHeight: 44,
-                    dense: true,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(veriRadiusSm),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                    title: Text(
-                      labelOf(value),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: showSelectedMarker && value == selected
-                            ? FontWeight.w800
-                            : FontWeight.w600,
-                      ),
-                    ),
-                    trailing: showSelectedMarker && value == selected
-                        ? const Icon(Icons.check, color: veriRoyal, size: 18)
-                        : null,
-                    onTap: () => Navigator.of(context).pop(value),
+    builder: (context) {
+      final maxHeight = MediaQuery.sizeOf(context).height * 0.72;
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-          ],
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: <Widget>[
+                      for (final value in values)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Material(
+                            color: showSelectedMarker && value == selected
+                                ? veriRoyal.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(veriRadiusSm),
+                            child: ListTile(
+                              minTileHeight: 44,
+                              dense: true,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  veriRadiusSm,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              title: Text(
+                                labelOf(value),
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
+                                      fontWeight:
+                                          showSelectedMarker &&
+                                              value == selected
+                                          ? FontWeight.w800
+                                          : FontWeight.w600,
+                                    ),
+                              ),
+                              trailing: showSelectedMarker && value == selected
+                                  ? const Icon(
+                                      Icons.check,
+                                      color: veriRoyal,
+                                      size: 18,
+                                    )
+                                  : null,
+                              onTap: () => Navigator.of(context).pop(value),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
@@ -1869,7 +1895,11 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       );
     }
 
-    final category = categoryById(_categoryId);
+    final currentCategories = controller.categoriesForType(_type);
+    if (!currentCategories.any((category) => category.id == _categoryId)) {
+      _categoryId = currentCategories.first.id;
+    }
+    final category = controller.categoryById(_categoryId);
     final accounts = controller.accounts
         .where((account) => !account.hidden || account.id == _accountId)
         .toList();
@@ -1941,7 +1971,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                         ),
                       ),
                       VeriIconBox(
-                        icon: category.icon,
+                        icon: iconForCode(category.iconCode),
                         color: amountColor,
                         size: 38,
                       ),
@@ -2027,8 +2057,9 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     }
     setState(() {
       _type = selected;
-      if (categoryById(_categoryId).type != _type) {
-        _categoryId = categoriesFor(_type).first.id;
+      final controller = VeriFinScope.of(context);
+      if (controller.categoryById(_categoryId).type != _type) {
+        _categoryId = controller.categoriesForType(_type).first.id;
       }
     });
   }
@@ -2038,7 +2069,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       context: context,
       showDragHandle: true,
       builder: (context) => CategoryPickerSheet(
-        categories: categoriesFor(_type),
+        categories: VeriFinScope.of(context).categoriesForType(_type),
         selectedId: _categoryId,
       ),
     );
@@ -3377,6 +3408,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                             (entry) => TransactionTile(
                               entry,
                               accounts: controller.accounts,
+                              categories: controller.categories,
                               onTap: () => _openEntryDetail(context, entry),
                             ),
                           ),
@@ -3836,6 +3868,7 @@ class AccountReportPage extends StatelessWidget {
                             (entry) => TransactionTile(
                               entry,
                               accounts: controller.accounts,
+                              categories: controller.categories,
                               onTap: () => _openEntryDetail(context, entry),
                             ),
                           ),
@@ -3861,7 +3894,7 @@ class ReportsPage extends StatelessWidget {
         .where((entry) => entry.type == EntryType.expense)
         .toList(growable: false);
     final expenseTotal = sumByType(entries, EntryType.expense);
-    final categoryStats = _categoryStats(expenseEntries);
+    final categoryStats = _categoryStats(expenseEntries, controller.categories);
     final topCategory = categoryStats.firstOrNull;
     final trendWindow = sevenDayWindowFor(DateTime.now());
     final trendValues = valuesForTypeInWindow(
@@ -4235,36 +4268,35 @@ class ProfilePage extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           VeriCard(
-            onTap: () {
-              Navigator.of(context).push<void>(
-                MaterialPageRoute<void>(
-                  builder: (context) => const LedgerBooksPage(),
-                ),
-              );
-            },
-            child: Row(
+            child: Column(
               children: <Widget>[
-                const VeriIconBox(icon: Icons.book),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    controller.activeBook.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+                SettingsRow(
+                  icon: Icons.book_outlined,
+                  title: '账本',
+                  trailing: controller.activeBook.name,
+                  trailingIcon: Icons.chevron_right,
+                  onTap: () {
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const LedgerBooksPage(),
+                      ),
+                    );
+                  },
                 ),
-                Text(
-                  '当前账本',
-                  textAlign: TextAlign.end,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.55),
-                  ),
+                const Divider(),
+                SettingsRow(
+                  icon: Icons.category_outlined,
+                  title: '分类管理',
+                  trailing: '${controller.categories.length} 个分类',
+                  trailingIcon: Icons.chevron_right,
+                  onTap: () {
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const CategoryManagementPage(),
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(width: 4),
-                const Icon(Icons.chevron_right, size: 18),
               ],
             ),
           ),
@@ -4317,7 +4349,11 @@ class _CategoryStatTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: <Widget>[
-          VeriIconBox(icon: stat.category.icon, color: veriExpense, size: 30),
+          VeriIconBox(
+            icon: iconForCode(stat.category.iconCode),
+            color: veriExpense,
+            size: 30,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -4544,6 +4580,264 @@ class _LedgerBookRow extends StatelessWidget {
       return;
     }
     VeriFinScope.of(context).deleteLedgerBook(book.id);
+  }
+}
+
+class CategoryManagementPage extends StatefulWidget {
+  const CategoryManagementPage({super.key});
+
+  @override
+  State<CategoryManagementPage> createState() => _CategoryManagementPageState();
+}
+
+class _CategoryManagementPageState extends State<CategoryManagementPage> {
+  EntryType _type = EntryType.expense;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final categories = controller.categoriesForType(_type);
+
+    return Scaffold(
+      body: SafeArea(
+        child: VeriPage(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
+            children: <Widget>[
+              VeriHeader(
+                title: '分类管理',
+                subtitle: '用于记账和统计',
+                showBack: true,
+                actions: <Widget>[
+                  HeaderAction(
+                    icon: Icons.add,
+                    tooltip: '新增分类',
+                    onPressed: _createCategory,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              SegmentedButton<EntryType>(
+                segments: EntryType.values
+                    .map(
+                      (type) => ButtonSegment<EntryType>(
+                        value: type,
+                        label: Text(type.label),
+                      ),
+                    )
+                    .toList(),
+                selected: <EntryType>{_type},
+                onSelectionChanged: (selection) {
+                  setState(() => _type = selection.first);
+                },
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: Column(
+                  children: <Widget>[
+                    for (final item in categories.indexed) ...<Widget>[
+                      _CategoryManageRow(
+                        category: item.$2,
+                        usageCount: controller.categoryUsageCount(item.$2.id),
+                        onTap: () => _showCategoryActions(item.$2),
+                      ),
+                      if (item.$1 != categories.length - 1) const Divider(),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createCategory() async {
+    final label = await _showTextInputDialog(
+      context: context,
+      title: '新增${_type.label}分类',
+      label: '分类名称',
+    );
+    if (!mounted || label == null) {
+      return;
+    }
+    final iconCode = await _pickCategoryIcon(selected: 'category');
+    if (!mounted || iconCode == null) {
+      return;
+    }
+    VeriFinScope.of(
+      context,
+    ).addCategory(type: _type, label: label, iconCode: iconCode);
+  }
+
+  Future<void> _showCategoryActions(Category category) async {
+    final selected = await _showOptionSheet<String>(
+      context: context,
+      title: category.label,
+      values: const <String>['rename', 'icon', 'delete'],
+      selected: 'rename',
+      showSelectedMarker: false,
+      labelOf: (value) => switch (value) {
+        'rename' => '重命名',
+        'icon' => '更换图标',
+        'delete' => '删除分类',
+        _ => value,
+      },
+    );
+    if (!mounted || selected == null) {
+      return;
+    }
+    switch (selected) {
+      case 'rename':
+        await _renameCategory(category);
+      case 'icon':
+        await _changeCategoryIcon(category);
+      case 'delete':
+        await _deleteCategory(category);
+    }
+  }
+
+  Future<void> _renameCategory(Category category) async {
+    final label = await _showTextInputDialog(
+      context: context,
+      title: '重命名分类',
+      label: '分类名称',
+      initialValue: category.label,
+    );
+    if (!mounted || label == null) {
+      return;
+    }
+    VeriFinScope.of(context).renameCategory(category.id, label);
+  }
+
+  Future<void> _changeCategoryIcon(Category category) async {
+    final iconCode = await _pickCategoryIcon(selected: category.iconCode);
+    if (!mounted || iconCode == null) {
+      return;
+    }
+    VeriFinScope.of(context).updateCategoryIcon(category.id, iconCode);
+  }
+
+  Future<String?> _pickCategoryIcon({required String selected}) {
+    return _showOptionSheet<String>(
+      context: context,
+      title: '选择图标',
+      values: categoryIconCodes,
+      selected: selected,
+      labelOf: iconLabelForCode,
+    );
+  }
+
+  Future<void> _deleteCategory(Category category) async {
+    final controller = VeriFinScope.of(context);
+    if (_isProtectedCategory(category.id)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('系统分类不能删除')));
+      return;
+    }
+    final usageCount = controller.categoryUsageCount(category.id);
+    if (usageCount > 0) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('已有 $usageCount 笔交易使用该分类，不能删除')));
+      return;
+    }
+    if (controller.categoriesForType(category.type).length <= 1) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('至少需要保留一个分类')));
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('删除分类？'),
+        content: Text('分类「${category.label}」删除后无法恢复。'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) {
+      return;
+    }
+    final deleted = controller.deleteCategory(category.id);
+    if (!deleted && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('该分类暂时不能删除')));
+    }
+  }
+}
+
+bool _isProtectedCategory(String categoryId) {
+  return categoryId == 'balance_adjust_expense' ||
+      categoryId == 'balance_adjust_income';
+}
+
+class _CategoryManageRow extends StatelessWidget {
+  const _CategoryManageRow({
+    required this.category,
+    required this.usageCount,
+    required this.onTap,
+  });
+
+  final Category category;
+  final int usageCount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: <Widget>[
+              VeriIconBox(icon: iconForCode(category.iconCode), size: 30),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      category.label,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${category.type.label} · $usageCount 笔交易',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.48),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -4990,7 +5284,7 @@ class EntryDetailPage extends StatefulWidget {
 class _EntryDetailPageState extends State<EntryDetailPage> {
   late double _amount = widget.initialAmount;
   EntryType _type = EntryType.expense;
-  late String _categoryId = categoriesFor(_type).first.id;
+  String _categoryId = 'dining';
   late String _accountId = widget.initialAccountId ?? '';
   DateTime _occurredAt = DateTime.now();
   final TextEditingController _noteController = TextEditingController();
@@ -5011,7 +5305,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     if (hasAccounts && !accounts.any((account) => account.id == _accountId)) {
       _accountId = accounts.first.id;
     }
-    final categories = categoriesFor(_type);
+    final categories = controller.categoriesForType(_type);
+    if (!categories.any((category) => category.id == _categoryId)) {
+      _categoryId = categories.first.id;
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -5041,7 +5338,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     onSelectionChanged: (selection) {
                       setState(() {
                         _type = selection.first;
-                        _categoryId = categoriesFor(_type).first.id;
+                        _categoryId = controller
+                            .categoriesForType(_type)
+                            .first
+                            .id;
                       });
                     },
                   ),
@@ -5073,7 +5373,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                           .take(8)
                           .map(
                             (category) => ChoiceChip(
-                              avatar: Icon(category.icon, size: 18),
+                              avatar: Icon(
+                                iconForCode(category.iconCode),
+                                size: 18,
+                              ),
                               label: Text(category.label),
                               selected: _categoryId == category.id,
                               onSelected: (_) {
@@ -5184,7 +5487,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       context: context,
       showDragHandle: true,
       builder: (context) => CategoryPickerSheet(
-        categories: categoriesFor(_type),
+        categories: VeriFinScope.of(context).categoriesForType(_type),
         selectedId: _categoryId,
       ),
     );
@@ -5277,7 +5580,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 }
 
-List<_CategoryStat> _categoryStats(List<LedgerEntry> entries) {
+List<_CategoryStat> _categoryStats(
+  List<LedgerEntry> entries,
+  List<Category> categories,
+) {
   final totals = <String, double>{};
   final counts = <String, int>{};
   for (final entry in entries) {
@@ -5294,7 +5600,7 @@ List<_CategoryStat> _categoryStats(List<LedgerEntry> entries) {
       totals.entries
           .map(
             (entry) => _CategoryStat(
-              category: categoryById(entry.key),
+              category: categoryById(entry.key, categories),
               amount: entry.value,
               percent: total <= 0 ? 0 : entry.value / total,
               count: counts[entry.key] ?? 0,

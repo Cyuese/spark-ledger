@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
+import 'demo_data.dart';
 import 'ledger_math.dart';
 import 'models.dart';
 
@@ -249,7 +250,7 @@ class CategoryPickerSheet extends StatelessWidget {
             children: categories
                 .map(
                   (category) => ChoiceChip(
-                    avatar: Icon(category.icon, size: 18),
+                    avatar: Icon(iconForCode(category.iconCode), size: 18),
                     label: Text(category.label),
                     selected: category.id == selectedId,
                     onSelected: (_) => Navigator.of(context).pop(category.id),

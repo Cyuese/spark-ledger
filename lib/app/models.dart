@@ -393,11 +393,43 @@ class Category {
     required this.id,
     required this.label,
     required this.type,
-    required this.icon,
+    required this.iconCode,
   });
 
   final String id;
   final String label;
   final EntryType type;
-  final IconData icon;
+  final String iconCode;
+
+  Category copyWith({
+    String? id,
+    String? label,
+    EntryType? type,
+    String? iconCode,
+  }) {
+    return Category(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      type: type ?? this.type,
+      iconCode: iconCode ?? this.iconCode,
+    );
+  }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'id': id,
+      'label': label,
+      'type': type.storageValue,
+      'iconCode': iconCode,
+    };
+  }
+
+  static Category fromJson(Map<String, Object?> json) {
+    return Category(
+      id: json['id'] as String,
+      label: json['label'] as String? ?? '未命名分类',
+      type: EntryType.fromStorage(json['type'] as String? ?? 'expense'),
+      iconCode: json['iconCode'] as String? ?? 'category',
+    );
+  }
 }

@@ -10,16 +10,18 @@ class TransactionTile extends StatelessWidget {
     this.entry, {
     super.key,
     required this.accounts,
+    required this.categories,
     this.onTap,
   });
 
   final LedgerEntry entry;
   final List<Account> accounts;
+  final List<Category> categories;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final category = categoryById(entry.categoryId);
+    final category = categoryById(entry.categoryId, categories);
     final account = accountById(accounts, entry.accountId);
     final amountColor = colorForType(entry.type);
 
@@ -32,7 +34,11 @@ class TransactionTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             children: <Widget>[
-              VeriIconBox(icon: category.icon, color: amountColor, size: 28),
+              VeriIconBox(
+                icon: iconForCode(category.iconCode),
+                color: amountColor,
+                size: 28,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -112,11 +118,13 @@ class TransactionListCard extends StatelessWidget {
     super.key,
     required this.entries,
     required this.accounts,
+    required this.categories,
     this.onEntryTap,
   });
 
   final List<LedgerEntry> entries;
   final List<Account> accounts;
+  final List<Category> categories;
   final ValueChanged<LedgerEntry>? onEntryTap;
 
   @override
@@ -128,6 +136,7 @@ class TransactionListCard extends StatelessWidget {
             TransactionTile(
               item.$2,
               accounts: accounts,
+              categories: categories,
               onTap: onEntryTap == null ? null : () => onEntryTap!(item.$2),
             ),
             if (item.$1 != entries.length - 1)

@@ -34,8 +34,58 @@ const List<String> accountIconCodes = <String>[
   'folder',
 ];
 
+const List<String> categoryIconCodes = <String>[
+  'category',
+  'dining',
+  'transport',
+  'shopping',
+  'housing',
+  'entertainment',
+  'medical',
+  'salary',
+  'savings',
+  'interest',
+  'investment',
+  'bonus',
+  'work',
+  'transfer_out',
+  'transfer_in',
+  'repayment',
+  'adjust',
+];
+
 IconData iconForCode(String code) {
   switch (code) {
+    case 'category':
+      return Icons.category_outlined;
+    case 'dining':
+      return Icons.restaurant;
+    case 'transport':
+      return Icons.directions_bus;
+    case 'shopping':
+      return Icons.shopping_bag;
+    case 'housing':
+      return Icons.home_work;
+    case 'entertainment':
+      return Icons.movie;
+    case 'medical':
+      return Icons.local_hospital;
+    case 'salary':
+      return Icons.payments;
+    case 'interest':
+      return Icons.percent;
+    case 'bonus':
+      return Icons.military_tech;
+    case 'work':
+      return Icons.work;
+    case 'transfer_out':
+      return Icons.call_made;
+    case 'transfer_in':
+      return Icons.call_received;
+    case 'repayment':
+      return Icons.swap_horiz;
+    case 'adjust':
+      return Icons.tune;
     case 'alipay':
       return Icons.account_balance_wallet;
     case 'wechat':
@@ -62,6 +112,36 @@ IconData iconForCode(String code) {
 
 String iconLabelForCode(String code) {
   switch (code) {
+    case 'category':
+      return '分类';
+    case 'dining':
+      return '餐饮';
+    case 'transport':
+      return '交通';
+    case 'shopping':
+      return '购物';
+    case 'housing':
+      return '居住';
+    case 'entertainment':
+      return '娱乐';
+    case 'medical':
+      return '医疗';
+    case 'salary':
+      return '收入';
+    case 'interest':
+      return '利息';
+    case 'bonus':
+      return '奖励';
+    case 'work':
+      return '工作';
+    case 'transfer_out':
+      return '转出';
+    case 'transfer_in':
+      return '转入';
+    case 'repayment':
+      return '还款';
+    case 'adjust':
+      return '调整';
     case 'alipay':
       return '支付';
     case 'wechat':
@@ -86,121 +166,123 @@ String iconLabelForCode(String code) {
   }
 }
 
-const List<Category> demoCategories = <Category>[
+const List<Category> defaultCategories = <Category>[
   Category(
     id: 'dining',
     label: '餐饮',
     type: EntryType.expense,
-    icon: Icons.restaurant,
+    iconCode: 'dining',
   ),
   Category(
     id: 'transport',
     label: '交通',
     type: EntryType.expense,
-    icon: Icons.directions_bus,
+    iconCode: 'transport',
   ),
   Category(
     id: 'shopping',
     label: '购物',
     type: EntryType.expense,
-    icon: Icons.shopping_bag,
+    iconCode: 'shopping',
   ),
   Category(
     id: 'housing',
     label: '居住',
     type: EntryType.expense,
-    icon: Icons.home_work,
+    iconCode: 'housing',
   ),
   Category(
     id: 'entertainment',
     label: '娱乐',
     type: EntryType.expense,
-    icon: Icons.movie,
+    iconCode: 'entertainment',
   ),
   Category(
     id: 'medical',
     label: '医疗',
     type: EntryType.expense,
-    icon: Icons.local_hospital,
+    iconCode: 'medical',
   ),
   Category(
     id: 'balance_adjust_expense',
     label: '余额调整',
     type: EntryType.expense,
-    icon: Icons.tune,
+    iconCode: 'adjust',
   ),
   Category(
     id: 'salary',
     label: '工资',
     type: EntryType.income,
-    icon: Icons.payments,
+    iconCode: 'salary',
   ),
   Category(
     id: 'living',
     label: '生活费',
     type: EntryType.income,
-    icon: Icons.savings,
+    iconCode: 'savings',
   ),
   Category(
     id: 'interest',
     label: '利息',
     type: EntryType.income,
-    icon: Icons.percent,
+    iconCode: 'interest',
   ),
   Category(
     id: 'investment',
     label: '投资',
     type: EntryType.income,
-    icon: Icons.trending_up,
+    iconCode: 'investment',
   ),
-  Category(
-    id: 'bonus',
-    label: '奖金',
-    type: EntryType.income,
-    icon: Icons.emoji_events,
-  ),
+  Category(id: 'bonus', label: '奖金', type: EntryType.income, iconCode: 'bonus'),
   Category(
     id: 'part_time',
     label: '兼职',
     type: EntryType.income,
-    icon: Icons.work,
+    iconCode: 'work',
   ),
   Category(
     id: 'balance_adjust_income',
     label: '余额调整',
     type: EntryType.income,
-    icon: Icons.tune,
+    iconCode: 'adjust',
   ),
   Category(
     id: 'transfer_out',
     label: '转出',
     type: EntryType.transfer,
-    icon: Icons.call_made,
+    iconCode: 'transfer_out',
   ),
   Category(
     id: 'transfer_in',
     label: '转入',
     type: EntryType.transfer,
-    icon: Icons.call_received,
+    iconCode: 'transfer_in',
   ),
   Category(
     id: 'repayment',
     label: '还款',
     type: EntryType.transfer,
-    icon: Icons.swap_horiz,
+    iconCode: 'repayment',
   ),
 ];
 
-List<Category> categoriesFor(EntryType type) {
-  return demoCategories
+const List<Category> demoCategories = defaultCategories;
+
+List<Category> categoriesFor(EntryType type, [List<Category>? categories]) {
+  return (categories ?? defaultCategories)
       .where((category) => category.type == type)
       .toList(growable: false);
 }
 
-Category categoryById(String id) {
-  return demoCategories.firstWhere(
+Category categoryById(String id, [List<Category>? categories]) {
+  return categoryByIdFrom(categories ?? defaultCategories, id);
+}
+
+Category categoryByIdFrom(List<Category> categories, String id) {
+  final source = categories.isEmpty ? defaultCategories : categories;
+  return source.firstWhere(
     (category) => category.id == id,
-    orElse: () => demoCategories.first,
+    orElse: () => source.first,
   );
 }
 
