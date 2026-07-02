@@ -2177,7 +2177,7 @@ class AssetsPage extends StatelessWidget {
           controller.setAssetCoverUrl(url);
         }
       case 'local':
-        final dataUrl = await pickAvatarDataUrl();
+        final dataUrl = await pickAssetCoverDataUrl();
         if (dataUrl != null) {
           controller.setAssetCoverUrl(dataUrl);
         }
