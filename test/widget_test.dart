@@ -3,6 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:verifin/main.dart';
 
+Future<void> tapBottomTab(WidgetTester tester, int index) async {
+  final nav = tester.widget<BottomNavigationBar>(
+    find.byKey(const Key('main_bottom_nav')),
+  );
+  nav.onTap!(index);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('shows the main tabs and switches between pages', (
     WidgetTester tester,
@@ -10,21 +18,14 @@ void main() {
     await tester.pumpWidget(const VeriFinApp());
 
     expect(find.text('日常账本'), findsOneWidget);
-    expect(find.text('首页'), findsOneWidget);
-    expect(find.text('资产'), findsOneWidget);
-    expect(find.text('看板'), findsOneWidget);
-    expect(find.text('我的'), findsOneWidget);
 
-    await tester.tap(find.text('资产'));
-    await tester.pumpAndSettle();
+    await tapBottomTab(tester, 1);
     expect(find.text('净资产'), findsAtLeastNWidgets(1));
 
-    await tester.tap(find.text('看板'));
-    await tester.pumpAndSettle();
+    await tapBottomTab(tester, 2);
     expect(find.text('数据看板'), findsOneWidget);
 
-    await tester.tap(find.text('我的'));
-    await tester.pumpAndSettle();
+    await tapBottomTab(tester, 3);
     expect(find.text('主题模式'), findsOneWidget);
   });
 
@@ -33,8 +34,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const VeriFinApp());
 
-    await tester.tap(find.text('我的'));
-    await tester.pumpAndSettle();
+    await tapBottomTab(tester, 3);
     await tester.tap(find.text('深色'));
     await tester.pumpAndSettle();
 

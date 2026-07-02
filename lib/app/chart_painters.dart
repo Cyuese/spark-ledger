@@ -5,13 +5,28 @@ import 'package:flutter/material.dart';
 import 'app_theme.dart';
 
 class TrendLinePainter extends CustomPainter {
-  const TrendLinePainter({required this.color, required this.values});
+  const TrendLinePainter({
+    required this.color,
+    required this.values,
+    this.xLabels = const <String>[],
+    this.yLabels = const <String>[],
+  });
 
   final Color color;
   final List<double> values;
+  final List<String> xLabels;
+  final List<String> yLabels;
 
   @override
   void paint(Canvas canvas, Size size) {
+    const leftInset = 34.0;
+    const bottomInset = 22.0;
+    final chartRect = Rect.fromLTWH(
+      yLabels.isEmpty ? 0 : leftInset,
+      0,
+      size.width - (yLabels.isEmpty ? 0 : leftInset),
+      size.height - (xLabels.isEmpty ? 0 : bottomInset),
+    );
     final gridPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.08)
       ..strokeWidth = 1;
@@ -31,8 +46,12 @@ class TrendLinePainter extends CustomPainter {
       ).createShader(Offset.zero & size);
 
     for (var i = 0; i < 4; i += 1) {
-      final y = size.height * i / 3;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+      final y = chartRect.top + chartRect.height * i / 3;
+      canvas.drawLine(
+        Offset(chartRect.left, y),
+        Offset(chartRect.right, y),
+        gridPaint,
+      );
     }
 
     final normalized = values.isEmpty ? <double>[0, 0, 0, 0] : values;
@@ -42,40 +61,64 @@ class TrendLinePainter extends CustomPainter {
 
     for (var i = 0; i < normalized.length; i += 1) {
       final x = normalized.length == 1
-          ? 0.0
-          : size.width * i / (normalized.length - 1);
-      final y = size.height - (normalized[i] / maxValue * size.height * 0.86);
+          ? chartRect.left
+          : chartRect.left + chartRect.width * i / (normalized.length - 1);
+      final y =
+          chartRect.bottom -
+          (normalized[i] / maxValue * chartRect.height * 0.86);
       if (i == 0) {
         path.moveTo(x, y);
-        fillPath.moveTo(x, size.height);
+        fillPath.moveTo(x, chartRect.bottom);
         fillPath.lineTo(x, y);
       } else {
-        path.lineTo(x, y);
+        final previousX =
+            chartRect.left +
+            chartRect.width * (i - 1) / (normalized.length - 1);
+        final previousY =
+            chartRect.bottom -
+            (normalized[i - 1] / maxValue * chartRect.height * 0.86);
+        final controlX = (previousX + x) / 2;
+        path.quadraticBezierTo(controlX, previousY, x, y);
         fillPath.lineTo(x, y);
       }
     }
 
     fillPath
-      ..lineTo(size.width, size.height)
+      ..lineTo(chartRect.right, chartRect.bottom)
       ..close();
     canvas
       ..drawPath(fillPath, fillPaint)
       ..drawPath(path, linePaint);
+
+    _drawLabels(canvas, chartRect, xLabels, yLabels);
   }
 
   @override
   bool shouldRepaint(covariant TrendLinePainter oldDelegate) {
-    return oldDelegate.color != color || oldDelegate.values != values;
+    return oldDelegate.color != color ||
+        oldDelegate.values != values ||
+        oldDelegate.xLabels != xLabels ||
+        oldDelegate.yLabels != yLabels;
   }
 }
 
 class BarChartPainter extends CustomPainter {
-  const BarChartPainter({required this.values});
+  const BarChartPainter({
+    required this.values,
+    this.xLabels = const <String>[],
+  });
 
   final List<double> values;
+  final List<String> xLabels;
 
   @override
   void paint(Canvas canvas, Size size) {
+    final chartRect = Rect.fromLTWH(
+      0,
+      0,
+      size.width,
+      size.height - (xLabels.isEmpty ? 0 : 22),
+    );
     final axisPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.10)
       ..strokeWidth = 1;
@@ -87,19 +130,19 @@ class BarChartPainter extends CustomPainter {
       ).createShader(Offset.zero & size);
 
     canvas.drawLine(
-      Offset(0, size.height),
-      Offset(size.width, size.height),
+      Offset(chartRect.left, chartRect.bottom),
+      Offset(chartRect.right, chartRect.bottom),
       axisPaint,
     );
 
     final maxValue = math.max(values.reduce(math.max), 1);
-    final gap = size.width / values.length;
+    final gap = chartRect.width / values.length;
     for (var i = 0; i < values.length; i += 1) {
-      final barHeight = values[i] / maxValue * size.height * 0.86;
+      final barHeight = values[i] / maxValue * chartRect.height * 0.86;
       final rect = RRect.fromRectAndRadius(
         Rect.fromLTWH(
-          i * gap + gap * 0.25,
-          size.height - barHeight,
+          chartRect.left + i * gap + gap * 0.25,
+          chartRect.bottom - barHeight,
           gap * 0.5,
           barHeight,
         ),
@@ -107,10 +150,47 @@ class BarChartPainter extends CustomPainter {
       );
       canvas.drawRRect(rect, barPaint);
     }
+    _drawLabels(canvas, chartRect, xLabels, const <String>[]);
   }
 
   @override
   bool shouldRepaint(covariant BarChartPainter oldDelegate) {
-    return oldDelegate.values != values;
+    return oldDelegate.values != values || oldDelegate.xLabels != xLabels;
+  }
+}
+
+void _drawLabels(
+  Canvas canvas,
+  Rect chartRect,
+  List<String> xLabels,
+  List<String> yLabels,
+) {
+  final textStyle = TextStyle(
+    color: Colors.white.withValues(alpha: 0.45),
+    fontSize: 10,
+  );
+  for (var i = 0; i < xLabels.length; i += 1) {
+    final x = xLabels.length == 1
+        ? chartRect.left
+        : chartRect.left + chartRect.width * i / (xLabels.length - 1);
+    final painter = TextPainter(
+      text: TextSpan(text: xLabels[i], style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    painter.paint(canvas, Offset(x - painter.width / 2, chartRect.bottom + 6));
+  }
+
+  for (var i = 0; i < yLabels.length; i += 1) {
+    final y = yLabels.length == 1
+        ? chartRect.bottom
+        : chartRect.bottom - chartRect.height * i / (yLabels.length - 1);
+    final painter = TextPainter(
+      text: TextSpan(text: yLabels[i], style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    painter.paint(
+      canvas,
+      Offset(chartRect.left - painter.width - 6, y - painter.height / 2),
+    );
   }
 }

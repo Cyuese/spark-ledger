@@ -103,28 +103,31 @@ class _VeriFinShellState extends State<VeriFinShell> {
             )
           : null,
       bottomNavigationBar: BottomNavigationBar(
+        key: const Key('main_bottom_nav'),
         currentIndex: _index,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
         onTap: (value) => setState(() => _index = value),
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
-            label: '首页',
+            label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet_outlined),
             activeIcon: Icon(Icons.account_balance_wallet),
-            label: '资产',
+            label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart_outlined),
             activeIcon: Icon(Icons.bar_chart),
-            label: '看板',
+            label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: '我的',
+            label: '',
           ),
         ],
       ),
@@ -179,7 +182,7 @@ class HomePage extends StatelessWidget {
 
     return VeriPage(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 88),
         children: <Widget>[
           PageHeader(
             title: '日常账本',
@@ -189,7 +192,7 @@ class HomePage extends StatelessWidget {
               icon: const Icon(Icons.search),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,13 +210,14 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 Text('收入 ${formatAmount(monthIncome)}'),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 SizedBox(
-                  height: 120,
+                  height: 118,
                   child: CustomPaint(
                     painter: TrendLinePainter(
                       color: const Color(0xFFE84D6A),
                       values: dailyExpenseValues(monthEntries, now),
+                      xLabels: monthAxisLabels(now),
                     ),
                     child: const SizedBox.expand(),
                   ),
@@ -221,7 +225,7 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,19 +260,19 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           VeriCard(
             child: Row(
               children: <Widget>[
                 SizedBox(
-                  width: 112,
-                  height: 112,
+                  width: 104,
+                  height: 104,
                   child: Stack(
                     alignment: Alignment.center,
                     children: <Widget>[
                       CircularProgressIndicator(
                         value: (monthExpense / 800).clamp(0, 1),
-                        strokeWidth: 12,
+                        strokeWidth: 8,
                         backgroundColor: Theme.of(
                           context,
                         ).colorScheme.surfaceContainerHigh,
@@ -279,9 +283,13 @@ class HomePage extends StatelessWidget {
                         children: <Widget>[
                           Text(
                             formatAmount((800 - monthExpense).clamp(0, 800)),
-                            style: Theme.of(context).textTheme.titleLarge,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
                           ),
-                          const Text('预算剩余'),
+                          Text(
+                            '预算剩余',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
                         ],
                       ),
                     ],
@@ -305,7 +313,7 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           CalendarPreview(entries: monthEntries),
         ],
       ),
@@ -334,7 +342,7 @@ class AssetsPage extends StatelessWidget {
 
     return VeriPage(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 88),
         children: <Widget>[
           PageHeader(
             title: '净资产',
@@ -344,7 +352,7 @@ class AssetsPage extends StatelessWidget {
               icon: const Icon(Icons.add),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -426,38 +434,70 @@ class ReportsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const SectionTitle(title: '分类统计', trailing: '支出'),
-                const SizedBox(height: 20),
-                Center(
-                  child: SizedBox(
-                    width: 180,
-                    height: 180,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: <Widget>[
-                        CircularProgressIndicator(
-                          value: expenseTotal > 0 ? 1 : 0,
-                          strokeWidth: 28,
-                          color: veriBlue,
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerHighest,
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Text(topCategory),
-                            Text('-${formatAmount(expenseTotal)}'),
-                          ],
-                        ),
-                      ],
+                SectionTitle(
+                  title: '分类统计',
+                  trailing:
+                      '-${formatAmount(expenseTotal)} · ${DateTime.now().month}月 · 支出',
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: <Widget>[
+                    SizedBox(
+                      width: 168,
+                      height: 168,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: <Widget>[
+                          CircularProgressIndicator(
+                            value: expenseTotal > 0 ? 1 : 0,
+                            strokeWidth: 24,
+                            color: veriBlue,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                '全部',
+                                style: Theme.of(context).textTheme.labelMedium,
+                              ),
+                              Text(
+                                '-${formatAmount(expenseTotal)}',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            topCategory,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(expenseTotal == 0 ? '暂无支出记录' : '100.0% · 一级分类'),
+                          const SizedBox(height: 10),
+                          const Divider(),
+                          Text(
+                            '保存记录后自动聚合分类占比。',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -473,6 +513,8 @@ class ReportsPage extends StatelessWidget {
                     painter: TrendLinePainter(
                       color: const Color(0xFFE84D6A),
                       values: dailyExpenseValues(entries, DateTime.now()),
+                      xLabels: monthAxisLabels(DateTime.now()),
+                      yLabels: reportAxisLabels(expenseTotal),
                     ),
                     child: const SizedBox.expand(),
                   ),
@@ -480,7 +522,7 @@ class ReportsPage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,6 +534,20 @@ class ReportsPage extends StatelessWidget {
                   child: CustomPaint(
                     painter: BarChartPainter(
                       values: monthlyExpenseValues(entries),
+                      xLabels: const <String>[
+                        '1',
+                        '2',
+                        '3',
+                        '4',
+                        '5',
+                        '6',
+                        '7',
+                        '8',
+                        '9',
+                        '10',
+                        '11',
+                        '12',
+                      ],
                     ),
                     child: const SizedBox.expand(),
                   ),
@@ -933,4 +989,18 @@ String _topCategory(List<LedgerEntry> entries) {
     (previous, current) => previous.value >= current.value ? previous : current,
   );
   return categoryById(top.key).label;
+}
+
+List<String> monthAxisLabels(DateTime month) {
+  final days = DateUtils.getDaysInMonth(month.year, month.month);
+  return <String>[
+    '${month.month}.1',
+    '${month.month}.${(days / 2).round()}',
+    '${month.month}.$days',
+  ];
+}
+
+List<String> reportAxisLabels(double maxValue) {
+  final top = maxValue <= 0 ? 100 : maxValue;
+  return <String>['0', formatAmount(top / 2), formatAmount(top)];
 }
