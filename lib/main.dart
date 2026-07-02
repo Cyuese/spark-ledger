@@ -1217,9 +1217,16 @@ enum TransactionSortOrder {
 }
 
 class TransactionsPage extends StatefulWidget {
-  const TransactionsPage({super.key, this.initialDate});
+  const TransactionsPage({
+    super.key,
+    this.initialDate,
+    this.accountId,
+    this.title,
+  });
 
   final DateTime? initialDate;
+  final String? accountId;
+  final String? title;
 
   @override
   State<TransactionsPage> createState() => _TransactionsPageState();
@@ -1249,7 +1256,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
               children: <Widget>[
                 VeriHeader(
-                  title: _dateMode ? '当日交易' : '交易明细',
+                  title: widget.title ?? (_dateMode ? '当日交易' : '交易明细'),
                   subtitle: _dateMode
                       ? '${_visibleDate.month}.${_visibleDate.day}'
                       : null,
@@ -1347,15 +1354,21 @@ class _TransactionsPageState extends State<TransactionsPage> {
   }
 
   List<LedgerEntry> _filteredEntries(List<LedgerEntry> entries) {
+    final scopedEntries = widget.accountId == null
+        ? entries
+        : entries
+              .where((entry) => entry.accountId == widget.accountId)
+              .toList();
+
     if (_dateMode) {
-      return entries
+      return scopedEntries
           .where((entry) => DateUtils.isSameDay(entry.occurredAt, _visibleDate))
           .toList();
     }
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    return entries.where((entry) {
+    return scopedEntries.where((entry) {
       final date = entry.occurredAt;
       switch (_timeFilter) {
         case TransactionTimeFilter.all:
@@ -1710,6 +1723,53 @@ Future<void> _confirmDeleteEntry(
     return;
   }
   controller.deleteEntry(entry.id);
+  Navigator.of(context).pop();
+}
+
+Future<void> _confirmDeleteAccount(
+  BuildContext context,
+  Account account,
+  List<LedgerEntry> entries,
+) async {
+  if (entries.isNotEmpty) {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('暂不能删除账户'),
+        content: Text('此账户已有 ${entries.length} 笔交易。为避免历史记录失去账户来源，请先保留账户或隐藏账户。'),
+        actions: <Widget>[
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('知道了'),
+          ),
+        ],
+      ),
+    );
+    return;
+  }
+
+  final controller = VeriFinScope.of(context);
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('删除此账户？'),
+      content: Text('账户「${account.name}」删除后无法恢复。'),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('删除'),
+        ),
+      ],
+    ),
+  );
+  if (!context.mounted || confirmed != true) {
+    return;
+  }
+  controller.deleteAccount(account.id);
   Navigator.of(context).pop();
 }
 
@@ -2393,10 +2453,8 @@ class AccountDetailPage extends StatelessWidget {
                     icon: Icons.delete_outline,
                     tooltip: '删除账户',
                     destructive: true,
-                    onPressed: () {
-                      controller.deleteAccount(currentAccount.id);
-                      Navigator.of(context).pop();
-                    },
+                    onPressed: () =>
+                        _confirmDeleteAccount(context, currentAccount, entries),
                   ),
                 ],
               ),
@@ -2450,7 +2508,17 @@ class AccountDetailPage extends StatelessWidget {
                         child: const SizedBox.expand(),
                       ),
                     ),
-                    TextButton(onPressed: () {}, child: const Text('查看报告')),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (context) =>
+                                AccountReportPage(account: currentAccount),
+                          ),
+                        );
+                      },
+                      child: const Text('查看报告'),
+                    ),
                   ],
                 ),
               ),
@@ -2476,7 +2544,19 @@ class AccountDetailPage extends StatelessWidget {
                               accounts: controller.accounts,
                             ),
                           ),
-                    TextButton(onPressed: () {}, child: const Text('所有交易')),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (context) => TransactionsPage(
+                              accountId: currentAccount.id,
+                              title: '${currentAccount.name}交易',
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('所有交易'),
+                    ),
                   ],
                 ),
               ),
@@ -2559,6 +2639,121 @@ class AccountDetailPage extends StatelessWidget {
   }
 }
 
+class AccountReportPage extends StatelessWidget {
+  const AccountReportPage({super.key, required this.account});
+
+  final Account account;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final currentAccount = controller.accounts.firstWhere(
+      (item) => item.id == account.id,
+      orElse: () => account,
+    );
+    final entries = controller.entries
+        .where((entry) => entry.accountId == currentAccount.id)
+        .toList();
+    final expense = sumByType(entries, EntryType.expense);
+    final income = sumByType(entries, EntryType.income);
+    final balance = controller.accountBalance(currentAccount);
+
+    return Scaffold(
+      body: SafeArea(
+        child: VeriPage(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
+            children: <Widget>[
+              VeriHeader(
+                title: '账户报告',
+                subtitle: currentAccount.name,
+                showBack: true,
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 16,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    SummaryMetric(
+                      label: '当前余额',
+                      value: formatAmount(balance),
+                      color: balance < 0 ? veriExpense : veriRoyal,
+                    ),
+                    SummaryMetric(
+                      label: '收入',
+                      value: formatAmount(income),
+                      color: veriIncome,
+                    ),
+                    SummaryMetric(
+                      label: '支出',
+                      value: '-${formatAmount(expense)}',
+                      color: veriExpense,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const SectionTitle(title: '余额趋势', trailing: '本月'),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 156,
+                      child: CustomPaint(
+                        painter: TrendLinePainter(
+                          color: veriRoyal,
+                          values: accountBalanceSeries(currentAccount, entries),
+                          xLabels: monthAxisLabels(DateTime.now()),
+                          yLabels: reportAxisLabels(balance.abs()),
+                          labelColor: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.50),
+                        ),
+                        child: const SizedBox.expand(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const SectionTitle(title: '最近交易', trailing: null),
+                    const SizedBox(height: 6),
+                    if (entries.isEmpty)
+                      const EmptyState(
+                        icon: Icons.receipt_long_outlined,
+                        title: '暂无交易',
+                        description: '该账户还没有交易记录。',
+                      )
+                    else
+                      ...entries
+                          .take(6)
+                          .map(
+                            (entry) => TransactionTile(
+                              entry,
+                              accounts: controller.accounts,
+                              onTap: () => _openEntryDetail(context, entry),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
 
@@ -2570,7 +2765,8 @@ class ReportsPage extends StatelessWidget {
         .where((entry) => entry.type == EntryType.expense)
         .toList(growable: false);
     final expenseTotal = sumByType(entries, EntryType.expense);
-    final topCategory = _topCategory(expenseEntries);
+    final categoryStats = _categoryStats(expenseEntries);
+    final topCategory = categoryStats.firstOrNull;
 
     return VeriPage(
       child: ListView(
@@ -2597,9 +2793,11 @@ class ReportsPage extends StatelessWidget {
                         alignment: Alignment.center,
                         children: <Widget>[
                           CircularProgressIndicator(
-                            value: expenseTotal > 0 ? 1 : 0,
+                            value: topCategory == null || expenseTotal <= 0
+                                ? 0
+                                : topCategory.amount / expenseTotal,
                             strokeWidth: 18,
-                            color: veriBlue,
+                            color: veriRoyal,
                             backgroundColor: Theme.of(
                               context,
                             ).colorScheme.surfaceContainerHighest,
@@ -2608,7 +2806,7 @@ class ReportsPage extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               Text(
-                                '全部',
+                                topCategory?.category.label ?? '暂无',
                                 style: Theme.of(context).textTheme.labelMedium,
                               ),
                               Text(
@@ -2627,15 +2825,26 @@ class ReportsPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            topCategory,
-                            style: Theme.of(context).textTheme.titleMedium,
+                            topCategory == null ? '暂无支出记录' : '最高分类',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.48),
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                           const SizedBox(height: 4),
-                          Text(expenseTotal == 0 ? '暂无支出记录' : '100.0% · 一级分类'),
+                          Text(
+                            topCategory == null
+                                ? '保存记录后自动聚合分类占比'
+                                : '${topCategory.category.label} · ${(topCategory.percent * 100).toStringAsFixed(1)}%',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
                           const SizedBox(height: 8),
                           const Divider(),
                           Text(
-                            '保存记录后自动聚合分类占比。',
+                            '本月支出会按分类自动排序。',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -2643,6 +2852,26 @@ class ReportsPage extends StatelessWidget {
                     ),
                   ],
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          VeriCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const SectionTitle(title: '分类明细', trailing: '支出'),
+                const SizedBox(height: 8),
+                if (categoryStats.isEmpty)
+                  const EmptyState(
+                    icon: Icons.donut_small_outlined,
+                    title: '暂无分类数据',
+                    description: '保存支出记录后会在这里显示分类排行。',
+                  )
+                else
+                  ...categoryStats
+                      .take(6)
+                      .map((stat) => _CategoryStatTile(stat: stat)),
               ],
             ),
           ),
@@ -2854,6 +3083,85 @@ class ProfilePage extends StatelessWidget {
                   icon: Icons.cloud_off_outlined,
                   title: '云同步',
                   trailing: '本地优先',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryStat {
+  const _CategoryStat({
+    required this.category,
+    required this.amount,
+    required this.percent,
+    required this.count,
+  });
+
+  final Category category;
+  final double amount;
+  final double percent;
+  final int count;
+}
+
+class _CategoryStatTile extends StatelessWidget {
+  const _CategoryStatTile({required this.stat});
+
+  final _CategoryStat stat;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: <Widget>[
+          VeriIconBox(icon: stat.category.icon, color: veriExpense, size: 30),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        stat.category.label,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '-${formatAmount(stat.amount)}',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: veriExpense,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                LinearProgressIndicator(
+                  value: stat.percent.clamp(0, 1).toDouble(),
+                  minHeight: 5,
+                  borderRadius: BorderRadius.circular(999),
+                  color: veriExpense,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${(stat.percent * 100).toStringAsFixed(1)}% · ${stat.count}笔',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.46),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -3168,13 +3476,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
                 children: <Widget>[
-                  VeriHeader(
+                  const VeriHeader(
                     title: '日常账本',
                     subtitle: '记账详情',
                     showBack: true,
-                    actions: <Widget>[
-                      HeaderTextAction(label: '设置', onPressed: () {}),
-                    ],
                   ),
                   const SizedBox(height: 12),
                   SegmentedButton<EntryType>(
@@ -3413,24 +3718,32 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 }
 
-String _topCategory(List<LedgerEntry> entries) {
-  if (entries.isEmpty) {
-    return '暂无';
-  }
-
+List<_CategoryStat> _categoryStats(List<LedgerEntry> entries) {
   final totals = <String, double>{};
+  final counts = <String, int>{};
   for (final entry in entries) {
     totals.update(
       entry.categoryId,
       (value) => value + entry.amount,
       ifAbsent: () => entry.amount,
     );
+    counts.update(entry.categoryId, (value) => value + 1, ifAbsent: () => 1);
   }
 
-  final top = totals.entries.reduce(
-    (previous, current) => previous.value >= current.value ? previous : current,
-  );
-  return categoryById(top.key).label;
+  final total = totals.values.fold<double>(0, (sum, value) => sum + value);
+  final stats =
+      totals.entries
+          .map(
+            (entry) => _CategoryStat(
+              category: categoryById(entry.key),
+              amount: entry.value,
+              percent: total <= 0 ? 0 : entry.value / total,
+              count: counts[entry.key] ?? 0,
+            ),
+          )
+          .toList()
+        ..sort((a, b) => b.amount.compareTo(a.amount));
+  return stats;
 }
 
 List<String> monthAxisLabels(DateTime month) {
