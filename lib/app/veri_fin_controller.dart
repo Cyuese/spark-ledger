@@ -286,6 +286,37 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reorderCategories(EntryType type, int oldIndex, int newIndex) {
+    final typeCategories = categoriesForType(type).toList();
+    if (oldIndex < 0 ||
+        oldIndex >= typeCategories.length ||
+        newIndex < 0 ||
+        newIndex > typeCategories.length) {
+      return;
+    }
+    final moved = typeCategories.removeAt(oldIndex);
+    final targetIndex = newIndex.clamp(0, typeCategories.length);
+    typeCategories.insert(targetIndex, moved);
+
+    final categoriesByType = <EntryType, List<Category>>{
+      for (final entryType in EntryType.values)
+        entryType: _categories
+            .where((category) => category.type == entryType)
+            .toList(),
+    };
+    categoriesByType[type] = typeCategories;
+
+    _categories
+      ..clear()
+      ..addAll(
+        EntryType.values.expand(
+          (entryType) => categoriesByType[entryType] ?? const <Category>[],
+        ),
+      );
+    _persistCategories();
+    notifyListeners();
+  }
+
   bool deleteCategory(String categoryId) {
     if (_isProtectedCategory(categoryId)) {
       return false;

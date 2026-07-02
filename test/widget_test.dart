@@ -228,6 +228,10 @@ void main() {
       ..setMonthlyBudget(DateTime(2026, 7), 2400)
       ..setThemePreference(ThemePreference.dark)
       ..addCategory(type: EntryType.expense, label: '咖啡', iconCode: 'dining');
+    final coffeeIndex = source
+        .categoriesForType(EntryType.expense)
+        .indexWhere((category) => category.label == '咖啡');
+    source.reorderCategories(EntryType.expense, coffeeIndex, 0);
 
     final backup = source.exportDataJson();
     final target = VeriFinController(LocalKeyValueStore());
@@ -239,6 +243,7 @@ void main() {
     expect(target.monthlyBudget(DateTime(2026, 7)), 2400);
     expect(target.themePreference, ThemePreference.dark);
     expect(target.categories.any((category) => category.label == '咖啡'), isTrue);
+    expect(target.categoriesForType(EntryType.expense).first.label, '咖啡');
 
     expect(
       () => target.importDataJson(

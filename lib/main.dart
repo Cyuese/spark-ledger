@@ -4633,17 +4633,25 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
               ),
               const SizedBox(height: 10),
               VeriCard(
-                child: Column(
-                  children: <Widget>[
-                    for (final item in categories.indexed) ...<Widget>[
-                      _CategoryManageRow(
-                        category: item.$2,
-                        usageCount: controller.categoryUsageCount(item.$2.id),
-                        onTap: () => _showCategoryActions(item.$2),
-                      ),
-                      if (item.$1 != categories.length - 1) const Divider(),
-                    ],
-                  ],
+                padding: EdgeInsets.zero,
+                child: ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  buildDefaultDragHandles: false,
+                  itemCount: categories.length,
+                  onReorderItem: (oldIndex, newIndex) {
+                    controller.reorderCategories(_type, oldIndex, newIndex);
+                  },
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+                    return _CategoryManageRow(
+                      key: ValueKey(category.id),
+                      index: index,
+                      category: category,
+                      usageCount: controller.categoryUsageCount(category.id),
+                      onTap: () => _showCategoryActions(category),
+                    );
+                  },
                 ),
               ),
             ],
@@ -4787,11 +4795,14 @@ bool _isProtectedCategory(String categoryId) {
 
 class _CategoryManageRow extends StatelessWidget {
   const _CategoryManageRow({
+    super.key,
+    required this.index,
     required this.category,
     required this.usageCount,
     required this.onTap,
   });
 
+  final int index;
   final Category category;
   final int usageCount;
   final VoidCallback onTap;
@@ -4804,7 +4815,7 @@ class _CategoryManageRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(veriRadiusSm),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
           child: Row(
             children: <Widget>[
               VeriIconBox(icon: iconForCode(category.iconCode), size: 30),
@@ -4832,7 +4843,19 @@ class _CategoryManageRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, size: 18),
+              ReorderableDragStartListener(
+                index: index,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.drag_handle,
+                    size: 18,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.38),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
