@@ -29,18 +29,11 @@ class TransactionTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(veriRadiusSm),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             children: <Widget>[
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: amountColor,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              const SizedBox(width: 12),
+              VeriIconBox(icon: category.icon, color: amountColor, size: 28),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,11 +43,11 @@ class TransactionTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       '${formatTime(entry.occurredAt)} · '
                       '${entry.note.isEmpty ? account.name : entry.note}',
@@ -77,15 +70,15 @@ class TransactionTile extends StatelessWidget {
                     formatSignedAmount(signedAmount(entry)),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: amountColor,
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 7,
-                      vertical: 2,
+                      vertical: 1,
                     ),
                     decoration: BoxDecoration(
                       border: Border.all(
@@ -152,11 +145,18 @@ class TransactionListCard extends StatelessWidget {
 }
 
 class FilterPill extends StatelessWidget {
-  const FilterPill({super.key, required this.label, this.icon, this.onTap});
+  const FilterPill({
+    super.key,
+    required this.label,
+    this.icon,
+    this.onTap,
+    this.showChevron = true,
+  });
 
   final String label;
   final IconData? icon;
   final VoidCallback? onTap;
+  final bool showChevron;
 
   @override
   Widget build(BuildContext context) {
@@ -167,11 +167,14 @@ class FilterPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          constraints: const BoxConstraints(minHeight: 36),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: isDark ? Colors.black.withValues(alpha: 0.28) : Colors.white,
+            color: isDark ? veriSurfaceAltDark : veriSurfaceLight,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: isDark ? Colors.white10 : veriLine),
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.10) : veriLine,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -182,12 +185,17 @@ class FilterPill extends StatelessWidget {
               ],
               Text(
                 label,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.78),
+                ),
               ),
-              const SizedBox(width: 4),
-              const Icon(Icons.keyboard_arrow_down, size: 16),
+              if (showChevron) ...<Widget>[
+                const SizedBox(width: 4),
+                const Icon(Icons.keyboard_arrow_down, size: 16),
+              ],
             ],
           ),
         ),
@@ -295,7 +303,7 @@ class VeriIconBox extends StatelessWidget {
   const VeriIconBox({
     super.key,
     required this.icon,
-    this.color = veriBlue,
+    this.color = veriRoyal,
     this.size = 30,
   });
 
@@ -339,7 +347,7 @@ class VeriSectionAction extends StatelessWidget {
         minimumSize: const Size(32, 32),
         padding: EdgeInsets.zero,
         backgroundColor: veriBlue.withValues(alpha: 0.10),
-        foregroundColor: veriBlue,
+        foregroundColor: veriRoyal,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(veriRadiusSm),
         ),
@@ -360,8 +368,8 @@ class VeriPage extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: Theme.of(context).brightness == Brightness.dark
-              ? const <Color>[Color(0xFF101216), Color(0xFF141A24)]
-              : const <Color>[Color(0xFFF6FBFC), Color(0xFFEFF5FF)],
+              ? const <Color>[Color(0xFF0B0F15), Color(0xFF111722)]
+              : const <Color>[Color(0xFFF5F8FC), Color(0xFFEFF4FB)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -377,33 +385,52 @@ class VeriPage extends StatelessWidget {
 }
 
 class VeriCard extends StatelessWidget {
-  const VeriCard({super.key, required this.child});
+  const VeriCard({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.padding = const EdgeInsets.all(13),
+  });
 
   final Widget child;
+  final VoidCallback? onTap;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0D0F12) : Colors.white,
-        borderRadius: BorderRadius.circular(veriRadiusMd),
-        border: Border.all(
-          color: isDark ? Colors.white10 : const Color(0xFFE8EEF4),
-        ),
-        boxShadow: <BoxShadow>[
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.045),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
-            ),
-        ],
+    final borderRadius = BorderRadius.circular(veriRadiusMd);
+    final decoration = BoxDecoration(
+      color: isDark ? veriSurfaceDark : veriSurfaceLight,
+      borderRadius: borderRadius,
+      border: Border.all(
+        color: isDark ? Colors.white.withValues(alpha: 0.10) : veriLine,
       ),
-      child: child,
+      boxShadow: <BoxShadow>[
+        if (!isDark)
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.045),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+      ],
     );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: Ink(
+          decoration: decoration,
+          child: InkWell(
+            borderRadius: borderRadius,
+            onTap: onTap,
+            child: Padding(padding: padding, child: child),
+          ),
+        ),
+      );
+    }
+
+    return Container(padding: padding, decoration: decoration, child: child);
   }
 }
 
@@ -420,9 +447,10 @@ class PageHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+            ),
           ),
         ),
         ?trailing,
@@ -570,8 +598,8 @@ class AccountGroupCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               color: (balances[account] ?? 0) < 0
-                                  ? const Color(0xFFE84D6A)
-                                  : veriMint,
+                                  ? veriExpense
+                                  : veriIncome,
                               fontWeight: FontWeight.w800,
                             ),
                       ),
@@ -706,7 +734,7 @@ class _CalendarPreviewState extends State<CalendarPreview> {
                         day == now.day &&
                             _visibleMonth.year == now.year &&
                             _visibleMonth.month == now.month
-                        ? veriBlue.withValues(alpha: 0.14)
+                        ? veriRoyal.withValues(alpha: 0.12)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(veriRadiusSm),
                   ),
@@ -722,7 +750,7 @@ class _CalendarPreviewState extends State<CalendarPreview> {
                                     day == now.day &&
                                         _visibleMonth.year == now.year &&
                                         _visibleMonth.month == now.month
-                                    ? veriBlue
+                                    ? veriRoyal
                                     : null,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -733,12 +761,9 @@ class _CalendarPreviewState extends State<CalendarPreview> {
                         child: expense <= 0
                             ? const SizedBox.shrink()
                             : Text(
-                                '-${formatAmount(expense)}',
+                                '-${formatCompactAmount(expense)}',
                                 style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: const Color(0xFFE84D6A),
-                                      fontSize: 9,
-                                    ),
+                                    ?.copyWith(color: veriExpense, fontSize: 9),
                               ),
                       ),
                       SizedBox(
@@ -746,9 +771,9 @@ class _CalendarPreviewState extends State<CalendarPreview> {
                         child: income <= 0
                             ? const SizedBox.shrink()
                             : Text(
-                                '+${formatAmount(income)}',
+                                '+${formatCompactAmount(income)}',
                                 style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(color: veriMint, fontSize: 9),
+                                    ?.copyWith(color: veriIncome, fontSize: 9),
                               ),
                       ),
                     ],

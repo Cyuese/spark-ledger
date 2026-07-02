@@ -46,6 +46,9 @@ class TrendLinePainter extends CustomPainter {
       ..strokeWidth = 2.8
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
+    final pointPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
     final fillPaint = Paint()
       ..shader = LinearGradient(
         colors: <Color>[
@@ -96,8 +99,8 @@ class TrendLinePainter extends CustomPainter {
         final previousY =
             chartRect.bottom -
             (normalized[i - 1] / maxValue * chartRect.height * 0.86);
-        final controlX = (previousX + x) / 2;
-        path.quadraticBezierTo(controlX, previousY, x, y);
+        final dx = (x - previousX) / 2;
+        path.cubicTo(previousX + dx, previousY, x - dx, y, x, y);
         fillPath.lineTo(x, y);
       }
     }
@@ -110,6 +113,18 @@ class TrendLinePainter extends CustomPainter {
       canvas.drawPath(path, glowPaint);
     }
     canvas.drawPath(path, linePaint);
+    for (var i = 0; i < normalized.length; i += 1) {
+      if (normalized[i] <= 0) {
+        continue;
+      }
+      final x = normalized.length == 1
+          ? chartRect.left
+          : chartRect.left + chartRect.width * i / (normalized.length - 1);
+      final y =
+          chartRect.bottom -
+          (normalized[i] / maxValue * chartRect.height * 0.86);
+      canvas.drawCircle(Offset(x, y), 2.2, pointPaint);
+    }
 
     _drawLabels(canvas, chartRect, xLabels, yLabels, axisColor);
   }

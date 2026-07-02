@@ -17,11 +17,11 @@ double signedAmount(LedgerEntry entry) {
 Color colorForType(EntryType type) {
   switch (type) {
     case EntryType.expense:
-      return const Color(0xFFE84D6A);
+      return veriExpense;
     case EntryType.income:
-      return veriMint;
+      return veriIncome;
     case EntryType.transfer:
-      return veriBlue;
+      return veriRoyal;
   }
 }
 
@@ -69,6 +69,18 @@ String formatSignedAmount(double value) {
   return value > 0
       ? '+${formatAmount(value)}'
       : '-${formatAmount(value.abs())}';
+}
+
+String formatCompactAmount(num value) {
+  final abs = value.abs();
+  if (abs >= 10000) {
+    final compact = value / 10000;
+    return '${compact.toStringAsFixed(compact.abs() >= 10 ? 0 : 1)}万';
+  }
+  if (abs >= 1000) {
+    return value.toStringAsFixed(0);
+  }
+  return formatAmount(value);
 }
 
 String formatDate(DateTime date) {

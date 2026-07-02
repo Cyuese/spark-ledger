@@ -6,20 +6,27 @@ const Color veriBlue = Color(0xFF3498DB);
 const Color veriRoyal = Color(0xFF346EDB);
 const Color veriIndigo = Color(0xFF3445DB);
 const Color veriInk = Color(0xFF151922);
-const Color veriLine = Color(0xFFE4EAF0);
+const Color veriLine = Color(0xFFE1E8F1);
+const Color veriExpense = Color(0xFFE84D6A);
+const Color veriIncome = Color(0xFF12B8A6);
+const Color veriWarning = Color(0xFFFFB33E);
+const Color veriSurfaceLight = Color(0xFFFFFFFF);
+const Color veriSurfaceDark = Color(0xFF0E1117);
+const Color veriSurfaceAltLight = Color(0xFFF5F8FC);
+const Color veriSurfaceAltDark = Color(0xFF151A22);
 const double veriRadiusSm = 6;
-const double veriRadiusMd = 10;
-const double veriRadiusLg = 14;
+const double veriRadiusMd = 8;
+const double veriRadiusLg = 12;
 const double veriPageMaxWidth = 440;
 
 ThemeData buildVeriFinTheme(Brightness brightness) {
   final isDark = brightness == Brightness.dark;
   final colorScheme = ColorScheme.fromSeed(
-    seedColor: veriBlue,
+    seedColor: veriRoyal,
     brightness: brightness,
-    primary: veriBlue,
-    secondary: veriRoyal,
-    tertiary: veriIndigo,
+    primary: veriRoyal,
+    secondary: veriBlue,
+    tertiary: veriIncome,
   );
 
   final baseTheme = ThemeData(
@@ -27,8 +34,8 @@ ThemeData buildVeriFinTheme(Brightness brightness) {
     brightness: brightness,
     colorScheme: colorScheme,
     scaffoldBackgroundColor: isDark
-        ? const Color(0xFF101216)
-        : const Color(0xFFF4F8FA),
+        ? const Color(0xFF0B0F15)
+        : const Color(0xFFF3F7FC),
     fontFamily: 'Roboto',
     visualDensity: VisualDensity.compact,
     dividerTheme: DividerThemeData(
@@ -45,7 +52,7 @@ ThemeData buildVeriFinTheme(Brightness brightness) {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: veriBlue,
+        backgroundColor: veriRoyal,
         foregroundColor: Colors.white,
         minimumSize: const Size(44, 44),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -62,7 +69,7 @@ ThemeData buildVeriFinTheme(Brightness brightness) {
       ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: veriBlue,
+      backgroundColor: veriRoyal,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(veriRadiusLg)),
@@ -70,9 +77,9 @@ ThemeData buildVeriFinTheme(Brightness brightness) {
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: veriBlue,
+      selectedItemColor: veriRoyal,
       unselectedItemColor: isDark ? Colors.white54 : Colors.black45,
-      backgroundColor: isDark ? const Color(0xFF0D0F12) : Colors.white,
+      backgroundColor: isDark ? veriSurfaceDark : veriSurfaceLight,
       elevation: 0,
       selectedIconTheme: const IconThemeData(size: 25),
       unselectedIconTheme: const IconThemeData(size: 24),
@@ -80,9 +87,9 @@ ThemeData buildVeriFinTheme(Brightness brightness) {
       showSelectedLabels: false,
     ),
     chipTheme: ChipThemeData(
-      backgroundColor: isDark ? const Color(0xFF171A20) : Colors.white,
-      selectedColor: veriBlue.withValues(alpha: 0.14),
-      secondarySelectedColor: veriBlue.withValues(alpha: 0.14),
+      backgroundColor: isDark ? veriSurfaceAltDark : veriSurfaceLight,
+      selectedColor: veriRoyal.withValues(alpha: 0.14),
+      secondarySelectedColor: veriRoyal.withValues(alpha: 0.14),
       labelStyle: TextStyle(
         color: isDark ? Colors.white.withValues(alpha: 0.86) : veriInk,
         fontSize: 12,
@@ -99,7 +106,7 @@ ThemeData buildVeriFinTheme(Brightness brightness) {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: isDark ? const Color(0xFF171A20) : Colors.white,
+      fillColor: isDark ? veriSurfaceAltDark : veriSurfaceLight,
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       border: OutlineInputBorder(
