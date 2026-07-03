@@ -79,11 +79,22 @@ jobs:
       - name: Build release APK
         run: flutter build apk --release
 
+      - name: Prepare APK artifact
+        shell: bash
+        run: |
+          mkdir -p release-artifacts
+          short_sha="${GITHUB_SHA::7}"
+          version_name="${GITHUB_REF_NAME}"
+          if [[ "${version_name}" == "main" ]]; then
+            version_name="v1.0.0"
+          fi
+          cp build/app/outputs/flutter-apk/app-release.apk "release-artifacts/verifin-${version_name}-${short_sha}.apk"
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: verifin-android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: release-artifacts/*.apk
 
   release:
     name: GitHub Release

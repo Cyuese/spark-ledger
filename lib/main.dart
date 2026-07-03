@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app/app_theme.dart';
+import 'app/account_icon_assets.dart';
 import 'app/avatar_picker.dart';
 import 'app/chart_painters.dart';
 import 'app/common_widgets.dart';
@@ -15,6 +16,8 @@ import 'app/ledger_math.dart';
 import 'app/models.dart';
 import 'app/veri_fin_controller.dart';
 import 'local_storage/local_storage.dart';
+
+const String appVersionLabel = 'v1.0.0+2';
 
 void main() {
   runApp(const VeriFinApp());
@@ -130,7 +133,10 @@ class _VeriFinShellState extends State<VeriFinShell> {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => const NumberPadSheet(title: '快速记账'),
+      builder: (context) => NumberPadSheet(
+        title: '快速记账',
+        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
+      ),
     );
 
     if (!context.mounted || amount == null || amount <= 0) {
@@ -3371,33 +3377,27 @@ class _TransactionSearchFilters extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilterPill(
-                    label: accountLabel,
-                    icon: accountLocked
-                        ? Icons.lock_outline
-                        : Icons.account_balance_wallet_outlined,
-                    onTap: onPickAccount,
-                    showChevron: !accountLocked,
-                  ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                FilterPill(
+                  label: accountLabel,
+                  icon: accountLocked
+                      ? Icons.lock_outline
+                      : Icons.account_balance_wallet_outlined,
+                  onTap: onPickAccount,
+                  showChevron: !accountLocked,
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilterPill(
-                    label: categoryLabel,
-                    icon: Icons.category_outlined,
-                    onTap: onPickCategory,
-                  ),
+                FilterPill(
+                  label: categoryLabel,
+                  icon: Icons.category_outlined,
+                  onTap: onPickCategory,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -3526,6 +3526,122 @@ Future<T?> _showOptionSheet<T>({
       );
     },
   );
+}
+
+Future<String?> _showAccountIconSheet({
+  required BuildContext context,
+  required String selected,
+}) {
+  final choices = <_AccountIconChoice>[
+    for (final code in accountIconCodes)
+      _AccountIconChoice(
+        code: code,
+        label: iconLabelForCode(code),
+        group: '通用图标',
+      ),
+    for (final option in accountAssetIconOptions)
+      _AccountIconChoice(
+        code: option.code,
+        label: option.label,
+        group: option.group,
+      ),
+  ];
+
+  return showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
+    ),
+    builder: (context) {
+      final maxHeight = MediaQuery.sizeOf(context).height * 0.74;
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  '选择账户图标',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: choices.length,
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.06),
+                    ),
+                    itemBuilder: (context, index) {
+                      final choice = choices[index];
+                      final isSelected = choice.code == selected;
+                      return Material(
+                        color: isSelected
+                            ? veriRoyal.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(veriRadiusSm),
+                        child: ListTile(
+                          minTileHeight: 48,
+                          dense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                          ),
+                          leading: AccountIconBox(
+                            iconCode: choice.code,
+                            size: 34,
+                          ),
+                          title: Text(
+                            choice.label,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  fontWeight: isSelected
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                ),
+                          ),
+                          subtitle: Text(choice.group),
+                          trailing: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: veriRoyal,
+                                  size: 18,
+                                )
+                              : null,
+                          onTap: () => Navigator.of(context).pop(choice.code),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _AccountIconChoice {
+  const _AccountIconChoice({
+    required this.code,
+    required this.label,
+    required this.group,
+  });
+
+  final String code;
+  final String label;
+  final String group;
 }
 
 Future<String?> _showTextInputDialog({
@@ -3851,8 +3967,11 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) =>
-          NumberPadSheet(title: '修改金额', initialAmount: _amount),
+      builder: (context) => NumberPadSheet(
+        title: '修改金额',
+        initialAmount: _amount,
+        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
+      ),
     );
     if (amount == null || amount <= 0 || !mounted) {
       return;
@@ -4540,7 +4659,6 @@ class AssetsPage extends StatelessWidget {
       title: '资产操作',
       values: const <String>['add_account', 'manage_groups'],
       selected: 'add_account',
-      showSelectedMarker: false,
       labelOf: (value) {
         return switch (value) {
           'add_account' => '添加账户',
@@ -4932,6 +5050,50 @@ class _SelectField extends StatelessWidget {
   }
 }
 
+class _AccountIconSelectField extends StatelessWidget {
+  const _AccountIconSelectField({
+    super.key,
+    required this.iconCode,
+    required this.onTap,
+  });
+
+  final String iconCode;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(veriRadiusMd),
+        onTap: onTap,
+        child: InputDecorator(
+          decoration: const InputDecoration(
+            labelText: '账户图标',
+            suffixIcon: Icon(Icons.keyboard_arrow_down),
+          ),
+          child: Row(
+            children: <Widget>[
+              AccountIconBox(iconCode: iconCode, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  iconLabelForCode(iconCode),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AddAccountPageState extends State<AddAccountPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -5004,10 +5166,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                _SelectField(
-                  label: '账户图标',
-                  value: iconLabelForCode(_iconCode),
-                  icon: iconForCode(_iconCode),
+                _AccountIconSelectField(
+                  key: const Key('account_icon_select_field'),
+                  iconCode: _iconCode,
                   onTap: _pickAccountIcon,
                 ),
                 const SizedBox(height: 10),
@@ -5045,12 +5206,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
   }
 
   Future<void> _pickAccountIcon() async {
-    final selected = await _showOptionSheet<String>(
+    final selected = await _showAccountIconSheet(
       context: context,
-      title: '选择账户图标',
-      values: accountIconCodes,
       selected: _iconCode,
-      labelOf: iconLabelForCode,
     );
     if (selected != null) {
       setState(() => _iconCode = selected);
@@ -5429,6 +5587,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
         initialAmount: balance,
         allowNegative: true,
         allowZero: true,
+        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
       ),
     );
     if (amount == null || !mounted) {
@@ -5445,7 +5604,10 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => const NumberPadSheet(title: '快速记账'),
+      builder: (context) => NumberPadSheet(
+        title: '快速记账',
+        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
+      ),
     );
     if (!context.mounted || amount == null || amount <= 0) {
       return;
@@ -5486,12 +5648,9 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
   }
 
   Future<void> _pickAccountIcon(Account account) async {
-    final selected = await _showOptionSheet<String>(
+    final selected = await _showAccountIconSheet(
       context: context,
-      title: '选择账户图标',
-      values: accountIconCodes,
       selected: account.iconCode,
-      labelOf: iconLabelForCode,
     );
     if (selected != null && mounted) {
       VeriFinScope.of(
@@ -7160,23 +7319,12 @@ class SettingsPage extends StatelessWidget {
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _pickThemePreference(context, controller),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              const VeriCard(
-                child: Column(
-                  children: <Widget>[
-                    SettingsRow(
-                      icon: Icons.cloud_off_outlined,
-                      title: '同步方式',
-                      trailing: '本地优先',
-                    ),
-                    Divider(),
-                    SettingsRow(
-                      icon: Icons.android_outlined,
-                      title: 'Android 打包',
-                      trailing: 'GitHub CI',
+                    const Divider(height: 1),
+                    _CompactSwitchRow(
+                      icon: Icons.vibration,
+                      title: const Text('触感反馈'),
+                      value: controller.hapticsEnabled,
+                      onChanged: controller.setHapticsEnabled,
                     ),
                   ],
                 ),
@@ -7215,6 +7363,17 @@ class SettingsPage extends StatelessWidget {
                       onTap: () => _confirmReset(context, controller),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'VeriFin $appVersionLabel',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.38),
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -7593,11 +7752,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       ),
                       if (hasAccounts)
                         Chip(
-                          avatar: Icon(
-                            iconForCode(
-                              accountById(accounts, _accountId).iconCode,
-                            ),
-                            size: 18,
+                          avatar: AccountIconBox(
+                            iconCode: accountById(
+                              accounts,
+                              _accountId,
+                            ).iconCode,
+                            size: 22,
                           ),
                           label: Text(accountById(accounts, _accountId).name),
                         ),
@@ -7629,8 +7789,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) =>
-          NumberPadSheet(title: '修改金额', initialAmount: _amount),
+      builder: (context) => NumberPadSheet(
+        title: '修改金额',
+        initialAmount: _amount,
+        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
+      ),
     );
 
     if (!mounted || amount == null || amount <= 0) {

@@ -26,6 +26,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _assetCoverKey = 'verifin.asset_cover.v1';
   static const String _categoriesKey = 'verifin.categories.v1';
   static const String _categoryBudgetsKey = 'verifin.category_budgets.v1';
+  static const String _hapticsKey = 'verifin.haptics.v1';
 
   final LocalKeyValueStore _store;
   final List<LedgerEntry> _entries = <LedgerEntry>[];
@@ -42,6 +43,7 @@ class VeriFinController extends ChangeNotifier {
   UserProfile _profile = defaultUserProfile;
   String _activeBookId = defaultLedgerBookId;
   String _assetCoverUrl = '';
+  bool _hapticsEnabled = true;
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
     _entries.where((entry) => entry.bookId == _activeBookId),
@@ -76,6 +78,8 @@ class VeriFinController extends ChangeNotifier {
   UserProfile get profile => _profile;
 
   String get assetCoverUrl => _assetCoverUrl;
+
+  bool get hapticsEnabled => _hapticsEnabled;
 
   List<Category> categoriesForType(EntryType type) {
     return categoriesFor(type, categories);
@@ -114,6 +118,12 @@ class VeriFinController extends ChangeNotifier {
     _themePreference = preference;
     themePreferenceListenable.value = preference;
     _store.write(_themeKey, preference.name);
+    notifyListeners();
+  }
+
+  void setHapticsEnabled(bool enabled) {
+    _hapticsEnabled = enabled;
+    _store.write(_hapticsKey, enabled.toString());
     notifyListeners();
   }
 
@@ -462,6 +472,7 @@ class VeriFinController extends ChangeNotifier {
       _assetCoverKey,
       _categoriesKey,
       _categoryBudgetsKey,
+      _hapticsKey,
     ]) {
       _store.delete(key);
     }
@@ -484,6 +495,7 @@ class VeriFinController extends ChangeNotifier {
     _themePreference = ThemePreference.system;
     _activeBookId = defaultLedgerBookId;
     _assetCoverUrl = '';
+    _hapticsEnabled = true;
     themePreferenceListenable.value = _themePreference;
     notifyListeners();
   }
@@ -505,6 +517,7 @@ class VeriFinController extends ChangeNotifier {
         'profile': _profile.toJson(),
         'themePreference': _themePreference.name,
         'assetCoverUrl': _assetCoverUrl,
+        'hapticsEnabled': _hapticsEnabled,
       },
     };
     return const JsonEncoder.withIndent('  ').convert(payload);
@@ -570,6 +583,7 @@ class VeriFinController extends ChangeNotifier {
       data['themePreference'] as String?,
     );
     final nextAssetCoverUrl = data['assetCoverUrl'] as String? ?? '';
+    final nextHapticsEnabled = data['hapticsEnabled'] as bool? ?? true;
 
     _ledgerBooks
       ..clear()
@@ -597,6 +611,7 @@ class VeriFinController extends ChangeNotifier {
     _profile = nextProfile;
     _themePreference = nextThemePreference;
     _assetCoverUrl = nextAssetCoverUrl;
+    _hapticsEnabled = nextHapticsEnabled;
 
     _persistLedgerBooks();
     _store.write(_activeBookKey, _activeBookId);
@@ -608,6 +623,7 @@ class VeriFinController extends ChangeNotifier {
     _persistCategoryBudgets();
     _store.write(_profileKey, jsonEncode(_profile.toJson()));
     _store.write(_themeKey, _themePreference.name);
+    _store.write(_hapticsKey, _hapticsEnabled.toString());
     if (_assetCoverUrl.isEmpty) {
       _store.delete(_assetCoverKey);
     } else {
@@ -639,6 +655,7 @@ class VeriFinController extends ChangeNotifier {
     _loadBudgets();
     _loadCategoryBudgets();
     _assetCoverUrl = _store.read(_assetCoverKey) ?? '';
+    _hapticsEnabled = _store.read(_hapticsKey) != 'false';
     final rawEntries = _store.read(_entriesKey);
     if (rawEntries == null || rawEntries.isEmpty) {
       return;

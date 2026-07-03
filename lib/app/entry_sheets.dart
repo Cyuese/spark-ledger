@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_theme.dart';
+import 'common_widgets.dart';
 import 'demo_data.dart';
 import 'ledger_math.dart';
 import 'models.dart';
@@ -12,12 +14,14 @@ class NumberPadSheet extends StatefulWidget {
     this.initialAmount,
     this.allowNegative = false,
     this.allowZero = false,
+    this.hapticsEnabled = true,
   });
 
   final String title;
   final double? initialAmount;
   final bool allowNegative;
   final bool allowZero;
+  final bool hapticsEnabled;
 
   @override
   State<NumberPadSheet> createState() => _NumberPadSheetState();
@@ -167,6 +171,13 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
   }
 
   void _handleKey(String value) {
+    if (widget.hapticsEnabled) {
+      if (value == 'OK') {
+        HapticFeedback.lightImpact();
+      } else {
+        HapticFeedback.selectionClick();
+      }
+    }
     if (value == 'OK') {
       Navigator.of(context).pop(_amount);
       return;
@@ -239,24 +250,50 @@ class CategoryPickerSheet extends StatelessWidget {
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 2.6,
-            children: categories
-                .map(
-                  (category) => ChoiceChip(
-                    avatar: Icon(iconForCode(category.iconCode), size: 18),
-                    label: Text(category.label),
-                    selected: category.id == selectedId,
-                    onSelected: (_) => Navigator.of(context).pop(category.id),
+          const SizedBox(height: 10),
+          Flexible(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: categories.length,
+              separatorBuilder: (_, _) => Divider(
+                height: 1,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.06),
+              ),
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                final isSelected = category.id == selectedId;
+                return Material(
+                  color: isSelected
+                      ? veriRoyal.withValues(alpha: 0.12)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(veriRadiusSm),
+                  child: ListTile(
+                    minTileHeight: 48,
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    leading: VeriIconBox(
+                      icon: iconForCode(category.iconCode),
+                      color: colorForType(category.type),
+                      size: 32,
+                    ),
+                    title: Text(
+                      category.label,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: isSelected
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check, color: veriRoyal, size: 18)
+                        : null,
+                    onTap: () => Navigator.of(context).pop(category.id),
                   ),
-                )
-                .toList(),
+                );
+              },
+            ),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'account_icon_assets.dart';
 import 'models.dart';
 
 const List<AccountGroup> defaultAccountGroups = <AccountGroup>[];
@@ -111,6 +112,11 @@ IconData iconForCode(String code) {
 }
 
 String iconLabelForCode(String code) {
+  final assetIcon = accountAssetIconByCode(code);
+  if (assetIcon != null) {
+    return assetIcon.label;
+  }
+
   switch (code) {
     case 'category':
       return '分类';

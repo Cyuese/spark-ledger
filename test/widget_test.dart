@@ -62,6 +62,11 @@ void main() {
     await tapBottomTab(tester, 3);
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
+    expect(find.text('触感反馈'), findsOneWidget);
+    expect(find.text('VeriFin v1.0.0+2'), findsOneWidget);
+    expect(find.text('同步方式'), findsNothing);
+    expect(find.text('Android 打包'), findsNothing);
+
     await tester.tap(find.text('主题模式'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('深色'));
@@ -69,6 +74,29 @@ void main() {
 
     expect(find.text('主题模式'), findsOneWidget);
     expect(find.text('深色'), findsOneWidget);
+  });
+
+  testWidgets('opens account icon picker from add account page', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+
+    await tapBottomTab(tester, 1);
+    await tester.tap(find.byTooltip('资产操作'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('添加账户'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('account_icon_select_field')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('选择账户图标'), findsOneWidget);
+    expect(find.text('通用图标'), findsAtLeastNWidgets(1));
+    await tester.scrollUntilVisible(
+      find.text('花呗'),
+      280,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.text('花呗'), findsOneWidget);
   });
 
   testWidgets('opens asset cover selector from the assets page', (
@@ -471,6 +499,7 @@ void main() {
       ..setMonthlyBudget(DateTime(2026, 7), 2400)
       ..setCategoryBudget(DateTime(2026, 7), 'dining', 600)
       ..setThemePreference(ThemePreference.dark)
+      ..setHapticsEnabled(false)
       ..addCategory(type: EntryType.expense, label: '咖啡', iconCode: 'dining');
     final coffeeIndex = source
         .categoriesForType(EntryType.expense)
@@ -487,6 +516,7 @@ void main() {
     expect(target.monthlyBudget(DateTime(2026, 7)), 2400);
     expect(target.categoryBudget(DateTime(2026, 7), 'dining'), 600);
     expect(target.themePreference, ThemePreference.dark);
+    expect(target.hapticsEnabled, isFalse);
     expect(target.categories.any((category) => category.label == '咖啡'), isTrue);
     expect(target.categoriesForType(EntryType.expense).first.label, '咖啡');
 

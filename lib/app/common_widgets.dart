@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
+import 'account_icon_assets.dart';
 import 'app_theme.dart';
 import 'demo_data.dart';
 import 'ledger_math.dart';
@@ -160,6 +162,50 @@ class TransactionListCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class AccountIconBox extends StatelessWidget {
+  const AccountIconBox({
+    super.key,
+    required this.iconCode,
+    this.size = 28,
+    this.color,
+  });
+
+  final String iconCode;
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final option = accountAssetIconByCode(iconCode);
+    if (option == null) {
+      return VeriIconBox(
+        icon: iconForCode(iconCode),
+        color: color ?? veriRoyal,
+        size: size,
+      );
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all((size * 0.18).clamp(4, 8).toDouble()),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        border: Border.all(
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.06),
+        ),
+      ),
+      child: SvgPicture.asset(option.assetPath, fit: BoxFit.contain),
     );
   }
 }
@@ -809,7 +855,7 @@ class AccountGroupCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
                     children: <Widget>[
-                      VeriIconBox(icon: iconForCode(account.iconCode)),
+                      AccountIconBox(iconCode: account.iconCode),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -1110,7 +1156,7 @@ class SettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: <Widget>[
           VeriIconBox(icon: icon, size: 28),
