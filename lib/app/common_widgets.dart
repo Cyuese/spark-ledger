@@ -194,6 +194,8 @@ class FilterPill extends StatelessWidget {
               ],
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: Theme.of(

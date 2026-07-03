@@ -285,6 +285,95 @@ void main() {
     expect(find.text('还没有交易'), findsOneWidget);
   });
 
+  testWidgets('filters transaction list by search and account', (
+    WidgetTester tester,
+  ) async {
+    final store = LocalKeyValueStore();
+    final controller = VeriFinController(store);
+    final now = DateTime.now();
+    controller
+      ..addAccount(
+        Account(
+          id: 'cash-search-test',
+          bookId: controller.activeBook.id,
+          name: '现金账户',
+          type: AccountType.cash,
+          groupId: null,
+          initialBalance: 0,
+          iconCode: 'cash',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+        ),
+      )
+      ..addAccount(
+        Account(
+          id: 'card-search-test',
+          bookId: controller.activeBook.id,
+          name: '银行卡',
+          type: AccountType.debitCard,
+          groupId: null,
+          initialBalance: 0,
+          iconCode: 'bank',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'dining-search-test',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 75,
+          categoryId: 'dining',
+          accountId: 'cash-search-test',
+          note: '晚餐',
+          occurredAt: now,
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'transport-search-test',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 12,
+          categoryId: 'transport',
+          accountId: 'card-search-test',
+          note: '公交',
+          occurredAt: now,
+        ),
+      )
+      ..dispose();
+
+    await tester.pumpWidget(VeriFinApp(store: store));
+    await tester.tap(find.text('今日交易'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('交易明细'), findsOneWidget);
+    expect(find.text('餐饮'), findsOneWidget);
+    expect(find.text('交通'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('transaction_search_field')),
+      '晚餐',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('餐饮'), findsOneWidget);
+    expect(find.text('交通'), findsNothing);
+
+    await tester.tap(find.byTooltip('清空筛选'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('全部账户'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('银行卡').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('交通'), findsOneWidget);
+    expect(find.text('餐饮'), findsNothing);
+  });
+
   testWidgets('starts with no default accounts', (WidgetTester tester) async {
     await tester.pumpWidget(const VeriFinApp());
 

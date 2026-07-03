@@ -2772,11 +2772,29 @@ class TransactionsPage extends StatefulWidget {
 }
 
 class _TransactionsPageState extends State<TransactionsPage> {
+  static const String _allFilterValue = '__all__';
+
   TransactionTimeFilter _timeFilter = TransactionTimeFilter.all;
   TransactionSortOrder _sortOrder = TransactionSortOrder.dateDesc;
   DateTime _periodAnchor = DateTime.now();
   late DateTime _visibleDate = widget.initialDate ?? DateTime.now();
   late bool _dateMode = widget.initialDate != null;
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+  String? _selectedAccountId;
+  String? _selectedCategoryId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedAccountId = widget.accountId;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2844,7 +2862,31 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       ),
                     ],
                   ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 10),
+                _TransactionSearchFilters(
+                  controller: _searchController,
+                  accountLabel: _accountFilterLabel(controller),
+                  categoryLabel: _categoryFilterLabel(controller),
+                  accountLocked: widget.accountId != null,
+                  onChanged: (value) => setState(() => _query = value.trim()),
+                  onPickAccount: widget.accountId == null
+                      ? () => _pickAccountFilter(controller)
+                      : null,
+                  onPickCategory: () => _pickCategoryFilter(controller),
+                  onClear: _hasSecondaryFilters
+                      ? () {
+                          setState(() {
+                            _searchController.clear();
+                            _query = '';
+                            if (widget.accountId == null) {
+                              _selectedAccountId = null;
+                            }
+                            _selectedCategoryId = null;
+                          });
+                        }
+                      : null,
+                ),
+                const SizedBox(height: 16),
                 Text(
                   '${entries.length}笔交易',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -2886,11 +2928,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 ),
                 const SizedBox(height: 18),
                 if (entries.isEmpty)
-                  const VeriCard(
+                  VeriCard(
                     child: EmptyState(
                       icon: Icons.receipt_long_outlined,
-                      title: '暂无交易',
-                      description: '保存交易后会在这里按日期展示。',
+                      title: _hasSecondaryFilters ? '没有匹配交易' : '暂无交易',
+                      description: _hasSecondaryFilters
+                          ? '换一个关键词、账户或分类再试。'
+                          : '保存交易后会在这里按日期展示。',
                     ),
                   )
                 else
@@ -2920,24 +2964,74 @@ class _TransactionsPageState extends State<TransactionsPage> {
               .where((entry) => entry.accountId == widget.accountId)
               .toList();
 
+    List<LedgerEntry> filtered;
     if (_dateMode) {
-      return scopedEntries
+      filtered = scopedEntries
           .where((entry) => DateUtils.isSameDay(entry.occurredAt, _visibleDate))
           .toList();
+    } else {
+      final period = _activePeriod();
+      if (period == null) {
+        filtered = scopedEntries;
+      } else {
+        final endExclusive = period.end.add(const Duration(days: 1));
+        filtered = scopedEntries
+            .where(
+              (entry) =>
+                  !entry.occurredAt.isBefore(period.start) &&
+                  entry.occurredAt.isBefore(endExclusive),
+            )
+            .toList();
+      }
     }
 
-    final period = _activePeriod();
-    if (period == null) {
-      return scopedEntries;
-    }
-    final endExclusive = period.end.add(const Duration(days: 1));
-    return scopedEntries
+    final controller = VeriFinScope.of(context);
+    final normalizedQuery = _query.toLowerCase();
+    return filtered
+        .where((entry) => _matchesSecondaryFilters(entry, controller))
         .where(
-          (entry) =>
-              !entry.occurredAt.isBefore(period.start) &&
-              entry.occurredAt.isBefore(endExclusive),
+          (entry) => normalizedQuery.isEmpty
+              ? true
+              : _matchesQuery(entry, controller, normalizedQuery),
         )
         .toList();
+  }
+
+  bool get _hasSecondaryFilters =>
+      _query.isNotEmpty ||
+      (widget.accountId == null && _selectedAccountId != null) ||
+      _selectedCategoryId != null;
+
+  bool _matchesSecondaryFilters(
+    LedgerEntry entry,
+    VeriFinController controller,
+  ) {
+    if (_selectedAccountId != null && entry.accountId != _selectedAccountId) {
+      return false;
+    }
+    if (_selectedCategoryId != null &&
+        entry.categoryId != _selectedCategoryId) {
+      return false;
+    }
+    return true;
+  }
+
+  bool _matchesQuery(
+    LedgerEntry entry,
+    VeriFinController controller,
+    String query,
+  ) {
+    final category = controller.categoryById(entry.categoryId);
+    final account = accountById(controller.accounts, entry.accountId);
+    final searchable = <String>[
+      entry.note,
+      category.label,
+      account.name,
+      entry.type.label,
+      formatAmount(entry.amount),
+      formatSignedAmount(signedAmount(entry)),
+    ].join(' ').toLowerCase();
+    return searchable.contains(query);
   }
 
   List<LedgerEntry> _sortedEntries(List<LedgerEntry> entries) {
@@ -2983,6 +3077,64 @@ class _TransactionsPageState extends State<TransactionsPage> {
     if (selected != null) {
       setState(() => _sortOrder = selected);
     }
+  }
+
+  Future<void> _pickAccountFilter(VeriFinController controller) async {
+    final values = <String>[
+      _allFilterValue,
+      for (final account in controller.accounts) account.id,
+    ];
+    final selected = await _showOptionSheet<String>(
+      context: context,
+      title: '筛选账户',
+      values: values,
+      selected: _selectedAccountId ?? _allFilterValue,
+      labelOf: (value) => value == _allFilterValue
+          ? '全部账户'
+          : accountById(controller.accounts, value).name,
+    );
+    if (selected != null) {
+      setState(() {
+        _selectedAccountId = selected == _allFilterValue ? null : selected;
+      });
+    }
+  }
+
+  Future<void> _pickCategoryFilter(VeriFinController controller) async {
+    final values = <String>[
+      _allFilterValue,
+      for (final category in controller.categories) category.id,
+    ];
+    final selected = await _showOptionSheet<String>(
+      context: context,
+      title: '筛选分类',
+      values: values,
+      selected: _selectedCategoryId ?? _allFilterValue,
+      labelOf: (value) => value == _allFilterValue
+          ? '全部分类'
+          : controller.categoryById(value).label,
+    );
+    if (selected != null) {
+      setState(() {
+        _selectedCategoryId = selected == _allFilterValue ? null : selected;
+      });
+    }
+  }
+
+  String _accountFilterLabel(VeriFinController controller) {
+    final accountId = _selectedAccountId;
+    if (accountId == null) {
+      return '全部账户';
+    }
+    return accountById(controller.accounts, accountId).name;
+  }
+
+  String _categoryFilterLabel(VeriFinController controller) {
+    final categoryId = _selectedCategoryId;
+    if (categoryId == null) {
+      return '全部分类';
+    }
+    return controller.categoryById(categoryId).label;
   }
 
   DateWindow? _activePeriod() {
@@ -3136,6 +3288,116 @@ class _TransactionFilterBar extends StatelessWidget {
           icon: const Icon(Icons.chevron_right, size: 18),
         ),
       ],
+    );
+  }
+}
+
+class _TransactionSearchFilters extends StatelessWidget {
+  const _TransactionSearchFilters({
+    required this.controller,
+    required this.accountLabel,
+    required this.categoryLabel,
+    required this.accountLocked,
+    required this.onChanged,
+    required this.onPickCategory,
+    this.onPickAccount,
+    this.onClear,
+  });
+
+  final TextEditingController controller;
+  final String accountLabel;
+  final String categoryLabel;
+  final bool accountLocked;
+  final ValueChanged<String> onChanged;
+  final VoidCallback? onPickAccount;
+  final VoidCallback onPickCategory;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return VeriCard(
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+      child: Column(
+        children: <Widget>[
+          TextField(
+            key: const Key('transaction_search_field'),
+            controller: controller,
+            onChanged: onChanged,
+            textInputAction: TextInputAction.search,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: '搜索备注、分类、账户或金额',
+              prefixIcon: const Icon(Icons.search, size: 18),
+              suffixIcon: onClear == null
+                  ? null
+                  : IconButton(
+                      tooltip: '清空筛选',
+                      onPressed: onClear,
+                      icon: const Icon(Icons.close, size: 18),
+                    ),
+              filled: true,
+              fillColor: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : veriSurfaceLight,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(veriRadiusSm),
+                borderSide: BorderSide(
+                  color: colorScheme.onSurface.withValues(alpha: 0.08),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(veriRadiusSm),
+                borderSide: BorderSide(
+                  color: colorScheme.onSurface.withValues(alpha: 0.08),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(veriRadiusSm),
+                borderSide: const BorderSide(color: veriRoyal, width: 1.2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilterPill(
+                    label: accountLabel,
+                    icon: accountLocked
+                        ? Icons.lock_outline
+                        : Icons.account_balance_wallet_outlined,
+                    onTap: onPickAccount,
+                    showChevron: !accountLocked,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilterPill(
+                    label: categoryLabel,
+                    icon: Icons.category_outlined,
+                    onTap: onPickCategory,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
