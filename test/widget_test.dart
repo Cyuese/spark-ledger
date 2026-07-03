@@ -154,6 +154,46 @@ void main() {
     expect(find.text('预算 2400'), findsOneWidget);
   });
 
+  testWidgets('shows category budget risk on home and budget page', (
+    WidgetTester tester,
+  ) async {
+    final store = LocalKeyValueStore();
+    final controller = VeriFinController(store);
+    final now = DateTime.now();
+    controller
+      ..addEntry(
+        LedgerEntry(
+          id: 'dining-risk',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 75,
+          categoryId: 'dining',
+          accountId: 'cash-test',
+          note: '晚餐',
+          occurredAt: now,
+        ),
+      )
+      ..setCategoryBudget(now, 'dining', 50)
+      ..dispose();
+
+    await tester.pumpWidget(VeriFinApp(store: store));
+    await tester.scrollUntilVisible(
+      find.byType(BudgetPanel),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.text('餐饮超出 25'), findsOneWidget);
+    await tester.ensureVisible(find.text('餐饮超出 25'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('餐饮超出 25'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('餐饮已超支'), findsOneWidget);
+    expect(find.textContaining('已超出 25'), findsOneWidget);
+  });
+
   testWidgets('creates an entry through the quick entry flow', (
     WidgetTester tester,
   ) async {

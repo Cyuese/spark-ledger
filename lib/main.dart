@@ -284,6 +284,12 @@ class HomePage extends StatelessWidget {
     final trendIncome = sumByType(trendEntries, EntryType.income);
     final recentEntries = entries.take(5).toList();
     final monthlyBudget = controller.monthlyBudget(now);
+    final categoryBudgetSnapshots = _categoryBudgetSnapshots(
+      controller: controller,
+      month: now,
+      monthEntries: monthEntries,
+    );
+    final categoryBudgetRisk = _topCategoryBudgetRisk(categoryBudgetSnapshots);
 
     return VeriPage(
       child: ListView(
@@ -362,6 +368,7 @@ class HomePage extends StatelessWidget {
             month: now,
             expense: monthExpense,
             budget: monthlyBudget,
+            categoryRisk: categoryBudgetRisk,
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
@@ -654,12 +661,14 @@ class BudgetPanel extends StatelessWidget {
     required this.month,
     required this.expense,
     required this.budget,
+    required this.categoryRisk,
     required this.onTap,
   });
 
   final DateTime month;
   final double expense;
   final double budget;
+  final CategoryBudgetSnapshot? categoryRisk;
   final VoidCallback onTap;
 
   @override
@@ -780,6 +789,10 @@ class BudgetPanel extends StatelessWidget {
               ),
             ),
           ),
+          if (categoryRisk != null) ...<Widget>[
+            const SizedBox(height: 8),
+            _HomeBudgetRiskBanner(snapshot: categoryRisk!),
+          ],
         ],
       ),
     );
@@ -953,6 +966,52 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
   }
 }
 
+class _HomeBudgetRiskBanner extends StatelessWidget {
+  const _HomeBudgetRiskBanner({required this.snapshot});
+
+  final CategoryBudgetSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = snapshot.overBudget ? veriExpense : veriWarning;
+    final text = snapshot.overBudget
+        ? '${snapshot.category.label}超出 ${formatAmount(snapshot.spent - snapshot.budget)}'
+        : '${snapshot.category.label}已用 ${(snapshot.ratio * 100).toStringAsFixed(0)}%';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        border: Border.all(color: color.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(
+            snapshot.overBudget
+                ? Icons.warning_amber_rounded
+                : Icons.error_outline,
+            color: color,
+            size: 17,
+          ),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class BudgetSettingsPage extends StatefulWidget {
   const BudgetSettingsPage({super.key, required this.initialMonth});
 
@@ -1024,20 +1083,15 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
     final dailyAvailable = remainingDays <= 0 || remaining <= 0
         ? 0.0
         : remaining / remainingDays;
-    final expenseCategories = controller
-        .categoriesForType(EntryType.expense)
-        .where((category) => category.id != 'balance_adjust_expense')
-        .toList(growable: false);
-    final categoryExpenses = <String, double>{};
-    for (final entry in monthEntries.where(
-      (entry) => entry.type == EntryType.expense,
-    )) {
-      categoryExpenses.update(
-        entry.categoryId,
-        (amount) => amount + entry.amount,
-        ifAbsent: () => entry.amount,
-      );
-    }
+    final categoryBudgetSnapshots = _categoryBudgetSnapshots(
+      controller: controller,
+      month: _month,
+      monthEntries: monthEntries,
+    );
+    final budgetedCategoryCount = categoryBudgetSnapshots
+        .where((snapshot) => snapshot.hasBudget)
+        .length;
+    final categoryBudgetRisk = _topCategoryBudgetRisk(categoryBudgetSnapshots);
 
     return Scaffold(
       body: SafeArea(
@@ -1228,6 +1282,14 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                 ratio: ratio,
                 remainingDays: remainingDays,
               ),
+              if (categoryBudgetRisk != null ||
+                  budgetedCategoryCount > 0) ...<Widget>[
+                const SizedBox(height: 10),
+                _CategoryBudgetAlertCard(
+                  snapshot: categoryBudgetRisk,
+                  budgetedCategoryCount: budgetedCategoryCount,
+                ),
+              ],
               const SizedBox(height: 10),
               VeriCard(
                 padding: const EdgeInsets.fromLTRB(13, 12, 13, 8),
@@ -1256,7 +1318,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    if (expenseCategories.isEmpty)
+                    if (categoryBudgetSnapshots.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Center(
@@ -1271,15 +1333,10 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                         ),
                       )
                     else
-                      for (final category in expenseCategories)
+                      for (final snapshot in categoryBudgetSnapshots)
                         _CategoryBudgetRow(
-                          category: category,
-                          spent: categoryExpenses[category.id] ?? 0,
-                          budget: controller.categoryBudget(
-                            _month,
-                            category.id,
-                          ),
-                          onTap: () => _editCategoryBudget(category),
+                          snapshot: snapshot,
+                          onTap: () => _editCategoryBudget(snapshot.category),
                         ),
                   ],
                 ),
@@ -1578,33 +1635,95 @@ class _BudgetMetricTile extends StatelessWidget {
   }
 }
 
-class _CategoryBudgetRow extends StatelessWidget {
-  const _CategoryBudgetRow({
-    required this.category,
-    required this.spent,
-    required this.budget,
-    required this.onTap,
+class _CategoryBudgetAlertCard extends StatelessWidget {
+  const _CategoryBudgetAlertCard({
+    required this.snapshot,
+    required this.budgetedCategoryCount,
   });
 
-  final Category category;
-  final double spent;
-  final double budget;
+  final CategoryBudgetSnapshot? snapshot;
+  final int budgetedCategoryCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final current = snapshot;
+    final color = current == null
+        ? veriIncome
+        : current.overBudget
+        ? veriExpense
+        : veriWarning;
+    final icon = current == null
+        ? Icons.check_circle_outline
+        : current.overBudget
+        ? Icons.warning_amber_rounded
+        : Icons.error_outline;
+    final title = current == null
+        ? '分类预算正常'
+        : current.overBudget
+        ? '${current.category.label}已超支'
+        : '${current.category.label}接近预算';
+    final description = current == null
+        ? '已设置 $budgetedCategoryCount 个分类预算，当前没有临近超支的分类。'
+        : current.overBudget
+        ? '已超出 ${formatAmount(current.spent - current.budget)}，本月已用 ${(current.ratio * 100).toStringAsFixed(0)}%。'
+        : '剩余 ${formatAmount(current.remaining)}，本月已用 ${(current.ratio * 100).toStringAsFixed(0)}%。';
+
+    return VeriCard(
+      padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          VeriIconBox(icon: icon, color: color, size: 32),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.58),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryBudgetRow extends StatelessWidget {
+  const _CategoryBudgetRow({required this.snapshot, required this.onTap});
+
+  final CategoryBudgetSnapshot snapshot;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final color = budget <= 0
+    final color = snapshot.budget <= 0
         ? veriBlue
-        : spent > budget
+        : snapshot.spent > snapshot.budget
         ? veriExpense
         : veriRoyal;
-    final ratio = budget <= 0 ? 0.0 : (spent / budget).clamp(0, 1).toDouble();
-    final remaining = budget - spent;
-    final subtitle = budget <= 0
-        ? '未设置预算 · 本月支出 ${formatAmount(spent)}'
-        : remaining >= 0
-        ? '剩余 ${formatAmount(remaining)} · 已用 ${(spent / budget * 100).toStringAsFixed(0)}%'
-        : '超出 ${formatAmount(remaining.abs())} · 已用 ${(spent / budget * 100).toStringAsFixed(0)}%';
+    final subtitle = snapshot.budget <= 0
+        ? '未设置预算 · 本月支出 ${formatAmount(snapshot.spent)}'
+        : snapshot.remaining >= 0
+        ? '剩余 ${formatAmount(snapshot.remaining)} · 已用 ${(snapshot.ratio * 100).toStringAsFixed(0)}%'
+        : '超出 ${formatAmount(snapshot.remaining.abs())} · 已用 ${(snapshot.ratio * 100).toStringAsFixed(0)}%';
 
     return Material(
       color: Colors.transparent,
@@ -1616,7 +1735,7 @@ class _CategoryBudgetRow extends StatelessWidget {
           child: Row(
             children: <Widget>[
               VeriIconBox(
-                icon: iconForCode(category.iconCode),
+                icon: iconForCode(snapshot.category.iconCode),
                 color: color,
                 size: 30,
               ),
@@ -1629,7 +1748,7 @@ class _CategoryBudgetRow extends StatelessWidget {
                       children: <Widget>[
                         Expanded(
                           child: Text(
-                            category.label,
+                            snapshot.category.label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.titleSmall
@@ -1638,10 +1757,12 @@ class _CategoryBudgetRow extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          budget <= 0 ? '设置' : formatAmount(budget),
+                          snapshot.budget <= 0
+                              ? '设置'
+                              : formatAmount(snapshot.budget),
                           style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(
-                                color: budget <= 0
+                                color: snapshot.budget <= 0
                                     ? Theme.of(context).colorScheme.onSurface
                                           .withValues(alpha: 0.52)
                                     : Theme.of(context).colorScheme.onSurface,
@@ -1674,7 +1795,7 @@ class _CategoryBudgetRow extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(99),
                       child: LinearProgressIndicator(
-                        value: ratio,
+                        value: snapshot.progress,
                         minHeight: 4,
                         backgroundColor: Theme.of(context)
                             .colorScheme
@@ -1822,6 +1943,110 @@ String _budgetPeriodLabel(
     '这个月份已结束，可切换到其他月份继续查看或调整预算。',
     Icons.event_available_outlined,
   );
+}
+
+class CategoryBudgetSnapshot {
+  const CategoryBudgetSnapshot({
+    required this.category,
+    required this.spent,
+    required this.budget,
+  });
+
+  final Category category;
+  final double spent;
+  final double budget;
+
+  bool get hasBudget => budget > 0;
+
+  double get remaining => budget - spent;
+
+  double get ratio => hasBudget ? spent / budget : 0;
+
+  double get progress => hasBudget ? ratio.clamp(0, 1).toDouble() : 0;
+
+  bool get overBudget => hasBudget && spent > budget;
+
+  bool get nearLimit => hasBudget && !overBudget && ratio >= 0.85;
+
+  bool get needsAttention => overBudget || nearLimit;
+}
+
+List<CategoryBudgetSnapshot> _categoryBudgetSnapshots({
+  required VeriFinController controller,
+  required DateTime month,
+  required List<LedgerEntry> monthEntries,
+}) {
+  final spentByCategory = <String, double>{};
+  for (final entry in monthEntries.where(
+    (entry) => entry.type == EntryType.expense,
+  )) {
+    spentByCategory.update(
+      entry.categoryId,
+      (amount) => amount + entry.amount,
+      ifAbsent: () => entry.amount,
+    );
+  }
+
+  final snapshots = controller
+      .categoriesForType(EntryType.expense)
+      .where((category) => category.id != 'balance_adjust_expense')
+      .map(
+        (category) => CategoryBudgetSnapshot(
+          category: category,
+          spent: spentByCategory[category.id] ?? 0,
+          budget: controller.categoryBudget(month, category.id),
+        ),
+      )
+      .toList(growable: false);
+  return snapshots..sort(_compareCategoryBudgetSnapshots);
+}
+
+CategoryBudgetSnapshot? _topCategoryBudgetRisk(
+  List<CategoryBudgetSnapshot> snapshots,
+) {
+  for (final snapshot in snapshots) {
+    if (snapshot.needsAttention) {
+      return snapshot;
+    }
+  }
+  return null;
+}
+
+int _compareCategoryBudgetSnapshots(
+  CategoryBudgetSnapshot a,
+  CategoryBudgetSnapshot b,
+) {
+  final rankCompare = _categoryBudgetSortRank(
+    a,
+  ).compareTo(_categoryBudgetSortRank(b));
+  if (rankCompare != 0) {
+    return rankCompare;
+  }
+  final ratioCompare = b.ratio.compareTo(a.ratio);
+  if (ratioCompare != 0) {
+    return ratioCompare;
+  }
+  final spentCompare = b.spent.compareTo(a.spent);
+  if (spentCompare != 0) {
+    return spentCompare;
+  }
+  return a.category.label.compareTo(b.category.label);
+}
+
+int _categoryBudgetSortRank(CategoryBudgetSnapshot snapshot) {
+  if (snapshot.overBudget) {
+    return 0;
+  }
+  if (snapshot.nearLimit) {
+    return 1;
+  }
+  if (snapshot.hasBudget) {
+    return 2;
+  }
+  if (snapshot.spent > 0) {
+    return 3;
+  }
+  return 4;
 }
 
 enum TransactionTimeFilter {
