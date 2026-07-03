@@ -385,6 +385,16 @@ void main() {
     expect(find.text('花呗'), findsNothing);
   });
 
+  testWidgets('shows ungrouped accounts in the assets page', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+    await addTestAccount(tester, '现金账户');
+
+    expect(find.text('未分组'), findsOneWidget);
+    expect(find.text('现金账户'), findsOneWidget);
+  });
+
   testWidgets('isolates accounts between ledger books', (
     WidgetTester tester,
   ) async {

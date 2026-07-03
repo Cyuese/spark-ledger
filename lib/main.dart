@@ -4204,7 +4204,7 @@ class AssetsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
-    final accounts = controller.accounts;
+    final accounts = _sortedAccounts(controller.accounts);
     final groups = controller.accountGroups;
     final balances = <Account, double>{
       for (final account in accounts)
@@ -4383,16 +4383,18 @@ class AssetsPage extends StatelessWidget {
           const SizedBox(height: 12),
           for (final group in visibleGroups) ...<Widget>[
             if (accounts.any(
-              (account) => account.groupId == group.id && !account.hidden,
+              (account) =>
+                  _effectiveGroupId(account) == group.id && !account.hidden,
             )) ...<Widget>[
               AccountGroupCard(
                 title: group.name,
-                accounts: accounts
-                    .where(
-                      (account) =>
-                          account.groupId == group.id && !account.hidden,
-                    )
-                    .toList(),
+                accounts: _sortedAccounts(
+                  accounts.where(
+                    (account) =>
+                        _effectiveGroupId(account) == group.id &&
+                        !account.hidden,
+                  ),
+                ),
                 balances: balances,
                 onAccountTap: (account) {
                   Navigator.of(context).push<void>(
@@ -4572,6 +4574,32 @@ class _AssetCoverPreset {
   final String url;
 }
 
+String _effectiveGroupId(Account account) {
+  return account.groupId ?? 'ungrouped';
+}
+
+List<Account> _sortedAccounts(Iterable<Account> accounts) {
+  final sorted = accounts.toList();
+  sorted.sort((a, b) {
+    final hiddenCompare = (a.hidden ? 1 : 0).compareTo(b.hidden ? 1 : 0);
+    if (hiddenCompare != 0) {
+      return hiddenCompare;
+    }
+    final includeCompare = (b.includeInAssets ? 1 : 0).compareTo(
+      a.includeInAssets ? 1 : 0,
+    );
+    if (includeCompare != 0) {
+      return includeCompare;
+    }
+    final typeCompare = a.type.index.compareTo(b.type.index);
+    if (typeCompare != 0) {
+      return typeCompare;
+    }
+    return a.name.compareTo(b.name);
+  });
+  return sorted;
+}
+
 class HiddenAccountsPage extends StatelessWidget {
   const HiddenAccountsPage({super.key});
 
@@ -4605,7 +4633,7 @@ class HiddenAccountsPage extends StatelessWidget {
               else
                 AccountGroupCard(
                   title: '隐藏账户',
-                  accounts: accounts,
+                  accounts: _sortedAccounts(accounts),
                   balances: balances,
                   onAccountTap: (account) {
                     Navigator.of(context).push<void>(
@@ -4668,7 +4696,9 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                   itemBuilder: (context, index) {
                     final group = groups[index];
                     final groupAccounts = accounts
-                        .where((account) => account.groupId == group.id)
+                        .where(
+                          (account) => _effectiveGroupId(account) == group.id,
+                        )
                         .toList();
                     final total = groupAccounts.fold<double>(
                       0,
