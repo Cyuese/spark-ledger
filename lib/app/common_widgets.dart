@@ -823,6 +823,7 @@ class AccountGroupCard extends StatelessWidget {
     required this.accounts,
     required this.balances,
     this.collapsed = false,
+    this.sectionDragIndex,
     this.onToggleCollapsed,
     this.onReorderAccounts,
     this.onAccountTap,
@@ -832,6 +833,7 @@ class AccountGroupCard extends StatelessWidget {
   final List<Account> accounts;
   final Map<Account, double> balances;
   final bool collapsed;
+  final int? sectionDragIndex;
   final VoidCallback? onToggleCollapsed;
   final ReorderCallback? onReorderAccounts;
   final ValueChanged<Account>? onAccountTap;
@@ -862,6 +864,20 @@ class AccountGroupCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (sectionDragIndex != null) ...<Widget>[
+                    const SizedBox(width: 6),
+                    ReorderableDelayedDragStartListener(
+                      index: sectionDragIndex!,
+                      child: Icon(
+                        Icons.drag_indicator,
+                        size: 18,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.34),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(width: 4),
                   Text(
                     formatAmount(total),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(

@@ -1,20 +1,37 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class AppPlatformBridge {
   AppPlatformBridge._();
 
   static const MethodChannel _channel = MethodChannel('verifin/app');
+  static Future<void> Function()? _quickEntryHandler;
+  static final ValueNotifier<UpdateDownloadProgress?> updateProgress =
+      ValueNotifier<UpdateDownloadProgress?>(null);
 
   static void setQuickEntryHandler(Future<void> Function() handler) {
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'openQuickEntry') {
-        await handler();
-      }
-    });
+    _quickEntryHandler = handler;
+    _ensureMethodHandler();
   }
 
   static void clearQuickEntryHandler() {
-    _channel.setMethodCallHandler(null);
+    _quickEntryHandler = null;
+    _ensureMethodHandler();
+  }
+
+  static void _ensureMethodHandler() {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'openQuickEntry') {
+        await _quickEntryHandler?.call();
+        return;
+      }
+      if (call.method == 'updateDownloadProgress') {
+        final args = Map<String, Object?>.from(
+          call.arguments as Map<dynamic, dynamic>? ?? <dynamic, dynamic>{},
+        );
+        updateProgress.value = UpdateDownloadProgress.fromMap(args);
+      }
+    });
   }
 
   static Future<bool> consumeInitialQuickEntryIntent() async {
@@ -29,7 +46,7 @@ class AppPlatformBridge {
   static Future<UpdateCheckResult> checkForUpdate() async {
     try {
       final result = await _channel.invokeMapMethod<String, Object?>(
-        'checkForUpdate',
+        'checkLatestRelease',
       );
       return UpdateCheckResult.fromMap(result ?? const <String, Object?>{});
     } on MissingPluginException {
@@ -41,6 +58,26 @@ class AppPlatformBridge {
       return UpdateCheckResult(
         status: UpdateCheckStatus.error,
         message: error.message ?? '检查更新失败，请稍后再试。',
+      );
+    }
+  }
+
+  static Future<UpdateCheckResult> downloadLatestUpdate() async {
+    updateProgress.value = const UpdateDownloadProgress(progress: 0);
+    try {
+      final result = await _channel.invokeMapMethod<String, Object?>(
+        'downloadLatestUpdate',
+      );
+      return UpdateCheckResult.fromMap(result ?? const <String, Object?>{});
+    } on MissingPluginException {
+      return const UpdateCheckResult(
+        status: UpdateCheckStatus.unsupported,
+        message: '当前预览环境不支持 Android 应用更新。',
+      );
+    } on PlatformException catch (error) {
+      return UpdateCheckResult(
+        status: UpdateCheckStatus.error,
+        message: error.message ?? '下载更新失败，请稍后再试。',
       );
     }
   }
@@ -65,7 +102,14 @@ class AppPlatformBridge {
   }
 }
 
-enum UpdateCheckStatus { installing, upToDate, noAsset, unsupported, error }
+enum UpdateCheckStatus {
+  available,
+  installing,
+  upToDate,
+  noAsset,
+  unsupported,
+  error,
+}
 
 class UpdateCheckResult {
   const UpdateCheckResult({
@@ -90,6 +134,31 @@ class UpdateCheckResult {
       message: map['message'] as String? ?? '检查更新失败，请稍后再试。',
       currentVersion: map['currentVersion'] as String? ?? '',
       latestVersion: map['latestVersion'] as String? ?? '',
+    );
+  }
+}
+
+class UpdateDownloadProgress {
+  const UpdateDownloadProgress({
+    required this.progress,
+    this.receivedBytes = 0,
+    this.totalBytes = 0,
+  });
+
+  final double progress;
+  final int receivedBytes;
+  final int totalBytes;
+
+  int get percent => (progress.clamp(0, 1) * 100).round();
+
+  static UpdateDownloadProgress fromMap(Map<String, Object?> map) {
+    return UpdateDownloadProgress(
+      progress: (map['progress'] as num? ?? 0)
+          .toDouble()
+          .clamp(0, 1)
+          .toDouble(),
+      receivedBytes: (map['receivedBytes'] as num? ?? 0).toInt(),
+      totalBytes: (map['totalBytes'] as num? ?? 0).toInt(),
     );
   }
 }

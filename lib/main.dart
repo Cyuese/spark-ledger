@@ -4379,9 +4379,14 @@ String _relativeDay(DateTime date) {
   return '';
 }
 
-class AssetsPage extends StatelessWidget {
+class AssetsPage extends StatefulWidget {
   const AssetsPage({super.key});
 
+  @override
+  State<AssetsPage> createState() => _AssetsPageState();
+}
+
+class _AssetsPageState extends State<AssetsPage> {
   static const List<_AssetCoverPreset> _coverPresets = <_AssetCoverPreset>[
     _AssetCoverPreset(
       label: '蓝色城市',
@@ -4404,6 +4409,8 @@ class AssetsPage extends StatelessWidget {
           'https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&w=1200&q=80',
     ),
   ];
+
+  bool _reorderingSections = false;
 
   @override
   Widget build(BuildContext context) {
@@ -4448,39 +4455,46 @@ class AssetsPage extends StatelessWidget {
         sortOrder: 999,
       ),
     ];
-    final assetSections = viewMode == AssetAccountViewMode.group
-        ? visibleGroups
-              .map(
-                (group) => _AssetAccountSection(
-                  id: group.id,
-                  title: group.name,
-                  accounts: controller.sortedAccountsForAssetSection(
-                    mode: viewMode,
-                    sectionId: group.id,
-                    accounts: accounts.where(
-                      (account) =>
-                          _effectiveGroupId(account) == group.id &&
-                          !account.hidden,
+    final assetSections = controller.sortedAssetSections<_AssetAccountSection>(
+      mode: viewMode,
+      sections: viewMode == AssetAccountViewMode.group
+          ? visibleGroups
+                .map(
+                  (group) => _AssetAccountSection(
+                    id: group.id,
+                    title: group.name,
+                    accounts: controller.sortedAccountsForAssetSection(
+                      mode: viewMode,
+                      sectionId: group.id,
+                      accounts: accounts.where(
+                        (account) =>
+                            _effectiveGroupId(account) == group.id &&
+                            !account.hidden,
+                      ),
                     ),
                   ),
-                ),
-              )
-              .toList()
-        : AccountType.values
-              .map(
-                (type) => _AssetAccountSection(
-                  id: type.name,
-                  title: type.label,
-                  accounts: controller.sortedAccountsForAssetSection(
-                    mode: viewMode,
-                    sectionId: type.name,
-                    accounts: accounts.where(
-                      (account) => account.type == type && !account.hidden,
+                )
+                .toList()
+          : AccountType.values
+                .map(
+                  (type) => _AssetAccountSection(
+                    id: type.name,
+                    title: type.label,
+                    accounts: controller.sortedAccountsForAssetSection(
+                      mode: viewMode,
+                      sectionId: type.name,
+                      accounts: accounts.where(
+                        (account) => account.type == type && !account.hidden,
+                      ),
                     ),
                   ),
-                ),
-              )
-              .toList();
+                )
+                .toList(),
+      idOf: (section) => section.id,
+    );
+    final visibleAssetSections = assetSections
+        .where((section) => section.accounts.isNotEmpty)
+        .toList(growable: false);
 
     return VeriPage(
       child: ListView(
@@ -4531,18 +4545,8 @@ class AssetsPage extends StatelessWidget {
               children: <Widget>[
                 if (hasAssetCover)
                   Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: <Color>[
-                            Colors.black.withValues(alpha: 0.48),
-                            veriRoyal.withValues(alpha: 0.50),
-                            Colors.black.withValues(alpha: 0.28),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
+                    child: ColoredBox(
+                      color: Colors.black.withValues(alpha: 0.28),
                     ),
                   ),
                 Padding(
@@ -4619,7 +4623,7 @@ class AssetsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          if (!assetSections.any((section) => section.accounts.isNotEmpty)) ...[
+          if (visibleAssetSections.isEmpty) ...[
             const VeriCard(
               child: EmptyState(
                 icon: Icons.account_balance_wallet_outlined,
@@ -4629,39 +4633,79 @@ class AssetsPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
           ],
-          for (final section in assetSections) ...<Widget>[
-            if (section.accounts.isNotEmpty) ...<Widget>[
-              AccountGroupCard(
-                title: section.title,
-                accounts: section.accounts,
-                balances: balances,
-                collapsed: controller.isAssetSectionCollapsed(
-                  mode: viewMode,
-                  sectionId: section.id,
+          if (visibleAssetSections.isNotEmpty)
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              proxyDecorator: (child, _, _) => Material(
+                color: Colors.transparent,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(veriRadiusMd),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.14),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: child,
                 ),
-                onToggleCollapsed: () => controller.toggleAssetSectionCollapsed(
-                  mode: viewMode,
-                  sectionId: section.id,
-                ),
-                onReorderAccounts: (oldIndex, newIndex) =>
-                    controller.reorderAssetAccounts(
-                      mode: viewMode,
-                      sectionId: section.id,
-                      accounts: section.accounts,
-                      oldIndex: oldIndex,
-                      newIndex: newIndex,
-                    ),
-                onAccountTap: (account) {
-                  Navigator.of(context).push<void>(
-                    MaterialPageRoute<void>(
-                      builder: (context) => AccountDetailPage(account: account),
-                    ),
-                  );
-                },
               ),
-              const SizedBox(height: 12),
-            ],
-          ],
+              onReorderStart: (_) => setState(() => _reorderingSections = true),
+              onReorderEnd: (_) => setState(() => _reorderingSections = false),
+              onReorderItem: (oldIndex, newIndex) =>
+                  controller.reorderAssetSections<_AssetAccountSection>(
+                    mode: viewMode,
+                    sections: visibleAssetSections,
+                    idOf: (section) => section.id,
+                    oldIndex: oldIndex,
+                    newIndex: newIndex,
+                  ),
+              itemCount: visibleAssetSections.length,
+              itemBuilder: (context, index) {
+                final section = visibleAssetSections[index];
+                return Padding(
+                  key: ValueKey<String>('asset_section_${section.id}'),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: AccountGroupCard(
+                    title: section.title,
+                    accounts: section.accounts,
+                    balances: balances,
+                    collapsed:
+                        _reorderingSections ||
+                        controller.isAssetSectionCollapsed(
+                          mode: viewMode,
+                          sectionId: section.id,
+                        ),
+                    sectionDragIndex: index,
+                    onToggleCollapsed: () =>
+                        controller.toggleAssetSectionCollapsed(
+                          mode: viewMode,
+                          sectionId: section.id,
+                        ),
+                    onReorderAccounts: (oldIndex, newIndex) =>
+                        controller.reorderAssetAccounts(
+                          mode: viewMode,
+                          sectionId: section.id,
+                          accounts: section.accounts,
+                          oldIndex: oldIndex,
+                          newIndex: newIndex,
+                        ),
+                    onAccountTap: (account) {
+                      Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (context) =>
+                              AccountDetailPage(account: account),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           if (hiddenAccounts.isNotEmpty) ...<Widget>[
             VeriCard(
               onTap: () {
@@ -7598,7 +7642,7 @@ class SettingsPage extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('已导出本地数据备份')));
+        ).showSnackBar(const SnackBar(content: Text('已导出本地数据备份，位置：下载目录')));
       }
     } catch (_) {
       if (context.mounted) {
@@ -7664,16 +7708,10 @@ class SettingsPage extends StatelessWidget {
   }
 
   Future<void> _checkForUpdate(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      const SnackBar(content: Text('正在检查 GitHub Release...')),
+    await showDialog<void>(
+      context: context,
+      builder: (context) => const _UpdateCheckDialog(),
     );
-    final result = await AppPlatformBridge.checkForUpdate();
-    if (!context.mounted) {
-      return;
-    }
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(SnackBar(content: Text(result.message)));
   }
 
   Future<void> _confirmReset(
@@ -7703,6 +7741,177 @@ class SettingsPage extends StatelessWidget {
         Navigator.of(context).pop();
       }
     }
+  }
+}
+
+class _UpdateCheckDialog extends StatefulWidget {
+  const _UpdateCheckDialog();
+
+  @override
+  State<_UpdateCheckDialog> createState() => _UpdateCheckDialogState();
+}
+
+class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
+  UpdateCheckResult? _result;
+  bool _checking = true;
+  bool _downloading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    setState(() {
+      _checking = true;
+      _downloading = false;
+    });
+    final result = await AppPlatformBridge.checkForUpdate();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _result = result;
+      _checking = false;
+    });
+  }
+
+  Future<void> _download() async {
+    setState(() => _downloading = true);
+    final result = await AppPlatformBridge.downloadLatestUpdate();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _result = result;
+      _downloading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final result = _result;
+    final hasUpdate = result?.status == UpdateCheckStatus.available;
+
+    return AlertDialog(
+      title: const Text('检查更新'),
+      content: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            _VersionInfoRow(label: '当前版本', value: appVersionLabel),
+            const SizedBox(height: 8),
+            _VersionInfoRow(
+              label: '最新版本',
+              value: _checking ? '检查中...' : _displayVersion(result),
+            ),
+            const SizedBox(height: 14),
+            if (_checking)
+              const Row(
+                children: <Widget>[
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 10),
+                  Text('正在查询 GitHub Release...'),
+                ],
+              )
+            else
+              Text(
+                result?.message ?? '检查更新失败，请稍后再试。',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.72),
+                ),
+              ),
+            if (_downloading) ...<Widget>[
+              const SizedBox(height: 14),
+              ValueListenableBuilder<UpdateDownloadProgress?>(
+                valueListenable: AppPlatformBridge.updateProgress,
+                builder: (context, progress, _) {
+                  final knownSize = progress != null && progress.totalBytes > 0;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      LinearProgressIndicator(
+                        value: knownSize ? progress.progress : null,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        knownSize ? '下载中 ${progress.percent}%' : '正在下载...',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: _downloading ? null : () => Navigator.of(context).pop(),
+          child: const Text('关闭'),
+        ),
+        if (!_checking && result?.status == UpdateCheckStatus.error)
+          TextButton(
+            onPressed: _downloading ? null : _check,
+            child: const Text('重试'),
+          ),
+        if (hasUpdate)
+          FilledButton(
+            onPressed: _downloading ? null : _download,
+            child: Text(_downloading ? '下载中' : '下载新版本'),
+          ),
+      ],
+    );
+  }
+
+  String _displayVersion(UpdateCheckResult? result) {
+    final latest = result?.latestVersion ?? '';
+    if (latest.isEmpty) {
+      return '--';
+    }
+    return latest.startsWith('v') ? latest : 'v$latest';
+  }
+}
+
+class _VersionInfoRow extends StatelessWidget {
+  const _VersionInfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.54),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+        ),
+      ],
+    );
   }
 }
 

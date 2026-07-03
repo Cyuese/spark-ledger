@@ -31,6 +31,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _assetSectionCollapsedKey =
       'verifin.asset_section_collapsed.v1';
   static const String _assetAccountOrderKey = 'verifin.asset_account_order.v1';
+  static const String _assetSectionOrderKey = 'verifin.asset_section_order.v1';
 
   final LocalKeyValueStore _store;
   final List<LedgerEntry> _entries = <LedgerEntry>[];
@@ -42,6 +43,8 @@ class VeriFinController extends ChangeNotifier {
   final Map<String, double> _categoryBudgets = <String, double>{};
   final Set<String> _collapsedAssetSections = <String>{};
   final Map<String, List<String>> _assetAccountOrders =
+      <String, List<String>>{};
+  final Map<String, List<String>> _assetSectionOrders =
       <String, List<String>>{};
 
   late final ValueNotifier<ThemePreference> themePreferenceListenable;
@@ -218,6 +221,59 @@ class VeriFinController extends ChangeNotifier {
         .map((account) => account.id)
         .toList();
     _persistAssetAccountOrders();
+    notifyListeners();
+  }
+
+  List<T> sortedAssetSections<T>({
+    required AssetAccountViewMode mode,
+    required List<T> sections,
+    required String Function(T section) idOf,
+  }) {
+    final sorted = sections.toList();
+    final order =
+        _assetSectionOrders[_assetSectionOrderKeyForMode(_activeBookId, mode)];
+    if (order == null || order.isEmpty) {
+      return sorted;
+    }
+    final orderIndex = <String, int>{
+      for (final item in order.indexed) item.$2: item.$1,
+    };
+    sorted.sort((a, b) {
+      final aIndex = orderIndex[idOf(a)];
+      final bIndex = orderIndex[idOf(b)];
+      if (aIndex != null && bIndex != null) {
+        return aIndex.compareTo(bIndex);
+      }
+      if (aIndex != null) {
+        return -1;
+      }
+      if (bIndex != null) {
+        return 1;
+      }
+      return 0;
+    });
+    return sorted;
+  }
+
+  void reorderAssetSections<T>({
+    required AssetAccountViewMode mode,
+    required List<T> sections,
+    required String Function(T section) idOf,
+    required int oldIndex,
+    required int newIndex,
+  }) {
+    if (oldIndex < 0 ||
+        oldIndex >= sections.length ||
+        newIndex < 0 ||
+        newIndex > sections.length) {
+      return;
+    }
+    final next = sections.toList();
+    final moved = next.removeAt(oldIndex);
+    next.insert(newIndex.clamp(0, next.length).toInt(), moved);
+    _assetSectionOrders[_assetSectionOrderKeyForMode(_activeBookId, mode)] =
+        next.map(idOf).toList();
+    _persistAssetSectionOrders();
     notifyListeners();
   }
 
@@ -582,6 +638,7 @@ class VeriFinController extends ChangeNotifier {
       _assetViewModeKey,
       _assetSectionCollapsedKey,
       _assetAccountOrderKey,
+      _assetSectionOrderKey,
     ]) {
       _store.delete(key);
     }
@@ -608,6 +665,7 @@ class VeriFinController extends ChangeNotifier {
     _assetAccountViewMode = AssetAccountViewMode.type;
     _collapsedAssetSections.clear();
     _assetAccountOrders.clear();
+    _assetSectionOrders.clear();
     themePreferenceListenable.value = _themePreference;
     notifyListeners();
   }
@@ -633,6 +691,7 @@ class VeriFinController extends ChangeNotifier {
         'assetAccountViewMode': _assetAccountViewMode.name,
         'collapsedAssetSections': _collapsedAssetSections.toList(),
         'assetAccountOrders': _assetAccountOrders,
+        'assetSectionOrders': _assetSectionOrders,
       },
     };
     return const JsonEncoder.withIndent('  ').convert(payload);
@@ -708,6 +767,9 @@ class VeriFinController extends ChangeNotifier {
     final nextAssetAccountOrders = _decodeStringListMap(
       data['assetAccountOrders'],
     );
+    final nextAssetSectionOrders = _decodeStringListMap(
+      data['assetSectionOrders'],
+    );
 
     _ledgerBooks
       ..clear()
@@ -743,6 +805,9 @@ class VeriFinController extends ChangeNotifier {
     _assetAccountOrders
       ..clear()
       ..addAll(nextAssetAccountOrders);
+    _assetSectionOrders
+      ..clear()
+      ..addAll(nextAssetSectionOrders);
 
     _persistLedgerBooks();
     _store.write(_activeBookKey, _activeBookId);
@@ -758,6 +823,7 @@ class VeriFinController extends ChangeNotifier {
     _store.write(_assetViewModeKey, _assetAccountViewMode.name);
     _persistAssetSectionCollapsed();
     _persistAssetAccountOrders();
+    _persistAssetSectionOrders();
     if (_assetCoverUrl.isEmpty) {
       _store.delete(_assetCoverKey);
     } else {
@@ -795,6 +861,7 @@ class VeriFinController extends ChangeNotifier {
     );
     _loadAssetSectionCollapsed();
     _loadAssetAccountOrders();
+    _loadAssetSectionOrders();
     final rawEntries = _store.read(_entriesKey);
     if (rawEntries == null || rawEntries.isEmpty) {
       return;
@@ -1029,6 +1096,20 @@ class VeriFinController extends ChangeNotifier {
     }
   }
 
+  void _loadAssetSectionOrders() {
+    final rawOrders = _store.read(_assetSectionOrderKey);
+    if (rawOrders == null || rawOrders.isEmpty) {
+      return;
+    }
+    try {
+      _assetSectionOrders
+        ..clear()
+        ..addAll(_decodeStringListMap(jsonDecode(rawOrders)));
+    } on FormatException {
+      _store.delete(_assetSectionOrderKey);
+    }
+  }
+
   void _persistEntries() {
     _store.write(
       _entriesKey,
@@ -1083,6 +1164,10 @@ class VeriFinController extends ChangeNotifier {
     _store.write(_assetAccountOrderKey, jsonEncode(_assetAccountOrders));
   }
 
+  void _persistAssetSectionOrders() {
+    _store.write(_assetSectionOrderKey, jsonEncode(_assetSectionOrders));
+  }
+
   void _normalizeGroupOrder() {
     final grouped = <String, List<AccountGroup>>{};
     for (final group in _accountGroups) {
@@ -1119,6 +1204,10 @@ String _assetSectionKey(
   String sectionId,
 ) {
   return '$bookId:${mode.name}:$sectionId';
+}
+
+String _assetSectionOrderKeyForMode(String bookId, AssetAccountViewMode mode) {
+  return '$bookId:${mode.name}';
 }
 
 int _defaultAccountCompare(Account a, Account b) {

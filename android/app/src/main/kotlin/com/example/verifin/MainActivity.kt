@@ -36,7 +36,8 @@ class MainActivity : FlutterActivity() {
                     pendingQuickEntryIntent = false
                     result.success(shouldOpen)
                 }
-                "checkForUpdate" -> checkForUpdate(result)
+                "checkLatestRelease" -> checkLatestRelease(result)
+                "downloadLatestUpdate" -> downloadLatestUpdate(result)
                 "saveTextToDownloads" -> saveTextToDownloads(
                     call.argument<String>("filename") ?: "verifin-backup.json",
                     call.argument<String>("content") ?: "",
@@ -66,10 +67,10 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun checkForUpdate(result: MethodChannel.Result) {
+    private fun checkLatestRelease(result: MethodChannel.Result) {
         Thread {
             try {
-                val response = checkLatestReleaseAndInstall()
+                val response = checkLatestReleaseInfo()
                 runOnUiThread { result.success(response) }
             } catch (error: Exception) {
                 runOnUiThread {
@@ -83,7 +84,60 @@ class MainActivity : FlutterActivity() {
         }.start()
     }
 
-    private fun checkLatestReleaseAndInstall(): Map<String, Any> {
+    private fun downloadLatestUpdate(result: MethodChannel.Result) {
+        Thread {
+            try {
+                val response = downloadLatestReleaseAndInstall()
+                runOnUiThread { result.success(response) }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    result.error(
+                        "UPDATE_DOWNLOAD_FAILED",
+                        error.message ?: "下载更新失败，请稍后再试。",
+                        null,
+                    )
+                }
+            }
+        }.start()
+    }
+
+    private fun checkLatestReleaseInfo(): Map<String, Any> {
+        val release = fetchLatestRelease()
+        val latestTag = release.optString("tag_name")
+        val latestVersion = latestTag.removePrefix("v")
+        val currentVersion = BuildConfig.VERSION_NAME
+        if (latestVersion.isBlank()) {
+            return mapOf(
+                "status" to "error",
+                "message" to "没有读取到最新版本号。",
+                "currentVersion" to currentVersion,
+                "latestVersion" to latestTag,
+            )
+        }
+        if (!isNewerVersion(latestVersion, currentVersion)) {
+            return mapOf(
+                "status" to "upToDate",
+                "message" to "当前已经是最新版本：v$currentVersion。",
+                "currentVersion" to currentVersion,
+                "latestVersion" to latestTag,
+            )
+        }
+        findApkAssetUrl(release)
+            ?: return mapOf(
+                "status" to "noAsset",
+                "message" to "发现 $latestTag，但 Release 中没有可安装的 APK。",
+                "currentVersion" to currentVersion,
+                "latestVersion" to latestTag,
+            )
+        return mapOf(
+            "status" to "available",
+            "message" to "发现新版本 $latestTag，可以下载并安装。",
+            "currentVersion" to currentVersion,
+            "latestVersion" to latestTag,
+        )
+    }
+
+    private fun downloadLatestReleaseAndInstall(): Map<String, Any> {
         val release = fetchLatestRelease()
         val latestTag = release.optString("tag_name")
         val latestVersion = latestTag.removePrefix("v")
@@ -115,7 +169,7 @@ class MainActivity : FlutterActivity() {
             )
             return mapOf(
                 "status" to "error",
-                "message" to "请先允许 VeriFin 安装未知应用，授权后再次点击检查更新。",
+                "message" to "请先允许 VeriFin 安装未知应用，授权后再次点击下载新版本。",
                 "currentVersion" to currentVersion,
                 "latestVersion" to latestTag,
             )
@@ -181,11 +235,54 @@ class MainActivity : FlutterActivity() {
             connection.disconnect()
             throw IllegalStateException("APK 下载失败：HTTP $code")
         }
+        val totalBytes = connection.contentLengthLong.takeIf { it > 0 } ?: 0
+        sendDownloadProgress(0, totalBytes)
         connection.inputStream.use { input ->
-            apkFile.outputStream().use { output -> input.copyTo(output) }
+            apkFile.outputStream().use { output ->
+                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                var received = 0L
+                var lastProgress = -1
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read == -1) {
+                        break
+                    }
+                    output.write(buffer, 0, read)
+                    received += read
+                    val progress = if (totalBytes > 0) {
+                        ((received * 100) / totalBytes).toInt()
+                    } else {
+                        0
+                    }
+                    if (progress != lastProgress) {
+                        lastProgress = progress
+                        sendDownloadProgress(received, totalBytes)
+                    }
+                }
+            }
         }
+        val finalSize = apkFile.length()
+        sendDownloadProgress(finalSize, totalBytes.takeIf { it > 0 } ?: finalSize)
         connection.disconnect()
         return apkFile
+    }
+
+    private fun sendDownloadProgress(receivedBytes: Long, totalBytes: Long) {
+        val progress = if (totalBytes > 0) {
+            receivedBytes.toDouble() / totalBytes.toDouble()
+        } else {
+            0.0
+        }.coerceIn(0.0, 1.0)
+        runOnUiThread {
+            channel?.invokeMethod(
+                "updateDownloadProgress",
+                mapOf(
+                    "receivedBytes" to receivedBytes,
+                    "totalBytes" to totalBytes,
+                    "progress" to progress,
+                ),
+            )
+        }
     }
 
     private fun startApkInstall(apkFile: File) {

@@ -665,6 +665,32 @@ void main() {
     target.dispose();
   });
 
+  test('persists manual asset section ordering', () {
+    final store = LocalKeyValueStore();
+    final source = VeriFinController(store);
+    const sections = <String>['onlinePayment', 'creditCard', 'debitCard'];
+    source
+      ..reorderAssetSections<String>(
+        mode: AssetAccountViewMode.type,
+        sections: sections,
+        idOf: (section) => section,
+        oldIndex: 0,
+        newIndex: 2,
+      )
+      ..dispose();
+
+    final target = VeriFinController(store);
+    final sorted = target.sortedAssetSections<String>(
+      mode: AssetAccountViewMode.type,
+      sections: sections,
+      idOf: (section) => section,
+    );
+
+    expect(sorted, <String>['creditCard', 'debitCard', 'onlinePayment']);
+
+    target.dispose();
+  });
+
   test(
     'deleting account with related entries removes touched transfers too',
     () {
