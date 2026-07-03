@@ -1,6 +1,8 @@
 # 开发习惯
 
 ## 预览方式
+Web 端只用于开发预览和测试，不面向最终用户交付；对外交付物是 GitHub CI 构建的 Android APK。Web 端的取舍（如 localStorage 容量、浏览器差异）不需要按产品级标准投入，但不能让 Web 路径掩盖移动端缺失的实现。
+
 日常开发优先使用 Web 预览。需要给用户稳定验收地址时，先执行 `flutter build web --pwa-strategy=none`，再在 `build/web` 下启动静态服务，例如：
 
 ```bash
