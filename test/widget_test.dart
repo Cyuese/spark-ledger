@@ -12,6 +12,7 @@ import 'package:verifin/app/series_math.dart';
 import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 import 'package:verifin/main.dart';
+import 'package:verifin/pages/home_page.dart';
 
 Future<void> tapBottomTab(WidgetTester tester, int index) async {
   await tester.tap(find.byKey(Key('main_tab_$index')));
