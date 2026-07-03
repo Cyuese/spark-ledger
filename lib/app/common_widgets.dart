@@ -981,11 +981,17 @@ class _AccountRow extends StatelessWidget {
                           account.type.supportsCardLast4)
                         TextSpan(
                           text: ' (${account.cardLast4})',
-                          style: Theme.of(context).textTheme.bodySmall
+                          style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.onSurface.withValues(alpha: 0.42),
+                                fontSize:
+                                    (Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium?.fontSize ??
+                                        16) *
+                                    0.82,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),

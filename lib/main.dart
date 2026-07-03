@@ -6879,6 +6879,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
     final profile = controller.profile;
+    final profileTags = _profileSummaryTags(profile);
     final netAssets = controller.accounts
         .where((account) => account.includeInAssets && !account.hidden)
         .fold<double>(
@@ -6937,14 +6938,16 @@ class ProfilePage extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 7),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: _profileSummaryTags(profile)
-                                  .map((tag) => _ProfileMetaTag(label: tag))
-                                  .toList(),
-                            ),
+                            if (profileTags.isNotEmpty) ...[
+                              const SizedBox(height: 7),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: profileTags
+                                    .map((tag) => _ProfileMetaTag(label: tag))
+                                    .toList(),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -7032,7 +7035,7 @@ List<String> _profileSummaryTags(UserProfile profile) {
   if (profile.occupation.isNotEmpty) {
     tags.add(profile.occupation);
   }
-  return tags.isEmpty ? <String>['本地资料'] : tags;
+  return tags;
 }
 
 class _ProfileMetaTag extends StatelessWidget {
