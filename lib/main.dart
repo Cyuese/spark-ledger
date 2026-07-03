@@ -7321,7 +7321,7 @@ class SettingsPage extends StatelessWidget {
                     ),
                     const Divider(height: 1),
                     _CompactSwitchRow(
-                      icon: Icons.vibration,
+                      icon: Icons.touch_app_outlined,
                       title: const Text('触感反馈'),
                       value: controller.hapticsEnabled,
                       onChanged: controller.setHapticsEnabled,
