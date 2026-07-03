@@ -198,7 +198,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       SummaryMetric(
                         label: '收入',
                         value: formatAmount(income),
-                        color: veriIncome,
+                        color: isZeroAmount(income)
+                            ? Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.48)
+                            : veriIncome,
                       ),
                       SummaryMetric(
                         label: '结余',
