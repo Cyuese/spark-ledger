@@ -84,7 +84,7 @@ pubspec.write_text(
     re.sub(r"^version: .*$", f"version: {next_version}", pubspec_text, flags=re.M)
 )
 
-main = pathlib.Path("lib/main.dart")
+main = pathlib.Path("lib/app/app_version.dart")
 main_text = main.read_text()
 main.write_text(
     re.sub(
@@ -95,12 +95,12 @@ main.write_text(
 )
 PY
 
-dart format lib/main.dart
+dart format lib/app/app_version.dart
 flutter pub get
 flutter analyze
 flutter test
 
-git add pubspec.yaml pubspec.lock lib/main.dart
+git add pubspec.yaml pubspec.lock lib/app/app_version.dart
 git commit -m "chore: release $tag"
 git tag "$tag"
 git push origin main

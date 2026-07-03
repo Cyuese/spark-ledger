@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app/app_theme.dart';
+import 'app/app_version.dart';
 import 'app/account_icon_assets.dart';
 import 'app/avatar_picker.dart';
 import 'app/chart_painters.dart';
@@ -16,11 +17,12 @@ import 'app/image_cropper.dart';
 import 'app/image_sources.dart';
 import 'app/ledger_math.dart';
 import 'app/models.dart';
+import 'app/series_math.dart';
 import 'app/platform_bridge.dart';
 import 'app/veri_fin_controller.dart';
+import 'app/veri_fin_scope.dart';
 import 'local_storage/local_storage.dart';
 
-const String appVersionLabel = 'v1.1.1+8';
 const double assetCoverAspectRatio = 1200 / 760;
 const int assetCoverTargetWidth = 1200;
 const int assetCoverTargetHeight = 760;
@@ -83,20 +85,6 @@ class _VeriFinAppState extends State<VeriFinApp> {
         },
       ),
     );
-  }
-}
-
-class VeriFinScope extends InheritedNotifier<VeriFinController> {
-  const VeriFinScope({
-    super.key,
-    required VeriFinController controller,
-    required super.child,
-  }) : super(notifier: controller);
-
-  static VeriFinController of(BuildContext context) {
-    final scope = context.dependOnInheritedWidgetOfExactType<VeriFinScope>();
-    assert(scope != null, 'VeriFinScope not found');
-    return scope!.notifier!;
   }
 }
 
@@ -1125,11 +1113,11 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
     final monthEntries = controller.entries
-        .where((entry) => _isInMonth(entry, _month))
+        .where((entry) => isInMonth(entry, _month))
         .toList(growable: false);
     final previousMonth = DateTime(_month.year, _month.month - 1);
     final previousMonthEntries = controller.entries
-        .where((entry) => _isInMonth(entry, previousMonth))
+        .where((entry) => isInMonth(entry, previousMonth))
         .toList(growable: false);
     final monthExpense = sumByType(monthEntries, EntryType.expense);
     final previousMonthExpense = sumByType(
@@ -2679,7 +2667,7 @@ List<BudgetMonthSnapshot> _budgetMonthSnapshots({
   return List<BudgetMonthSnapshot>.generate(count, (index) {
     final month = DateTime(anchor.year, anchor.month - count + 1 + index);
     final entries = controller.entries
-        .where((entry) => _isInMonth(entry, month))
+        .where((entry) => isInMonth(entry, month))
         .toList(growable: false);
     return BudgetMonthSnapshot(
       month: month,
@@ -2777,11 +2765,6 @@ int _categoryBudgetSortRank(CategoryBudgetSnapshot snapshot) {
     return 3;
   }
   return 4;
-}
-
-bool _isInMonth(LedgerEntry entry, DateTime month) {
-  return entry.occurredAt.year == month.year &&
-      entry.occurredAt.month == month.month;
 }
 
 String _expenseDeltaLabel(double delta) {
@@ -3276,11 +3259,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
         final quarter = ((anchor.month - 1) ~/ 3) + 1;
         return anchor.year == now.year
             ? '季度$quarter'
-            : '${_yy(anchor.year)}.Q$quarter';
+            : '${twoDigitYear(anchor.year)}.Q$quarter';
       case TransactionTimeFilter.month:
         return anchor.year == now.year
             ? '${anchor.month}月'
-            : '${_yy(anchor.year)}.${anchor.month.toString().padLeft(2, '0')}';
+            : '${twoDigitYear(anchor.year)}.${anchor.month.toString().padLeft(2, '0')}';
       case TransactionTimeFilter.week:
         final week = isoWeekNumber(anchor);
         final year = isoWeekYear(anchor);
@@ -3289,7 +3272,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       case TransactionTimeFilter.last30Days:
         return '${period.start.month}.${period.start.day}-${period.end.month}.${period.end.day}';
       case TransactionTimeFilter.last6Weeks:
-        return '${_yy(isoWeekYear(period.start))}.${isoWeekNumber(period.start).toString().padLeft(2, '0')}-${_yy(isoWeekYear(period.end))}.${isoWeekNumber(period.end).toString().padLeft(2, '0')}';
+        return '${twoDigitYear(isoWeekYear(period.start))}.${isoWeekNumber(period.start).toString().padLeft(2, '0')}-${twoDigitYear(isoWeekYear(period.end))}.${isoWeekNumber(period.end).toString().padLeft(2, '0')}';
     }
   }
 
@@ -6322,7 +6305,7 @@ class ReportsPage extends StatelessWidget {
     final entries = controller.entries;
     final now = DateTime.now();
     final monthEntries = entries
-        .where((entry) => _isInMonth(entry, now))
+        .where((entry) => isInMonth(entry, now))
         .toList(growable: false);
     final monthExpense = sumByType(monthEntries, EntryType.expense);
     final monthlyBudget = controller.monthlyBudget(now);
@@ -8763,173 +8746,4 @@ List<_CategoryStat> _categoryStats(
           .toList()
         ..sort((a, b) => b.amount.compareTo(a.amount));
   return stats;
-}
-
-List<String> monthAxisLabels(DateTime month) {
-  final days = DateUtils.getDaysInMonth(month.year, month.month);
-  return <String>[
-    '${month.month}.1',
-    '${month.month}.${(days / 2).round()}',
-    '${month.month}.$days',
-  ];
-}
-
-List<String> reportAxisLabels(double maxValue) {
-  final top = maxValue <= 0 ? 100 : maxValue;
-  return <String>['0', _formatAxisAmount(top / 2), _formatAxisAmount(top)];
-}
-
-String _formatAxisAmount(num value) {
-  final abs = value.abs();
-  if (abs >= 10000) {
-    final compact = value / 10000;
-    final decimals = compact.abs() >= 10 || compact % 1 == 0 ? 0 : 1;
-    return '${compact.toStringAsFixed(decimals)}w';
-  }
-  return formatAmount(value);
-}
-
-String _yy(int year) => (year % 100).toString().padLeft(2, '0');
-
-int isoWeekYear(DateTime date) {
-  return date.add(Duration(days: 4 - date.weekday)).year;
-}
-
-int isoWeekNumber(DateTime date) {
-  final thursday = date.add(Duration(days: 4 - date.weekday));
-  final firstThursday = DateTime(thursday.year, 1, 4);
-  final weekOne = firstThursday.add(Duration(days: 4 - firstThursday.weekday));
-  return thursday.difference(weekOne).inDays ~/ 7 + 1;
-}
-
-/// 当月每日余额:基线包含本月之前的全部历史流水,余额保留正负号。
-List<double> accountBalanceSeries(Account account, List<LedgerEntry> entries) {
-  final now = DateTime.now();
-  final days = DateUtils.getDaysInMonth(now.year, now.month);
-  final monthStart = DateTime(now.year, now.month);
-  var runningBalance = account.initialBalance;
-  final dailyDeltas = List<double>.filled(days, 0);
-  for (final entry in entries) {
-    final delta = accountDeltaForEntry(entry, account.id);
-    if (delta == 0) {
-      continue;
-    }
-    if (entry.occurredAt.isBefore(monthStart)) {
-      runningBalance += delta;
-    } else if (entry.occurredAt.year == now.year &&
-        entry.occurredAt.month == now.month) {
-      dailyDeltas[entry.occurredAt.day - 1] += delta;
-    }
-  }
-  final values = List<double>.filled(days, 0);
-  for (var i = 0; i < days; i += 1) {
-    runningBalance += dailyDeltas[i];
-    values[i] = runningBalance;
-  }
-  return values;
-}
-
-/// 今年逐月月末余额:基线包含往年全部流水,余额保留正负号。
-List<double> accountMonthlyBalanceSeries(
-  Account account,
-  List<LedgerEntry> entries,
-) {
-  final now = DateTime.now();
-  final yearStart = DateTime(now.year);
-  var runningBalance = account.initialBalance;
-  final monthlyDeltas = List<double>.filled(12, 0);
-  for (final entry in entries) {
-    final delta = accountDeltaForEntry(entry, account.id);
-    if (delta == 0) {
-      continue;
-    }
-    if (entry.occurredAt.isBefore(yearStart)) {
-      runningBalance += delta;
-    } else if (entry.occurredAt.year == now.year) {
-      monthlyDeltas[entry.occurredAt.month - 1] += delta;
-    }
-  }
-  final values = List<double>.filled(12, 0);
-  for (var month = 0; month < 12; month += 1) {
-    runningBalance += monthlyDeltas[month];
-    values[month] = runningBalance;
-  }
-  return values;
-}
-
-/// 今年逐月净资产:基线包含往年全部流水,净资产保留正负号。
-List<double> monthlyNetAssetSeries(
-  List<Account> accounts,
-  List<LedgerEntry> entries,
-) {
-  final visibleAccounts = accounts
-      .where((account) => account.includeInAssets && !account.hidden)
-      .toList();
-  if (visibleAccounts.isEmpty) {
-    return List<double>.filled(12, 0);
-  }
-  final now = DateTime.now();
-  final yearStart = DateTime(now.year);
-  var baseline = visibleAccounts.fold<double>(
-    0,
-    (sum, account) => sum + account.initialBalance,
-  );
-  final monthlyDeltas = List<double>.filled(12, 0);
-  for (final entry in entries) {
-    var delta = 0.0;
-    for (final account in visibleAccounts) {
-      delta += accountDeltaForEntry(entry, account.id);
-    }
-    if (delta == 0) {
-      continue;
-    }
-    if (entry.occurredAt.isBefore(yearStart)) {
-      baseline += delta;
-    } else if (entry.occurredAt.year == now.year) {
-      monthlyDeltas[entry.occurredAt.month - 1] += delta;
-    }
-  }
-  final values = List<double>.filled(12, 0);
-  var runningTotal = baseline;
-  for (var month = 0; month < 12; month += 1) {
-    runningTotal += monthlyDeltas[month];
-    values[month] = runningTotal;
-  }
-  return values;
-}
-
-/// 余额类序列的纵轴刻度:范围取序列实际的 [min, max](含 0)。
-List<String> balanceAxisLabels(List<double> values) {
-  var maxValue = 0.0;
-  var minValue = 0.0;
-  for (final value in values) {
-    if (value > maxValue) {
-      maxValue = value;
-    }
-    if (value < minValue) {
-      minValue = value;
-    }
-  }
-  if (maxValue - minValue <= 0) {
-    return reportAxisLabels(0);
-  }
-  return <String>[
-    _formatAxisAmount(minValue),
-    _formatAxisAmount((minValue + maxValue) / 2),
-    _formatAxisAmount(maxValue),
-  ];
-}
-
-List<String> evenMonthAxisLabels() {
-  return const <String>['2', '4', '6', '8', '10', '12'];
-}
-
-int bookkeepingDays(List<LedgerEntry> entries) {
-  if (entries.isEmpty) {
-    return 0;
-  }
-  final first = entries
-      .map((entry) => entry.occurredAt)
-      .reduce((a, b) => a.isBefore(b) ? a : b);
-  return DateTime.now().difference(first).inDays + 1;
 }

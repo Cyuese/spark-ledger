@@ -1,0 +1,182 @@
+import 'package:flutter/material.dart';
+
+import 'ledger_math.dart';
+import 'models.dart';
+
+bool isInMonth(LedgerEntry entry, DateTime month) {
+  return entry.occurredAt.year == month.year &&
+      entry.occurredAt.month == month.month;
+}
+
+List<String> monthAxisLabels(DateTime month) {
+  final days = DateUtils.getDaysInMonth(month.year, month.month);
+  return <String>[
+    '${month.month}.1',
+    '${month.month}.${(days / 2).round()}',
+    '${month.month}.$days',
+  ];
+}
+
+List<String> reportAxisLabels(double maxValue) {
+  final top = maxValue <= 0 ? 100 : maxValue;
+  return <String>['0', _formatAxisAmount(top / 2), _formatAxisAmount(top)];
+}
+
+String _formatAxisAmount(num value) {
+  final abs = value.abs();
+  if (abs >= 10000) {
+    final compact = value / 10000;
+    final decimals = compact.abs() >= 10 || compact % 1 == 0 ? 0 : 1;
+    return '${compact.toStringAsFixed(decimals)}w';
+  }
+  return formatAmount(value);
+}
+
+String twoDigitYear(int year) => (year % 100).toString().padLeft(2, '0');
+
+int isoWeekYear(DateTime date) {
+  return date.add(Duration(days: 4 - date.weekday)).year;
+}
+
+int isoWeekNumber(DateTime date) {
+  final thursday = date.add(Duration(days: 4 - date.weekday));
+  final firstThursday = DateTime(thursday.year, 1, 4);
+  final weekOne = firstThursday.add(Duration(days: 4 - firstThursday.weekday));
+  return thursday.difference(weekOne).inDays ~/ 7 + 1;
+}
+
+/// 当月每日余额:基线包含本月之前的全部历史流水,余额保留正负号。
+
+List<double> accountBalanceSeries(Account account, List<LedgerEntry> entries) {
+  final now = DateTime.now();
+  final days = DateUtils.getDaysInMonth(now.year, now.month);
+  final monthStart = DateTime(now.year, now.month);
+  var runningBalance = account.initialBalance;
+  final dailyDeltas = List<double>.filled(days, 0);
+  for (final entry in entries) {
+    final delta = accountDeltaForEntry(entry, account.id);
+    if (delta == 0) {
+      continue;
+    }
+    if (entry.occurredAt.isBefore(monthStart)) {
+      runningBalance += delta;
+    } else if (entry.occurredAt.year == now.year &&
+        entry.occurredAt.month == now.month) {
+      dailyDeltas[entry.occurredAt.day - 1] += delta;
+    }
+  }
+  final values = List<double>.filled(days, 0);
+  for (var i = 0; i < days; i += 1) {
+    runningBalance += dailyDeltas[i];
+    values[i] = runningBalance;
+  }
+  return values;
+}
+
+/// 今年逐月月末余额:基线包含往年全部流水,余额保留正负号。
+
+List<double> accountMonthlyBalanceSeries(
+  Account account,
+  List<LedgerEntry> entries,
+) {
+  final now = DateTime.now();
+  final yearStart = DateTime(now.year);
+  var runningBalance = account.initialBalance;
+  final monthlyDeltas = List<double>.filled(12, 0);
+  for (final entry in entries) {
+    final delta = accountDeltaForEntry(entry, account.id);
+    if (delta == 0) {
+      continue;
+    }
+    if (entry.occurredAt.isBefore(yearStart)) {
+      runningBalance += delta;
+    } else if (entry.occurredAt.year == now.year) {
+      monthlyDeltas[entry.occurredAt.month - 1] += delta;
+    }
+  }
+  final values = List<double>.filled(12, 0);
+  for (var month = 0; month < 12; month += 1) {
+    runningBalance += monthlyDeltas[month];
+    values[month] = runningBalance;
+  }
+  return values;
+}
+
+/// 今年逐月净资产:基线包含往年全部流水,净资产保留正负号。
+
+List<double> monthlyNetAssetSeries(
+  List<Account> accounts,
+  List<LedgerEntry> entries,
+) {
+  final visibleAccounts = accounts
+      .where((account) => account.includeInAssets && !account.hidden)
+      .toList();
+  if (visibleAccounts.isEmpty) {
+    return List<double>.filled(12, 0);
+  }
+  final now = DateTime.now();
+  final yearStart = DateTime(now.year);
+  var baseline = visibleAccounts.fold<double>(
+    0,
+    (sum, account) => sum + account.initialBalance,
+  );
+  final monthlyDeltas = List<double>.filled(12, 0);
+  for (final entry in entries) {
+    var delta = 0.0;
+    for (final account in visibleAccounts) {
+      delta += accountDeltaForEntry(entry, account.id);
+    }
+    if (delta == 0) {
+      continue;
+    }
+    if (entry.occurredAt.isBefore(yearStart)) {
+      baseline += delta;
+    } else if (entry.occurredAt.year == now.year) {
+      monthlyDeltas[entry.occurredAt.month - 1] += delta;
+    }
+  }
+  final values = List<double>.filled(12, 0);
+  var runningTotal = baseline;
+  for (var month = 0; month < 12; month += 1) {
+    runningTotal += monthlyDeltas[month];
+    values[month] = runningTotal;
+  }
+  return values;
+}
+
+/// 余额类序列的纵轴刻度:范围取序列实际的 [min, max](含 0)。
+
+List<String> balanceAxisLabels(List<double> values) {
+  var maxValue = 0.0;
+  var minValue = 0.0;
+  for (final value in values) {
+    if (value > maxValue) {
+      maxValue = value;
+    }
+    if (value < minValue) {
+      minValue = value;
+    }
+  }
+  if (maxValue - minValue <= 0) {
+    return reportAxisLabels(0);
+  }
+  return <String>[
+    _formatAxisAmount(minValue),
+    _formatAxisAmount((minValue + maxValue) / 2),
+    _formatAxisAmount(maxValue),
+  ];
+}
+
+List<String> evenMonthAxisLabels() {
+  return const <String>['2', '4', '6', '8', '10', '12'];
+}
+
+int bookkeepingDays(List<LedgerEntry> entries) {
+  if (entries.isEmpty) {
+    return 0;
+  }
+  final first = entries
+      .map((entry) => entry.occurredAt)
+      .reduce((a, b) => a.isBefore(b) ? a : b);
+  return DateTime.now().difference(first).inDays + 1;
+}
