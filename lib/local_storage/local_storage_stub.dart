@@ -1,6 +1,8 @@
 class LocalKeyValueStore {
   final Map<String, String> _memory = <String, String>{};
 
+  static Future<LocalKeyValueStore> create() async => LocalKeyValueStore();
+
   String? read(String key) => _memory[key];
 
   void write(String key, String value) {

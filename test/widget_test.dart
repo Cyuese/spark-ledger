@@ -413,13 +413,13 @@ void main() {
     expect(find.text('花呗'), findsNothing);
   });
 
-  testWidgets('shows ungrouped accounts in the assets page', (
+  testWidgets('shows accounts by type in the assets page by default', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const VeriFinApp());
     await addTestAccount(tester, '现金账户');
 
-    expect(find.text('未分组'), findsOneWidget);
+    expect(find.text('网络支付'), findsOneWidget);
     expect(find.text('现金账户'), findsOneWidget);
   });
 
@@ -450,13 +450,13 @@ void main() {
 
     await tester.tap(find.byTooltip('资产操作'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('切换为类型视图'));
+    await tester.tap(find.text('切换为分类视图'));
     await tester.pumpAndSettle();
 
-    expect(find.text('网络支付'), findsOneWidget);
+    expect(find.text('未分组'), findsOneWidget);
     expect(find.text('支付宝账户'), findsOneWidget);
 
-    await tester.tap(find.text('网络支付'));
+    await tester.tap(find.text('未分组'));
     await tester.pumpAndSettle();
     expect(find.text('支付宝账户'), findsNothing);
 
@@ -464,7 +464,7 @@ void main() {
     await tester.pumpWidget(VeriFinApp(store: store));
     await tapBottomTab(tester, 1);
 
-    expect(find.text('网络支付'), findsOneWidget);
+    expect(find.text('未分组'), findsOneWidget);
     expect(find.text('支付宝账户'), findsNothing);
   });
 
@@ -608,7 +608,6 @@ void main() {
     source
       ..addAccount(first)
       ..addAccount(second)
-      ..toggleAssetAccountViewMode()
       ..toggleAssetSectionCollapsed(
         mode: AssetAccountViewMode.type,
         sectionId: AccountType.cash.name,

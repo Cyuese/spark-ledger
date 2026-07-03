@@ -51,7 +51,7 @@ class VeriFinController extends ChangeNotifier {
   String _activeBookId = defaultLedgerBookId;
   String _assetCoverUrl = '';
   bool _hapticsEnabled = true;
-  AssetAccountViewMode _assetAccountViewMode = AssetAccountViewMode.group;
+  AssetAccountViewMode _assetAccountViewMode = AssetAccountViewMode.type;
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
     _entries.where((entry) => entry.bookId == _activeBookId),
@@ -597,7 +597,7 @@ class VeriFinController extends ChangeNotifier {
     _activeBookId = defaultLedgerBookId;
     _assetCoverUrl = '';
     _hapticsEnabled = true;
-    _assetAccountViewMode = AssetAccountViewMode.group;
+    _assetAccountViewMode = AssetAccountViewMode.type;
     _collapsedAssetSections.clear();
     _assetAccountOrders.clear();
     themePreferenceListenable.value = _themePreference;

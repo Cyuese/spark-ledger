@@ -25,7 +25,6 @@ final List<LedgerBook> defaultLedgerBooks = <LedgerBook>[
 const List<String> accountIconCodes = <String>[
   'wallet',
   'alipay',
-  'wechat',
   'credit',
   'bank',
   'cash',

@@ -3,6 +3,8 @@
 import 'dart:html' as html;
 
 class LocalKeyValueStore {
+  static Future<LocalKeyValueStore> create() async => LocalKeyValueStore();
+
   String? read(String key) => html.window.localStorage[key];
 
   void write(String key, String value) {

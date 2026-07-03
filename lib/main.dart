@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app/app_theme.dart';
@@ -20,8 +21,10 @@ import 'local_storage/local_storage.dart';
 
 const String appVersionLabel = 'v1.0.0+2';
 
-void main() {
-  runApp(const VeriFinApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final store = await LocalKeyValueStore.create();
+  runApp(VeriFinApp(store: store));
 }
 
 class VeriFinApp extends StatefulWidget {
@@ -102,6 +105,7 @@ class VeriFinShell extends StatefulWidget {
 
 class _VeriFinShellState extends State<VeriFinShell> {
   int _index = 0;
+  DateTime? _lastBackPressedAt;
 
   @override
   void initState() {
@@ -129,21 +133,49 @@ class _VeriFinShellState extends State<VeriFinShell> {
       const ProfilePage(),
     ];
 
-    return Scaffold(
-      body: SafeArea(child: pages[_index]),
-      floatingActionButton: _index == 0
-          ? FloatingActionButton(
-              key: const Key('quick_entry_fab'),
-              onPressed: () => _startQuickEntry(context),
-              tooltip: '快速记账',
-              child: const Icon(Icons.add),
-            )
-          : null,
-      bottomNavigationBar: VeriBottomNav(
-        currentIndex: _index,
-        onTap: (value) => setState(() => _index = value),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          return;
+        }
+        _handleRootBack();
+      },
+      child: Scaffold(
+        body: SafeArea(child: pages[_index]),
+        floatingActionButton: _index == 0
+            ? FloatingActionButton(
+                key: const Key('quick_entry_fab'),
+                onPressed: () => _startQuickEntry(context),
+                tooltip: '快速记账',
+                child: const Icon(Icons.add),
+              )
+            : null,
+        bottomNavigationBar: VeriBottomNav(
+          currentIndex: _index,
+          onTap: (value) => setState(() => _index = value),
+        ),
       ),
     );
+  }
+
+  void _handleRootBack() {
+    if (_index != 0) {
+      setState(() => _index = 0);
+      return;
+    }
+    final now = DateTime.now();
+    final shouldExit =
+        _lastBackPressedAt != null &&
+        now.difference(_lastBackPressedAt!) < const Duration(seconds: 2);
+    if (shouldExit) {
+      SystemNavigator.pop();
+      return;
+    }
+    _lastBackPressedAt = now;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('再次返回退出程序')));
   }
 
   Future<void> _startQuickEntry(BuildContext context) async {
@@ -4566,6 +4598,16 @@ class AssetsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          if (!assetSections.any((section) => section.accounts.isNotEmpty)) ...[
+            const VeriCard(
+              child: EmptyState(
+                icon: Icons.account_balance_wallet_outlined,
+                title: '还没有资产账户',
+                description: '请先点击右上角添加资产，之后可以在这里按类型或分组查看资产。',
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           for (final section in assetSections) ...<Widget>[
             if (section.accounts.isNotEmpty) ...<Widget>[
               AccountGroupCard(

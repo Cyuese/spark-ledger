@@ -122,15 +122,17 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                         Theme.of(context).brightness == Brightness.dark;
                     final keyColor = isDark
                         ? Theme.of(context).colorScheme.surfaceContainerHighest
-                        : const Color(0xFF2F3747);
-                    final keyTextColor = Colors.white.withValues(alpha: 0.94);
+                        : const Color(0xFFEAF0F8);
+                    final keyTextColor = isDark
+                        ? Colors.white.withValues(alpha: 0.94)
+                        : veriInk;
                     return FilledButton.tonal(
                       key: isOk
                           ? const Key('number_pad_ok')
                           : Key('number_key_$value'),
                       style: FilledButton.styleFrom(
                         backgroundColor: isOk ? veriRoyal : keyColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: isOk ? Colors.white : keyTextColor,
                         disabledBackgroundColor: keyColor.withValues(
                           alpha: 0.42,
                         ),
@@ -173,9 +175,9 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
   void _handleKey(String value) {
     if (widget.hapticsEnabled) {
       if (value == 'OK') {
-        HapticFeedback.lightImpact();
+        HapticFeedback.mediumImpact();
       } else {
-        HapticFeedback.selectionClick();
+        HapticFeedback.lightImpact();
       }
     }
     if (value == 'OK') {

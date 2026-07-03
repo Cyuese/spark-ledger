@@ -125,7 +125,7 @@ enum AssetAccountViewMode {
   static AssetAccountViewMode fromStorage(String? value) {
     return AssetAccountViewMode.values.firstWhere(
       (mode) => mode.name == value,
-      orElse: () => AssetAccountViewMode.group,
+      orElse: () => AssetAccountViewMode.type,
     );
   }
 }
