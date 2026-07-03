@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'account_icon_assets.dart';
@@ -825,8 +826,11 @@ class AccountGroupCard extends StatelessWidget {
     this.collapsed = false,
     this.sectionDragIndex,
     this.onToggleCollapsed,
+    this.onSectionDragPointerDown,
+    this.onSectionDragPointerUp,
     this.onReorderAccounts,
     this.onAccountTap,
+    this.hapticsEnabled = true,
   });
 
   final String title;
@@ -835,8 +839,11 @@ class AccountGroupCard extends StatelessWidget {
   final bool collapsed;
   final int? sectionDragIndex;
   final VoidCallback? onToggleCollapsed;
+  final VoidCallback? onSectionDragPointerDown;
+  final VoidCallback? onSectionDragPointerUp;
   final ReorderCallback? onReorderAccounts;
   final ValueChanged<Account>? onAccountTap;
+  final bool hapticsEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -852,7 +859,14 @@ class AccountGroupCard extends StatelessWidget {
         children: <Widget>[
           InkWell(
             borderRadius: BorderRadius.circular(veriRadiusSm),
-            onTap: onToggleCollapsed,
+            onTap: onToggleCollapsed == null
+                ? null
+                : () {
+                    if (hapticsEnabled) {
+                      HapticFeedback.selectionClick();
+                    }
+                    onToggleCollapsed?.call();
+                  },
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: Row(
@@ -867,14 +881,28 @@ class AccountGroupCard extends StatelessWidget {
                   ),
                   if (sectionDragIndex != null) ...<Widget>[
                     const SizedBox(width: 6),
-                    ReorderableDelayedDragStartListener(
-                      index: sectionDragIndex!,
-                      child: Icon(
-                        Icons.drag_indicator,
-                        size: 18,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.34),
+                    Listener(
+                      behavior: HitTestBehavior.opaque,
+                      onPointerDown: (_) {
+                        onSectionDragPointerDown?.call();
+                        if (hapticsEnabled) {
+                          HapticFeedback.selectionClick();
+                        }
+                      },
+                      onPointerUp: (_) => onSectionDragPointerUp?.call(),
+                      onPointerCancel: (_) => onSectionDragPointerUp?.call(),
+                      child: ReorderableDelayedDragStartListener(
+                        index: sectionDragIndex!,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.drag_indicator,
+                            size: 18,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.34),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -890,58 +918,87 @@ class AccountGroupCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
-                    collapsed ? Icons.expand_more : Icons.expand_less,
-                    size: 18,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.42),
+                  AnimatedRotation(
+                    turns: collapsed ? 0 : 0.5,
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    child: Icon(
+                      Icons.expand_more,
+                      size: 18,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.42),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-          if (!collapsed) ...<Widget>[
-            const SizedBox(height: 10),
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              buildDefaultDragHandles: false,
-              proxyDecorator: (child, _, _) => Material(
-                color: Colors.transparent,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(veriRadiusSm),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 14,
-                        offset: const Offset(0, 8),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: collapsed
+                ? const SizedBox.shrink()
+                : Column(
+                    children: <Widget>[
+                      const SizedBox(height: 10),
+                      ReorderableListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        buildDefaultDragHandles: false,
+                        proxyDecorator: (child, _, _) => Material(
+                          color: Colors.transparent,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(veriRadiusSm),
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: child,
+                          ),
+                        ),
+                        itemCount: accounts.length,
+                        onReorderStart: (_) {
+                          if (hapticsEnabled) {
+                            HapticFeedback.selectionClick();
+                          }
+                        },
+                        onReorderEnd: (_) {
+                          if (hapticsEnabled) {
+                            HapticFeedback.selectionClick();
+                          }
+                        },
+                        onReorderItem: (oldIndex, newIndex) {
+                          if (hapticsEnabled) {
+                            HapticFeedback.selectionClick();
+                          }
+                          (onReorderAccounts ?? (_, _) {})(oldIndex, newIndex);
+                        },
+                        itemBuilder: (context, index) {
+                          final account = accounts[index];
+                          return ReorderableDelayedDragStartListener(
+                            key: ValueKey<String>('account_${account.id}'),
+                            index: index,
+                            child: _AccountRow(
+                              account: account,
+                              balance: balances[account] ?? 0,
+                              onTap: onAccountTap == null
+                                  ? null
+                                  : () => onAccountTap!(account),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
-                  child: child,
-                ),
-              ),
-              itemCount: accounts.length,
-              onReorderItem: onReorderAccounts ?? (_, _) {},
-              itemBuilder: (context, index) {
-                final account = accounts[index];
-                return ReorderableDelayedDragStartListener(
-                  key: ValueKey<String>('account_${account.id}'),
-                  index: index,
-                  child: _AccountRow(
-                    account: account,
-                    balance: balances[account] ?? 0,
-                    onTap: onAccountTap == null
-                        ? null
-                        : () => onAccountTap!(account),
-                  ),
-                );
-              },
-            ),
-          ],
+          ),
         ],
       ),
     );

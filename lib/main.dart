@@ -4404,6 +4404,7 @@ class _AssetsPageState extends State<AssetsPage> {
   ];
 
   bool _reorderingSections = false;
+  bool _sectionDragPrimed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -4652,20 +4653,29 @@ class _AssetsPageState extends State<AssetsPage> {
                       balances: balances,
                       collapsed: true,
                       sectionDragIndex: index,
+                      hapticsEnabled: controller.hapticsEnabled,
                     ),
                   ),
                 );
               },
-              onReorderStart: (_) => setState(() => _reorderingSections = true),
-              onReorderEnd: (_) => setState(() => _reorderingSections = false),
-              onReorderItem: (oldIndex, newIndex) =>
-                  controller.reorderAssetSections<_AssetAccountSection>(
-                    mode: viewMode,
-                    sections: visibleAssetSections,
-                    idOf: (section) => section.id,
-                    oldIndex: oldIndex,
-                    newIndex: newIndex,
-                  ),
+              onReorderStart: (_) => _startSectionReorder(controller),
+              onReorderEnd: (_) {
+                _triggerSelectionHaptic(controller);
+                setState(() {
+                  _reorderingSections = false;
+                  _sectionDragPrimed = false;
+                });
+              },
+              onReorderItem: (oldIndex, newIndex) {
+                _triggerSelectionHaptic(controller);
+                controller.reorderAssetSections<_AssetAccountSection>(
+                  mode: viewMode,
+                  sections: visibleAssetSections,
+                  idOf: (section) => section.id,
+                  oldIndex: oldIndex,
+                  newIndex: newIndex,
+                );
+              },
               itemCount: visibleAssetSections.length,
               itemBuilder: (context, index) {
                 final section = visibleAssetSections[index];
@@ -4683,6 +4693,9 @@ class _AssetsPageState extends State<AssetsPage> {
                           sectionId: section.id,
                         ),
                     sectionDragIndex: index,
+                    hapticsEnabled: controller.hapticsEnabled,
+                    onSectionDragPointerDown: _primeSectionDrag,
+                    onSectionDragPointerUp: _cancelPrimedSectionDrag,
                     onToggleCollapsed: () =>
                         controller.toggleAssetSectionCollapsed(
                           mode: viewMode,
@@ -4753,6 +4766,40 @@ class _AssetsPageState extends State<AssetsPage> {
         ],
       ),
     );
+  }
+
+  void _primeSectionDrag() {
+    if (_reorderingSections && _sectionDragPrimed) {
+      return;
+    }
+    setState(() {
+      _reorderingSections = true;
+      _sectionDragPrimed = true;
+    });
+  }
+
+  void _startSectionReorder(VeriFinController controller) {
+    _triggerSelectionHaptic(controller);
+    setState(() {
+      _reorderingSections = true;
+      _sectionDragPrimed = false;
+    });
+  }
+
+  void _cancelPrimedSectionDrag() {
+    if (!_sectionDragPrimed) {
+      return;
+    }
+    setState(() {
+      _reorderingSections = false;
+      _sectionDragPrimed = false;
+    });
+  }
+
+  void _triggerSelectionHaptic(VeriFinController controller) {
+    if (controller.hapticsEnabled) {
+      HapticFeedback.selectionClick();
+    }
   }
 
   Future<void> _changeAssetCover(
