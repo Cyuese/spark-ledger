@@ -7986,11 +7986,11 @@ class SettingsPage extends StatelessWidget {
   ) async {
     final date = DateTime.now().toIso8601String().substring(0, 10);
     try {
-      await downloadTextFile(
+      final saved = await downloadTextFile(
         filename: 'verifin-backup-$date.json',
         content: controller.exportDataJson(),
       );
-      if (context.mounted) {
+      if (saved && context.mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('已导出本地数据备份，位置：下载目录')));

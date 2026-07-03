@@ -1,4 +1,4 @@
-Future<void> downloadTextFile({
+Future<bool> downloadTextFile({
   required String filename,
   required String content,
   String mimeType = 'application/json',

@@ -3,7 +3,7 @@
 import 'dart:async';
 import 'dart:html' as html;
 
-Future<void> downloadTextFile({
+Future<bool> downloadTextFile({
   required String filename,
   required String content,
   String mimeType = 'application/json',
@@ -14,6 +14,7 @@ Future<void> downloadTextFile({
     ..download = filename
     ..click();
   html.Url.revokeObjectUrl(url);
+  return true;
 }
 
 Future<String?> pickTextFile() {
@@ -41,6 +42,12 @@ Future<String?> pickTextFile() {
       }
     });
     reader.readAsText(file);
+  });
+  // 用户取消对话框时不会触发 change,监听 cancel 以完成 Future。
+  input.on['cancel'].first.then((_) {
+    if (!completer.isCompleted) {
+      completer.complete(null);
+    }
   });
 
   input.click();

@@ -6,7 +6,13 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 Future<String?> pickRawImageDataUrl() async {
-  final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+  // 限制取图尺寸,避免原图(可达几十 MP)解码时内存峰值过高;
+  // 裁剪目标最大只有 1200x760。
+  final picked = await ImagePicker().pickImage(
+    source: ImageSource.gallery,
+    maxWidth: 2400,
+    maxHeight: 2400,
+  );
   if (picked == null) {
     return null;
   }
@@ -25,12 +31,17 @@ Future<String?> cropImageDataUrl({
 }) async {
   final bytes = _bytesFromDataUrl(sourceDataUrl);
   if (bytes == null) {
-    return sourceDataUrl;
+    return null;
   }
-  final source = img.decodeImage(bytes);
-  if (source == null || source.width == 0 || source.height == 0) {
-    return sourceDataUrl;
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null || decoded.width == 0 || decoded.height == 0) {
+    // 无法解码的格式(如 HEIC)不能当作裁剪结果原样返回,否则会把
+    // 渲染不出来的大体积原图写进本地存储。
+    return null;
   }
+  // Flutter 预览会应用 EXIF 方向,image 包解码不会;先烘焙方向,
+  // 保证竖拍照片的裁剪结果与预览一致。
+  final source = img.bakeOrientation(decoded);
 
   final targetRatio = targetWidth / targetHeight;
   final sourceRatio = source.width / source.height;
@@ -50,8 +61,10 @@ Future<String?> cropImageDataUrl({
   final cropHeight = baseCropHeight / effectiveZoom;
   final maxOffsetX = math.max(0, source.width - cropWidth) / 2;
   final maxOffsetY = math.max(0, source.height - cropHeight) / 2;
-  final centerX = source.width / 2 + offsetX.clamp(-1.0, 1.0) * maxOffsetX;
-  final centerY = source.height / 2 + offsetY.clamp(-1.0, 1.0) * maxOffsetY;
+  // 预览把图片向 offset 方向平移,取景框内露出的是相反一侧,
+  // 因此裁剪中心要向 offset 的反方向移动。
+  final centerX = source.width / 2 - offsetX.clamp(-1.0, 1.0) * maxOffsetX;
+  final centerY = source.height / 2 - offsetY.clamp(-1.0, 1.0) * maxOffsetY;
   final cropX = (centerX - cropWidth / 2)
       .clamp(0, source.width - cropWidth)
       .round();

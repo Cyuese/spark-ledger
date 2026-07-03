@@ -4,7 +4,8 @@ import 'package:file_selector/file_selector.dart';
 
 import 'platform_bridge.dart';
 
-Future<void> downloadTextFile({
+/// 返回是否真正保存了文件;用户在保存对话框中取消时返回 false。
+Future<bool> downloadTextFile({
   required String filename,
   required String content,
   String mimeType = 'application/json',
@@ -15,12 +16,12 @@ Future<void> downloadTextFile({
     mimeType: mimeType,
   );
   if (savedToDownloads) {
-    return;
+    return true;
   }
 
   final location = await getSaveLocation(suggestedName: filename);
   if (location == null) {
-    return;
+    return false;
   }
   final file = XFile.fromData(
     utf8.encode(content),
@@ -28,6 +29,7 @@ Future<void> downloadTextFile({
     name: filename,
   );
   await file.saveTo(location.path);
+  return true;
 }
 
 Future<String?> pickTextFile() async {

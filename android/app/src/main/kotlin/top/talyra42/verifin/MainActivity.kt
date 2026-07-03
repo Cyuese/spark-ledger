@@ -1,13 +1,17 @@
 package top.talyra42.verifin
 
+import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -20,6 +24,7 @@ import java.net.URL
 class MainActivity : FlutterActivity() {
     private var channel: MethodChannel? = null
     private var pendingQuickEntryIntent = false
+    private var pendingDownloadsWrite: PendingDownloadsWrite? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         rememberQuickEntryIntent(intent)
@@ -199,8 +204,9 @@ class MainActivity : FlutterActivity() {
         connection.connectTimeout = 15_000
         connection.readTimeout = 15_000
         val code = connection.responseCode
+        // errorStream 在部分错误场景下为 null（如连接被重置、无响应体）。
         val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-        val body = stream.bufferedReader().use { it.readText() }
+        val body = stream?.bufferedReader()?.use { it.readText() } ?: ""
         connection.disconnect()
         if (code !in 200..299) {
             throw IllegalStateException("GitHub Release 查询失败：HTTP $code")
@@ -305,6 +311,52 @@ class MainActivity : FlutterActivity() {
         mimeType: String,
         result: MethodChannel.Result,
     ) {
+        // Android 10 以下写公共下载目录需要运行时授予存储权限。
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (pendingDownloadsWrite != null) {
+                result.error("EXPORT_FAILED", "已有导出任务在等待授权，请稍后再试。", null)
+                return
+            }
+            pendingDownloadsWrite = PendingDownloadsWrite(filename, content, mimeType, result)
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                REQUEST_WRITE_DOWNLOADS,
+            )
+            return
+        }
+        writeTextToDownloads(filename, content, mimeType, result)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQUEST_WRITE_DOWNLOADS) {
+            return
+        }
+        val pending = pendingDownloadsWrite ?: return
+        pendingDownloadsWrite = null
+        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            writeTextToDownloads(pending.filename, pending.content, pending.mimeType, pending.result)
+        } else {
+            pending.result.error("EXPORT_FAILED", "需要存储权限才能导出到下载目录。", null)
+        }
+    }
+
+    private fun writeTextToDownloads(
+        filename: String,
+        content: String,
+        mimeType: String,
+        result: MethodChannel.Result,
+    ) {
         Thread {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -357,9 +409,17 @@ class MainActivity : FlutterActivity() {
         return false
     }
 
+    private data class PendingDownloadsWrite(
+        val filename: String,
+        val content: String,
+        val mimeType: String,
+        val result: MethodChannel.Result,
+    )
+
     companion object {
         const val ACTION_QUICK_ENTRY = "top.talyra42.verifin.action.QUICK_ENTRY"
         private const val CHANNEL_NAME = "verifin/app"
+        private const val REQUEST_WRITE_DOWNLOADS = 4301
         private const val RELEASE_API_URL =
             "https://api.github.com/repos/LumiDesk/verifin/releases/latest"
     }
