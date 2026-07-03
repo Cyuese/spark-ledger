@@ -394,7 +394,7 @@ class HomePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 SectionHeaderAction(
-                  title: '今日交易',
+                  title: '最近交易',
                   trailing: recentEntries.isEmpty
                       ? '暂无'
                       : formatSignedAmount(
@@ -453,7 +453,7 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           CalendarPreview(
-            entries: monthEntries,
+            entries: entries,
             onDayTap: (date) {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
@@ -651,7 +651,7 @@ class HomeTrendPanel extends StatelessWidget {
                     color: hasExpense ? veriExpense : mutedColor,
                     values: values,
                     xLabels: labelsForWindow(window),
-                    yLabels: reportAxisLabels(expense),
+                    yLabels: reportAxisLabels(values.fold(0, math.max)),
                     labelColor: mutedColor,
                     glow: isDark,
                   ),
@@ -796,9 +796,11 @@ class BudgetPanel extends StatelessWidget {
                               .colorScheme
                               .surfaceContainerHighest
                               .withValues(alpha: 0.48),
-                          progressColor: ratio > 0.85
-                              ? veriExpense
-                              : veriWarning,
+                          progressColor: _budgetProgressColor(
+                            budget,
+                            budget - expense,
+                            ratio,
+                          ),
                         ),
                       ),
                     ),
@@ -913,6 +915,7 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
       (sum, entry) => sum + entry.amount,
     );
     final dayRows = _dailyStatRows(windowEntries, window.start, total);
+    final windowValues = valuesForTypeInWindow(windowEntries, window, _type);
     final mutedColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.52);
@@ -977,13 +980,11 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                       child: CustomPaint(
                         painter: TrendLinePainter(
                           color: totalColor,
-                          values: valuesForTypeInWindow(
-                            windowEntries,
-                            window,
-                            _type,
-                          ),
+                          values: windowValues,
                           xLabels: labelsForWindow(window),
-                          yLabels: reportAxisLabels(total),
+                          yLabels: reportAxisLabels(
+                            windowValues.fold(0, math.max),
+                          ),
                           labelColor: Theme.of(
                             context,
                           ).colorScheme.onSurface.withValues(alpha: 0.50),
@@ -1911,7 +1912,7 @@ class _BudgetTrendPainter extends CustomPainter {
       ..color = labelColor.withValues(alpha: 0.14)
       ..strokeWidth = 1;
     for (var i = 0; i < 4; i += 1) {
-      final y = chartRect.bottom - chartRect.height * i / 3;
+      final y = chartRect.bottom - chartRect.height * chartValueScale * i / 3;
       canvas.drawLine(
         Offset(chartRect.left, y),
         Offset(chartRect.right, y),
@@ -1947,7 +1948,8 @@ class _BudgetTrendPainter extends CustomPainter {
     for (var i = 0; i < months.length; i += 1) {
       final item = months[i];
       final centerX = chartRect.left + gap * i + gap / 2;
-      final barHeight = item.expense / maxValue * chartRect.height * 0.86;
+      final barHeight =
+          item.expense / maxValue * chartRect.height * chartValueScale;
       final barRect = RRect.fromRectAndRadius(
         Rect.fromLTWH(
           centerX - gap * 0.16,
@@ -1960,7 +1962,8 @@ class _BudgetTrendPainter extends CustomPainter {
       canvas.drawRRect(barRect, barPaint);
 
       final budgetY =
-          chartRect.bottom - item.budget / maxValue * chartRect.height * 0.86;
+          chartRect.bottom -
+          item.budget / maxValue * chartRect.height * chartValueScale;
       if (i == 0) {
         path.moveTo(centerX, budgetY);
       } else {
@@ -1972,7 +1975,8 @@ class _BudgetTrendPainter extends CustomPainter {
       final item = months[i];
       final centerX = chartRect.left + gap * i + gap / 2;
       final budgetY =
-          chartRect.bottom - item.budget / maxValue * chartRect.height * 0.86;
+          chartRect.bottom -
+          item.budget / maxValue * chartRect.height * chartValueScale;
       canvas.drawCircle(Offset(centerX, budgetY), 2.4, pointPaint);
     }
 
@@ -1991,7 +1995,9 @@ class _BudgetTrendPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
         maxLines: 1,
       )..layout(maxWidth: chartRect.left - 4);
-      final y = chartRect.bottom - chartRect.height * i / (yLabels.length - 1);
+      final y =
+          chartRect.bottom -
+          chartRect.height * chartValueScale * i / (yLabels.length - 1);
       painter.paint(canvas, Offset(0, y - painter.height / 2));
     }
 
@@ -4187,6 +4193,13 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     if (entry == null) {
       return;
     }
+    if (_type == EntryType.transfer &&
+        (_toAccountId == null || _toAccountId == _accountId)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('转账需要两个不同的账户,请先添加转入账户。')));
+      return;
+    }
     VeriFinScope.of(context).updateEntry(
       entry.copyWith(
         type: _type,
@@ -5240,7 +5253,9 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
         ],
       ),
     );
-    textController.dispose();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => textController.dispose(),
+    );
     if (!context.mounted || name == null) {
       return;
     }
@@ -5634,6 +5649,9 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
     final entries = controller.entries
         .where((entry) => entryTouchesAccount(entry, currentAccount.id))
         .toList();
+    final balanceTrendValues = _monthlyTrend
+        ? accountMonthlyBalanceSeries(currentAccount, entries)
+        : accountBalanceSeries(currentAccount, entries);
     final matchingGroups = controller.accountGroups.where(
       (group) => group.id == currentAccount.groupId,
     );
@@ -5714,16 +5732,11 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                       child: CustomPaint(
                         painter: TrendLinePainter(
                           color: veriBlue,
-                          values: _monthlyTrend
-                              ? accountMonthlyBalanceSeries(
-                                  currentAccount,
-                                  entries,
-                                )
-                              : accountBalanceSeries(currentAccount, entries),
+                          values: balanceTrendValues,
                           xLabels: _monthlyTrend
                               ? evenMonthAxisLabels()
                               : monthAxisLabels(DateTime.now()),
-                          yLabels: reportAxisLabels(balance.abs()),
+                          yLabels: balanceAxisLabels(balanceTrendValues),
                           labelColor: Theme.of(
                             context,
                           ).colorScheme.onSurface.withValues(alpha: 0.50),
@@ -6197,6 +6210,7 @@ class AccountReportPage extends StatelessWidget {
     final expense = sumByType(entries, EntryType.expense);
     final income = sumByType(entries, EntryType.income);
     final balance = controller.accountBalance(currentAccount);
+    final reportBalanceValues = accountBalanceSeries(currentAccount, entries);
 
     return Scaffold(
       body: SafeArea(
@@ -6251,9 +6265,9 @@ class AccountReportPage extends StatelessWidget {
                       child: CustomPaint(
                         painter: TrendLinePainter(
                           color: veriRoyal,
-                          values: accountBalanceSeries(currentAccount, entries),
+                          values: reportBalanceValues,
                           xLabels: monthAxisLabels(DateTime.now()),
-                          yLabels: reportAxisLabels(balance.abs()),
+                          yLabels: balanceAxisLabels(reportBalanceValues),
                           labelColor: Theme.of(
                             context,
                           ).colorScheme.onSurface.withValues(alpha: 0.50),
@@ -6317,16 +6331,19 @@ class ReportsPage extends StatelessWidget {
       month: now,
       monthEntries: monthEntries,
     );
-    final expenseEntries = entries
+    final expenseEntries = monthEntries
         .where((entry) => entry.type == EntryType.expense)
         .toList(growable: false);
-    final expenseTotal = sumByType(entries, EntryType.expense);
     final categoryStats = _categoryStats(expenseEntries, controller.categories);
     final trendWindow = sevenDayWindowFor(DateTime.now());
     final trendValues = valuesForTypeInWindow(
       entries,
       trendWindow,
       EntryType.expense,
+    );
+    final trendExpense = trendValues.fold<double>(
+      0,
+      (sum, value) => sum + value,
     );
     final trendMax = trendValues.fold<double>(
       0,
@@ -6357,7 +6374,7 @@ class ReportsPage extends StatelessWidget {
                 SectionTitle(
                   title: '分类统计',
                   trailing:
-                      '${formatExpenseAmount(expenseTotal)} · ${DateTime.now().month}月 · 支出',
+                      '${formatExpenseAmount(monthExpense)} · ${DateTime.now().month}月 · 支出',
                 ),
                 const SizedBox(height: 12),
                 LayoutBuilder(
@@ -6365,7 +6382,7 @@ class ReportsPage extends StatelessWidget {
                     final compact = constraints.maxWidth < 360;
                     return _CategoryRingChart(
                       stats: categoryStats,
-                      total: expenseTotal,
+                      total: monthExpense,
                       ringSize: compact ? 126 : 156,
                     );
                   },
@@ -6400,14 +6417,14 @@ class ReportsPage extends StatelessWidget {
               children: <Widget>[
                 SectionTitle(
                   title: '日趋势',
-                  trailing: formatExpenseAmount(expenseTotal),
+                  trailing: formatExpenseAmount(trendExpense),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 138,
                   child: CustomPaint(
                     painter: TrendLinePainter(
-                      color: isZeroAmount(expenseTotal)
+                      color: isZeroAmount(trendExpense)
                           ? Theme.of(
                               context,
                             ).colorScheme.onSurface.withValues(alpha: 0.42)
@@ -8785,83 +8802,122 @@ int isoWeekNumber(DateTime date) {
   return thursday.difference(weekOne).inDays ~/ 7 + 1;
 }
 
+/// 当月每日余额:基线包含本月之前的全部历史流水,余额保留正负号。
 List<double> accountBalanceSeries(Account account, List<LedgerEntry> entries) {
   final now = DateTime.now();
   final days = DateUtils.getDaysInMonth(now.year, now.month);
+  final monthStart = DateTime(now.year, now.month);
   var runningBalance = account.initialBalance;
-  final values = List<double>.filled(days, account.initialBalance.abs());
-  final sortedEntries = List<LedgerEntry>.from(entries)
-    ..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
-
-  for (final entry in sortedEntries) {
-    if (entry.occurredAt.year != now.year ||
-        entry.occurredAt.month != now.month) {
+  final dailyDeltas = List<double>.filled(days, 0);
+  for (final entry in entries) {
+    final delta = accountDeltaForEntry(entry, account.id);
+    if (delta == 0) {
       continue;
     }
-    runningBalance += accountDeltaForEntry(entry, account.id);
-    values[entry.occurredAt.day - 1] = runningBalance.abs();
-  }
-
-  for (var i = 1; i < values.length; i += 1) {
-    if (values[i] == account.initialBalance.abs()) {
-      values[i] = values[i - 1];
+    if (entry.occurredAt.isBefore(monthStart)) {
+      runningBalance += delta;
+    } else if (entry.occurredAt.year == now.year &&
+        entry.occurredAt.month == now.month) {
+      dailyDeltas[entry.occurredAt.day - 1] += delta;
     }
+  }
+  final values = List<double>.filled(days, 0);
+  for (var i = 0; i < days; i += 1) {
+    runningBalance += dailyDeltas[i];
+    values[i] = runningBalance;
   }
   return values;
 }
 
+/// 今年逐月月末余额:基线包含往年全部流水,余额保留正负号。
 List<double> accountMonthlyBalanceSeries(
   Account account,
   List<LedgerEntry> entries,
 ) {
   final now = DateTime.now();
+  final yearStart = DateTime(now.year);
   var runningBalance = account.initialBalance;
-  final values = List<double>.filled(12, account.initialBalance.abs());
-  final sortedEntries = List<LedgerEntry>.from(entries)
-    ..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
-  for (var month = 1; month <= 12; month += 1) {
-    for (final entry in sortedEntries) {
-      if (entry.occurredAt.year != now.year ||
-          entry.occurredAt.month != month) {
-        continue;
-      }
-      runningBalance += accountDeltaForEntry(entry, account.id);
+  final monthlyDeltas = List<double>.filled(12, 0);
+  for (final entry in entries) {
+    final delta = accountDeltaForEntry(entry, account.id);
+    if (delta == 0) {
+      continue;
     }
-    values[month - 1] = runningBalance.abs();
+    if (entry.occurredAt.isBefore(yearStart)) {
+      runningBalance += delta;
+    } else if (entry.occurredAt.year == now.year) {
+      monthlyDeltas[entry.occurredAt.month - 1] += delta;
+    }
+  }
+  final values = List<double>.filled(12, 0);
+  for (var month = 0; month < 12; month += 1) {
+    runningBalance += monthlyDeltas[month];
+    values[month] = runningBalance;
   }
   return values;
 }
 
+/// 今年逐月净资产:基线包含往年全部流水,净资产保留正负号。
 List<double> monthlyNetAssetSeries(
   List<Account> accounts,
   List<LedgerEntry> entries,
 ) {
-  if (accounts.isEmpty) {
-    return List<double>.filled(12, 0);
-  }
-  final now = DateTime.now();
   final visibleAccounts = accounts
       .where((account) => account.includeInAssets && !account.hidden)
       .toList();
   if (visibleAccounts.isEmpty) {
     return List<double>.filled(12, 0);
   }
-  return List<double>.generate(12, (index) {
-    final month = index + 1;
-    var total = 0.0;
+  final now = DateTime.now();
+  final yearStart = DateTime(now.year);
+  var baseline = visibleAccounts.fold<double>(
+    0,
+    (sum, account) => sum + account.initialBalance,
+  );
+  final monthlyDeltas = List<double>.filled(12, 0);
+  for (final entry in entries) {
+    var delta = 0.0;
     for (final account in visibleAccounts) {
-      var balance = account.initialBalance;
-      for (final entry in entries.where((entry) {
-        return entryTouchesAccount(entry, account.id) &&
-            entry.occurredAt.year == now.year &&
-            entry.occurredAt.month <= month;
-      })) {
-        balance += accountDeltaForEntry(entry, account.id);
-      }
-      total += balance;
+      delta += accountDeltaForEntry(entry, account.id);
     }
-    return total.abs();
-  });
+    if (delta == 0) {
+      continue;
+    }
+    if (entry.occurredAt.isBefore(yearStart)) {
+      baseline += delta;
+    } else if (entry.occurredAt.year == now.year) {
+      monthlyDeltas[entry.occurredAt.month - 1] += delta;
+    }
+  }
+  final values = List<double>.filled(12, 0);
+  var runningTotal = baseline;
+  for (var month = 0; month < 12; month += 1) {
+    runningTotal += monthlyDeltas[month];
+    values[month] = runningTotal;
+  }
+  return values;
+}
+
+/// 余额类序列的纵轴刻度:范围取序列实际的 [min, max](含 0)。
+List<String> balanceAxisLabels(List<double> values) {
+  var maxValue = 0.0;
+  var minValue = 0.0;
+  for (final value in values) {
+    if (value > maxValue) {
+      maxValue = value;
+    }
+    if (value < minValue) {
+      minValue = value;
+    }
+  }
+  if (maxValue - minValue <= 0) {
+    return reportAxisLabels(0);
+  }
+  return <String>[
+    _formatAxisAmount(minValue),
+    _formatAxisAmount((minValue + maxValue) / 2),
+    _formatAxisAmount(maxValue),
+  ];
 }
 
 List<String> evenMonthAxisLabels() {

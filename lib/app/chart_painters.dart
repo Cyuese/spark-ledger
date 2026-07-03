@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
 
+/// 数值只画到图表高度的这个比例,顶部留白;网格线和纵轴刻度按同一比例
+/// 定位,保证刻度读数与曲线/柱高一致。
+const double chartValueScale = 0.86;
+
 class TrendLinePainter extends CustomPainter {
   const TrendLinePainter({
     required this.color,
@@ -61,7 +65,7 @@ class TrendLinePainter extends CustomPainter {
       ).createShader(Offset.zero & size);
 
     for (var i = 0; i < 4; i += 1) {
-      final y = chartRect.top + chartRect.height * i / 3;
+      final y = chartRect.bottom - chartRect.height * chartValueScale * i / 3;
       canvas.drawLine(
         Offset(chartRect.left, y),
         Offset(chartRect.right, y),
@@ -78,7 +82,14 @@ class TrendLinePainter extends CustomPainter {
     }
 
     final normalized = values.isEmpty ? <double>[0, 0, 0, 0] : values;
-    final maxValue = math.max(normalized.reduce(math.max), 1);
+    // 序列可能包含负值(如负债账户余额),按 [min, max] 区间归一化;
+    // 全为非负时与按最大值归一化完全一致。
+    final maxValue = math.max(normalized.reduce(math.max), 0.0);
+    final minValue = math.min(normalized.reduce(math.min), 0.0);
+    final range = math.max(maxValue - minValue, 1.0);
+    double yFor(double value) =>
+        chartRect.bottom -
+        ((value - minValue) / range * chartRect.height * chartValueScale);
     final path = Path();
     final fillPath = Path();
 
@@ -86,9 +97,7 @@ class TrendLinePainter extends CustomPainter {
       final x = normalized.length == 1
           ? chartRect.left
           : chartRect.left + chartRect.width * i / (normalized.length - 1);
-      final y =
-          chartRect.bottom -
-          (normalized[i] / maxValue * chartRect.height * 0.86);
+      final y = yFor(normalized[i]);
       if (i == 0) {
         path.moveTo(x, y);
         fillPath.moveTo(x, chartRect.bottom);
@@ -97,9 +106,7 @@ class TrendLinePainter extends CustomPainter {
         final previousX =
             chartRect.left +
             chartRect.width * (i - 1) / (normalized.length - 1);
-        final previousY =
-            chartRect.bottom -
-            (normalized[i - 1] / maxValue * chartRect.height * 0.86);
+        final previousY = yFor(normalized[i - 1]);
         final dx = (x - previousX) / 2;
         path.cubicTo(previousX + dx, previousY, x - dx, y, x, y);
         fillPath.lineTo(x, y);
@@ -115,16 +122,13 @@ class TrendLinePainter extends CustomPainter {
     }
     canvas.drawPath(path, linePaint);
     for (var i = 0; i < normalized.length; i += 1) {
-      if (normalized[i] <= 0) {
+      if (minValue >= 0 && normalized[i] <= 0) {
         continue;
       }
       final x = normalized.length == 1
           ? chartRect.left
           : chartRect.left + chartRect.width * i / (normalized.length - 1);
-      final y =
-          chartRect.bottom -
-          (normalized[i] / maxValue * chartRect.height * 0.86);
-      canvas.drawCircle(Offset(x, y), 2.2, pointPaint);
+      canvas.drawCircle(Offset(x, yFor(normalized[i])), 2.2, pointPaint);
     }
 
     _drawLabels(canvas, chartRect, xLabels, yLabels, axisColor);
@@ -181,7 +185,7 @@ class BarChartPainter extends CustomPainter {
       axisPaint,
     );
     for (var i = 1; i < 4; i += 1) {
-      final y = chartRect.bottom - chartRect.height * i / 3;
+      final y = chartRect.bottom - chartRect.height * chartValueScale * i / 3;
       canvas.drawLine(
         Offset(chartRect.left, y),
         Offset(chartRect.right, y),
@@ -192,7 +196,8 @@ class BarChartPainter extends CustomPainter {
     final maxValue = math.max(values.reduce(math.max), 1);
     final gap = chartRect.width / values.length;
     for (var i = 0; i < values.length; i += 1) {
-      final barHeight = values[i] / maxValue * chartRect.height * 0.86;
+      final barHeight =
+          values[i] / maxValue * chartRect.height * chartValueScale;
       final rect = RRect.fromRectAndRadius(
         Rect.fromLTWH(
           chartRect.left + i * gap + gap * 0.25,
@@ -288,7 +293,8 @@ void _drawLabels(
   for (var i = 0; i < yLabels.length; i += 1) {
     final y = yLabels.length == 1
         ? chartRect.bottom
-        : chartRect.bottom - chartRect.height * i / (yLabels.length - 1);
+        : chartRect.bottom -
+              chartRect.height * chartValueScale * i / (yLabels.length - 1);
     final painter = TextPainter(
       text: TextSpan(text: yLabels[i], style: textStyle),
       textDirection: TextDirection.ltr,

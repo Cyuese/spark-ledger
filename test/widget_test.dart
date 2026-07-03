@@ -321,7 +321,7 @@ void main() {
     await tester.tap(find.byKey(const Key('save_entry_button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('今日交易'), findsOneWidget);
+    expect(find.text('最近交易'), findsOneWidget);
     expect(find.text('餐饮'), findsAtLeastNWidgets(1));
     expect(find.text('-45'), findsAtLeastNWidgets(1));
   });
@@ -414,7 +414,7 @@ void main() {
       ..dispose();
 
     await tester.pumpWidget(VeriFinApp(store: store));
-    await tester.tap(find.text('今日交易'));
+    await tester.tap(find.text('最近交易'));
     await tester.pumpAndSettle();
 
     expect(find.text('交易明细'), findsOneWidget);
@@ -1012,4 +1012,138 @@ void main() {
       target.dispose();
     },
   );
+
+  test('addEntry keeps entries sorted latest first', () {
+    final controller = VeriFinController(LocalKeyValueStore());
+    final bookId = controller.activeBook.id;
+    LedgerEntry entryAt(String id, DateTime when) => LedgerEntry(
+      id: id,
+      bookId: bookId,
+      type: EntryType.expense,
+      amount: 10,
+      categoryId: 'dining',
+      accountId: 'cash',
+      note: '',
+      occurredAt: when,
+    );
+
+    controller
+      ..addEntry(entryAt('today', DateTime(2026, 7, 3, 10)))
+      ..addEntry(entryAt('backdated', DateTime(2026, 6, 26, 9)));
+
+    expect(controller.entries.first.id, 'today');
+    expect(controller.entries.last.id, 'backdated');
+    controller.dispose();
+  });
+
+  test('recovers from structurally corrupt persisted entries', () {
+    final store = LocalKeyValueStore();
+    store.write('verifin.entries.v1', '[{"id":"broken"}]');
+
+    final controller = VeriFinController(store);
+
+    expect(controller.entries, isEmpty);
+    expect(store.read('verifin.entries.v1'), isNull);
+    controller.dispose();
+  });
+
+  test('deleting a ledger book removes its asset view preferences', () {
+    final store = LocalKeyValueStore();
+    final controller = VeriFinController(store);
+    controller.addLedgerBook('临时账本');
+    final bookId = controller.activeBook.id;
+    controller.toggleAssetSectionCollapsed(
+      mode: AssetAccountViewMode.type,
+      sectionId: 'cash',
+    );
+    expect(store.read('verifin.asset_section_collapsed.v1'), contains(bookId));
+
+    controller.deleteLedgerBook(bookId);
+
+    expect(
+      store.read('verifin.asset_section_collapsed.v1'),
+      isNot(contains(bookId)),
+    );
+    controller.dispose();
+  });
+
+  test('account balance series keeps history baseline and sign', () {
+    final now = DateTime.now();
+    final account = Account(
+      id: 'acc-series',
+      bookId: 'default',
+      name: '测试卡',
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 100,
+      iconCode: 'wallet',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+    );
+    final lastMonth = DateTime(
+      now.year,
+      now.month,
+    ).subtract(const Duration(days: 1));
+    final entries = <LedgerEntry>[
+      LedgerEntry(
+        id: 'prior',
+        bookId: 'default',
+        type: EntryType.expense,
+        amount: 300,
+        categoryId: 'dining',
+        accountId: account.id,
+        note: '',
+        occurredAt: lastMonth,
+      ),
+      LedgerEntry(
+        id: 'current',
+        bookId: 'default',
+        type: EntryType.expense,
+        amount: 50,
+        categoryId: 'dining',
+        accountId: account.id,
+        note: '',
+        occurredAt: DateTime(now.year, now.month, 1, 10),
+      ),
+    ];
+
+    final values = accountBalanceSeries(account, entries);
+
+    expect(values.first, -250);
+    expect(values.last, -250);
+  });
+
+  test('monthly net asset series includes prior year history', () {
+    final now = DateTime.now();
+    final account = Account(
+      id: 'acc-net',
+      bookId: 'default',
+      name: '测试卡',
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 100,
+      iconCode: 'wallet',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+    );
+    final entries = <LedgerEntry>[
+      LedgerEntry(
+        id: 'last-year',
+        bookId: 'default',
+        type: EntryType.expense,
+        amount: 300,
+        categoryId: 'dining',
+        accountId: account.id,
+        note: '',
+        occurredAt: DateTime(now.year - 1, 12, 31, 12),
+      ),
+    ];
+
+    final values = monthlyNetAssetSeries(<Account>[account], entries);
+
+    expect(values.first, -200);
+    expect(values.last, -200);
+  });
 }
