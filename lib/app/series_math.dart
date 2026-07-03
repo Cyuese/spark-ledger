@@ -180,3 +180,16 @@ int bookkeepingDays(List<LedgerEntry> entries) {
       .reduce((a, b) => a.isBefore(b) ? a : b);
   return DateTime.now().difference(first).inDays + 1;
 }
+
+/// 记账时长的展示文案:一年以内显示天数,超过一年显示 1.2、2 这样的年数。
+(String, String) bookkeepingDurationStat(int days) {
+  if (days <= 365) {
+    return ('$days', '记账天数');
+  }
+  final years = days / 365;
+  final text = years.toStringAsFixed(1);
+  return (
+    text.endsWith('.0') ? text.substring(0, text.length - 2) : text,
+    '记账年数',
+  );
+}

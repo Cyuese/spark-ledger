@@ -102,9 +102,13 @@ class ProfilePage extends StatelessWidget {
                   Row(
                     children: <Widget>[
                       Expanded(
-                        child: ProfileStat(
-                          label: '记账天数',
-                          value: '${bookkeepingDays(controller.entries)}',
+                        child: Builder(
+                          builder: (context) {
+                            final (value, label) = bookkeepingDurationStat(
+                              bookkeepingDays(controller.entries),
+                            );
+                            return ProfileStat(label: label, value: value);
+                          },
                         ),
                       ),
                       Expanded(
