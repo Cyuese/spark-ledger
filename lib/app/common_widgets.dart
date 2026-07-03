@@ -23,7 +23,16 @@ class TransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final category = categoryById(entry.categoryId, categories);
     final account = accountById(accounts, entry.accountId);
+    final toAccount = entry.toAccountId == null
+        ? null
+        : accountById(accounts, entry.toAccountId!);
     final amountColor = colorForType(entry.type);
+    final amountText = entry.type == EntryType.transfer
+        ? formatAmount(entry.amount)
+        : formatSignedAmount(signedAmount(entry));
+    final accountLabel = entry.type == EntryType.transfer && toAccount != null
+        ? '${account.name} → ${toAccount.name}'
+        : account.name;
 
     return Material(
       color: Colors.transparent,
@@ -73,7 +82,7 @@ class TransactionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: <Widget>[
                   Text(
-                    formatSignedAmount(signedAmount(entry)),
+                    amountText,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: amountColor,
                       fontSize: 14,
@@ -95,7 +104,9 @@ class TransactionTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      account.name,
+                      accountLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(
                           context,

@@ -108,6 +108,7 @@ class LedgerEntry {
     required this.amount,
     required this.categoryId,
     required this.accountId,
+    this.toAccountId,
     required this.note,
     required this.occurredAt,
   });
@@ -118,6 +119,7 @@ class LedgerEntry {
   final double amount;
   final String categoryId;
   final String accountId;
+  final String? toAccountId;
   final String note;
   final DateTime occurredAt;
 
@@ -128,6 +130,8 @@ class LedgerEntry {
     double? amount,
     String? categoryId,
     String? accountId,
+    String? toAccountId,
+    bool clearToAccountId = false,
     String? note,
     DateTime? occurredAt,
   }) {
@@ -138,6 +142,7 @@ class LedgerEntry {
       amount: amount ?? this.amount,
       categoryId: categoryId ?? this.categoryId,
       accountId: accountId ?? this.accountId,
+      toAccountId: clearToAccountId ? null : toAccountId ?? this.toAccountId,
       note: note ?? this.note,
       occurredAt: occurredAt ?? this.occurredAt,
     );
@@ -151,6 +156,7 @@ class LedgerEntry {
       'amount': amount,
       'categoryId': categoryId,
       'accountId': accountId,
+      'toAccountId': toAccountId,
       'note': note,
       'occurredAt': occurredAt.toIso8601String(),
     };
@@ -164,6 +170,7 @@ class LedgerEntry {
       amount: (json['amount'] as num).toDouble(),
       categoryId: json['categoryId'] as String? ?? 'dining',
       accountId: json['accountId'] as String? ?? 'alipay',
+      toAccountId: json['toAccountId'] as String?,
       note: json['note'] as String? ?? '',
       occurredAt:
           DateTime.tryParse(json['occurredAt'] as String? ?? '') ??

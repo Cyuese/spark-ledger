@@ -218,7 +218,7 @@ class _BottomNavButton extends StatelessWidget {
 
   final _NavItem item;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -404,7 +404,7 @@ class SectionHeaderAction extends StatelessWidget {
 
   final String title;
   final String trailing;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -2961,7 +2961,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
     final scopedEntries = widget.accountId == null
         ? entries
         : entries
-              .where((entry) => entry.accountId == widget.accountId)
+              .where((entry) => entryTouchesAccount(entry, widget.accountId!))
               .toList();
 
     List<LedgerEntry> filtered;
@@ -3006,7 +3006,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
     LedgerEntry entry,
     VeriFinController controller,
   ) {
-    if (_selectedAccountId != null && entry.accountId != _selectedAccountId) {
+    if (_selectedAccountId != null &&
+        !entryTouchesAccount(entry, _selectedAccountId!)) {
       return false;
     }
     if (_selectedCategoryId != null &&
@@ -3027,6 +3028,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
       entry.note,
       category.label,
       account.name,
+      if (entry.toAccountId != null)
+        accountById(controller.accounts, entry.toAccountId!).name,
       entry.type.label,
       formatAmount(entry.amount),
       formatSignedAmount(signedAmount(entry)),
@@ -3628,6 +3631,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   late double _amount;
   late String _categoryId;
   late String _accountId;
+  late String? _toAccountId;
   late DateTime _occurredAt;
   late final TextEditingController _noteController;
 
@@ -3648,6 +3652,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     _amount = entry.amount;
     _categoryId = entry.categoryId;
     _accountId = entry.accountId;
+    _toAccountId = entry.toAccountId;
     _occurredAt = entry.occurredAt;
     _noteController = TextEditingController(text: entry.note);
   }
@@ -3678,7 +3683,23 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     final accounts = controller.accounts
         .where((account) => !account.hidden || account.id == _accountId)
         .toList();
+    if (_type == EntryType.transfer &&
+        _toAccountId != null &&
+        !accounts.any((account) => account.id == _toAccountId)) {
+      final toAccount = controller.accounts.where(
+        (account) => account.id == _toAccountId,
+      );
+      accounts.addAll(toAccount);
+    }
+    _normalizeTransferAccounts(accounts);
     final account = accountById(accounts, _accountId);
+    final toAccount = _toAccountId == null
+        ? null
+        : accountById(accounts, _toAccountId!);
+    final canSave =
+        accounts.isNotEmpty &&
+        (_type != EntryType.transfer ||
+            (_toAccountId != null && _toAccountId != _accountId));
     final amountColor = colorForType(_type);
     final amountText = switch (_type) {
       EntryType.expense => formatExpenseAmount(_amount),
@@ -3707,7 +3728,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                     HeaderAction(
                       icon: Icons.check,
                       tooltip: '保存交易',
-                      onPressed: accounts.isEmpty ? null : _save,
+                      onPressed: canSave ? _save : null,
                     ),
                   ],
                 ),
@@ -3767,14 +3788,34 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                         value: category.label,
                         onTap: _pickCategory,
                       ),
-                      DetailInfoRow(
-                        label: '账户',
-                        value:
-                            '${account.name} (${formatAmount(controller.accountBalance(account))})',
-                        onTap: accounts.isEmpty
-                            ? null
-                            : () => _pickAccount(accounts),
-                      ),
+                      if (_type == EntryType.transfer) ...<Widget>[
+                        DetailInfoRow(
+                          label: '转出账户',
+                          value:
+                              '${account.name} (${formatAmount(controller.accountBalance(account))})',
+                          onTap: accounts.isEmpty
+                              ? null
+                              : () => _pickAccount(accounts),
+                        ),
+                        DetailInfoRow(
+                          label: '转入账户',
+                          value: toAccount == null
+                              ? '请选择'
+                              : '${toAccount.name} (${formatAmount(controller.accountBalance(toAccount))})',
+                          placeholder: toAccount == null,
+                          onTap: accounts.length < 2
+                              ? null
+                              : () => _pickToAccount(accounts),
+                        ),
+                      ] else
+                        DetailInfoRow(
+                          label: '账户',
+                          value:
+                              '${account.name} (${formatAmount(controller.accountBalance(account))})',
+                          onTap: accounts.isEmpty
+                              ? null
+                              : () => _pickAccount(accounts),
+                        ),
                       DetailInfoRow(
                         label: '日期',
                         value:
@@ -3836,6 +3877,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       if (controller.categoryById(_categoryId).type != _type) {
         _categoryId = controller.categoriesForType(_type).first.id;
       }
+      _normalizeTransferAccounts(controller.accounts);
     });
   }
 
@@ -3862,7 +3904,48 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       labelOf: (value) => value.name,
     );
     if (selected != null && mounted) {
-      setState(() => _accountId = selected.id);
+      setState(() {
+        _accountId = selected.id;
+        _normalizeTransferAccounts(accounts);
+      });
+    }
+  }
+
+  Future<void> _pickToAccount(List<Account> accounts) async {
+    final selectableAccounts = accounts
+        .where((account) => account.id != _accountId)
+        .toList();
+    if (selectableAccounts.isEmpty) {
+      return;
+    }
+    final selected = await _showOptionSheet<Account>(
+      context: context,
+      title: '选择转入账户',
+      values: selectableAccounts,
+      selected: accountById(selectableAccounts, _toAccountId ?? ''),
+      labelOf: (value) => value.name,
+    );
+    if (selected != null && mounted) {
+      setState(() => _toAccountId = selected.id);
+    }
+  }
+
+  void _normalizeTransferAccounts(List<Account> accounts) {
+    if (_type != EntryType.transfer) {
+      _toAccountId = null;
+      return;
+    }
+    final available = accounts;
+    if (available.length < 2) {
+      _toAccountId = null;
+      return;
+    }
+    if (_toAccountId == null ||
+        _toAccountId == _accountId ||
+        !available.any((account) => account.id == _toAccountId)) {
+      _toAccountId = available
+          .firstWhere((account) => account.id != _accountId)
+          .id;
     }
   }
 
@@ -3930,6 +4013,8 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
         amount: _amount,
         categoryId: _categoryId,
         accountId: _accountId,
+        toAccountId: _type == EntryType.transfer ? _toAccountId : null,
+        clearToAccountId: _type != EntryType.transfer,
         note: _noteController.text.trim(),
         occurredAt: _occurredAt,
       ),
@@ -4788,7 +4873,7 @@ class _SelectField extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -5034,7 +5119,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
     );
     final balance = controller.accountBalance(currentAccount);
     final entries = controller.entries
-        .where((entry) => entry.accountId == currentAccount.id)
+        .where((entry) => entryTouchesAccount(entry, currentAccount.id))
         .toList();
     final matchingGroups = controller.accountGroups.where(
       (group) => group.id == currentAccount.groupId,
@@ -5551,7 +5636,7 @@ class AccountReportPage extends StatelessWidget {
       orElse: () => account,
     );
     final entries = controller.entries
-        .where((entry) => entry.accountId == currentAccount.id)
+        .where((entry) => entryTouchesAccount(entry, currentAccount.id))
         .toList();
     final expense = sumByType(entries, EntryType.expense);
     final income = sumByType(entries, EntryType.income);
@@ -7305,6 +7390,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   EntryType _type = EntryType.expense;
   String _categoryId = 'dining';
   late String _accountId = widget.initialAccountId ?? '';
+  String? _toAccountId;
   DateTime _occurredAt = DateTime.now();
   final TextEditingController _noteController = TextEditingController();
 
@@ -7324,6 +7410,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     if (hasAccounts && !accounts.any((account) => account.id == _accountId)) {
       _accountId = accounts.first.id;
     }
+    _normalizeTransferAccounts(accounts);
     final categories = controller.categoriesForType(_type);
     if (!categories.any((category) => category.id == _categoryId)) {
       _categoryId = categories.first.id;
@@ -7361,6 +7448,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                             .categoriesForType(_type)
                             .first
                             .id;
+                        _normalizeTransferAccounts(accounts);
                       });
                     },
                   ),
@@ -7411,7 +7499,28 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  if (hasAccounts)
+                  if (hasAccounts && _type == EntryType.transfer) ...<Widget>[
+                    _SelectField(
+                      key: const Key('account_dropdown'),
+                      label: '转出账户',
+                      value:
+                          '${accountById(accounts, _accountId).name} (${formatAmount(controller.accountBalance(accountById(accounts, _accountId)))})',
+                      icon: Icons.call_made,
+                      onTap: () => _pickAccount(accounts),
+                    ),
+                    const SizedBox(height: 10),
+                    _SelectField(
+                      key: const Key('to_account_dropdown'),
+                      label: '转入账户',
+                      value: _toAccountId == null
+                          ? '请选择'
+                          : '${accountById(accounts, _toAccountId!).name} (${formatAmount(controller.accountBalance(accountById(accounts, _toAccountId!)))})',
+                      icon: Icons.call_received,
+                      onTap: accounts.length < 2
+                          ? null
+                          : () => _pickToAccount(accounts),
+                    ),
+                  ] else if (hasAccounts)
                     _SelectField(
                       key: const Key('account_dropdown'),
                       label: '账户',
@@ -7474,7 +7583,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 height: 48,
                 child: FilledButton(
                   key: const Key('save_entry_button'),
-                  onPressed: hasAccounts ? _save : null,
+                  onPressed: _canSave(accounts) ? _save : null,
                   child: const Text('保存'),
                 ),
               ),
@@ -7529,7 +7638,57 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     if (!mounted || selected == null) {
       return;
     }
-    setState(() => _accountId = selected.id);
+    setState(() {
+      _accountId = selected.id;
+      _normalizeTransferAccounts(accounts);
+    });
+  }
+
+  Future<void> _pickToAccount(List<Account> accounts) async {
+    final selectableAccounts = accounts
+        .where((account) => account.id != _accountId)
+        .toList();
+    if (selectableAccounts.isEmpty) {
+      return;
+    }
+    final selected = await _showOptionSheet<Account>(
+      context: context,
+      title: '选择转入账户',
+      values: selectableAccounts,
+      selected: accountById(selectableAccounts, _toAccountId ?? ''),
+      labelOf: (value) => value.name,
+    );
+    if (selected != null && mounted) {
+      setState(() => _toAccountId = selected.id);
+    }
+  }
+
+  void _normalizeTransferAccounts(List<Account> accounts) {
+    if (_type != EntryType.transfer) {
+      _toAccountId = null;
+      return;
+    }
+    if (accounts.length < 2) {
+      _toAccountId = null;
+      return;
+    }
+    if (_toAccountId == null ||
+        _toAccountId == _accountId ||
+        !accounts.any((account) => account.id == _toAccountId)) {
+      _toAccountId = accounts
+          .firstWhere((account) => account.id != _accountId)
+          .id;
+    }
+  }
+
+  bool _canSave(List<Account> accounts) {
+    if (accounts.isEmpty) {
+      return false;
+    }
+    if (_type != EntryType.transfer) {
+      return true;
+    }
+    return _toAccountId != null && _toAccountId != _accountId;
   }
 
   Future<void> _pickDate() async {
@@ -7591,6 +7750,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         amount: _amount,
         categoryId: _categoryId,
         accountId: _accountId,
+        toAccountId: _type == EntryType.transfer ? _toAccountId : null,
         note: _noteController.text.trim(),
         occurredAt: _occurredAt,
       ),
@@ -7680,7 +7840,7 @@ List<double> accountBalanceSeries(Account account, List<LedgerEntry> entries) {
         entry.occurredAt.month != now.month) {
       continue;
     }
-    runningBalance += signedAmount(entry);
+    runningBalance += accountDeltaForEntry(entry, account.id);
     values[entry.occurredAt.day - 1] = runningBalance.abs();
   }
 
@@ -7707,7 +7867,7 @@ List<double> accountMonthlyBalanceSeries(
           entry.occurredAt.month != month) {
         continue;
       }
-      runningBalance += signedAmount(entry);
+      runningBalance += accountDeltaForEntry(entry, account.id);
     }
     values[month - 1] = runningBalance.abs();
   }
@@ -7734,11 +7894,11 @@ List<double> monthlyNetAssetSeries(
     for (final account in visibleAccounts) {
       var balance = account.initialBalance;
       for (final entry in entries.where((entry) {
-        return entry.accountId == account.id &&
+        return entryTouchesAccount(entry, account.id) &&
             entry.occurredAt.year == now.year &&
             entry.occurredAt.month <= month;
       })) {
-        balance += signedAmount(entry);
+        balance += accountDeltaForEntry(entry, account.id);
       }
       total += balance;
     }

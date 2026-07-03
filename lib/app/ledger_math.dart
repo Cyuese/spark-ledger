@@ -14,6 +14,27 @@ double signedAmount(LedgerEntry entry) {
   }
 }
 
+double accountDeltaForEntry(LedgerEntry entry, String accountId) {
+  switch (entry.type) {
+    case EntryType.expense:
+      return entry.accountId == accountId ? -entry.amount : 0;
+    case EntryType.income:
+      return entry.accountId == accountId ? entry.amount : 0;
+    case EntryType.transfer:
+      if (entry.accountId == accountId) {
+        return -entry.amount;
+      }
+      if (entry.toAccountId == accountId) {
+        return entry.amount;
+      }
+      return 0;
+  }
+}
+
+bool entryTouchesAccount(LedgerEntry entry, String accountId) {
+  return entry.accountId == accountId || entry.toAccountId == accountId;
+}
+
 Color colorForType(EntryType type) {
   switch (type) {
     case EntryType.expense:

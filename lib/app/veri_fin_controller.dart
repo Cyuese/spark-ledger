@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' hide Category;
 
 import '../local_storage/local_storage.dart';
 import 'demo_data.dart';
+import 'ledger_math.dart';
 import 'models.dart';
 
 class VeriFinController extends ChangeNotifier {
@@ -619,16 +620,11 @@ class VeriFinController extends ChangeNotifier {
   double accountBalance(Account account) {
     var balance = account.initialBalance;
     for (final entry in _entries.where(
-      (item) => item.bookId == account.bookId && item.accountId == account.id,
+      (item) =>
+          item.bookId == account.bookId &&
+          entryTouchesAccount(item, account.id),
     )) {
-      switch (entry.type) {
-        case EntryType.expense:
-          balance -= entry.amount;
-        case EntryType.income:
-          balance += entry.amount;
-        case EntryType.transfer:
-          break;
-      }
+      balance += accountDeltaForEntry(entry, account.id);
     }
     return balance;
   }

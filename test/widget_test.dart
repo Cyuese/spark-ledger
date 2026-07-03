@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:verifin/app/common_widgets.dart';
+import 'package:verifin/app/ledger_math.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/local_storage/local_storage.dart';
@@ -491,4 +492,67 @@ void main() {
     source.dispose();
     target.dispose();
   });
+
+  test(
+    'transfer entries update both account balances without income expense',
+    () {
+      final source = VeriFinController(LocalKeyValueStore());
+      final cash = Account(
+        id: 'transfer-cash-test',
+        bookId: source.activeBook.id,
+        name: '现金账户',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 500,
+        iconCode: 'cash',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      );
+      final card = Account(
+        id: 'transfer-card-test',
+        bookId: source.activeBook.id,
+        name: '银行卡',
+        type: AccountType.debitCard,
+        groupId: null,
+        initialBalance: 100,
+        iconCode: 'bank',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      );
+      source
+        ..addAccount(cash)
+        ..addAccount(card)
+        ..addEntry(
+          LedgerEntry(
+            id: 'transfer-entry-test',
+            bookId: source.activeBook.id,
+            type: EntryType.transfer,
+            amount: 80,
+            categoryId: 'transfer_out',
+            accountId: cash.id,
+            toAccountId: card.id,
+            note: '转入银行卡',
+            occurredAt: DateTime(2026, 7, 3, 10),
+          ),
+        );
+
+      expect(source.accountBalance(cash), 420);
+      expect(source.accountBalance(card), 180);
+      expect(sumByType(source.entries, EntryType.expense), 0);
+      expect(sumByType(source.entries, EntryType.income), 0);
+
+      final backup = source.exportDataJson();
+      final target = VeriFinController(LocalKeyValueStore());
+      target.importDataJson(backup);
+
+      expect(target.entries.single.toAccountId, card.id);
+      expect(target.accountBalance(target.accounts.first), 420);
+      expect(target.accountBalance(target.accounts.last), 180);
+
+      source.dispose();
+      target.dispose();
+    },
+  );
 }
