@@ -13,6 +13,7 @@ import 'app/data_file_port.dart';
 import 'app/demo_data.dart';
 import 'app/entry_sheets.dart';
 import 'app/image_cropper.dart';
+import 'app/image_sources.dart';
 import 'app/ledger_math.dart';
 import 'app/models.dart';
 import 'app/platform_bridge.dart';
@@ -20,6 +21,9 @@ import 'app/veri_fin_controller.dart';
 import 'local_storage/local_storage.dart';
 
 const String appVersionLabel = 'v1.0.2+4';
+const double assetCoverAspectRatio = 1200 / 760;
+const int assetCoverTargetWidth = 1200;
+const int assetCoverTargetHeight = 760;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -4242,27 +4246,42 @@ Future<void> _confirmDeleteAccount(
 ) async {
   final controller = VeriFinScope.of(context);
   if (entries.isNotEmpty) {
-    final shouldHide = await showDialog<bool>(
+    final action = await showDialog<_AccountDeleteAction>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('暂不能删除账户'),
-        content: Text('此账户已有 ${entries.length} 笔交易。为避免历史记录失去账户来源，可以先隐藏账户。'),
+        title: const Text('处理此账户？'),
+        content: Text(
+          '账户「${account.name}」已有 ${entries.length} 笔相关交易。你可以隐藏账户，或删除账户并同步删除这些交易记录。',
+        ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('保留'),
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.of(context).pop(_AccountDeleteAction.hide),
+            child: const Text('隐藏账户'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('隐藏账户'),
+            onPressed: () =>
+                Navigator.of(context).pop(_AccountDeleteAction.delete),
+            style: FilledButton.styleFrom(backgroundColor: veriExpense),
+            child: const Text('删除账户和交易'),
           ),
         ],
       ),
     );
-    if (context.mounted && shouldHide == true) {
+    if (!context.mounted || action == null) {
+      return;
+    }
+    if (action == _AccountDeleteAction.hide) {
       controller.updateAccount(account.copyWith(hidden: true));
       Navigator.of(context).pop();
+      return;
     }
+    controller.deleteAccountAndRelatedEntries(account.id);
+    Navigator.of(context).pop();
     return;
   }
 
@@ -4289,6 +4308,8 @@ Future<void> _confirmDeleteAccount(
   controller.deleteAccount(account.id);
   Navigator.of(context).pop();
 }
+
+enum _AccountDeleteAction { hide, delete }
 
 void _openEntryDetail(BuildContext context, LedgerEntry entry) {
   Navigator.of(context).push<void>(
@@ -4493,7 +4514,7 @@ class AssetsPage extends StatelessWidget {
               image: !hasAssetCover
                   ? null
                   : DecorationImage(
-                      image: NetworkImage(controller.assetCoverUrl),
+                      image: imageProviderForSource(controller.assetCoverUrl),
                       fit: BoxFit.cover,
                       alignment: Alignment.center,
                     ),
@@ -4747,15 +4768,15 @@ class AssetsPage extends StatelessWidget {
           context: context,
           imageDataUrl: rawImage,
           title: '裁剪资产背景',
-          aspectRatio: 1200 / 520,
+          aspectRatio: assetCoverAspectRatio,
         );
         if (crop == null) {
           return;
         }
         final dataUrl = await cropImageDataUrl(
           sourceDataUrl: rawImage,
-          targetWidth: 1200,
-          targetHeight: 520,
+          targetWidth: assetCoverTargetWidth,
+          targetHeight: assetCoverTargetHeight,
           zoom: crop.zoom,
           offsetX: crop.offsetX,
           offsetY: crop.offsetY,
@@ -4938,89 +4959,114 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                 ),
               ),
               Expanded(
-                child: ReorderableListView.builder(
-                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 86),
-                  itemCount: groups.length,
-                  // ignore: deprecated_member_use
-                  onReorder: controller.reorderAccountGroup,
-                  itemBuilder: (context, index) {
-                    final group = groups[index];
-                    final groupAccounts = accounts
-                        .where(
-                          (account) => _effectiveGroupId(account) == group.id,
-                        )
-                        .toList();
-                    final total = groupAccounts.fold<double>(
-                      0,
-                      (sum, account) =>
-                          sum + controller.accountBalance(account),
-                    );
-                    final selected = _selectedGroupId == group.id;
+                child: groups.isEmpty
+                    ? ListView(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 86),
+                        children: const <Widget>[
+                          VeriCard(
+                            child: EmptyState(
+                              icon: Icons.folder_open_outlined,
+                              title: '还没有账户分组',
+                              description: '点击右上角加号创建分组，用来整理不同账户。',
+                            ),
+                          ),
+                        ],
+                      )
+                    : ReorderableListView.builder(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 86),
+                        itemCount: groups.length,
+                        // ignore: deprecated_member_use
+                        onReorder: controller.reorderAccountGroup,
+                        itemBuilder: (context, index) {
+                          final group = groups[index];
+                          final groupAccounts = accounts
+                              .where(
+                                (account) =>
+                                    _effectiveGroupId(account) == group.id,
+                              )
+                              .toList();
+                          final total = groupAccounts.fold<double>(
+                            0,
+                            (sum, account) =>
+                                sum + controller.accountBalance(account),
+                          );
+                          final selected = _selectedGroupId == group.id;
 
-                    return Padding(
-                      key: ValueKey(group.id),
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(veriRadiusMd),
-                        onLongPress: () =>
-                            setState(() => _selectedGroupId = group.id),
-                        onTap: () => setState(() {
-                          _selectedGroupId = selected ? null : group.id;
-                        }),
-                        child: VeriCard(
-                          child: Row(
-                            children: <Widget>[
-                              VeriIconBox(icon: iconForCode(group.iconCode)),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                          return Padding(
+                            key: ValueKey(group.id),
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(veriRadiusMd),
+                              onLongPress: () =>
+                                  setState(() => _selectedGroupId = group.id),
+                              onTap: () => setState(() {
+                                _selectedGroupId = selected ? null : group.id;
+                              }),
+                              child: VeriCard(
+                                child: Row(
                                   children: <Widget>[
+                                    VeriIconBox(
+                                      icon: iconForCode(group.iconCode),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text(
+                                            group.name,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium,
+                                          ),
+                                          const SizedBox(height: 5),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceContainerHighest,
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    veriRadiusSm,
+                                                  ),
+                                            ),
+                                            child: Text(
+                                              '${groupAccounts.length}个账户',
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.labelSmall,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                     Text(
-                                      group.name,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleMedium,
+                                      formatAmount(total),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                          ),
                                     ),
-                                    const SizedBox(height: 5),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
+                                    if (selected) const SizedBox(width: 6),
+                                    if (selected)
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: veriBlue,
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.surfaceContainerHighest,
-                                        borderRadius: BorderRadius.circular(
-                                          veriRadiusSm,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        '${groupAccounts.length}个账户',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.labelSmall,
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ),
-                              Text(
-                                formatAmount(total),
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w800),
-                              ),
-                              if (selected) const SizedBox(width: 6),
-                              if (selected)
-                                const Icon(Icons.check_circle, color: veriBlue),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
             ],
           ),
@@ -7671,7 +7717,7 @@ class ProfileAvatar extends StatelessWidget {
     if (profile.avatarDataUrl.isNotEmpty) {
       return CircleAvatar(
         radius: radius,
-        backgroundImage: NetworkImage(profile.avatarDataUrl),
+        backgroundImage: imageProviderForSource(profile.avatarDataUrl),
       );
     }
     return CircleAvatar(

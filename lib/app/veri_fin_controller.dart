@@ -329,9 +329,17 @@ class VeriFinController extends ChangeNotifier {
 
   void deleteAccount(String accountId) {
     _accounts.removeWhere((account) => account.id == accountId);
-    for (final order in _assetAccountOrders.values) {
-      order.remove(accountId);
-    }
+    _removeAccountFromOrders(accountId);
+    _persistAssetAccountOrders();
+    _persistAccounts();
+    notifyListeners();
+  }
+
+  void deleteAccountAndRelatedEntries(String accountId) {
+    _entries.removeWhere((entry) => entryTouchesAccount(entry, accountId));
+    _accounts.removeWhere((account) => account.id == accountId);
+    _removeAccountFromOrders(accountId);
+    _persistEntries();
     _persistAssetAccountOrders();
     _persistAccounts();
     notifyListeners();
@@ -805,6 +813,12 @@ class VeriFinController extends ChangeNotifier {
         );
     } on FormatException {
       _store.delete(_entriesKey);
+    }
+  }
+
+  void _removeAccountFromOrders(String accountId) {
+    for (final order in _assetAccountOrders.values) {
+      order.remove(accountId);
     }
   }
 

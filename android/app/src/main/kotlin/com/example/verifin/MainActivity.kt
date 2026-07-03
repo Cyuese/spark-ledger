@@ -1,9 +1,12 @@
 package com.example.verifin
 
+import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
@@ -34,6 +37,12 @@ class MainActivity : FlutterActivity() {
                     result.success(shouldOpen)
                 }
                 "checkForUpdate" -> checkForUpdate(result)
+                "saveTextToDownloads" -> saveTextToDownloads(
+                    call.argument<String>("filename") ?: "verifin-backup.json",
+                    call.argument<String>("content") ?: "",
+                    call.argument<String>("mimeType") ?: "application/json",
+                    result,
+                )
                 else -> result.notImplemented()
             }
         }
@@ -191,6 +200,50 @@ class MainActivity : FlutterActivity() {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(intent)
+    }
+
+    private fun saveTextToDownloads(
+        filename: String,
+        content: String,
+        mimeType: String,
+        result: MethodChannel.Result,
+    ) {
+        Thread {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val values = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                        put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                        put(MediaStore.MediaColumns.IS_PENDING, 1)
+                    }
+                    val uri = contentResolver.insert(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                        values,
+                    ) ?: throw IllegalStateException("无法创建下载文件")
+                    contentResolver.openOutputStream(uri)?.use { output ->
+                        output.write(content.toByteArray(Charsets.UTF_8))
+                    } ?: throw IllegalStateException("无法写入下载文件")
+                    values.clear()
+                    values.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                    contentResolver.update(uri, values, null, null)
+                } else {
+                    val downloadsDir = Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS,
+                    ).apply { mkdirs() }
+                    File(downloadsDir, filename).writeText(content, Charsets.UTF_8)
+                }
+                runOnUiThread { result.success(true) }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    result.error(
+                        "EXPORT_FAILED",
+                        error.message ?: "导出失败，请稍后再试。",
+                        null,
+                    )
+                }
+            }
+        }.start()
     }
 
     private fun isNewerVersion(latest: String, current: String): Boolean {

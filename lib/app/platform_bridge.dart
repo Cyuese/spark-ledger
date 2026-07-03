@@ -44,6 +44,25 @@ class AppPlatformBridge {
       );
     }
   }
+
+  static Future<bool> saveTextToDownloads({
+    required String filename,
+    required String content,
+    required String mimeType,
+  }) async {
+    try {
+      return await _channel.invokeMethod<bool>('saveTextToDownloads', {
+            'filename': filename,
+            'content': content,
+            'mimeType': mimeType,
+          }) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (error) {
+      throw Exception(error.message ?? '导出失败，请稍后再试。');
+    }
+  }
 }
 
 enum UpdateCheckStatus { installing, upToDate, noAsset, unsupported, error }

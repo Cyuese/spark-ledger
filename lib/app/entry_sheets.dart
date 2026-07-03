@@ -126,33 +126,53 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                     final keyTextColor = isDark
                         ? Colors.white.withValues(alpha: 0.94)
                         : veriInk;
+                    final canSubmit = _canSubmit;
+                    final enabled = !isOk || canSubmit;
+                    final okDisabledBackground = isDark
+                        ? Colors.white.withValues(alpha: 0.10)
+                        : const Color(0xFFD9E5F3);
+                    final okDisabledForeground = isDark
+                        ? Colors.white.withValues(alpha: 0.46)
+                        : const Color(0xFF6B7C93);
+                    final buttonBackground = isOk
+                        ? (enabled ? veriRoyal : okDisabledBackground)
+                        : keyColor;
+                    final buttonForeground = isOk
+                        ? (enabled ? Colors.white : okDisabledForeground)
+                        : keyTextColor;
                     return FilledButton.tonal(
                       key: isOk
                           ? const Key('number_pad_ok')
                           : Key('number_key_$value'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: isOk ? veriRoyal : keyColor,
-                        foregroundColor: isOk ? Colors.white : keyTextColor,
-                        disabledBackgroundColor: keyColor.withValues(
-                          alpha: 0.42,
-                        ),
-                        disabledForegroundColor: keyTextColor.withValues(
-                          alpha: 0.36,
-                        ),
+                        backgroundColor: buttonBackground,
+                        foregroundColor: buttonForeground,
+                        disabledBackgroundColor: isOk
+                            ? okDisabledBackground
+                            : keyColor.withValues(alpha: 0.42),
+                        disabledForegroundColor: isOk
+                            ? okDisabledForeground
+                            : keyTextColor.withValues(alpha: 0.36),
                         minimumSize: const Size(64, 48),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(veriRadiusMd),
                         ),
                       ),
-                      onPressed: isOk && !_canSubmit
+                      onPressed: isOk && !canSubmit
                           ? null
                           : () => _handleKey(value),
                       child: value == '⌫'
-                          ? const Icon(Icons.backspace_outlined)
+                          ? Icon(
+                              Icons.backspace_outlined,
+                              color: buttonForeground,
+                            )
                           : Text(
                               value,
                               style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w800),
+                                  ?.copyWith(
+                                    color: buttonForeground,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                             ),
                     );
                   },

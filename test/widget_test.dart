@@ -413,6 +413,21 @@ void main() {
     expect(find.text('花呗'), findsNothing);
   });
 
+  testWidgets('shows empty state on account groups page', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+
+    await tapBottomTab(tester, 1);
+    await tester.tap(find.byTooltip('资产操作'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('管理分组'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('还没有账户分组'), findsOneWidget);
+    expect(find.text('点击右上角加号创建分组，用来整理不同账户。'), findsOneWidget);
+  });
+
   testWidgets('shows accounts by type in the assets page by default', (
     WidgetTester tester,
   ) async {
@@ -649,6 +664,88 @@ void main() {
 
     target.dispose();
   });
+
+  test(
+    'deleting account with related entries removes touched transfers too',
+    () {
+      final controller = VeriFinController(LocalKeyValueStore());
+      final cash = Account(
+        id: 'delete-cash-test',
+        bookId: controller.activeBook.id,
+        name: '现金账户',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 0,
+        iconCode: 'cash',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      );
+      final card = Account(
+        id: 'delete-card-test',
+        bookId: controller.activeBook.id,
+        name: '银行卡',
+        type: AccountType.debitCard,
+        groupId: null,
+        initialBalance: 0,
+        iconCode: 'bank',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      );
+      controller
+        ..addAccount(cash)
+        ..addAccount(card)
+        ..addEntry(
+          LedgerEntry(
+            id: 'delete-expense-test',
+            bookId: controller.activeBook.id,
+            type: EntryType.expense,
+            amount: 12,
+            categoryId: 'dining',
+            accountId: cash.id,
+            note: '现金消费',
+            occurredAt: DateTime(2026, 7, 3, 9),
+          ),
+        )
+        ..addEntry(
+          LedgerEntry(
+            id: 'delete-transfer-test',
+            bookId: controller.activeBook.id,
+            type: EntryType.transfer,
+            amount: 30,
+            categoryId: 'transfer_out',
+            accountId: cash.id,
+            toAccountId: card.id,
+            note: '转入银行卡',
+            occurredAt: DateTime(2026, 7, 3, 10),
+          ),
+        )
+        ..addEntry(
+          LedgerEntry(
+            id: 'keep-income-test',
+            bookId: controller.activeBook.id,
+            type: EntryType.income,
+            amount: 100,
+            categoryId: 'salary',
+            accountId: card.id,
+            note: '工资',
+            occurredAt: DateTime(2026, 7, 3, 11),
+          ),
+        );
+
+      controller.deleteAccountAndRelatedEntries(cash.id);
+
+      expect(controller.accounts.map((account) => account.id), <String>[
+        card.id,
+      ]);
+      expect(controller.entries.map((entry) => entry.id), <String>[
+        'keep-income-test',
+      ]);
+
+      controller.dispose();
+    },
+  );
 
   test(
     'transfer entries update both account balances without income expense',

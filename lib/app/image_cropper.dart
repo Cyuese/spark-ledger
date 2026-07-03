@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
 import 'common_widgets.dart';
+import 'image_sources.dart';
 
 class ImageCropResult {
   const ImageCropResult({
@@ -73,7 +74,7 @@ class _ImageCropperPageState extends State<ImageCropperPage> {
               offset: Offset(_offsetX * 74, _offsetY * 74),
               child: Transform.scale(
                 scale: _zoom,
-                child: Image.network(widget.imageDataUrl, fit: BoxFit.cover),
+                child: imageForSource(widget.imageDataUrl, fit: BoxFit.cover),
               ),
             ),
             DecoratedBox(
