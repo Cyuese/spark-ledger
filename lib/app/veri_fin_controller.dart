@@ -277,8 +277,18 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 交易列表始终维护 occurredAt 倒序;同一时刻用 id 决出稳定顺序。
+  static int _compareEntriesLatestFirst(LedgerEntry a, LedgerEntry b) {
+    final byDate = b.occurredAt.compareTo(a.occurredAt);
+    if (byDate != 0) {
+      return byDate;
+    }
+    return b.id.compareTo(a.id);
+  }
+
   void addEntry(LedgerEntry entry) {
     _entries.insert(0, entry);
+    _entries.sort(_compareEntriesLatestFirst);
     _persistEntries();
     notifyListeners();
   }
@@ -289,7 +299,7 @@ class VeriFinController extends ChangeNotifier {
       return;
     }
     _entries[index] = entry;
-    _entries.sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    _entries.sort(_compareEntriesLatestFirst);
     _persistEntries();
     notifyListeners();
   }
@@ -345,6 +355,9 @@ class VeriFinController extends ChangeNotifier {
     _entries.removeWhere((entry) => entry.bookId == bookId);
     _accounts.removeWhere((account) => account.bookId == bookId);
     _accountGroups.removeWhere((group) => group.bookId == bookId);
+    _collapsedAssetSections.removeWhere((key) => key.startsWith('$bookId:'));
+    _assetAccountOrders.removeWhere((key, _) => key.startsWith('$bookId:'));
+    _assetSectionOrders.removeWhere((key, _) => key.startsWith('$bookId:'));
     if (_activeBookId == bookId) {
       _activeBookId = defaultLedgerBookId;
       _store.write(_activeBookKey, _activeBookId);
@@ -353,6 +366,9 @@ class VeriFinController extends ChangeNotifier {
     _persistEntries();
     _persistAccounts();
     _persistAccountGroups();
+    _persistAssetSectionCollapsed();
+    _persistAssetAccountOrders();
+    _persistAssetSectionOrders();
     notifyListeners();
     return true;
   }
@@ -730,7 +746,7 @@ class VeriFinController extends ChangeNotifier {
     final nextEntries = _decodeModelList<LedgerEntry>(
       data['entries'],
       LedgerEntry.fromJson,
-    )..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    )..sort(_compareEntriesLatestFirst);
     final nextAccounts = _decodeModelList<Account>(
       data['accounts'],
       Account.fromJson,
@@ -878,7 +894,7 @@ class VeriFinController extends ChangeNotifier {
             ),
           ),
         );
-    } on FormatException {
+    } catch (_) {
       _store.delete(_entriesKey);
     }
   }
@@ -907,7 +923,7 @@ class VeriFinController extends ChangeNotifier {
               ),
             ),
           );
-      } on FormatException {
+      } catch (_) {
         _store.delete(_ledgerBooksKey);
         _ledgerBooks
           ..clear()
@@ -944,7 +960,7 @@ class VeriFinController extends ChangeNotifier {
             ),
           ),
         );
-    } on FormatException {
+    } catch (_) {
       _store.delete(_accountsKey);
       _accounts
         ..clear()
@@ -973,7 +989,7 @@ class VeriFinController extends ChangeNotifier {
           ),
         );
       _normalizeGroupOrder();
-    } on FormatException {
+    } catch (_) {
       _store.delete(_accountGroupsKey);
       _accountGroups
         ..clear()
@@ -994,7 +1010,7 @@ class VeriFinController extends ChangeNotifier {
           jsonDecode(rawProfile) as Map<dynamic, dynamic>,
         ),
       );
-    } on FormatException {
+    } catch (_) {
       _store.delete(_profileKey);
       _profile = defaultUserProfile;
     }
@@ -1023,7 +1039,7 @@ class VeriFinController extends ChangeNotifier {
       if (_categories.isEmpty) {
         _categories.addAll(defaultCategories);
       }
-    } on FormatException {
+    } catch (_) {
       _store.delete(_categoriesKey);
       _categories
         ..clear()
@@ -1048,7 +1064,7 @@ class VeriFinController extends ChangeNotifier {
             (key, value) => MapEntry(key, (value as num? ?? 0).toDouble()),
           ),
         );
-    } on FormatException {
+    } catch (_) {
       _store.delete(_budgetsKey);
     }
   }
@@ -1063,7 +1079,7 @@ class VeriFinController extends ChangeNotifier {
       _categoryBudgets
         ..clear()
         ..addAll(_decodeBudgets(jsonDecode(rawBudgets)));
-    } on FormatException {
+    } catch (_) {
       _store.delete(_categoryBudgetsKey);
     }
   }
@@ -1077,7 +1093,7 @@ class VeriFinController extends ChangeNotifier {
       _collapsedAssetSections
         ..clear()
         ..addAll(_decodeStringSet(jsonDecode(rawCollapsed)));
-    } on FormatException {
+    } catch (_) {
       _store.delete(_assetSectionCollapsedKey);
     }
   }
@@ -1091,7 +1107,7 @@ class VeriFinController extends ChangeNotifier {
       _assetAccountOrders
         ..clear()
         ..addAll(_decodeStringListMap(jsonDecode(rawOrders)));
-    } on FormatException {
+    } catch (_) {
       _store.delete(_assetAccountOrderKey);
     }
   }
@@ -1105,7 +1121,7 @@ class VeriFinController extends ChangeNotifier {
       _assetSectionOrders
         ..clear()
         ..addAll(_decodeStringListMap(jsonDecode(rawOrders)));
-    } on FormatException {
+    } catch (_) {
       _store.delete(_assetSectionOrderKey);
     }
   }
