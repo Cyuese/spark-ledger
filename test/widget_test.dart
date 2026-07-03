@@ -114,10 +114,34 @@ void main() {
     expect(find.text('本月支出'), findsOneWidget);
     expect(find.text('剩余日均'), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.text('设置预算'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.enterText(find.byType(TextField).last, '2400');
     await tester.pump();
     expect(find.text('2400'), findsAtLeastNWidgets(1));
 
+    await tester.scrollUntilVisible(
+      find.text('分类预算'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('餐饮'), findsOneWidget);
+    await tester.tap(find.text('餐饮'));
+    await tester.pumpAndSettle();
+    expect(find.text('设置餐饮预算'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).last, '600');
+    await tester.tap(find.text('确认'));
+    await tester.pumpAndSettle();
+    expect(find.text('600'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('预算设置'),
+      -300,
+      scrollable: find.byType(Scrollable).first,
+    );
     final saveAction = tester.widget<HeaderAction>(
       find.byWidgetPredicate(
         (widget) => widget is HeaderAction && widget.tooltip == '保存预算',
@@ -260,6 +284,7 @@ void main() {
         ),
       )
       ..setMonthlyBudget(DateTime(2026, 7), 2400)
+      ..setCategoryBudget(DateTime(2026, 7), 'dining', 600)
       ..setThemePreference(ThemePreference.dark)
       ..addCategory(type: EntryType.expense, label: '咖啡', iconCode: 'dining');
     final coffeeIndex = source
@@ -275,6 +300,7 @@ void main() {
     expect(target.entries.single.amount, 45);
     expect(target.entries.single.note, '午餐');
     expect(target.monthlyBudget(DateTime(2026, 7)), 2400);
+    expect(target.categoryBudget(DateTime(2026, 7), 'dining'), 600);
     expect(target.themePreference, ThemePreference.dark);
     expect(target.categories.any((category) => category.label == '咖啡'), isTrue);
     expect(target.categoriesForType(EntryType.expense).first.label, '咖啡');

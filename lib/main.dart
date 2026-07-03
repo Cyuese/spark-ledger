@@ -968,6 +968,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
     widget.initialMonth.month,
   );
   late final TextEditingController _amountController;
+  bool _amountInitialized = false;
 
   @override
   void initState() {
@@ -978,9 +979,13 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_amountInitialized) {
+      return;
+    }
     _amountController.text = formatAmount(
       VeriFinScope.of(context).monthlyBudget(_month),
     );
+    _amountInitialized = true;
   }
 
   @override
@@ -1019,6 +1024,20 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
     final dailyAvailable = remainingDays <= 0 || remaining <= 0
         ? 0.0
         : remaining / remainingDays;
+    final expenseCategories = controller
+        .categoriesForType(EntryType.expense)
+        .where((category) => category.id != 'balance_adjust_expense')
+        .toList(growable: false);
+    final categoryExpenses = <String, double>{};
+    for (final entry in monthEntries.where(
+      (entry) => entry.type == EntryType.expense,
+    )) {
+      categoryExpenses.update(
+        entry.categoryId,
+        (amount) => amount + entry.amount,
+        ifAbsent: () => entry.amount,
+      );
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -1211,6 +1230,62 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
               ),
               const SizedBox(height: 10),
               VeriCard(
+                padding: const EdgeInsets.fromLTRB(13, 12, 13, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            '分类预算',
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                        Text(
+                          '本月支出分类',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.48),
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (expenseCategories.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: Text(
+                            '还没有支出分类',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.48),
+                                ),
+                          ),
+                        ),
+                      )
+                    else
+                      for (final category in expenseCategories)
+                        _CategoryBudgetRow(
+                          category: category,
+                          spent: categoryExpenses[category.id] ?? 0,
+                          budget: controller.categoryBudget(
+                            _month,
+                            category.id,
+                          ),
+                          onTap: () => _editCategoryBudget(category),
+                        ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -1257,6 +1332,27 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
       context,
     ).setMonthlyBudget(_month, double.tryParse(_amountController.text) ?? 0);
     Navigator.of(context).pop();
+  }
+
+  Future<void> _editCategoryBudget(Category category) async {
+    final controller = VeriFinScope.of(context);
+    final currentBudget = controller.categoryBudget(_month, category.id);
+    final amountText = await _showTextInputDialog(
+      context: context,
+      title: '设置${category.label}预算',
+      label: '分类预算金额',
+      initialValue: currentBudget <= 0 ? '' : formatAmount(currentBudget),
+      allowEmpty: true,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    );
+    if (amountText == null || !mounted) {
+      return;
+    }
+    controller.setCategoryBudget(
+      _month,
+      category.id,
+      double.tryParse(amountText) ?? 0,
+    );
   }
 }
 
@@ -1477,6 +1573,122 @@ class _BudgetMetricTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CategoryBudgetRow extends StatelessWidget {
+  const _CategoryBudgetRow({
+    required this.category,
+    required this.spent,
+    required this.budget,
+    required this.onTap,
+  });
+
+  final Category category;
+  final double spent;
+  final double budget;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = budget <= 0
+        ? veriBlue
+        : spent > budget
+        ? veriExpense
+        : veriRoyal;
+    final ratio = budget <= 0 ? 0.0 : (spent / budget).clamp(0, 1).toDouble();
+    final remaining = budget - spent;
+    final subtitle = budget <= 0
+        ? '未设置预算 · 本月支出 ${formatAmount(spent)}'
+        : remaining >= 0
+        ? '剩余 ${formatAmount(remaining)} · 已用 ${(spent / budget * 100).toStringAsFixed(0)}%'
+        : '超出 ${formatAmount(remaining.abs())} · 已用 ${(spent / budget * 100).toStringAsFixed(0)}%';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: <Widget>[
+              VeriIconBox(
+                icon: iconForCode(category.iconCode),
+                color: color,
+                size: 30,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            category.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          budget <= 0 ? '设置' : formatAmount(budget),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: budget <= 0
+                                    ? Theme.of(context).colorScheme.onSurface
+                                          .withValues(alpha: 0.52)
+                                    : Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 17,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.36),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.52),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                        value: ratio,
+                        minHeight: 4,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest
+                            .withValues(alpha: 0.50),
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -2152,6 +2364,7 @@ Future<String?> _showTextInputDialog({
   required String label,
   String initialValue = '',
   bool allowEmpty = false,
+  TextInputType? keyboardType,
 }) async {
   final controller = TextEditingController(text: initialValue);
   final result = await showDialog<String>(
@@ -2161,6 +2374,7 @@ Future<String?> _showTextInputDialog({
       content: TextField(
         controller: controller,
         autofocus: true,
+        keyboardType: keyboardType,
         decoration: InputDecoration(labelText: label),
       ),
       actions: <Widget>[

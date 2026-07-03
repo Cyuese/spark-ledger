@@ -24,6 +24,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _activeBookKey = 'verifin.active_book.v1';
   static const String _assetCoverKey = 'verifin.asset_cover.v1';
   static const String _categoriesKey = 'verifin.categories.v1';
+  static const String _categoryBudgetsKey = 'verifin.category_budgets.v1';
 
   final LocalKeyValueStore _store;
   final List<LedgerEntry> _entries = <LedgerEntry>[];
@@ -32,6 +33,7 @@ class VeriFinController extends ChangeNotifier {
   final List<AccountGroup> _accountGroups = <AccountGroup>[];
   final List<Category> _categories = <Category>[];
   final Map<String, double> _monthlyBudgets = <String, double>{};
+  final Map<String, double> _categoryBudgets = <String, double>{};
 
   late final ValueNotifier<ThemePreference> themePreferenceListenable;
 
@@ -89,6 +91,21 @@ class VeriFinController extends ChangeNotifier {
   void setMonthlyBudget(DateTime month, double amount) {
     _monthlyBudgets[_monthKey(month)] = amount <= 0 ? 0 : amount;
     _persistBudgets();
+    notifyListeners();
+  }
+
+  double categoryBudget(DateTime month, String categoryId) {
+    return _categoryBudgets[_categoryBudgetKey(month, categoryId)] ?? 0;
+  }
+
+  void setCategoryBudget(DateTime month, String categoryId, double amount) {
+    final key = _categoryBudgetKey(month, categoryId);
+    if (amount <= 0) {
+      _categoryBudgets.remove(key);
+    } else {
+      _categoryBudgets[key] = amount;
+    }
+    _persistCategoryBudgets();
     notifyListeners();
   }
 
@@ -443,6 +460,7 @@ class VeriFinController extends ChangeNotifier {
       _activeBookKey,
       _assetCoverKey,
       _categoriesKey,
+      _categoryBudgetsKey,
     ]) {
       _store.delete(key);
     }
@@ -460,6 +478,7 @@ class VeriFinController extends ChangeNotifier {
       ..clear()
       ..addAll(defaultCategories);
     _monthlyBudgets.clear();
+    _categoryBudgets.clear();
     _profile = defaultUserProfile;
     _themePreference = ThemePreference.system;
     _activeBookId = defaultLedgerBookId;
@@ -481,6 +500,7 @@ class VeriFinController extends ChangeNotifier {
         'accountGroups': _accountGroups.map((group) => group.toJson()).toList(),
         'categories': _categories.map((category) => category.toJson()).toList(),
         'monthlyBudgets': Map<String, double>.from(_monthlyBudgets),
+        'categoryBudgets': Map<String, double>.from(_categoryBudgets),
         'profile': _profile.toJson(),
         'themePreference': _themePreference.name,
         'assetCoverUrl': _assetCoverUrl,
@@ -539,6 +559,7 @@ class VeriFinController extends ChangeNotifier {
       ...(importedCategories.isEmpty ? defaultCategories : importedCategories),
     ];
     final nextMonthlyBudgets = _decodeBudgets(data['monthlyBudgets']);
+    final nextCategoryBudgets = _decodeBudgets(data['categoryBudgets']);
 
     final profileValue = data['profile'];
     final nextProfile = profileValue is Map
@@ -569,6 +590,9 @@ class VeriFinController extends ChangeNotifier {
     _monthlyBudgets
       ..clear()
       ..addAll(nextMonthlyBudgets);
+    _categoryBudgets
+      ..clear()
+      ..addAll(nextCategoryBudgets);
     _profile = nextProfile;
     _themePreference = nextThemePreference;
     _assetCoverUrl = nextAssetCoverUrl;
@@ -580,6 +604,7 @@ class VeriFinController extends ChangeNotifier {
     _persistAccountGroups();
     _persistCategories();
     _persistBudgets();
+    _persistCategoryBudgets();
     _store.write(_profileKey, jsonEncode(_profile.toJson()));
     _store.write(_themeKey, _themePreference.name);
     if (_assetCoverUrl.isEmpty) {
@@ -616,6 +641,7 @@ class VeriFinController extends ChangeNotifier {
     _loadAccounts();
     _loadProfile();
     _loadBudgets();
+    _loadCategoryBudgets();
     _assetCoverUrl = _store.read(_assetCoverKey) ?? '';
     final rawEntries = _store.read(_entriesKey);
     if (rawEntries == null || rawEntries.isEmpty) {
@@ -802,6 +828,21 @@ class VeriFinController extends ChangeNotifier {
     }
   }
 
+  void _loadCategoryBudgets() {
+    final rawBudgets = _store.read(_categoryBudgetsKey);
+    if (rawBudgets == null || rawBudgets.isEmpty) {
+      return;
+    }
+
+    try {
+      _categoryBudgets
+        ..clear()
+        ..addAll(_decodeBudgets(jsonDecode(rawBudgets)));
+    } on FormatException {
+      _store.delete(_categoryBudgetsKey);
+    }
+  }
+
   void _persistEntries() {
     _store.write(
       _entriesKey,
@@ -841,6 +882,10 @@ class VeriFinController extends ChangeNotifier {
     _store.write(_budgetsKey, jsonEncode(_monthlyBudgets));
   }
 
+  void _persistCategoryBudgets() {
+    _store.write(_categoryBudgetsKey, jsonEncode(_categoryBudgets));
+  }
+
   void _normalizeGroupOrder() {
     final grouped = <String, List<AccountGroup>>{};
     for (final group in _accountGroups) {
@@ -869,6 +914,10 @@ bool _isProtectedCategory(String categoryId) {
 
 String _monthKey(DateTime month) {
   return '${month.year}-${month.month.toString().padLeft(2, '0')}';
+}
+
+String _categoryBudgetKey(DateTime month, String categoryId) {
+  return '${_monthKey(month)}:$categoryId';
 }
 
 List<T> _decodeModelList<T>(
