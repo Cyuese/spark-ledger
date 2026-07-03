@@ -79,6 +79,25 @@ void main() {
     expect(find.text('深色'), findsOneWidget);
   });
 
+  testWidgets('requires double confirmation before resetting data', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+
+    await tapBottomTab(tester, 3);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('初始化数据'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('初始化所有数据？'), findsOneWidget);
+    await tester.tap(find.text('继续'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('再次确认初始化'), findsOneWidget);
+    expect(find.text('确认初始化'), findsOneWidget);
+  });
+
   testWidgets('opens account icon picker from add account page', (
     WidgetTester tester,
   ) async {
@@ -100,6 +119,22 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     expect(find.text('花呗'), findsOneWidget);
+  });
+
+  testWidgets('suggests bank icon from account name', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+
+    await tapBottomTab(tester, 1);
+    await tester.tap(find.byTooltip('资产操作'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('添加账户'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, '中信银行储蓄卡');
+    await tester.pumpAndSettle();
+
+    expect(find.text('中信银行'), findsOneWidget);
   });
 
   testWidgets('opens asset cover selector from the assets page', (
@@ -489,6 +524,39 @@ void main() {
     expect(find.text('600'), findsNothing);
   });
 
+  testWidgets('account row shows card last four digits', (
+    WidgetTester tester,
+  ) async {
+    const account = Account(
+      id: 'card-account',
+      bookId: defaultLedgerBookId,
+      name: '中信信用卡',
+      type: AccountType.creditCard,
+      groupId: null,
+      initialBalance: 0,
+      iconCode: 'credit',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+      cardLast4: '8321',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildVeriFinTheme(Brightness.light),
+        home: Scaffold(
+          body: AccountGroupCard(
+            title: '信用卡',
+            accounts: const <Account>[account],
+            balances: const <Account, double>{account: -120},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('8321'), findsOneWidget);
+  });
+
   testWidgets('switches asset account view and persists collapsed sections', (
     WidgetTester tester,
   ) async {
@@ -778,8 +846,26 @@ void main() {
           .first,
       AccountType.onlinePayment.name,
     );
+    expect(controller.profile.occupation, '产品设计师');
+    expect(
+      controller.accounts
+          .firstWhere((account) => account.id == 'acc_credit')
+          .cardLast4,
+      '8321',
+    );
 
     controller.dispose();
+  });
+
+  test('android package name is not the Flutter template package', () {
+    final buildGradle = File('android/app/build.gradle.kts').readAsStringSync();
+    final mainActivity = File(
+      'android/app/src/main/kotlin/top/talyra42/verifin/MainActivity.kt',
+    ).readAsStringSync();
+
+    expect(buildGradle, contains('applicationId = "top.talyra42.verifin"'));
+    expect(buildGradle, isNot(contains('com.example.verifin')));
+    expect(mainActivity, contains('package top.talyra42.verifin'));
   });
 
   test(

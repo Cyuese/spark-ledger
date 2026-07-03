@@ -1,4 +1,4 @@
-package com.example.verifin
+package top.talyra42.verifin
 
 import android.content.Intent
 import android.app.PendingIntent

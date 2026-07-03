@@ -4631,22 +4631,31 @@ class _AssetsPageState extends State<AssetsPage> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
-              proxyDecorator: (child, _, _) => Material(
-                color: Colors.transparent,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(veriRadiusMd),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.14),
-                        blurRadius: 18,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
+              proxyDecorator: (_, index, _) {
+                final section = visibleAssetSections[index];
+                return Material(
+                  color: Colors.transparent,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(veriRadiusMd),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.14),
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: AccountGroupCard(
+                      title: section.title,
+                      accounts: section.accounts,
+                      balances: balances,
+                      collapsed: true,
+                      sectionDragIndex: index,
+                    ),
                   ),
-                  child: child,
-                ),
-              ),
+                );
+              },
               onReorderStart: (_) => setState(() => _reorderingSections = true),
               onReorderEnd: (_) => setState(() => _reorderingSections = false),
               onReorderItem: (oldIndex, newIndex) =>
@@ -5313,15 +5322,25 @@ class _AddAccountPageState extends State<AddAccountPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _balanceController = TextEditingController();
+  final _cardLast4Controller = TextEditingController();
   final _noteController = TextEditingController();
   AccountType _type = AccountType.onlinePayment;
   String _iconCode = 'wallet';
   String _groupId = 'ungrouped';
+  bool _iconManuallySelected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_suggestIconFromName);
+  }
 
   @override
   void dispose() {
+    _nameController.removeListener(_suggestIconFromName);
     _nameController.dispose();
     _balanceController.dispose();
+    _cardLast4Controller.dispose();
     _noteController.dispose();
     super.dispose();
   }
@@ -5369,6 +5388,28 @@ class _AddAccountPageState extends State<AddAccountPage> {
                   },
                 ),
                 const SizedBox(height: 10),
+                if (_type.supportsCardLast4) ...<Widget>[
+                  TextFormField(
+                    controller: _cardLast4Controller,
+                    maxLength: 4,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: '卡号后四位',
+                      counterText: '',
+                    ),
+                    validator: (value) {
+                      final text = value?.trim() ?? '';
+                      if (text.isEmpty) {
+                        return null;
+                      }
+                      if (!RegExp(r'^\d{1,4}$').hasMatch(text)) {
+                        return '请输入 1-4 位数字';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 TextFormField(
                   controller: _balanceController,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -5389,7 +5430,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                 const SizedBox(height: 10),
                 TextField(
                   controller: _noteController,
-                  maxLines: 2,
+                  maxLines: 1,
                   decoration: const InputDecoration(labelText: '账户备注'),
                 ),
                 const SizedBox(height: 10),
@@ -5416,7 +5457,12 @@ class _AddAccountPageState extends State<AddAccountPage> {
       labelOf: (value) => value.label,
     );
     if (selected != null) {
-      setState(() => _type = selected);
+      setState(() {
+        _type = selected;
+        if (!_type.supportsCardLast4) {
+          _cardLast4Controller.clear();
+        }
+      });
     }
   }
 
@@ -5426,8 +5472,22 @@ class _AddAccountPageState extends State<AddAccountPage> {
       selected: _iconCode,
     );
     if (selected != null) {
-      setState(() => _iconCode = selected);
+      setState(() {
+        _iconCode = selected;
+        _iconManuallySelected = true;
+      });
     }
+  }
+
+  void _suggestIconFromName() {
+    if (_iconManuallySelected) {
+      return;
+    }
+    final suggested = suggestedAccountIconCode(_nameController.text);
+    if (suggested == null || suggested == _iconCode) {
+      return;
+    }
+    setState(() => _iconCode = suggested);
   }
 
   Future<void> _pickAccountGroup(List<AccountGroup> groups) async {
@@ -5495,6 +5555,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
         note: _noteController.text.trim(),
         includeInAssets: true,
         hidden: false,
+        cardLast4: _type.supportsCardLast4
+            ? _cardLast4Controller.text.trim()
+            : '',
       ),
     );
     Navigator.of(context).pop();
@@ -5739,6 +5802,18 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                       onTap: () => _editAccountName(currentAccount),
                     ),
                     const Divider(),
+                    if (currentAccount.type.supportsCardLast4) ...<Widget>[
+                      SettingsRow(
+                        icon: Icons.credit_card,
+                        title: '卡号后四位',
+                        trailing: currentAccount.cardLast4.isEmpty
+                            ? '未设置'
+                            : currentAccount.cardLast4,
+                        trailingIcon: Icons.chevron_right,
+                        onTap: () => _editCardLast4(currentAccount),
+                      ),
+                      const Divider(),
+                    ],
                     SettingsRow(
                       icon: Icons.image_outlined,
                       title: '图标',
@@ -5846,7 +5921,12 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       labelOf: (value) => value.label,
     );
     if (selected != null && mounted) {
-      VeriFinScope.of(context).updateAccount(account.copyWith(type: selected));
+      VeriFinScope.of(context).updateAccount(
+        account.copyWith(
+          type: selected,
+          cardLast4: selected.supportsCardLast4 ? account.cardLast4 : '',
+        ),
+      );
     }
   }
 
@@ -5858,8 +5938,33 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       initialValue: account.name,
     );
     if (name != null && mounted) {
-      VeriFinScope.of(context).updateAccount(account.copyWith(name: name));
+      final suggested = suggestedAccountIconCode(name);
+      VeriFinScope.of(context).updateAccount(
+        account.copyWith(name: name, iconCode: suggested ?? account.iconCode),
+      );
     }
+  }
+
+  Future<void> _editCardLast4(Account account) async {
+    final cardLast4 = await _showTextInputDialog(
+      context: context,
+      title: '编辑卡号后四位',
+      label: '卡号后四位',
+      initialValue: account.cardLast4,
+      allowEmpty: true,
+      keyboardType: TextInputType.number,
+    );
+    if (cardLast4 == null || !mounted) {
+      return;
+    }
+    final normalized = cardLast4.replaceAll(RegExp(r'\D'), '');
+    VeriFinScope.of(context).updateAccount(
+      account.copyWith(
+        cardLast4: normalized.length > 4
+            ? normalized.substring(normalized.length - 4)
+            : normalized,
+      ),
+    );
   }
 
   Future<void> _pickAccountIcon(Account account) async {
@@ -6832,6 +6937,14 @@ class ProfilePage extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            const SizedBox(height: 7),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: _profileSummaryTags(profile)
+                                  .map((tag) => _ProfileMetaTag(label: tag))
+                                  .toList(),
+                            ),
                           ],
                         ),
                       ),
@@ -6899,25 +7012,50 @@ class ProfilePage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 10),
-          VeriCard(
-            child: Column(
-              children: <Widget>[
-                SettingsRow(
-                  icon: Icons.storage_outlined,
-                  title: '本地数据',
-                  trailing: '${controller.entries.length} 笔记录',
-                ),
-                const Divider(),
-                const SettingsRow(
-                  icon: Icons.cloud_off_outlined,
-                  title: '云同步',
-                  trailing: '本地优先',
-                ),
-              ],
-            ),
-          ),
         ],
+      ),
+    );
+  }
+}
+
+List<String> _profileSummaryTags(UserProfile profile) {
+  final tags = <String>[];
+  if (profile.gender != ProfileGender.unset) {
+    tags.add(profile.gender.label);
+  }
+  if (profile.birthday.isNotEmpty) {
+    tags.add(profile.birthday);
+  }
+  if (profile.city.isNotEmpty) {
+    tags.add(profile.city);
+  }
+  if (profile.occupation.isNotEmpty) {
+    tags.add(profile.occupation);
+  }
+  return tags.isEmpty ? <String>['本地资料'] : tags;
+}
+
+class _ProfileMetaTag extends StatelessWidget {
+  const _ProfileMetaTag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.58),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -7473,7 +7611,11 @@ class ProfileInfoPage extends StatefulWidget {
 class _ProfileInfoPageState extends State<ProfileInfoPage> {
   late TextEditingController _nicknameController;
   late TextEditingController _bioController;
+  late TextEditingController _cityController;
+  late TextEditingController _occupationController;
   late String _avatarDataUrl;
+  ProfileGender _gender = ProfileGender.unset;
+  String _birthday = '';
   var _initialized = false;
 
   @override
@@ -7485,7 +7627,11 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     final profile = VeriFinScope.of(context).profile;
     _nicknameController = TextEditingController(text: profile.nickname);
     _bioController = TextEditingController(text: profile.bio);
+    _cityController = TextEditingController(text: profile.city);
+    _occupationController = TextEditingController(text: profile.occupation);
     _avatarDataUrl = profile.avatarDataUrl;
+    _gender = profile.gender;
+    _birthday = profile.birthday;
     _initialized = true;
   }
 
@@ -7493,18 +7639,14 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   void dispose() {
     _nicknameController.dispose();
     _bioController.dispose();
+    _cityController.dispose();
+    _occupationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
-    final netAssets = controller.accounts
-        .where((account) => account.includeInAssets && !account.hidden)
-        .fold<double>(
-          0,
-          (sum, account) => sum + controller.accountBalance(account),
-        );
 
     return Scaffold(
       body: SafeArea(
@@ -7548,35 +7690,65 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 decoration: const InputDecoration(labelText: '简介'),
               ),
               const SizedBox(height: 10),
-              VeriCard(
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: ProfileStat(
-                        label: '记账天数',
-                        value: '${bookkeepingDays(controller.entries)}',
-                      ),
-                    ),
-                    Expanded(
-                      child: ProfileStat(
-                        label: '交易笔数',
-                        value: '${controller.entries.length}',
-                      ),
-                    ),
-                    Expanded(
-                      child: ProfileStat(
-                        label: '净资产',
-                        value: formatAmount(netAssets),
-                      ),
-                    ),
-                  ],
-                ),
+              _SelectField(
+                label: '性别',
+                value: _gender.label,
+                icon: Icons.person_outline,
+                onTap: _pickGender,
+              ),
+              const SizedBox(height: 10),
+              _SelectField(
+                label: '生日',
+                value: _birthday.isEmpty ? '不设置' : _birthday,
+                icon: Icons.cake_outlined,
+                onTap: _pickBirthday,
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _cityController,
+                maxLines: 1,
+                decoration: const InputDecoration(labelText: '城市'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _occupationController,
+                maxLines: 1,
+                decoration: const InputDecoration(labelText: '职业'),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _pickGender() async {
+    final selected = await _showOptionSheet<ProfileGender>(
+      context: context,
+      title: '选择性别',
+      values: ProfileGender.values,
+      selected: _gender,
+      labelOf: (value) => value.label,
+    );
+    if (selected != null && mounted) {
+      setState(() => _gender = selected);
+    }
+  }
+
+  Future<void> _pickBirthday() async {
+    final initial = DateTime.tryParse(_birthday) ?? DateTime(1998);
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (selected != null && mounted) {
+      setState(() {
+        _birthday =
+            '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
+      });
+    }
   }
 
   Future<void> _pickAvatar() async {
@@ -7617,6 +7789,10 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             ? '完全免费 · 数据自主'
             : _bioController.text.trim(),
         avatarDataUrl: _avatarDataUrl,
+        gender: _gender,
+        birthday: _birthday,
+        city: _cityController.text.trim(),
+        occupation: _occupationController.text.trim(),
       ),
     );
     Navigator.of(context).pop();
@@ -7697,6 +7873,7 @@ class SettingsPage extends StatelessWidget {
                       title: '初始化数据',
                       trailing: '删除所有本地数据',
                       trailingIcon: Icons.chevron_right,
+                      contentColor: veriExpense,
                       onTap: () => _confirmReset(context, controller),
                     ),
                   ],
@@ -7825,7 +8002,7 @@ class SettingsPage extends StatelessWidget {
     BuildContext context,
     VeriFinController controller,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final firstConfirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('初始化所有数据？'),
@@ -7836,13 +8013,36 @@ class SettingsPage extends StatelessWidget {
             child: const Text('取消'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: veriExpense),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('初始化'),
+            child: const Text('继续'),
           ),
         ],
       ),
     );
-    if (confirmed == true) {
+    if (firstConfirmed != true || !context.mounted) {
+      return;
+    }
+
+    final secondConfirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('再次确认初始化'),
+        content: const Text('确认后会立即清空所有本地数据，并恢复默认状态。此操作不能撤销。'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: veriExpense),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('确认初始化'),
+          ),
+        ],
+      ),
+    );
+    if (secondConfirmed == true) {
       controller.resetAllData();
       if (context.mounted) {
         Navigator.of(context).pop();
@@ -8243,7 +8443,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                   TextField(
                     key: const Key('entry_note_field'),
                     controller: _noteController,
-                    maxLines: 2,
+                    maxLines: 1,
                     decoration: const InputDecoration(
                       labelText: '备注',
                       hintText: '点击添加备注',

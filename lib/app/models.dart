@@ -98,6 +98,10 @@ enum AccountType {
       orElse: () => AccountType.onlinePayment,
     );
   }
+
+  bool get supportsCardLast4 {
+    return this == AccountType.creditCard || this == AccountType.debitCard;
+  }
 }
 
 enum AssetAccountViewMode {
@@ -267,6 +271,7 @@ class Account {
     required this.note,
     required this.includeInAssets,
     required this.hidden,
+    this.cardLast4 = '',
   });
 
   final String id;
@@ -279,6 +284,7 @@ class Account {
   final String note;
   final bool includeInAssets;
   final bool hidden;
+  final String cardLast4;
 
   Account copyWith({
     String? id,
@@ -291,6 +297,7 @@ class Account {
     String? note,
     bool? includeInAssets,
     bool? hidden,
+    String? cardLast4,
   }) {
     return Account(
       id: id ?? this.id,
@@ -303,6 +310,7 @@ class Account {
       note: note ?? this.note,
       includeInAssets: includeInAssets ?? this.includeInAssets,
       hidden: hidden ?? this.hidden,
+      cardLast4: cardLast4 ?? this.cardLast4,
     );
   }
 
@@ -318,6 +326,7 @@ class Account {
       'note': note,
       'includeInAssets': includeInAssets,
       'hidden': hidden,
+      'cardLast4': cardLast4,
     };
   }
 
@@ -333,6 +342,7 @@ class Account {
       note: json['note'] as String? ?? '',
       includeInAssets: json['includeInAssets'] as bool? ?? true,
       hidden: json['hidden'] as bool? ?? false,
+      cardLast4: json['cardLast4'] as String? ?? '',
     );
   }
 }
@@ -389,22 +399,66 @@ class AccountGroup {
   }
 }
 
+enum ProfileGender {
+  unset,
+  male,
+  female;
+
+  String get label {
+    switch (this) {
+      case ProfileGender.unset:
+        return '不设置';
+      case ProfileGender.male:
+        return '男';
+      case ProfileGender.female:
+        return '女';
+    }
+  }
+
+  static ProfileGender fromStorage(String? value) {
+    return ProfileGender.values.firstWhere(
+      (gender) => gender.name == value,
+      orElse: () => ProfileGender.unset,
+    );
+  }
+}
+
 class UserProfile {
   const UserProfile({
     required this.nickname,
     required this.bio,
     required this.avatarDataUrl,
+    this.gender = ProfileGender.unset,
+    this.birthday = '',
+    this.city = '',
+    this.occupation = '',
   });
 
   final String nickname;
   final String bio;
   final String avatarDataUrl;
+  final ProfileGender gender;
+  final String birthday;
+  final String city;
+  final String occupation;
 
-  UserProfile copyWith({String? nickname, String? bio, String? avatarDataUrl}) {
+  UserProfile copyWith({
+    String? nickname,
+    String? bio,
+    String? avatarDataUrl,
+    ProfileGender? gender,
+    String? birthday,
+    String? city,
+    String? occupation,
+  }) {
     return UserProfile(
       nickname: nickname ?? this.nickname,
       bio: bio ?? this.bio,
       avatarDataUrl: avatarDataUrl ?? this.avatarDataUrl,
+      gender: gender ?? this.gender,
+      birthday: birthday ?? this.birthday,
+      city: city ?? this.city,
+      occupation: occupation ?? this.occupation,
     );
   }
 
@@ -413,6 +467,10 @@ class UserProfile {
       'nickname': nickname,
       'bio': bio,
       'avatarDataUrl': avatarDataUrl,
+      'gender': gender.name,
+      'birthday': birthday,
+      'city': city,
+      'occupation': occupation,
     };
   }
 
@@ -421,6 +479,10 @@ class UserProfile {
       nickname: json['nickname'] as String? ?? 'Veri Fin',
       bio: json['bio'] as String? ?? '完全免费 · 数据自主',
       avatarDataUrl: json['avatarDataUrl'] as String? ?? '',
+      gender: ProfileGender.fromStorage(json['gender'] as String?),
+      birthday: json['birthday'] as String? ?? '',
+      city: json['city'] as String? ?? '',
+      occupation: json['occupation'] as String? ?? '',
     );
   }
 }

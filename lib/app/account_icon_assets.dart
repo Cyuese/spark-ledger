@@ -271,3 +271,57 @@ AccountIconOption? accountAssetIconByCode(String code) {
 }
 
 bool isAssetAccountIcon(String code) => accountAssetIconByCode(code) != null;
+
+String? suggestedAccountIconCode(String accountName) {
+  final normalized = accountName.trim().toLowerCase();
+  if (normalized.isEmpty) {
+    return null;
+  }
+
+  const aliases = <String, String>{
+    '支付宝': 'asset:payment_006',
+    'alipay': 'asset:payment_006',
+    '微信': 'asset:payment_004',
+    'wechat': 'asset:payment_004',
+    '微信支付': 'asset:payment_004',
+    '银联': 'asset:payment_005',
+    '中信': 'asset:bank_003',
+    '中信银行': 'asset:bank_003',
+    '民生': 'asset:bank_004',
+    '邮储': 'asset:bank_005',
+    '中国银行': 'asset:bank_006',
+    '交通': 'asset:bank_008',
+    '交通银行': 'asset:bank_008',
+    '兴业': 'asset:bank_009',
+    '农业': 'asset:bank_010',
+    '农行': 'asset:bank_010',
+    '北京银行': 'asset:bank_011',
+    '华夏': 'asset:bank_012',
+    '工商': 'asset:bank_015',
+    '工行': 'asset:bank_015',
+    '平安': 'asset:bank_016',
+    '广发': 'asset:bank_017',
+    '建设': 'asset:bank_018',
+    '建行': 'asset:bank_018',
+    '招商': 'asset:bank_021',
+    '招行': 'asset:bank_021',
+    '江苏银行': 'asset:bank_022',
+    '浦发': 'asset:bank_024',
+    '苏州银行': 'asset:bank_028',
+    '青岛银行': 'asset:bank_032',
+  };
+
+  for (final entry in aliases.entries) {
+    if (normalized.contains(entry.key.toLowerCase())) {
+      return entry.value;
+    }
+  }
+
+  for (final option in accountAssetIconOptions) {
+    final label = option.label.toLowerCase();
+    if (normalized.contains(label) || label.contains(normalized)) {
+      return option.code;
+    }
+  }
+  return null;
+}

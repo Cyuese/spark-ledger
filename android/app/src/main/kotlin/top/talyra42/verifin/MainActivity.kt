@@ -1,4 +1,4 @@
-package com.example.verifin
+package top.talyra42.verifin
 
 import android.content.ContentValues
 import android.content.Intent
@@ -358,7 +358,7 @@ class MainActivity : FlutterActivity() {
     }
 
     companion object {
-        const val ACTION_QUICK_ENTRY = "com.example.verifin.action.QUICK_ENTRY"
+        const val ACTION_QUICK_ENTRY = "top.talyra42.verifin.action.QUICK_ENTRY"
         private const val CHANNEL_NAME = "verifin/app"
         private const val RELEASE_API_URL =
             "https://api.github.com/repos/LumiDesk/verifin/releases/latest"

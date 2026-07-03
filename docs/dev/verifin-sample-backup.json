@@ -330,7 +330,8 @@
         "iconCode": "cmb",
         "note": "每月 25 日还款",
         "includeInAssets": true,
-        "hidden": false
+        "hidden": false,
+        "cardLast4": "8321"
       },
       {
         "id": "acc_debit",
@@ -342,7 +343,8 @@
         "iconCode": "icbc",
         "note": "工资和主要转账账户",
         "includeInAssets": true,
-        "hidden": false
+        "hidden": false,
+        "cardLast4": "6608"
       },
       {
         "id": "acc_savings",
@@ -402,7 +404,8 @@
         "iconCode": "bank",
         "note": "隐藏账户测试",
         "includeInAssets": true,
-        "hidden": true
+        "hidden": true,
+        "cardLast4": "0912"
       },
       {
         "id": "acc_travel_cash",
@@ -426,7 +429,8 @@
         "iconCode": "credit",
         "note": "旅行账本信用卡",
         "includeInAssets": true,
-        "hidden": false
+        "hidden": false,
+        "cardLast4": "7788"
       }
     ],
     "accountGroups": [
@@ -500,7 +504,11 @@
     "profile": {
       "nickname": "Veri Fin 测试用户",
       "bio": "用于验证资产、预算、看板、账本和导入导出流程",
-      "avatarDataUrl": ""
+      "avatarDataUrl": "",
+      "gender": "unset",
+      "birthday": "1998-07-03",
+      "city": "上海",
+      "occupation": "产品设计师"
     },
     "themePreference": "system",
     "assetCoverUrl": "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80",

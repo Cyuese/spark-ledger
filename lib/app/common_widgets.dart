@@ -973,8 +973,24 @@ class _AccountRow extends StatelessWidget {
               AccountIconBox(iconCode: account.iconCode),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  account.name,
+                child: Text.rich(
+                  TextSpan(
+                    text: account.name,
+                    children: <TextSpan>[
+                      if (account.cardLast4.isNotEmpty &&
+                          account.type.supportsCardLast4)
+                        TextSpan(
+                          text: ' (${account.cardLast4})',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.42),
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                    ],
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -1257,6 +1273,7 @@ class SettingsRow extends StatelessWidget {
     required this.trailing,
     this.onTap,
     this.trailingIcon,
+    this.contentColor,
   });
 
   final IconData icon;
@@ -1264,21 +1281,24 @@ class SettingsRow extends StatelessWidget {
   final String trailing;
   final VoidCallback? onTap;
   final IconData? trailingIcon;
+  final Color? contentColor;
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = contentColor ?? veriRoyal;
     final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: <Widget>[
-          VeriIconBox(icon: icon, size: 28),
+          VeriIconBox(icon: icon, size: 28, color: iconColor),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: contentColor,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -1289,9 +1309,11 @@ class SettingsRow extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.58),
+                color:
+                    contentColor ??
+                    Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.58),
               ),
             ),
           ),
@@ -1300,9 +1322,11 @@ class SettingsRow extends StatelessWidget {
             Icon(
               trailingIcon,
               size: 18,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.42),
+              color:
+                  contentColor ??
+                  Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.42),
             ),
           ],
         ],
