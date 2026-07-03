@@ -423,6 +423,51 @@ void main() {
     expect(find.text('现金账户'), findsOneWidget);
   });
 
+  testWidgets('switches asset account view and persists collapsed sections', (
+    WidgetTester tester,
+  ) async {
+    final store = LocalKeyValueStore();
+    final controller = VeriFinController(store);
+    controller
+      ..addAccount(
+        Account(
+          id: 'asset-view-alipay',
+          bookId: controller.activeBook.id,
+          name: '支付宝账户',
+          type: AccountType.onlinePayment,
+          groupId: null,
+          initialBalance: 0,
+          iconCode: 'wallet',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+        ),
+      )
+      ..dispose();
+
+    await tester.pumpWidget(VeriFinApp(store: store));
+    await tapBottomTab(tester, 1);
+
+    await tester.tap(find.byTooltip('资产操作'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('切换为类型视图'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('网络支付'), findsOneWidget);
+    expect(find.text('支付宝账户'), findsOneWidget);
+
+    await tester.tap(find.text('网络支付'));
+    await tester.pumpAndSettle();
+    expect(find.text('支付宝账户'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(VeriFinApp(store: store));
+    await tapBottomTab(tester, 1);
+
+    expect(find.text('网络支付'), findsOneWidget);
+    expect(find.text('支付宝账户'), findsNothing);
+  });
+
   testWidgets('isolates accounts between ledger books', (
     WidgetTester tester,
   ) async {
@@ -530,6 +575,79 @@ void main() {
     expect(target.accounts.single.id, account.id);
 
     source.dispose();
+    target.dispose();
+  });
+
+  test('persists asset account view mode collapse and manual ordering', () {
+    final store = LocalKeyValueStore();
+    final source = VeriFinController(store);
+    final first = Account(
+      id: 'order-a',
+      bookId: source.activeBook.id,
+      name: 'A 账户',
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 0,
+      iconCode: 'cash',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+    );
+    final second = Account(
+      id: 'order-b',
+      bookId: source.activeBook.id,
+      name: 'B 账户',
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 0,
+      iconCode: 'cash',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+    );
+    source
+      ..addAccount(first)
+      ..addAccount(second)
+      ..toggleAssetAccountViewMode()
+      ..toggleAssetSectionCollapsed(
+        mode: AssetAccountViewMode.type,
+        sectionId: AccountType.cash.name,
+      );
+    final sorted = source.sortedAccountsForAssetSection(
+      mode: AssetAccountViewMode.type,
+      sectionId: AccountType.cash.name,
+      accounts: source.accounts,
+    );
+    source
+      ..reorderAssetAccounts(
+        mode: AssetAccountViewMode.type,
+        sectionId: AccountType.cash.name,
+        accounts: sorted,
+        oldIndex: 0,
+        newIndex: 1,
+      )
+      ..dispose();
+
+    final target = VeriFinController(store);
+    final targetSorted = target.sortedAccountsForAssetSection(
+      mode: AssetAccountViewMode.type,
+      sectionId: AccountType.cash.name,
+      accounts: target.accounts,
+    );
+
+    expect(target.assetAccountViewMode, AssetAccountViewMode.type);
+    expect(
+      target.isAssetSectionCollapsed(
+        mode: AssetAccountViewMode.type,
+        sectionId: AccountType.cash.name,
+      ),
+      isTrue,
+    );
+    expect(targetSorted.map((account) => account.id), <String>[
+      'order-b',
+      'order-a',
+    ]);
+
     target.dispose();
   });
 

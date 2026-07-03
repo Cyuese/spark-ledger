@@ -27,6 +27,10 @@ class VeriFinController extends ChangeNotifier {
   static const String _categoriesKey = 'verifin.categories.v1';
   static const String _categoryBudgetsKey = 'verifin.category_budgets.v1';
   static const String _hapticsKey = 'verifin.haptics.v1';
+  static const String _assetViewModeKey = 'verifin.asset_view_mode.v1';
+  static const String _assetSectionCollapsedKey =
+      'verifin.asset_section_collapsed.v1';
+  static const String _assetAccountOrderKey = 'verifin.asset_account_order.v1';
 
   final LocalKeyValueStore _store;
   final List<LedgerEntry> _entries = <LedgerEntry>[];
@@ -36,6 +40,9 @@ class VeriFinController extends ChangeNotifier {
   final List<Category> _categories = <Category>[];
   final Map<String, double> _monthlyBudgets = <String, double>{};
   final Map<String, double> _categoryBudgets = <String, double>{};
+  final Set<String> _collapsedAssetSections = <String>{};
+  final Map<String, List<String>> _assetAccountOrders =
+      <String, List<String>>{};
 
   late final ValueNotifier<ThemePreference> themePreferenceListenable;
 
@@ -44,6 +51,7 @@ class VeriFinController extends ChangeNotifier {
   String _activeBookId = defaultLedgerBookId;
   String _assetCoverUrl = '';
   bool _hapticsEnabled = true;
+  AssetAccountViewMode _assetAccountViewMode = AssetAccountViewMode.group;
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
     _entries.where((entry) => entry.bookId == _activeBookId),
@@ -80,6 +88,8 @@ class VeriFinController extends ChangeNotifier {
   String get assetCoverUrl => _assetCoverUrl;
 
   bool get hapticsEnabled => _hapticsEnabled;
+
+  AssetAccountViewMode get assetAccountViewMode => _assetAccountViewMode;
 
   List<Category> categoriesForType(EntryType type) {
     return categoriesFor(type, categories);
@@ -124,6 +134,90 @@ class VeriFinController extends ChangeNotifier {
   void setHapticsEnabled(bool enabled) {
     _hapticsEnabled = enabled;
     _store.write(_hapticsKey, enabled.toString());
+    notifyListeners();
+  }
+
+  void toggleAssetAccountViewMode() {
+    _assetAccountViewMode = _assetAccountViewMode == AssetAccountViewMode.group
+        ? AssetAccountViewMode.type
+        : AssetAccountViewMode.group;
+    _store.write(_assetViewModeKey, _assetAccountViewMode.name);
+    notifyListeners();
+  }
+
+  bool isAssetSectionCollapsed({
+    required AssetAccountViewMode mode,
+    required String sectionId,
+  }) {
+    return _collapsedAssetSections.contains(
+      _assetSectionKey(_activeBookId, mode, sectionId),
+    );
+  }
+
+  void toggleAssetSectionCollapsed({
+    required AssetAccountViewMode mode,
+    required String sectionId,
+  }) {
+    final key = _assetSectionKey(_activeBookId, mode, sectionId);
+    if (!_collapsedAssetSections.add(key)) {
+      _collapsedAssetSections.remove(key);
+    }
+    _persistAssetSectionCollapsed();
+    notifyListeners();
+  }
+
+  List<Account> sortedAccountsForAssetSection({
+    required AssetAccountViewMode mode,
+    required String sectionId,
+    required Iterable<Account> accounts,
+  }) {
+    final sorted = accounts.toList();
+    final order =
+        _assetAccountOrders[_assetSectionKey(_activeBookId, mode, sectionId)];
+    if (order == null || order.isEmpty) {
+      sorted.sort(_defaultAccountCompare);
+      return sorted;
+    }
+    final orderIndex = <String, int>{
+      for (final item in order.indexed) item.$2: item.$1,
+    };
+    sorted.sort((a, b) {
+      final aIndex = orderIndex[a.id];
+      final bIndex = orderIndex[b.id];
+      if (aIndex != null && bIndex != null) {
+        return aIndex.compareTo(bIndex);
+      }
+      if (aIndex != null) {
+        return -1;
+      }
+      if (bIndex != null) {
+        return 1;
+      }
+      return _defaultAccountCompare(a, b);
+    });
+    return sorted;
+  }
+
+  void reorderAssetAccounts({
+    required AssetAccountViewMode mode,
+    required String sectionId,
+    required List<Account> accounts,
+    required int oldIndex,
+    required int newIndex,
+  }) {
+    if (oldIndex < 0 ||
+        oldIndex >= accounts.length ||
+        newIndex < 0 ||
+        newIndex >= accounts.length) {
+      return;
+    }
+    final next = accounts.toList();
+    final moved = next.removeAt(oldIndex);
+    next.insert(newIndex, moved);
+    _assetAccountOrders[_assetSectionKey(_activeBookId, mode, sectionId)] = next
+        .map((account) => account.id)
+        .toList();
+    _persistAssetAccountOrders();
     notifyListeners();
   }
 
@@ -235,6 +329,10 @@ class VeriFinController extends ChangeNotifier {
 
   void deleteAccount(String accountId) {
     _accounts.removeWhere((account) => account.id == accountId);
+    for (final order in _assetAccountOrders.values) {
+      order.remove(accountId);
+    }
+    _persistAssetAccountOrders();
     _persistAccounts();
     notifyListeners();
   }
@@ -473,6 +571,9 @@ class VeriFinController extends ChangeNotifier {
       _categoriesKey,
       _categoryBudgetsKey,
       _hapticsKey,
+      _assetViewModeKey,
+      _assetSectionCollapsedKey,
+      _assetAccountOrderKey,
     ]) {
       _store.delete(key);
     }
@@ -496,6 +597,9 @@ class VeriFinController extends ChangeNotifier {
     _activeBookId = defaultLedgerBookId;
     _assetCoverUrl = '';
     _hapticsEnabled = true;
+    _assetAccountViewMode = AssetAccountViewMode.group;
+    _collapsedAssetSections.clear();
+    _assetAccountOrders.clear();
     themePreferenceListenable.value = _themePreference;
     notifyListeners();
   }
@@ -518,6 +622,9 @@ class VeriFinController extends ChangeNotifier {
         'themePreference': _themePreference.name,
         'assetCoverUrl': _assetCoverUrl,
         'hapticsEnabled': _hapticsEnabled,
+        'assetAccountViewMode': _assetAccountViewMode.name,
+        'collapsedAssetSections': _collapsedAssetSections.toList(),
+        'assetAccountOrders': _assetAccountOrders,
       },
     };
     return const JsonEncoder.withIndent('  ').convert(payload);
@@ -584,6 +691,15 @@ class VeriFinController extends ChangeNotifier {
     );
     final nextAssetCoverUrl = data['assetCoverUrl'] as String? ?? '';
     final nextHapticsEnabled = data['hapticsEnabled'] as bool? ?? true;
+    final nextAssetAccountViewMode = AssetAccountViewMode.fromStorage(
+      data['assetAccountViewMode'] as String?,
+    );
+    final nextCollapsedAssetSections = _decodeStringSet(
+      data['collapsedAssetSections'],
+    );
+    final nextAssetAccountOrders = _decodeStringListMap(
+      data['assetAccountOrders'],
+    );
 
     _ledgerBooks
       ..clear()
@@ -612,6 +728,13 @@ class VeriFinController extends ChangeNotifier {
     _themePreference = nextThemePreference;
     _assetCoverUrl = nextAssetCoverUrl;
     _hapticsEnabled = nextHapticsEnabled;
+    _assetAccountViewMode = nextAssetAccountViewMode;
+    _collapsedAssetSections
+      ..clear()
+      ..addAll(nextCollapsedAssetSections);
+    _assetAccountOrders
+      ..clear()
+      ..addAll(nextAssetAccountOrders);
 
     _persistLedgerBooks();
     _store.write(_activeBookKey, _activeBookId);
@@ -624,6 +747,9 @@ class VeriFinController extends ChangeNotifier {
     _store.write(_profileKey, jsonEncode(_profile.toJson()));
     _store.write(_themeKey, _themePreference.name);
     _store.write(_hapticsKey, _hapticsEnabled.toString());
+    _store.write(_assetViewModeKey, _assetAccountViewMode.name);
+    _persistAssetSectionCollapsed();
+    _persistAssetAccountOrders();
     if (_assetCoverUrl.isEmpty) {
       _store.delete(_assetCoverKey);
     } else {
@@ -656,6 +782,11 @@ class VeriFinController extends ChangeNotifier {
     _loadCategoryBudgets();
     _assetCoverUrl = _store.read(_assetCoverKey) ?? '';
     _hapticsEnabled = _store.read(_hapticsKey) != 'false';
+    _assetAccountViewMode = AssetAccountViewMode.fromStorage(
+      _store.read(_assetViewModeKey),
+    );
+    _loadAssetSectionCollapsed();
+    _loadAssetAccountOrders();
     final rawEntries = _store.read(_entriesKey);
     if (rawEntries == null || rawEntries.isEmpty) {
       return;
@@ -856,6 +987,34 @@ class VeriFinController extends ChangeNotifier {
     }
   }
 
+  void _loadAssetSectionCollapsed() {
+    final rawCollapsed = _store.read(_assetSectionCollapsedKey);
+    if (rawCollapsed == null || rawCollapsed.isEmpty) {
+      return;
+    }
+    try {
+      _collapsedAssetSections
+        ..clear()
+        ..addAll(_decodeStringSet(jsonDecode(rawCollapsed)));
+    } on FormatException {
+      _store.delete(_assetSectionCollapsedKey);
+    }
+  }
+
+  void _loadAssetAccountOrders() {
+    final rawOrders = _store.read(_assetAccountOrderKey);
+    if (rawOrders == null || rawOrders.isEmpty) {
+      return;
+    }
+    try {
+      _assetAccountOrders
+        ..clear()
+        ..addAll(_decodeStringListMap(jsonDecode(rawOrders)));
+    } on FormatException {
+      _store.delete(_assetAccountOrderKey);
+    }
+  }
+
   void _persistEntries() {
     _store.write(
       _entriesKey,
@@ -899,6 +1058,17 @@ class VeriFinController extends ChangeNotifier {
     _store.write(_categoryBudgetsKey, jsonEncode(_categoryBudgets));
   }
 
+  void _persistAssetSectionCollapsed() {
+    _store.write(
+      _assetSectionCollapsedKey,
+      jsonEncode(_collapsedAssetSections.toList()),
+    );
+  }
+
+  void _persistAssetAccountOrders() {
+    _store.write(_assetAccountOrderKey, jsonEncode(_assetAccountOrders));
+  }
+
   void _normalizeGroupOrder() {
     final grouped = <String, List<AccountGroup>>{};
     for (final group in _accountGroups) {
@@ -927,6 +1097,57 @@ bool _isProtectedCategory(String categoryId) {
 
 String _monthKey(DateTime month) {
   return '${month.year}-${month.month.toString().padLeft(2, '0')}';
+}
+
+String _assetSectionKey(
+  String bookId,
+  AssetAccountViewMode mode,
+  String sectionId,
+) {
+  return '$bookId:${mode.name}:$sectionId';
+}
+
+int _defaultAccountCompare(Account a, Account b) {
+  final hiddenCompare = (a.hidden ? 1 : 0).compareTo(b.hidden ? 1 : 0);
+  if (hiddenCompare != 0) {
+    return hiddenCompare;
+  }
+  final includeCompare = (b.includeInAssets ? 1 : 0).compareTo(
+    a.includeInAssets ? 1 : 0,
+  );
+  if (includeCompare != 0) {
+    return includeCompare;
+  }
+  final typeCompare = a.type.index.compareTo(b.type.index);
+  if (typeCompare != 0) {
+    return typeCompare;
+  }
+  return a.name.compareTo(b.name);
+}
+
+Set<String> _decodeStringSet(Object? value) {
+  if (value == null) {
+    return <String>{};
+  }
+  if (value is! List) {
+    throw const FormatException('折叠数据格式不正确');
+  }
+  return value.whereType<String>().toSet();
+}
+
+Map<String, List<String>> _decodeStringListMap(Object? value) {
+  if (value == null) {
+    return <String, List<String>>{};
+  }
+  if (value is! Map) {
+    throw const FormatException('排序数据格式不正确');
+  }
+  return Map<String, Object?>.from(value).map((key, rawList) {
+    if (rawList is! List) {
+      return MapEntry(key, <String>[]);
+    }
+    return MapEntry(key, rawList.whereType<String>().toList());
+  });
 }
 
 String _categoryBudgetKey(DateTime month, String categoryId) {

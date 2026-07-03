@@ -822,12 +822,18 @@ class AccountGroupCard extends StatelessWidget {
     required this.title,
     required this.accounts,
     required this.balances,
+    this.collapsed = false,
+    this.onToggleCollapsed,
+    this.onReorderAccounts,
     this.onAccountTap,
   });
 
   final String title;
   final List<Account> accounts;
   final Map<Account, double> balances;
+  final bool collapsed;
+  final VoidCallback? onToggleCollapsed;
+  final ReorderCallback? onReorderAccounts;
   final ValueChanged<Account>? onAccountTap;
 
   @override
@@ -841,52 +847,140 @@ class AccountGroupCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SectionTitle(title: title, trailing: formatAmount(total)),
-          const SizedBox(height: 10),
-          ...accounts.map(
-            (account) => Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(veriRadiusSm),
-                onTap: onAccountTap == null
-                    ? null
-                    : () => onAccountTap!(account),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: <Widget>[
-                      AccountIconBox(iconCode: account.iconCode),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          account.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
+          InkWell(
+            borderRadius: BorderRadius.circular(veriRadiusSm),
+            onTap: onToggleCollapsed,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        formatAmount(balances[account] ?? 0),
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: !account.includeInAssets
-                                  ? Theme.of(context).colorScheme.onSurface
-                                        .withValues(alpha: 0.42)
-                                  : (balances[account] ?? 0) < 0
-                                  ? veriExpense
-                                  : veriIncome,
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  Text(
+                    formatAmount(total),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.58),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    collapsed ? Icons.expand_more : Icons.expand_less,
+                    size: 18,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.42),
+                  ),
+                ],
               ),
             ),
           ),
+          if (!collapsed) ...<Widget>[
+            const SizedBox(height: 10),
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              proxyDecorator: (child, _, _) => Material(
+                color: Colors.transparent,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(veriRadiusSm),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 14,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: child,
+                ),
+              ),
+              itemCount: accounts.length,
+              onReorderItem: onReorderAccounts ?? (_, _) {},
+              itemBuilder: (context, index) {
+                final account = accounts[index];
+                return ReorderableDelayedDragStartListener(
+                  key: ValueKey<String>('account_${account.id}'),
+                  index: index,
+                  child: _AccountRow(
+                    account: account,
+                    balance: balances[account] ?? 0,
+                    onTap: onAccountTap == null
+                        ? null
+                        : () => onAccountTap!(account),
+                  ),
+                );
+              },
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _AccountRow extends StatelessWidget {
+  const _AccountRow({
+    required this.account,
+    required this.balance,
+    required this.onTap,
+  });
+
+  final Account account;
+  final double balance;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: <Widget>[
+              AccountIconBox(iconCode: account.iconCode),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  account.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                formatAmount(balance),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: !account.includeInAssets
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.42)
+                      : balance < 0
+                      ? veriExpense
+                      : veriIncome,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

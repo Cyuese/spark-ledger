@@ -14,6 +14,7 @@ import 'app/entry_sheets.dart';
 import 'app/image_cropper.dart';
 import 'app/ledger_math.dart';
 import 'app/models.dart';
+import 'app/platform_bridge.dart';
 import 'app/veri_fin_controller.dart';
 import 'local_storage/local_storage.dart';
 
@@ -103,6 +104,23 @@ class _VeriFinShellState extends State<VeriFinShell> {
   int _index = 0;
 
   @override
+  void initState() {
+    super.initState();
+    AppPlatformBridge.setQuickEntryHandler(_openQuickEntryFromPlatform);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (await AppPlatformBridge.consumeInitialQuickEntryIntent() && mounted) {
+        await _openQuickEntryFromPlatform();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    AppPlatformBridge.clearQuickEntryHandler();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
       const HomePage(),
@@ -148,6 +166,20 @@ class _VeriFinShellState extends State<VeriFinShell> {
         builder: (context) => EntryDetailPage(initialAmount: amount),
       ),
     );
+  }
+
+  Future<void> _openQuickEntryFromPlatform() async {
+    if (!mounted) {
+      return;
+    }
+    if (_index != 0) {
+      setState(() => _index = 0);
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+    }
+    if (!mounted) {
+      return;
+    }
+    await _startQuickEntry(context);
   }
 }
 
@@ -4352,6 +4384,7 @@ class AssetsPage extends StatelessWidget {
     final hiddenAccounts = accounts
         .where((account) => account.hidden)
         .toList(growable: false);
+    final viewMode = controller.assetAccountViewMode;
     final visibleGroups = <AccountGroup>[
       ...groups,
       AccountGroup(
@@ -4362,6 +4395,39 @@ class AssetsPage extends StatelessWidget {
         sortOrder: 999,
       ),
     ];
+    final assetSections = viewMode == AssetAccountViewMode.group
+        ? visibleGroups
+              .map(
+                (group) => _AssetAccountSection(
+                  id: group.id,
+                  title: group.name,
+                  accounts: controller.sortedAccountsForAssetSection(
+                    mode: viewMode,
+                    sectionId: group.id,
+                    accounts: accounts.where(
+                      (account) =>
+                          _effectiveGroupId(account) == group.id &&
+                          !account.hidden,
+                    ),
+                  ),
+                ),
+              )
+              .toList()
+        : AccountType.values
+              .map(
+                (type) => _AssetAccountSection(
+                  id: type.name,
+                  title: type.label,
+                  accounts: controller.sortedAccountsForAssetSection(
+                    mode: viewMode,
+                    sectionId: type.name,
+                    accounts: accounts.where(
+                      (account) => account.type == type && !account.hidden,
+                    ),
+                  ),
+                ),
+              )
+              .toList();
 
     return VeriPage(
       child: ListView(
@@ -4500,21 +4566,28 @@ class AssetsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          for (final group in visibleGroups) ...<Widget>[
-            if (accounts.any(
-              (account) =>
-                  _effectiveGroupId(account) == group.id && !account.hidden,
-            )) ...<Widget>[
+          for (final section in assetSections) ...<Widget>[
+            if (section.accounts.isNotEmpty) ...<Widget>[
               AccountGroupCard(
-                title: group.name,
-                accounts: _sortedAccounts(
-                  accounts.where(
-                    (account) =>
-                        _effectiveGroupId(account) == group.id &&
-                        !account.hidden,
-                  ),
-                ),
+                title: section.title,
+                accounts: section.accounts,
                 balances: balances,
+                collapsed: controller.isAssetSectionCollapsed(
+                  mode: viewMode,
+                  sectionId: section.id,
+                ),
+                onToggleCollapsed: () => controller.toggleAssetSectionCollapsed(
+                  mode: viewMode,
+                  sectionId: section.id,
+                ),
+                onReorderAccounts: (oldIndex, newIndex) =>
+                    controller.reorderAssetAccounts(
+                      mode: viewMode,
+                      sectionId: section.id,
+                      accounts: section.accounts,
+                      oldIndex: oldIndex,
+                      newIndex: newIndex,
+                    ),
                 onAccountTap: (account) {
                   Navigator.of(context).push<void>(
                     MaterialPageRoute<void>(
@@ -4654,15 +4727,17 @@ class AssetsPage extends StatelessWidget {
   }
 
   Future<void> _showAssetActions(BuildContext context) async {
+    final controller = VeriFinScope.of(context);
     final selected = await _showOptionSheet<String>(
       context: context,
       title: '资产操作',
-      values: const <String>['add_account', 'manage_groups'],
+      values: const <String>['add_account', 'manage_groups', 'switch_view'],
       selected: 'add_account',
       labelOf: (value) {
         return switch (value) {
           'add_account' => '添加账户',
           'manage_groups' => '管理分组',
+          'switch_view' => controller.assetAccountViewMode.toggleLabel,
           _ => value,
         };
       },
@@ -4682,7 +4757,22 @@ class AssetsPage extends StatelessWidget {
         ),
       );
     }
+    if (selected == 'switch_view') {
+      controller.toggleAssetAccountViewMode();
+    }
   }
+}
+
+class _AssetAccountSection {
+  const _AssetAccountSection({
+    required this.id,
+    required this.title,
+    required this.accounts,
+  });
+
+  final String id;
+  final String title;
+  final List<Account> accounts;
 }
 
 class _AssetCoverPreset {
@@ -7356,6 +7446,14 @@ class SettingsPage extends StatelessWidget {
                 child: Column(
                   children: <Widget>[
                     SettingsRow(
+                      icon: Icons.system_update_alt_outlined,
+                      title: '检查更新',
+                      trailing: 'GitHub Release',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _checkForUpdate(context),
+                    ),
+                    const Divider(),
+                    SettingsRow(
                       icon: Icons.restart_alt,
                       title: '初始化数据',
                       trailing: '删除所有本地数据',
@@ -7475,6 +7573,19 @@ class SettingsPage extends StatelessWidget {
         ).showSnackBar(const SnackBar(content: Text('导入失败，请检查文件后重试')));
       }
     }
+  }
+
+  Future<void> _checkForUpdate(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('正在检查 GitHub Release...')),
+    );
+    final result = await AppPlatformBridge.checkForUpdate();
+    if (!context.mounted) {
+      return;
+    }
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(content: Text(result.message)));
   }
 
   Future<void> _confirmReset(

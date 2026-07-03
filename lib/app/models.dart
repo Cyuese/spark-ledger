@@ -100,6 +100,36 @@ enum AccountType {
   }
 }
 
+enum AssetAccountViewMode {
+  group,
+  type;
+
+  String get label {
+    switch (this) {
+      case AssetAccountViewMode.group:
+        return '分类视图';
+      case AssetAccountViewMode.type:
+        return '类型视图';
+    }
+  }
+
+  String get toggleLabel {
+    switch (this) {
+      case AssetAccountViewMode.group:
+        return '切换为类型视图';
+      case AssetAccountViewMode.type:
+        return '切换为分类视图';
+    }
+  }
+
+  static AssetAccountViewMode fromStorage(String? value) {
+    return AssetAccountViewMode.values.firstWhere(
+      (mode) => mode.name == value,
+      orElse: () => AssetAccountViewMode.group,
+    );
+  }
+}
+
 class LedgerEntry {
   const LedgerEntry({
     required this.id,
