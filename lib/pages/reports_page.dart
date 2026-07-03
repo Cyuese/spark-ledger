@@ -1,0 +1,750 @@
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../app/app_theme.dart';
+import '../app/chart_painters.dart';
+import '../app/common_widgets.dart';
+import '../app/demo_data.dart';
+import '../app/ledger_math.dart';
+import '../app/models.dart';
+import '../app/series_math.dart';
+import '../app/veri_fin_scope.dart';
+import 'budget_pages.dart';
+
+class ReportsPage extends StatelessWidget {
+  const ReportsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final entries = controller.entries;
+    final now = DateTime.now();
+    final monthEntries = entries
+        .where((entry) => isInMonth(entry, now))
+        .toList(growable: false);
+    final monthExpense = sumByType(monthEntries, EntryType.expense);
+    final monthlyBudget = controller.monthlyBudget(now);
+    final categoryBudgetSnapshots = computeCategoryBudgetSnapshots(
+      controller: controller,
+      month: now,
+      monthEntries: monthEntries,
+    );
+    final expenseEntries = monthEntries
+        .where((entry) => entry.type == EntryType.expense)
+        .toList(growable: false);
+    final categoryStats = _categoryStats(expenseEntries, controller.categories);
+    final trendWindow = sevenDayWindowFor(DateTime.now());
+    final trendValues = valuesForTypeInWindow(
+      entries,
+      trendWindow,
+      EntryType.expense,
+    );
+    final trendExpense = trendValues.fold<double>(
+      0,
+      (sum, value) => sum + value,
+    );
+    final trendMax = trendValues.fold<double>(
+      0,
+      (max, value) => value > max ? value : max,
+    );
+    final monthlyValues = monthlyExpenseValues(entries);
+    final monthlyMax = monthlyValues.fold<double>(
+      0,
+      (max, value) => value > max ? value : max,
+    );
+
+    return VeriPage(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 82),
+        children: <Widget>[
+          const PageHeader(title: '看板', subtitle: '数据看板'),
+          const SizedBox(height: 10),
+          _BudgetExecutionCard(
+            budget: monthlyBudget,
+            expense: monthExpense,
+            snapshots: categoryBudgetSnapshots,
+          ),
+          const SizedBox(height: 10),
+          VeriCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SectionTitle(
+                  title: '分类统计',
+                  trailing:
+                      '${formatExpenseAmount(monthExpense)} · ${DateTime.now().month}月 · 支出',
+                ),
+                const SizedBox(height: 12),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 360;
+                    return _CategoryRingChart(
+                      stats: categoryStats,
+                      total: monthExpense,
+                      ringSize: compact ? 126 : 156,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          VeriCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const SectionTitle(title: '分类明细', trailing: '支出'),
+                const SizedBox(height: 8),
+                if (categoryStats.isEmpty)
+                  const EmptyState(
+                    icon: Icons.donut_small_outlined,
+                    title: '暂无分类数据',
+                    description: '保存支出记录后会在这里显示分类排行。',
+                  )
+                else
+                  ...categoryStats
+                      .take(6)
+                      .map((stat) => _CategoryStatTile(stat: stat)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          VeriCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SectionTitle(
+                  title: '日趋势',
+                  trailing: formatExpenseAmount(trendExpense),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 138,
+                  child: CustomPaint(
+                    painter: TrendLinePainter(
+                      color: isZeroAmount(trendExpense)
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.42)
+                          : veriExpense,
+                      values: trendValues,
+                      xLabels: labelsForWindow(trendWindow),
+                      yLabels: reportAxisLabels(trendMax),
+                      labelColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.50),
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          VeriCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const SectionTitle(title: '月度收支', trailing: '今年'),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 146,
+                  child: CustomPaint(
+                    painter: BarChartPainter(
+                      values: monthlyValues,
+                      xLabels: const <String>[
+                        '1',
+                        '2',
+                        '3',
+                        '4',
+                        '5',
+                        '6',
+                        '7',
+                        '8',
+                        '9',
+                        '10',
+                        '11',
+                        '12',
+                      ],
+                      yLabels: reportAxisLabels(monthlyMax),
+                      labelColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.50),
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BudgetExecutionCard extends StatelessWidget {
+  const _BudgetExecutionCard({
+    required this.budget,
+    required this.expense,
+    required this.snapshots,
+  });
+
+  final double budget;
+  final double expense;
+  final List<CategoryBudgetSnapshot> snapshots;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = budget <= 0 ? 0.0 : expense / budget;
+    final remaining = budget - expense;
+    final budgetedCount = snapshots
+        .where((snapshot) => snapshot.hasBudget)
+        .length;
+    final overBudgetCount = snapshots
+        .where((snapshot) => snapshot.overBudget)
+        .length;
+    final color = budget <= 0
+        ? veriLine
+        : remaining < 0
+        ? veriExpense
+        : ratio >= 0.85
+        ? veriWarning
+        : veriRoyal;
+
+    return VeriCard(
+      padding: const EdgeInsets.fromLTRB(13, 12, 13, 13),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  '预算执行',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+                ),
+              ),
+              Text(
+                '${DateTime.now().month}月',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.48),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      budget <= 0
+                          ? '未设置预算'
+                          : remaining < 0
+                          ? '已超预算'
+                          : '剩余预算',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.50),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      budget <= 0
+                          ? formatExpenseAmount(expense)
+                          : remaining < 0
+                          ? formatExpenseAmount(remaining.abs())
+                          : formatAmount(remaining),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(color: color, fontWeight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                budget <= 0
+                    ? '仅记录支出'
+                    : '已用 ${(ratio * 100).toStringAsFixed(0)}%',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.48),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: budget <= 0 ? 0 : ratio.clamp(0, 1).toDouble(),
+              minHeight: 6,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.56),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _BudgetExecutionMetric(
+                  label: '本月预算',
+                  value: formatAmount(budget),
+                ),
+              ),
+              Expanded(
+                child: _BudgetExecutionMetric(
+                  label: '本月支出',
+                  value: formatExpenseAmount(expense),
+                ),
+              ),
+              Expanded(
+                child: _BudgetExecutionMetric(
+                  label: '分类预算',
+                  value: '$budgetedCount 个',
+                  accent: overBudgetCount > 0 ? '$overBudgetCount 个超支' : '正常',
+                  accentColor: overBudgetCount > 0 ? veriExpense : veriIncome,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BudgetExecutionMetric extends StatelessWidget {
+  const _BudgetExecutionMetric({
+    required this.label,
+    required this.value,
+    this.accent,
+    this.accentColor,
+  });
+
+  final String label;
+  final String value;
+  final String? accent;
+  final Color? accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.48),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        if (accent != null) ...<Widget>[
+          const SizedBox(height: 2),
+          Text(
+            accent!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color:
+                  accentColor ??
+                  Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.44),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _CategoryRingChart extends StatelessWidget {
+  const _CategoryRingChart({
+    required this.stats,
+    required this.total,
+    required this.ringSize,
+  });
+
+  final List<_CategoryStat> stats;
+  final double total;
+  final double ringSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final segments = _categoryRingSegments(stats);
+    final mutedColor = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.56);
+
+    return SizedBox(
+      width: double.infinity,
+      height: ringSize + 26,
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _CategoryCalloutPainter(
+                segments: segments,
+                ringSize: ringSize,
+                textColor: mutedColor,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: ringSize,
+            height: ringSize,
+            child: Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                CustomPaint(
+                  painter: _CategoryDonutPainter(
+                    segments: segments,
+                    trackColor: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.64),
+                  ),
+                  child: const SizedBox.expand(),
+                ),
+                SizedBox(
+                  width: ringSize * 0.56,
+                  child: Text(
+                    formatExpenseAmount(total),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryRingSegment {
+  const _CategoryRingSegment({
+    required this.label,
+    required this.amount,
+    required this.percent,
+    required this.color,
+  });
+
+  final String label;
+  final double amount;
+  final double percent;
+  final Color color;
+}
+
+List<_CategoryRingSegment> _categoryRingSegments(List<_CategoryStat> stats) {
+  if (stats.isEmpty) {
+    return const <_CategoryRingSegment>[];
+  }
+  const colors = <Color>[
+    veriRoyal,
+    veriBlue,
+    veriCyan,
+    veriMint,
+    veriWarning,
+    Color(0xFF8B95A7),
+  ];
+  final total = stats.fold<double>(0, (sum, stat) => sum + stat.amount);
+  if (total <= 0) {
+    return const <_CategoryRingSegment>[];
+  }
+  final visible = stats.take(5).toList();
+  final hidden = stats.skip(5).toList();
+  final segments = <_CategoryRingSegment>[
+    for (final item in visible.indexed)
+      _CategoryRingSegment(
+        label: item.$2.category.label,
+        amount: item.$2.amount,
+        percent: item.$2.amount / total,
+        color: colors[item.$1 % colors.length],
+      ),
+  ];
+  final otherAmount = hidden.fold<double>(0, (sum, stat) => sum + stat.amount);
+  if (otherAmount > 0) {
+    segments.add(
+      _CategoryRingSegment(
+        label: '其他',
+        amount: otherAmount,
+        percent: otherAmount / total,
+        color: colors.last,
+      ),
+    );
+  }
+  return segments;
+}
+
+class _CategoryDonutPainter extends CustomPainter {
+  const _CategoryDonutPainter({
+    required this.segments,
+    required this.trackColor,
+  });
+
+  final List<_CategoryRingSegment> segments;
+  final Color trackColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = math.max(12.0, size.shortestSide * 0.14);
+    final rect = Offset.zero & size;
+    final arcRect = rect.deflate(strokeWidth / 2);
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(arcRect, -math.pi / 2, math.pi * 2, false, trackPaint);
+    if (segments.isEmpty) {
+      return;
+    }
+
+    var start = -math.pi / 2;
+    for (final segment in segments) {
+      final sweep = math.pi * 2 * segment.percent;
+      final paint = Paint()
+        ..color = segment.color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(
+        arcRect,
+        start,
+        math.max(0.02, sweep - 0.018),
+        false,
+        paint,
+      );
+      start += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CategoryDonutPainter oldDelegate) {
+    return oldDelegate.segments != segments ||
+        oldDelegate.trackColor != trackColor;
+  }
+}
+
+class _CategoryCalloutPainter extends CustomPainter {
+  const _CategoryCalloutPainter({
+    required this.segments,
+    required this.ringSize,
+    required this.textColor,
+  });
+
+  final List<_CategoryRingSegment> segments;
+  final double ringSize;
+  final Color textColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (segments.isEmpty) {
+      return;
+    }
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = ringSize / 2;
+    var startAngle = -math.pi / 2;
+    for (final item in segments.indexed) {
+      final segment = item.$2;
+      final sweep = math.pi * 2 * segment.percent;
+      final angle = startAngle + sweep / 2;
+      startAngle += sweep;
+      if (item.$1 >= 6 || segment.percent < 0.035) {
+        continue;
+      }
+      final direction = Offset(math.cos(angle), math.sin(angle));
+      final start = center + direction * radius;
+      final elbow = center + direction * (radius + 12);
+      final rightSide = direction.dx >= 0;
+      final end = Offset(elbow.dx + (rightSide ? 32 : -32), elbow.dy);
+      final paint = Paint()
+        ..color = segment.color.withValues(alpha: 0.82)
+        ..strokeWidth = 1.3
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawLine(start, elbow, paint);
+      canvas.drawLine(elbow, end, paint);
+      canvas.drawCircle(start, 2.2, Paint()..color = segment.color);
+
+      final label = '${segment.label} ${(segment.percent * 100).round()}%';
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        maxLines: 1,
+        ellipsis: '...',
+        textDirection: TextDirection.ltr,
+        textAlign: rightSide ? TextAlign.left : TextAlign.right,
+      )..layout(maxWidth: 74);
+      final textOffset = Offset(
+        rightSide ? end.dx + 5 : end.dx - textPainter.width - 5,
+        end.dy - textPainter.height / 2,
+      );
+      textPainter.paint(canvas, textOffset);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CategoryCalloutPainter oldDelegate) {
+    return oldDelegate.segments != segments ||
+        oldDelegate.ringSize != ringSize ||
+        oldDelegate.textColor != textColor;
+  }
+}
+
+class _CategoryStat {
+  const _CategoryStat({
+    required this.category,
+    required this.amount,
+    required this.percent,
+    required this.count,
+  });
+
+  final Category category;
+  final double amount;
+  final double percent;
+  final int count;
+}
+
+class _CategoryStatTile extends StatelessWidget {
+  const _CategoryStatTile({required this.stat});
+
+  final _CategoryStat stat;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: <Widget>[
+          VeriIconBox(
+            icon: iconForCode(stat.category.iconCode),
+            color: veriExpense,
+            size: 30,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        stat.category.label,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '-${formatAmount(stat.amount)}',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: veriExpense,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                LinearProgressIndicator(
+                  value: stat.percent.clamp(0, 1).toDouble(),
+                  minHeight: 5,
+                  borderRadius: BorderRadius.circular(999),
+                  color: veriExpense,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${(stat.percent * 100).toStringAsFixed(1)}% · ${stat.count}笔',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.46),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+List<_CategoryStat> _categoryStats(
+  List<LedgerEntry> entries,
+  List<Category> categories,
+) {
+  final totals = <String, double>{};
+  final counts = <String, int>{};
+  for (final entry in entries) {
+    totals.update(
+      entry.categoryId,
+      (value) => value + entry.amount,
+      ifAbsent: () => entry.amount,
+    );
+    counts.update(entry.categoryId, (value) => value + 1, ifAbsent: () => 1);
+  }
+
+  final total = totals.values.fold<double>(0, (sum, value) => sum + value);
+  final stats =
+      totals.entries
+          .map(
+            (entry) => _CategoryStat(
+              category: categoryById(entry.key, categories),
+              amount: entry.value,
+              percent: total <= 0 ? 0 : entry.value / total,
+              count: counts[entry.key] ?? 0,
+            ),
+          )
+          .toList()
+        ..sort((a, b) => b.amount.compareTo(a.amount));
+  return stats;
+}
