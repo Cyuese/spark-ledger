@@ -27,32 +27,6 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
     widget.initialMonth.year,
     widget.initialMonth.month,
   );
-  late final TextEditingController _amountController;
-  bool _amountInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _amountController = TextEditingController();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_amountInitialized) {
-      return;
-    }
-    _amountController.text = formatAmount(
-      VeriFinScope.of(context).monthlyBudget(_month),
-    );
-    _amountInitialized = true;
-  }
-
-  @override
-  void dispose() {
-    _amountController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +43,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
       previousMonthEntries,
       EntryType.expense,
     );
-    final budget = double.tryParse(_amountController.text) ?? 0;
+    final budget = controller.monthlyBudget(_month);
     final previousBudget = controller.monthlyBudget(previousMonth);
     final remaining = budget - monthExpense;
     final ratio = budget <= 0
@@ -115,13 +89,6 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                 title: '预算设置',
                 subtitle: '${_month.year}年${_month.month}月',
                 showBack: true,
-                actions: <Widget>[
-                  HeaderAction(
-                    icon: Icons.check,
-                    tooltip: '保存预算',
-                    onPressed: _save,
-                  ),
-                ],
               ),
               const SizedBox(height: 10),
               VeriCard(
@@ -207,21 +174,43 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                                     ?.copyWith(fontWeight: FontWeight.w800),
                               ),
                               const SizedBox(height: 5),
-                              Text(
-                                remaining < 0
-                                    ? formatExpenseAmount(remaining.abs())
-                                    : formatAmount(remaining),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.displaySmall
-                                    ?.copyWith(
-                                      color: remaining < 0
-                                          ? veriExpense
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
-                                      fontWeight: FontWeight.w900,
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: <Widget>[
+                                  Flexible(
+                                    child: Text(
+                                      remaining < 0
+                                          ? formatExpenseAmount(remaining.abs())
+                                          : formatAmount(remaining),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .displaySmall
+                                          ?.copyWith(
+                                            color: remaining < 0
+                                                ? veriExpense
+                                                : Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                            fontWeight: FontWeight.w900,
+                                          ),
                                     ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  InkResponse(
+                                    onTap: _editMonthlyBudget,
+                                    radius: 18,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(3),
+                                      child: Icon(
+                                        Icons.edit_outlined,
+                                        size: 16,
+                                        color: veriRoyal,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 6),
                               Text(
@@ -365,33 +354,6 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
-              VeriCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      '设置预算',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _amountController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(
-                        labelText: '月份预算金额',
-                        helperText: '预算为 0 时仅记录支出，不计算剩余日均。',
-                        prefixIcon: Icon(Icons.currency_yuan),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
@@ -402,17 +364,26 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
   void _changeMonth(int delta) {
     setState(() {
       _month = DateTime(_month.year, _month.month + delta);
-      _amountController.text = formatAmount(
-        VeriFinScope.of(context).monthlyBudget(_month),
-      );
     });
   }
 
-  void _save() {
-    VeriFinScope.of(
-      context,
-    ).setMonthlyBudget(_month, double.tryParse(_amountController.text) ?? 0);
-    Navigator.of(context).pop();
+  Future<void> _editMonthlyBudget() async {
+    final controller = VeriFinScope.of(context);
+    final currentBudget = controller.monthlyBudget(_month);
+    final amountText = await showTextInputDialog(
+      context: context,
+      title: '设置本月预算',
+      label: '月份预算金额',
+      initialValue: currentBudget <= 0 ? '' : formatAmount(currentBudget),
+      allowEmpty: true,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    );
+    if (amountText == null || !mounted) {
+      return;
+    }
+    setState(() {
+      controller.setMonthlyBudget(_month, double.tryParse(amountText) ?? 0);
+    });
   }
 
   Future<void> _editCategoryBudget(Category category) async {

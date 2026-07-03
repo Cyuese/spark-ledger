@@ -185,21 +185,22 @@ void main() {
     expect(find.text('剩余日均'), findsOneWidget);
     expect(find.text('近 6 月趋势'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('设置预算'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    // 通过顶部“本月可用预算”旁的编辑图标设置本月预算
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+    expect(find.text('设置本月预算'), findsOneWidget);
     await tester.enterText(find.byType(TextField).last, '2400');
-    await tester.pump();
-    expect(find.text('2400'), findsAtLeastNWidgets(1));
+    await tester.tap(find.text('确认'));
+    await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('分类预算'),
+      find.text('餐饮'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('餐饮'), findsOneWidget);
+    await tester.ensureVisible(find.text('餐饮'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('餐饮'));
     await tester.pumpAndSettle();
     expect(find.text('设置餐饮预算'), findsOneWidget);
@@ -213,12 +214,7 @@ void main() {
       -300,
       scrollable: find.byType(Scrollable).first,
     );
-    final saveAction = tester.widget<HeaderAction>(
-      find.byWidgetPredicate(
-        (widget) => widget is HeaderAction && widget.tooltip == '保存预算',
-      ),
-    );
-    saveAction.onPressed?.call();
+    await tester.tap(find.byIcon(Icons.arrow_back).first);
     await tester.pumpAndSettle();
 
     expect(find.byType(BudgetPanel), findsOneWidget);
