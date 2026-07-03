@@ -642,28 +642,21 @@ class HomeTrendPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Container(
+            SizedBox(
               height: 138,
-              padding: const EdgeInsets.fromLTRB(8, 10, 8, 6),
-              decoration: BoxDecoration(
-                color: isDark ? veriSurfaceAltDark : const Color(0xFFF7FAFF),
-                borderRadius: BorderRadius.circular(veriRadiusSm),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : const Color(0xFFEAF0F8),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(2, 6, 2, 0),
+                child: CustomPaint(
+                  painter: TrendLinePainter(
+                    color: hasExpense ? veriExpense : mutedColor,
+                    values: values,
+                    xLabels: labelsForWindow(window),
+                    yLabels: reportAxisLabels(expense),
+                    labelColor: mutedColor,
+                    glow: isDark,
+                  ),
+                  child: const SizedBox.expand(),
                 ),
-              ),
-              child: CustomPaint(
-                painter: TrendLinePainter(
-                  color: hasExpense ? veriExpense : mutedColor,
-                  values: values,
-                  xLabels: labelsForWindow(window),
-                  yLabels: reportAxisLabels(expense),
-                  labelColor: mutedColor,
-                  glow: isDark,
-                ),
-                child: const SizedBox.expand(),
               ),
             ),
           ],
@@ -6177,7 +6170,6 @@ class ReportsPage extends StatelessWidget {
         .toList(growable: false);
     final expenseTotal = sumByType(entries, EntryType.expense);
     final categoryStats = _categoryStats(expenseEntries, controller.categories);
-    final topCategory = categoryStats.firstOrNull;
     final trendWindow = sevenDayWindowFor(DateTime.now());
     final trendValues = valuesForTypeInWindow(
       entries,
@@ -6220,7 +6212,7 @@ class ReportsPage extends StatelessWidget {
                   builder: (context, constraints) {
                     final compact = constraints.maxWidth < 360;
                     return _CategoryRingChart(
-                      stat: topCategory,
+                      stats: categoryStats,
                       total: expenseTotal,
                       ringSize: compact ? 126 : 156,
                     );
@@ -6530,19 +6522,18 @@ class _BudgetExecutionMetric extends StatelessWidget {
 
 class _CategoryRingChart extends StatelessWidget {
   const _CategoryRingChart({
-    required this.stat,
+    required this.stats,
     required this.total,
     required this.ringSize,
   });
 
-  final _CategoryStat? stat;
+  final List<_CategoryStat> stats;
   final double total;
   final double ringSize;
 
   @override
   Widget build(BuildContext context) {
-    final value = stat == null || total <= 0 ? 0.0 : stat!.amount / total;
-    final lineColor = stat == null ? veriRoyal : veriRoyal;
+    final segments = _categoryRingSegments(stats);
     final mutedColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.56);
@@ -6556,8 +6547,7 @@ class _CategoryRingChart extends StatelessWidget {
           Positioned.fill(
             child: CustomPaint(
               painter: _CategoryCalloutPainter(
-                label: stat?.category.label ?? '',
-                color: lineColor,
+                segments: segments,
                 ringSize: ringSize,
                 textColor: mutedColor,
               ),
@@ -6570,13 +6560,12 @@ class _CategoryRingChart extends StatelessWidget {
               alignment: Alignment.center,
               children: <Widget>[
                 CustomPaint(
-                  painter: BudgetRingPainter(
-                    value: value,
+                  painter: _CategoryDonutPainter(
+                    segments: segments,
                     trackColor: Theme.of(context)
                         .colorScheme
                         .surfaceContainerHighest
-                        .withValues(alpha: 0.72),
-                    progressColor: lineColor,
+                        .withValues(alpha: 0.64),
                   ),
                   child: const SizedBox.expand(),
                 ),
@@ -6601,60 +6590,178 @@ class _CategoryRingChart extends StatelessWidget {
   }
 }
 
+class _CategoryRingSegment {
+  const _CategoryRingSegment({
+    required this.label,
+    required this.amount,
+    required this.percent,
+    required this.color,
+  });
+
+  final String label;
+  final double amount;
+  final double percent;
+  final Color color;
+}
+
+List<_CategoryRingSegment> _categoryRingSegments(List<_CategoryStat> stats) {
+  if (stats.isEmpty) {
+    return const <_CategoryRingSegment>[];
+  }
+  const colors = <Color>[
+    veriRoyal,
+    veriBlue,
+    veriCyan,
+    veriMint,
+    veriWarning,
+    Color(0xFF8B95A7),
+  ];
+  final total = stats.fold<double>(0, (sum, stat) => sum + stat.amount);
+  if (total <= 0) {
+    return const <_CategoryRingSegment>[];
+  }
+  final visible = stats.take(5).toList();
+  final hidden = stats.skip(5).toList();
+  final segments = <_CategoryRingSegment>[
+    for (final item in visible.indexed)
+      _CategoryRingSegment(
+        label: item.$2.category.label,
+        amount: item.$2.amount,
+        percent: item.$2.amount / total,
+        color: colors[item.$1 % colors.length],
+      ),
+  ];
+  final otherAmount = hidden.fold<double>(0, (sum, stat) => sum + stat.amount);
+  if (otherAmount > 0) {
+    segments.add(
+      _CategoryRingSegment(
+        label: '其他',
+        amount: otherAmount,
+        percent: otherAmount / total,
+        color: colors.last,
+      ),
+    );
+  }
+  return segments;
+}
+
+class _CategoryDonutPainter extends CustomPainter {
+  const _CategoryDonutPainter({
+    required this.segments,
+    required this.trackColor,
+  });
+
+  final List<_CategoryRingSegment> segments;
+  final Color trackColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = math.max(12.0, size.shortestSide * 0.14);
+    final rect = Offset.zero & size;
+    final arcRect = rect.deflate(strokeWidth / 2);
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(arcRect, -math.pi / 2, math.pi * 2, false, trackPaint);
+    if (segments.isEmpty) {
+      return;
+    }
+
+    var start = -math.pi / 2;
+    for (final segment in segments) {
+      final sweep = math.pi * 2 * segment.percent;
+      final paint = Paint()
+        ..color = segment.color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(
+        arcRect,
+        start,
+        math.max(0.02, sweep - 0.018),
+        false,
+        paint,
+      );
+      start += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CategoryDonutPainter oldDelegate) {
+    return oldDelegate.segments != segments ||
+        oldDelegate.trackColor != trackColor;
+  }
+}
+
 class _CategoryCalloutPainter extends CustomPainter {
   const _CategoryCalloutPainter({
-    required this.label,
-    required this.color,
+    required this.segments,
     required this.ringSize,
     required this.textColor,
   });
 
-  final String label;
-  final Color color;
+  final List<_CategoryRingSegment> segments;
   final double ringSize;
   final Color textColor;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (label.isEmpty) {
+    if (segments.isEmpty) {
       return;
     }
     final center = Offset(size.width / 2, size.height / 2);
     final radius = ringSize / 2;
-    final angle = -math.pi / 5;
-    final start = center + Offset(math.cos(angle), math.sin(angle)) * radius;
-    final elbow =
-        center + Offset(math.cos(angle), math.sin(angle)) * (radius + 12);
-    final end = Offset(math.min(size.width - 78, elbow.dx + 38), elbow.dy);
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.82)
-      ..strokeWidth = 1.4
-      ..strokeCap = StrokeCap.round;
+    var startAngle = -math.pi / 2;
+    for (final item in segments.indexed) {
+      final segment = item.$2;
+      final sweep = math.pi * 2 * segment.percent;
+      final angle = startAngle + sweep / 2;
+      startAngle += sweep;
+      if (item.$1 >= 6 || segment.percent < 0.035) {
+        continue;
+      }
+      final direction = Offset(math.cos(angle), math.sin(angle));
+      final start = center + direction * radius;
+      final elbow = center + direction * (radius + 12);
+      final rightSide = direction.dx >= 0;
+      final end = Offset(elbow.dx + (rightSide ? 32 : -32), elbow.dy);
+      final paint = Paint()
+        ..color = segment.color.withValues(alpha: 0.82)
+        ..strokeWidth = 1.3
+        ..strokeCap = StrokeCap.round;
 
-    canvas.drawLine(start, elbow, paint);
-    canvas.drawLine(elbow, end, paint);
-    canvas.drawCircle(start, 2.3, Paint()..color = color);
+      canvas.drawLine(start, elbow, paint);
+      canvas.drawLine(elbow, end, paint);
+      canvas.drawCircle(start, 2.2, Paint()..color = segment.color);
 
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
+      final label = '${segment.label} ${(segment.percent * 100).round()}%';
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      ),
-      maxLines: 1,
-      ellipsis: '...',
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: math.max(42, size.width - end.dx - 8));
-    textPainter.paint(canvas, Offset(end.dx + 5, end.dy - textPainter.height));
+        maxLines: 1,
+        ellipsis: '...',
+        textDirection: TextDirection.ltr,
+        textAlign: rightSide ? TextAlign.left : TextAlign.right,
+      )..layout(maxWidth: 74);
+      final textOffset = Offset(
+        rightSide ? end.dx + 5 : end.dx - textPainter.width - 5,
+        end.dy - textPainter.height / 2,
+      );
+      textPainter.paint(canvas, textOffset);
+    }
   }
 
   @override
   bool shouldRepaint(covariant _CategoryCalloutPainter oldDelegate) {
-    return oldDelegate.label != label ||
-        oldDelegate.color != color ||
+    return oldDelegate.segments != segments ||
         oldDelegate.ringSize != ringSize ||
         oldDelegate.textColor != textColor;
   }

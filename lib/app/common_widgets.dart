@@ -842,7 +842,8 @@ class AccountGroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = accounts.fold<double>(
       0,
-      (sum, account) => sum + (balances[account] ?? 0),
+      (sum, account) =>
+          account.includeInAssets ? sum + (balances[account] ?? 0) : sum,
     );
 
     return VeriCard(
@@ -880,6 +881,7 @@ class AccountGroupCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     formatAmount(total),
+                    key: Key('account_group_total_$title'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: Theme.of(
                         context,

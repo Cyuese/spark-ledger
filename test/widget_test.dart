@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:verifin/app/app_theme.dart';
 import 'package:verifin/app/common_widgets.dart';
 import 'package:verifin/app/ledger_math.dart';
 import 'package:verifin/app/models.dart';
@@ -438,6 +439,54 @@ void main() {
 
     expect(find.text('网络支付'), findsOneWidget);
     expect(find.text('现金账户'), findsOneWidget);
+  });
+
+  testWidgets('asset section total ignores accounts excluded from assets', (
+    WidgetTester tester,
+  ) async {
+    const included = Account(
+      id: 'included-account',
+      bookId: defaultLedgerBookId,
+      name: '计入账户',
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 0,
+      iconCode: 'cash',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+    );
+    const excluded = Account(
+      id: 'excluded-account',
+      bookId: defaultLedgerBookId,
+      name: '不计入账户',
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 0,
+      iconCode: 'cash',
+      note: '',
+      includeInAssets: false,
+      hidden: false,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildVeriFinTheme(Brightness.light),
+        home: Scaffold(
+          body: AccountGroupCard(
+            title: '现金',
+            accounts: const <Account>[included, excluded],
+            balances: const <Account, double>{included: 100, excluded: 500},
+          ),
+        ),
+      ),
+    );
+
+    final totalText = tester.widget<Text>(
+      find.byKey(const Key('account_group_total_现金')),
+    );
+    expect(totalText.data, '100');
+    expect(find.text('600'), findsNothing);
   });
 
   testWidgets('switches asset account view and persists collapsed sections', (
