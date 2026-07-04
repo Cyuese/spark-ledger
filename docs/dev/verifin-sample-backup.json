@@ -598,6 +598,13 @@
       { "id": "tag_work_meal", "label": "工作餐" },
       { "id": "tag_reimbursable", "label": "可报销" }
     ],
+    "attachments": [
+      {
+        "id": "att_sample_1",
+        "entryId": "entry_20260703_001",
+        "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPgPAAEDAQAIicLsAAAAAElFTkSuQmCC"
+      }
+    ],
     "monthlyBudgets": {
       "default:2026-05": 5200.0,
       "default:2026-06": 5600.0,
