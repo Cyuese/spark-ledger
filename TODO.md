@@ -54,7 +54,7 @@
 ## 阶段 4：报表与体验
 
 - [x] 4.1 报表增强：看板右上角「统计分析」入口进入 `ReportAnalysisPage`；时间范围可选本月 / 本年 / 自定义（`showDateRangePicker`），维度可选支出 / 收入；展示收支概览、趋势曲线（短范围按天、整年/跨多月按月，`ReportTrend`）、分类排行（按顶级分类聚合净额）；纯函数在 `lib/app/report_analysis.dart`（`ReportRange`/`reportSummary`/`reportCategoryStats`/`reportTrend`）
-- [ ] 4.2 同比 / 环比分析（本月 vs 上月 vs 去年同期）
+- [x] 4.2 同比 / 环比分析：统计分析页在「本月」范围下展示「同比 · 环比」卡，收入 / 支出 / 结余分别对上月（环比）与去年同月（同比）算变化率；纯函数 `reportMonthlyComparison`/`changeRatio`/`formatChangeRatio`（`report_analysis.dart`），基准为 0 时显示「—」，颜色按「上升是否为好」区分（收入/结余升为绿、支出升为红）
 - [ ] 4.3 记账提醒：用户自定义每日提醒时间，本地通知
 - [ ] 4.4 我的页改版：宫格等更现代的布局，容纳新增功能入口，优化整体展示
 - [ ] 4.5 新用户引导：首次使用引导建账户、设预算等；**后续功能变动需回顾引导内容是否同步**

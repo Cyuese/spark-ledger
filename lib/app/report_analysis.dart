@@ -125,6 +125,62 @@ ReportSummary reportSummary(Iterable<LedgerEntry> entries) {
   );
 }
 
+/// 环比 / 同比对比：当前月对上月（环比）与去年同月（同比）。仅对「月」范围有意义。
+@immutable
+class ReportComparison {
+  const ReportComparison({
+    required this.current,
+    required this.previousMonth,
+    required this.sameMonthLastYear,
+  });
+
+  final ReportSummary current;
+
+  /// 上月（用于环比）。
+  final ReportSummary previousMonth;
+
+  /// 去年同月（用于同比）。
+  final ReportSummary sameMonthLastYear;
+}
+
+/// 计算 [month] 所在自然月与上月、去年同月的收支汇总，用于同比 / 环比。
+ReportComparison reportMonthlyComparison(
+  Iterable<LedgerEntry> entries,
+  DateTime month,
+) {
+  final list = entries is List<LedgerEntry> ? entries : entries.toList();
+  ReportSummary summaryOfMonth(DateTime m) =>
+      reportSummary(entriesInWindow(list, ReportRange.month(m).window));
+  final base = DateTime(month.year, month.month);
+  return ReportComparison(
+    current: summaryOfMonth(base),
+    previousMonth: summaryOfMonth(DateTime(base.year, base.month - 1)),
+    sameMonthLastYear: summaryOfMonth(DateTime(base.year - 1, base.month)),
+  );
+}
+
+/// 变化率（当前相对基准）。基准为 0 时无法计算百分比，返回 null。
+/// 以基准的绝对值为分母，保证金额符号语义正确。
+double? changeRatio(double current, double previous) {
+  if (previous.abs() < 0.005) {
+    return null;
+  }
+  return (current - previous) / previous.abs();
+}
+
+/// 变化率的展示文案：如 `+12.3%`、`-8.0%`；无法计算（基准为 0）时返回 `—`。
+String formatChangeRatio(double? ratio) {
+  if (ratio == null) {
+    return '—';
+  }
+  final percent = ratio * 100;
+  if (percent.abs() < 0.05) {
+    return '0%';
+  }
+  final sign = percent > 0 ? '+' : '-';
+  return '$sign${percent.abs().toStringAsFixed(1)}%';
+}
+
 /// 某维度（支出 / 收入）的分类统计项，金额归总到顶级祖先分类。
 @immutable
 class ReportCategoryStat {

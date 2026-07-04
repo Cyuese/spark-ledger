@@ -136,6 +136,69 @@ void main() {
     expect(incomeStats.first.percent, closeTo(1.0, 1e-9));
   });
 
+  group('reportMonthlyComparison & changeRatio', () {
+    test('changeRatio uses base magnitude and guards zero base', () {
+      expect(changeRatio(120, 100), closeTo(0.2, 1e-9));
+      expect(changeRatio(80, 100), closeTo(-0.2, 1e-9));
+      expect(changeRatio(50, 0), isNull);
+    });
+
+    test('formatChangeRatio renders sign and dash for null', () {
+      expect(formatChangeRatio(0.123), '+12.3%');
+      expect(formatChangeRatio(-0.08), '-8.0%');
+      expect(formatChangeRatio(null), '—');
+      expect(formatChangeRatio(0), '0%');
+    });
+
+    test('comparison pulls current, previous month and last year', () {
+      final entries = <LedgerEntry>[
+        entry(
+          id: 'cur',
+          type: EntryType.expense,
+          amount: 300,
+          categoryId: 'dining',
+          occurredAt: DateTime(2026, 5, 10),
+        ),
+        entry(
+          id: 'prev',
+          type: EntryType.expense,
+          amount: 200,
+          categoryId: 'dining',
+          occurredAt: DateTime(2026, 4, 10),
+        ),
+        entry(
+          id: 'yoy',
+          type: EntryType.expense,
+          amount: 150,
+          categoryId: 'dining',
+          occurredAt: DateTime(2025, 5, 10),
+        ),
+      ];
+      final cmp = reportMonthlyComparison(entries, DateTime(2026, 5, 20));
+      expect(cmp.current.expense, 300);
+      expect(cmp.previousMonth.expense, 200);
+      expect(cmp.sameMonthLastYear.expense, 150);
+      expect(
+        changeRatio(cmp.current.expense, cmp.previousMonth.expense),
+        closeTo(0.5, 1e-9),
+      );
+    });
+
+    test('january previous month rolls into last december', () {
+      final entries = <LedgerEntry>[
+        entry(
+          id: 'dec',
+          type: EntryType.income,
+          amount: 1000,
+          categoryId: 'salary',
+          occurredAt: DateTime(2025, 12, 5),
+        ),
+      ];
+      final cmp = reportMonthlyComparison(entries, DateTime(2026, 1, 15));
+      expect(cmp.previousMonth.income, 1000);
+    });
+  });
+
   group('reportTrend', () {
     test('short custom range is daily and buckets by day', () {
       final range = ReportRange.custom(

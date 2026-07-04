@@ -78,6 +78,15 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
           ),
           const SizedBox(height: 10),
           _SummaryCard(summary: summary),
+          if (_range.mode == ReportRangeMode.month) ...<Widget>[
+            const SizedBox(height: 10),
+            _ComparisonCard(
+              comparison: reportMonthlyComparison(
+                controller.entries,
+                _range.start,
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           _DimensionToggle(
             dimension: _dimension,
@@ -307,6 +316,174 @@ class _SummaryMetric extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// 同比 / 环比对比卡：收入、支出、结余分别对上月（环比）与去年同月（同比）的变化。
+class _ComparisonCard extends StatelessWidget {
+  const _ComparisonCard({required this.comparison});
+
+  final ReportComparison comparison;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.48);
+    Widget headerCell(String text) => Expanded(
+      flex: 3,
+      child: Text(
+        text,
+        textAlign: TextAlign.end,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: muted,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+
+    return VeriCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const SectionTitle(title: '同比 · 环比'),
+          const SizedBox(height: 4),
+          Text(
+            '较上月为环比，较去年同期为同比',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: <Widget>[
+              const Expanded(flex: 4, child: SizedBox.shrink()),
+              headerCell('环比'),
+              headerCell('同比'),
+            ],
+          ),
+          const SizedBox(height: 4),
+          _ComparisonRow(
+            label: '收入',
+            current: comparison.current.income,
+            momBase: comparison.previousMonth.income,
+            yoyBase: comparison.sameMonthLastYear.income,
+            higherIsGood: true,
+          ),
+          _ComparisonRow(
+            label: '支出',
+            current: comparison.current.expense,
+            momBase: comparison.previousMonth.expense,
+            yoyBase: comparison.sameMonthLastYear.expense,
+            higherIsGood: false,
+          ),
+          _ComparisonRow(
+            label: '结余',
+            current: comparison.current.net,
+            momBase: comparison.previousMonth.net,
+            yoyBase: comparison.sameMonthLastYear.net,
+            higherIsGood: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ComparisonRow extends StatelessWidget {
+  const _ComparisonRow({
+    required this.label,
+    required this.current,
+    required this.momBase,
+    required this.yoyBase,
+    required this.higherIsGood,
+  });
+
+  final String label;
+  final double current;
+  final double momBase;
+  final double yoyBase;
+
+  /// 上升是否为「好」（收入/结余上升为好，支出上升为差），决定颜色。
+  final bool higherIsGood;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            flex: 4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  formatSignedAmount(current),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.52),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _ChangeCell(
+            ratio: changeRatio(current, momBase),
+            higherIsGood: higherIsGood,
+          ),
+          _ChangeCell(
+            ratio: changeRatio(current, yoyBase),
+            higherIsGood: higherIsGood,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChangeCell extends StatelessWidget {
+  const _ChangeCell({required this.ratio, required this.higherIsGood});
+
+  final double? ratio;
+  final bool higherIsGood;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.44);
+    Color color = muted;
+    if (ratio != null && ratio!.abs() >= 0.0005) {
+      final rising = ratio! > 0;
+      final good = rising == higherIsGood;
+      color = good ? veriIncome : veriExpense;
+    }
+    return Expanded(
+      flex: 3,
+      child: Text(
+        formatChangeRatio(ratio),
+        textAlign: TextAlign.end,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }
