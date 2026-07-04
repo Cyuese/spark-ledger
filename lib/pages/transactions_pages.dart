@@ -65,6 +65,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   String _query = '';
   String? _selectedAccountId;
   String? _selectedCategoryId;
+  String? _selectedTagId;
 
   @override
   void initState() {
@@ -155,6 +156,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       ? () => _pickAccountFilter(controller)
                       : null,
                   onPickCategory: () => _pickCategoryFilter(controller),
+                  tagLabel: _tagFilterLabel(controller),
+                  tagSelected: _selectedTagId != null,
+                  onPickTag: controller.tags.isEmpty
+                      ? null
+                      : () => _pickTagFilter(controller),
                   onClear: _hasSecondaryFilters
                       ? () {
                           setState(() {
@@ -164,6 +170,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                               _selectedAccountId = null;
                             }
                             _selectedCategoryId = null;
+                            _selectedTagId = null;
                           });
                         }
                       : null,
@@ -286,7 +293,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
   bool get _hasSecondaryFilters =>
       _query.isNotEmpty ||
       (widget.accountId == null && _selectedAccountId != null) ||
-      _selectedCategoryId != null;
+      _selectedCategoryId != null ||
+      _selectedTagId != null;
 
   bool _matchesSecondaryFilters(
     LedgerEntry entry,
@@ -298,6 +306,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
     }
     if (_selectedCategoryId != null &&
         entry.categoryId != _selectedCategoryId) {
+      return false;
+    }
+    if (_selectedTagId != null && !entry.tagIds.contains(_selectedTagId)) {
       return false;
     }
     return true;
@@ -319,6 +330,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
       entry.type.label,
       formatAmount(entry.amount),
       formatSignedAmount(signedAmount(entry)),
+      for (final id in entry.tagIds)
+        if (controller.tagById(id) case final Tag tag) tag.label,
     ].join(' ').toLowerCase();
     return searchable.contains(query);
   }
@@ -424,6 +437,35 @@ class _TransactionsPageState extends State<TransactionsPage> {
       return '全部分类';
     }
     return controller.categoryById(categoryId).label;
+  }
+
+  Future<void> _pickTagFilter(VeriFinController controller) async {
+    final values = <String>[
+      _allFilterValue,
+      for (final tag in controller.tags) tag.id,
+    ];
+    final selected = await showOptionSheet<String>(
+      context: context,
+      title: '筛选标签',
+      values: values,
+      selected: _selectedTagId ?? _allFilterValue,
+      labelOf: (value) => value == _allFilterValue
+          ? '全部标签'
+          : (controller.tagById(value)?.label ?? '未知标签'),
+    );
+    if (selected != null) {
+      setState(() {
+        _selectedTagId = selected == _allFilterValue ? null : selected;
+      });
+    }
+  }
+
+  String _tagFilterLabel(VeriFinController controller) {
+    final tagId = _selectedTagId;
+    if (tagId == null) {
+      return '标签';
+    }
+    return controller.tagById(tagId)?.label ?? '标签';
   }
 
   DateWindow? _activePeriod() {
@@ -590,6 +632,9 @@ class _TransactionSearchFilters extends StatelessWidget {
     required this.onChanged,
     required this.onPickCategory,
     this.onPickAccount,
+    this.tagLabel,
+    this.tagSelected = false,
+    this.onPickTag,
     this.onClear,
   });
 
@@ -600,6 +645,11 @@ class _TransactionSearchFilters extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final VoidCallback? onPickAccount;
   final VoidCallback onPickCategory;
+
+  /// 标签筛选：仅当存在标签时由上层传入 [onPickTag]，否则不展示该胶囊。
+  final String? tagLabel;
+  final bool tagSelected;
+  final VoidCallback? onPickTag;
   final VoidCallback? onClear;
 
   @override
@@ -676,6 +726,12 @@ class _TransactionSearchFilters extends StatelessWidget {
                   icon: Icons.category_outlined,
                   onTap: onPickCategory,
                 ),
+                if (onPickTag != null)
+                  FilterPill(
+                    label: tagLabel ?? '标签',
+                    icon: tagSelected ? Icons.label : Icons.label_outline,
+                    onTap: onPickTag,
+                  ),
               ],
             ),
           ),

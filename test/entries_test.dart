@@ -305,6 +305,70 @@ void main() {
     expect(find.text('最近交易'), findsOneWidget);
   });
 
+  testWidgets('filters transaction list by tag', (WidgetTester tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final tagId = controller.addTag('必要')!;
+    final now = DateTime.now();
+    controller
+      ..addAccount(
+        Account(
+          id: 'cash-tag-test',
+          bookId: controller.activeBook.id,
+          name: '现金账户',
+          type: AccountType.cash,
+          groupId: null,
+          initialBalance: 0,
+          iconCode: 'cash',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'tagged-dining',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 30,
+          categoryId: 'dining',
+          accountId: 'cash-tag-test',
+          note: '午餐',
+          occurredAt: now,
+          tagIds: <String>[tagId],
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'untagged-transport',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 12,
+          categoryId: 'transport',
+          accountId: 'cash-tag-test',
+          note: '公交',
+          occurredAt: now,
+        ),
+      )
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await tester.tap(find.text('最近交易'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('餐饮'), findsOneWidget);
+    expect(find.text('交通'), findsOneWidget);
+
+    // 点击标签筛选胶囊，选择「必要」。
+    await tester.tap(find.text('标签'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('必要').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('餐饮'), findsOneWidget);
+    expect(find.text('交通'), findsNothing);
+  });
+
   test('addEntry keeps entries sorted latest first', () async {
     final controller = await makeController();
     final bookId = controller.activeBook.id;
