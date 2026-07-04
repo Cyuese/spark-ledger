@@ -57,6 +57,12 @@ class VeriFinController extends ChangeNotifier {
   static const String _booksMigratedKey = 'verifin.migration.books.v1';
   static const String _accountsMigratedKey = 'verifin.migration.accounts.v1';
   static const String _groupsMigratedKey = 'verifin.migration.groups.v1';
+  static const String _categoriesMigratedKey =
+      'verifin.migration.categories.v1';
+  static const String _monthlyBudgetsMigratedKey =
+      'verifin.migration.monthly_budgets.v1';
+  static const String _categoryBudgetsMigratedKey =
+      'verifin.migration.category_budgets.v1';
 
   static String _panelsKeyFor(PanelPageKind page) {
     switch (page) {
@@ -1116,6 +1122,36 @@ class VeriFinController extends ChangeNotifier {
       ..addAll(groups);
     _normalizeGroupOrder();
 
+    final categories = await _loadOrMigrate(
+      _categoriesMigratedKey,
+      repository.loadCategories,
+      () => repository.saveCategories(_categories),
+      _categories,
+    );
+    _categories
+      ..clear()
+      ..addAll(categories);
+
+    final monthlyBudgets = await _loadOrMigrateMap(
+      _monthlyBudgetsMigratedKey,
+      repository.loadMonthlyBudgets,
+      () => repository.saveMonthlyBudgets(_monthlyBudgets),
+      _monthlyBudgets,
+    );
+    _monthlyBudgets
+      ..clear()
+      ..addAll(_bookScopedBudgets(monthlyBudgets));
+
+    final categoryBudgets = await _loadOrMigrateMap(
+      _categoryBudgetsMigratedKey,
+      repository.loadCategoryBudgets,
+      () => repository.saveCategoryBudgets(_categoryBudgets),
+      _categoryBudgets,
+    );
+    _categoryBudgets
+      ..clear()
+      ..addAll(_bookScopedBudgets(categoryBudgets));
+
     notifyListeners();
   }
 
@@ -1139,6 +1175,25 @@ class VeriFinController extends ChangeNotifier {
     }
     await migrate();
     return List<T>.of(inMemory);
+  }
+
+  /// [_loadOrMigrate] 的键值映射版本（用于预算）。
+  Future<Map<String, double>> _loadOrMigrateMap(
+    String flagKey,
+    Future<Map<String, double>> Function() load,
+    Future<void> Function() migrate,
+    Map<String, double> inMemory,
+  ) async {
+    if (_store.read(flagKey) == 'true') {
+      return load();
+    }
+    final existing = await load();
+    _store.write(flagKey, 'true');
+    if (existing.isNotEmpty) {
+      return existing;
+    }
+    await migrate();
+    return Map<String, double>.of(inMemory);
   }
 
   void _removeAccountFromOrders(String accountId) {
@@ -1433,6 +1488,11 @@ class VeriFinController extends ChangeNotifier {
   }
 
   void _persistCategories() {
+    final repository = _repository;
+    if (repository != null) {
+      _trackWrite(repository.saveCategories(List<Category>.of(_categories)));
+      return;
+    }
     _store.write(
       _categoriesKey,
       jsonEncode(_categories.map((category) => category.toJson()).toList()),
@@ -1440,10 +1500,26 @@ class VeriFinController extends ChangeNotifier {
   }
 
   void _persistBudgets() {
+    final repository = _repository;
+    if (repository != null) {
+      _trackWrite(
+        repository.saveMonthlyBudgets(Map<String, double>.of(_monthlyBudgets)),
+      );
+      return;
+    }
     _store.write(_budgetsKey, jsonEncode(_monthlyBudgets));
   }
 
   void _persistCategoryBudgets() {
+    final repository = _repository;
+    if (repository != null) {
+      _trackWrite(
+        repository.saveCategoryBudgets(
+          Map<String, double>.of(_categoryBudgets),
+        ),
+      );
+      return;
+    }
     _store.write(_categoryBudgetsKey, jsonEncode(_categoryBudgets));
   }
 

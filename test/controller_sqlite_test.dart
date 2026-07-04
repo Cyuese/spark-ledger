@@ -141,4 +141,35 @@ void main() {
     expect(restored.name, '钱包');
     expect(restored.initialBalance, 66);
   });
+
+  test('分类与预算写入 SQLite 并被新控制器读回', () async {
+    final repo = await openRepo();
+    final controller = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    final month = DateTime(2026, 6);
+    controller.addCategory(
+      type: EntryType.expense,
+      label: '宠物',
+      iconCode: 'pets',
+    );
+    controller.setMonthlyBudget(month, 2000);
+    final petCategory = controller
+        .categoriesForType(EntryType.expense)
+        .firstWhere((c) => c.label == '宠物');
+    controller.setCategoryBudget(month, petCategory.id, 500);
+    await controller.waitForPendingWrites();
+
+    final reloaded = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    expect(
+      reloaded.categoriesForType(EntryType.expense).any((c) => c.label == '宠物'),
+      isTrue,
+    );
+    expect(reloaded.monthlyBudget(month), 2000);
+    expect(reloaded.categoryBudget(month, petCategory.id), 500);
+  });
 }
