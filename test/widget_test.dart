@@ -325,6 +325,58 @@ void main() {
     expect(find.text('-45'), findsAtLeastNWidgets(1));
   });
 
+  testWidgets('entry detail amount color follows type and shows account info', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+    await addTestAccount(tester, '现金账户');
+    await addTestAccount(tester, '备用账户');
+    await tapBottomTab(tester, 0);
+
+    await createQuickEntry(tester);
+
+    Color? amountColor() {
+      final text = tester.widget<Text>(
+        find.descendant(
+          of: find.byKey(const Key('detail_amount_button')),
+          matching: find.byType(Text),
+        ),
+      );
+      return text.style?.color;
+    }
+
+    // 支出红色;账户选择框前置图标为账户图标;日期/时间旁没有多余账户 Chip。
+    expect(amountColor(), veriExpense);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('account_dropdown')),
+        matching: find.byType(AccountIconBox),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(Chip), findsNothing);
+
+    await tester.tap(find.text('收入'));
+    await tester.pumpAndSettle();
+    expect(amountColor(), veriIncome);
+
+    await tester.tap(find.text('转账'));
+    await tester.pumpAndSettle();
+    expect(amountColor(), veriBlue);
+
+    // 账户选择弹窗展示账户图标与余额。
+    await tester.tap(find.byKey(const Key('account_dropdown')));
+    await tester.pumpAndSettle();
+    expect(find.text('选择转出账户'), findsOneWidget);
+    expect(find.text('备用账户'), findsAtLeastNWidgets(1));
+    expect(find.text('0'), findsAtLeastNWidgets(2));
+    expect(find.byType(AccountIconBox), findsAtLeastNWidgets(2));
+
+    await tester.tap(find.text('现金账户'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('save_entry_button')), findsOneWidget);
+  });
+
   testWidgets('opens and deletes an entry from the transaction detail page', (
     WidgetTester tester,
   ) async {

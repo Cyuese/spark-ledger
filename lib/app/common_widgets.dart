@@ -1001,6 +1001,18 @@ class AccountGroupCard extends StatelessWidget {
   }
 }
 
+/// 资产列表中的余额颜色:不计入资产的账户用弱化色,负余额红色,其余青绿色。
+Color accountBalanceColor(
+  BuildContext context,
+  Account account,
+  double balance,
+) {
+  if (!account.includeInAssets) {
+    return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.42);
+  }
+  return balance < 0 ? veriExpense : veriIncome;
+}
+
 class _AccountRow extends StatelessWidget {
   const _AccountRow({
     required this.account,
@@ -1061,13 +1073,7 @@ class _AccountRow extends StatelessWidget {
               Text(
                 formatAmount(balance),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: !account.includeInAssets
-                      ? Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.42)
-                      : balance < 0
-                      ? veriExpense
-                      : veriIncome,
+                  color: accountBalanceColor(context, account, balance),
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1412,13 +1418,17 @@ class SelectField extends StatelessWidget {
     super.key,
     required this.label,
     required this.value,
-    required this.icon,
+    this.icon,
+    this.leading,
     required this.onTap,
-  });
+  }) : assert(icon != null || leading != null, '需要提供 icon 或 leading');
 
   final String label;
   final String value;
-  final IconData icon;
+  final IconData? icon;
+
+  /// 自定义前置组件(如账户图标);提供时优先于 [icon]。
+  final Widget? leading;
   final VoidCallback? onTap;
 
   @override
@@ -1431,7 +1441,9 @@ class SelectField extends StatelessWidget {
         child: InputDecorator(
           decoration: InputDecoration(
             labelText: label,
-            prefixIcon: Icon(icon),
+            prefixIcon: leading == null
+                ? Icon(icon)
+                : Center(widthFactor: 1, heightFactor: 1, child: leading),
             suffixIcon: const Icon(Icons.keyboard_arrow_down),
           ),
           child: Text(

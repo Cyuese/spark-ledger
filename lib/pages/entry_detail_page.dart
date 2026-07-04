@@ -53,6 +53,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     if (!categories.any((category) => category.id == _categoryId)) {
       _categoryId = categories.first.id;
     }
+    // 大金额颜色跟随类型:支出红、收入青绿、转账保持蓝色。
+    final amountColor = switch (_type) {
+      EntryType.expense => veriExpense,
+      EntryType.income => veriIncome,
+      EntryType.transfer => veriBlue,
+    };
 
     return Scaffold(
       body: SafeArea(
@@ -101,7 +107,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                         formatAmount(_amount),
                         style: Theme.of(context).textTheme.displayLarge
                             ?.copyWith(
-                              color: veriBlue,
+                              color: amountColor,
                               fontWeight: FontWeight.w800,
                             ),
                       ),
@@ -143,7 +149,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       label: '转出账户',
                       value:
                           '${accountById(accounts, _accountId).name} (${formatAmount(controller.accountBalance(accountById(accounts, _accountId)))})',
-                      icon: Icons.call_made,
+                      leading: AccountIconBox(
+                        iconCode: accountById(accounts, _accountId).iconCode,
+                        size: 26,
+                      ),
                       onTap: () => _pickAccount(accounts),
                     ),
                     const SizedBox(height: 10),
@@ -153,7 +162,16 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       value: _toAccountId == null
                           ? '请选择'
                           : '${accountById(accounts, _toAccountId!).name} (${formatAmount(controller.accountBalance(accountById(accounts, _toAccountId!)))})',
-                      icon: Icons.call_received,
+                      icon: _toAccountId == null ? Icons.call_received : null,
+                      leading: _toAccountId == null
+                          ? null
+                          : AccountIconBox(
+                              iconCode: accountById(
+                                accounts,
+                                _toAccountId!,
+                              ).iconCode,
+                              size: 26,
+                            ),
                       onTap: accounts.length < 2
                           ? null
                           : () => _pickToAccount(accounts),
@@ -164,7 +182,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       label: '账户',
                       value:
                           '${accountById(accounts, _accountId).name} (${formatAmount(controller.accountBalance(accountById(accounts, _accountId)))})',
-                      icon: Icons.wallet,
+                      leading: AccountIconBox(
+                        iconCode: accountById(accounts, _accountId).iconCode,
+                        size: 26,
+                      ),
                       onTap: () => _pickAccount(accounts),
                     )
                   else
@@ -199,17 +220,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                         label: Text(formatTime(_occurredAt)),
                         onPressed: _pickTime,
                       ),
-                      if (hasAccounts)
-                        Chip(
-                          avatar: AccountIconBox(
-                            iconCode: accountById(
-                              accounts,
-                              _accountId,
-                            ).iconCode,
-                            size: 22,
-                          ),
-                          label: Text(accountById(accounts, _accountId).name),
-                        ),
                     ],
                   ),
                 ],
@@ -270,12 +280,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   Future<void> _pickAccount(List<Account> accounts) async {
-    final selected = await showOptionSheet<Account>(
+    final selected = await showAccountPickerSheet(
       context: context,
-      title: '选择账户',
-      values: accounts,
-      selected: accountById(accounts, _accountId),
-      labelOf: (value) => value.name,
+      title: _type == EntryType.transfer ? '选择转出账户' : '选择账户',
+      accounts: accounts,
+      selectedId: _accountId,
+      balanceOf: VeriFinScope.of(context).accountBalance,
     );
     if (!mounted || selected == null) {
       return;
@@ -293,12 +303,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     if (selectableAccounts.isEmpty) {
       return;
     }
-    final selected = await showOptionSheet<Account>(
+    final selected = await showAccountPickerSheet(
       context: context,
       title: '选择转入账户',
-      values: selectableAccounts,
-      selected: accountById(selectableAccounts, _toAccountId ?? ''),
-      labelOf: (value) => value.name,
+      accounts: selectableAccounts,
+      selectedId: _toAccountId,
+      balanceOf: VeriFinScope.of(context).accountBalance,
     );
     if (selected != null && mounted) {
       setState(() => _toAccountId = selected.id);

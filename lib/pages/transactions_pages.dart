@@ -1050,12 +1050,12 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   }
 
   Future<void> _pickAccount(List<Account> accounts) async {
-    final selected = await showOptionSheet<Account>(
+    final selected = await showAccountPickerSheet(
       context: context,
-      title: '选择账户',
-      values: accounts,
-      selected: accountById(accounts, _accountId),
-      labelOf: (value) => value.name,
+      title: _type == EntryType.transfer ? '选择转出账户' : '选择账户',
+      accounts: accounts,
+      selectedId: _accountId,
+      balanceOf: VeriFinScope.of(context).accountBalance,
     );
     if (selected != null && mounted) {
       setState(() {
@@ -1072,12 +1072,12 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     if (selectableAccounts.isEmpty) {
       return;
     }
-    final selected = await showOptionSheet<Account>(
+    final selected = await showAccountPickerSheet(
       context: context,
       title: '选择转入账户',
-      values: selectableAccounts,
-      selected: accountById(selectableAccounts, _toAccountId ?? ''),
-      labelOf: (value) => value.name,
+      accounts: selectableAccounts,
+      selectedId: _toAccountId,
+      balanceOf: VeriFinScope.of(context).accountBalance,
     );
     if (selected != null && mounted) {
       setState(() => _toAccountId = selected.id);

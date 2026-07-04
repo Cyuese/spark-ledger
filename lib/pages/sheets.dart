@@ -4,6 +4,7 @@ import '../app/account_icon_assets.dart';
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
 import '../app/demo_data.dart';
+import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
 
@@ -95,6 +96,135 @@ Future<T?> showOptionSheet<T>({
       );
     },
   );
+}
+
+/// 账户选择弹窗:与资产页账户列表一致,展示账户图标、名称(含卡号后四位)和余额。
+Future<Account?> showAccountPickerSheet({
+  required BuildContext context,
+  required String title,
+  required List<Account> accounts,
+  required String? selectedId,
+  required double Function(Account account) balanceOf,
+}) {
+  return showModalBottomSheet<Account>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
+    ),
+    builder: (context) {
+      final maxHeight = MediaQuery.sizeOf(context).height * 0.72;
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: <Widget>[
+                      for (final account in accounts)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: _AccountPickerRow(
+                            account: account,
+                            balance: balanceOf(account),
+                            selected: account.id == selectedId,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _AccountPickerRow extends StatelessWidget {
+  const _AccountPickerRow({
+    required this.account,
+    required this.balance,
+    required this.selected,
+  });
+
+  final Account account;
+  final double balance;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? veriRoyal.withValues(alpha: 0.12)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(veriRadiusSm),
+      child: ListTile(
+        minTileHeight: 48,
+        dense: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(veriRadiusSm),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+        leading: AccountIconBox(iconCode: account.iconCode, size: 32),
+        title: Text.rich(
+          TextSpan(
+            text: account.name,
+            children: <TextSpan>[
+              if (account.cardLast4.isNotEmpty &&
+                  account.type.supportsCardLast4)
+                TextSpan(
+                  text: ' (${account.cardLast4})',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.42),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+            ],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              formatAmount(balance),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: accountBalanceColor(context, account, balance),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (selected) ...<Widget>[
+              const SizedBox(width: 6),
+              const Icon(Icons.check, color: veriRoyal, size: 18),
+            ],
+          ],
+        ),
+        onTap: () => Navigator.of(context).pop(account),
+      ),
+    );
+  }
 }
 
 Future<String?> showAccountIconSheet({
