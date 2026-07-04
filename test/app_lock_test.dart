@@ -145,8 +145,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('锁定方式与密码'), findsOneWidget);
-    // 测试宿主没有生物识别，指纹开关不应出现。
-    expect(find.text('指纹解锁'), findsNothing);
+    // 测试宿主没有生物识别，生物解锁开关不应出现。
+    expect(find.text('生物解锁'), findsNothing);
   });
 
   testWidgets('unlocks with a pattern gesture', (WidgetTester tester) async {
