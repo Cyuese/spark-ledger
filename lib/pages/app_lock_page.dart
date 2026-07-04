@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -288,12 +289,26 @@ class _PatternInputViewState extends State<PatternInputView> {
         SizedBox(
           width: kPatternAreaSize,
           height: kPatternAreaSize,
-          child: GestureDetector(
+          child: RawGestureDetector(
             key: const Key('pattern_area'),
             behavior: HitTestBehavior.opaque,
-            onPanStart: (details) => _start(details.localPosition),
-            onPanUpdate: (details) => _update(details.localPosition),
-            onPanEnd: (_) => _end(),
+            gestures: <Type, GestureRecognizerFactory>{
+              _PatternPanRecognizer:
+                  GestureRecognizerFactoryWithHandlers<_PatternPanRecognizer>(
+                    _PatternPanRecognizer.new,
+                    (recognizer) {
+                      recognizer.onStart = (details) {
+                        _start(details.localPosition);
+                      };
+                      recognizer.onUpdate = (details) {
+                        _update(details.localPosition);
+                      };
+                      recognizer.onEnd = (_) {
+                        _end();
+                      };
+                    },
+                  ),
+            },
             child: CustomPaint(
               painter: _PatternPainter(
                 selected: _selected,
@@ -319,6 +334,17 @@ class _PatternInputViewState extends State<PatternInputView> {
         ),
       ],
     );
+  }
+}
+
+/// 图案连线专用 pan 识别器：位于 `SingleChildScrollView` 内时，普通
+/// `GestureDetector` 的 pan 会在手势竞技场里输给滚动视图的竖向拖动（表现为
+/// 「手在点上却在滚动页面」）。这里在被判负时改为立即接受，从而在图案区域内
+/// 抢下手势、不再触发父级滚动。触点落在图案区外时不受影响。
+class _PatternPanRecognizer extends PanGestureRecognizer {
+  @override
+  void rejectGesture(int pointer) {
+    acceptGesture(pointer);
   }
 }
 
