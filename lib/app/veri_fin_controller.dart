@@ -52,8 +52,11 @@ class VeriFinController extends ChangeNotifier {
   static const String _assetSectionOrderKey = 'verifin.asset_section_order.v1';
   static const String _homePanelsKey = 'verifin.home_panels.v1';
   static const String _reportPanelsKey = 'verifin.report_panels.v1';
-  // 首启动 KV→SQLite 迁移标记，按实体分步设置。
+  // 首启动 KV→SQLite 迁移标记，按实体独立设置，便于分步上线与回退。
   static const String _entriesMigratedKey = 'verifin.migration.entries.v1';
+  static const String _booksMigratedKey = 'verifin.migration.books.v1';
+  static const String _accountsMigratedKey = 'verifin.migration.accounts.v1';
+  static const String _groupsMigratedKey = 'verifin.migration.groups.v1';
 
   static String _panelsKeyFor(PanelPageKind page) {
     switch (page) {
@@ -1034,12 +1037,9 @@ class VeriFinController extends ChangeNotifier {
     _loadAssetAccountOrders();
     _loadAssetSectionOrders();
     _loadPagePanels();
-    // 有 SQLite 仓储时交易由 create() 异步从库中载入；否则走 KV。
-    if (_repository == null) {
-      _entries
-        ..clear()
-        ..addAll(_decodeEntriesFromKv());
-    }
+    _entries
+      ..clear()
+      ..addAll(_decodeEntriesFromKv());
   }
 
   /// 从 KV 解析交易列表；数据缺失或损坏时返回空列表并清理脏数据。
@@ -1063,21 +1063,82 @@ class VeriFinController extends ChangeNotifier {
     }
   }
 
-  /// 首启动把 KV 中的交易导入 SQLite（仅一次），随后以库中数据为准载入内存。
+  /// 首启动把 KV 中已载入并归一化的内存数据写入 SQLite（每类只一次），
+  /// 随后以库中数据为准覆盖内存列表。偏好类小数据仍留在 KV。
   Future<void> _migrateAndLoadFromRepository(LedgerRepository repository) async {
-    if (_store.read(_entriesMigratedKey) != 'true') {
-      final legacy = _decodeEntriesFromKv();
-      if (legacy.isNotEmpty) {
-        await repository.saveEntries(legacy);
-      }
-      _store.write(_entriesMigratedKey, 'true');
-    }
-    final entries = await repository.loadEntries()
-      ..sort(_compareEntriesLatestFirst);
+    final entries = await _loadOrMigrate(
+      _entriesMigratedKey,
+      repository.loadEntries,
+      () => repository.saveEntries(_entries),
+      _entries,
+    );
     _entries
       ..clear()
-      ..addAll(entries);
+      ..addAll(entries..sort(_compareEntriesLatestFirst));
+
+    final books = await _loadOrMigrate(
+      _booksMigratedKey,
+      repository.loadBooks,
+      () => repository.saveBooks(_ledgerBooks),
+      _ledgerBooks,
+    );
+    if (books.isNotEmpty) {
+      _ledgerBooks
+        ..clear()
+        ..addAll(books);
+      if (!_ledgerBooks.any((book) => book.id == defaultLedgerBookId)) {
+        _ledgerBooks.insert(0, defaultLedgerBooks.first);
+      }
+      if (!_ledgerBooks.any((book) => book.id == _activeBookId)) {
+        _activeBookId = defaultLedgerBookId;
+        _store.write(_activeBookKey, _activeBookId);
+      }
+    }
+
+    final accounts = await _loadOrMigrate(
+      _accountsMigratedKey,
+      repository.loadAccounts,
+      () => repository.saveAccounts(_accounts),
+      _accounts,
+    );
+    _accounts
+      ..clear()
+      ..addAll(accounts);
+
+    final groups = await _loadOrMigrate(
+      _groupsMigratedKey,
+      repository.loadAccountGroups,
+      () => repository.saveAccountGroups(_accountGroups),
+      _accountGroups,
+    );
+    _accountGroups
+      ..clear()
+      ..addAll(groups);
+    _normalizeGroupOrder();
+
     notifyListeners();
+  }
+
+  /// 单类实体的载入 / 一次性迁移，返回权威数据（供覆盖内存列表）：
+  /// - 已迁移过（标记置位）：库为准，直接返回库中数据（可能为空）。
+  /// - 未迁移且库已有数据：采用库中数据（避免覆盖，如 KV 被清但库仍在）。
+  /// - 未迁移且库为空：把内存（KV 载入）数据搬入库，返回其副本。
+  Future<List<T>> _loadOrMigrate<T>(
+    String flagKey,
+    Future<List<T>> Function() load,
+    Future<void> Function() migrate,
+    List<T> inMemory,
+  ) async {
+    if (_store.read(flagKey) == 'true') {
+      return load();
+    }
+    final existing = await load();
+    _store.write(flagKey, 'true');
+    if (existing.isNotEmpty) {
+      return existing;
+    }
+    await migrate();
+    return List<T>.of(inMemory);
   }
 
   void _removeAccountFromOrders(String accountId) {
@@ -1334,6 +1395,11 @@ class VeriFinController extends ChangeNotifier {
   Future<void> waitForPendingWrites() => _pendingWrite;
 
   void _persistLedgerBooks() {
+    final repository = _repository;
+    if (repository != null) {
+      _trackWrite(repository.saveBooks(List<LedgerBook>.of(_ledgerBooks)));
+      return;
+    }
     _store.write(
       _ledgerBooksKey,
       jsonEncode(_ledgerBooks.map((book) => book.toJson()).toList()),
@@ -1341,6 +1407,11 @@ class VeriFinController extends ChangeNotifier {
   }
 
   void _persistAccounts() {
+    final repository = _repository;
+    if (repository != null) {
+      _trackWrite(repository.saveAccounts(List<Account>.of(_accounts)));
+      return;
+    }
     _store.write(
       _accountsKey,
       jsonEncode(_accounts.map((account) => account.toJson()).toList()),
@@ -1348,6 +1419,13 @@ class VeriFinController extends ChangeNotifier {
   }
 
   void _persistAccountGroups() {
+    final repository = _repository;
+    if (repository != null) {
+      _trackWrite(
+        repository.saveAccountGroups(List<AccountGroup>.of(_accountGroups)),
+      );
+      return;
+    }
     _store.write(
       _accountGroupsKey,
       jsonEncode(_accountGroups.map((group) => group.toJson()).toList()),

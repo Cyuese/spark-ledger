@@ -7,11 +7,21 @@ import 'package:verifin/data/ledger_repository.dart';
 void main() {
   setUpAll(sqfliteFfiInit);
 
+  final opened = <AppDatabase>[];
+  tearDown(() async {
+    for (final db in opened) {
+      await db.close();
+    }
+    opened.clear();
+  });
+
+  // ffi 会跨调用复用 :memory: 数据库，测试间必须关闭以隔离。
   Future<LedgerRepository> openRepo() async {
     final db = await AppDatabase.open(
       factory: databaseFactoryFfi,
       path: inMemoryDatabasePath,
     );
+    opened.add(db);
     return LedgerRepository(db);
   }
 

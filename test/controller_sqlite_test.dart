@@ -11,11 +11,21 @@ import 'package:verifin/local_storage/local_storage.dart';
 void main() {
   setUpAll(sqfliteFfiInit);
 
+  final opened = <AppDatabase>[];
+  tearDown(() async {
+    for (final db in opened) {
+      await db.close();
+    }
+    opened.clear();
+  });
+
+  // ffi 会跨调用复用 :memory: 数据库，测试间必须关闭以隔离。
   Future<LedgerRepository> openRepo() async {
     final db = await AppDatabase.open(
       factory: databaseFactoryFfi,
       path: inMemoryDatabasePath,
     );
+    opened.add(db);
     return LedgerRepository(db);
   }
 
@@ -73,5 +83,62 @@ void main() {
       repository: repo,
     );
     expect(again.entries.single.id, '3');
+  });
+
+  test('账本/账户/分组写入 SQLite 并被新控制器读回', () async {
+    final repo = await openRepo();
+    final controller = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    // 默认账本已在首启动迁移进库（默认账户为空，用户新增后才有）。
+    expect(await repo.loadBooks(), isNotEmpty);
+
+    controller.addLedgerBook('旅行账本');
+    controller.addAccountGroup('出行');
+    await controller.waitForPendingWrites();
+
+    final reloaded = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    expect(reloaded.ledgerBooks.any((b) => b.name == '旅行账本'), isTrue);
+    // addLedgerBook 会切换活动账本，分组落在新账本下。
+    reloaded.switchLedgerBook(
+      reloaded.ledgerBooks.firstWhere((b) => b.name == '旅行账本').id,
+    );
+    expect(reloaded.accountGroups.any((g) => g.name == '出行'), isTrue);
+  });
+
+  test('新增账户后新控制器能读回', () async {
+    final repo = await openRepo();
+    final controller = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    controller.addAccount(
+      const Account(
+        id: 'my-cash',
+        bookId: defaultLedgerBookId,
+        name: '钱包',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 66,
+        iconCode: 'wallet',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+        cardLast4: '',
+      ),
+    );
+    await controller.waitForPendingWrites();
+
+    final reloaded = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    final restored = reloaded.accounts.firstWhere((a) => a.id == 'my-cash');
+    expect(restored.name, '钱包');
+    expect(restored.initialBalance, 66);
   });
 }
