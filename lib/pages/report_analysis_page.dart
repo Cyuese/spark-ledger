@@ -62,50 +62,55 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
         ? summary.expense
         : summary.income;
 
-    return VeriPage(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(14, 8, 14, 40),
-        children: <Widget>[
-          VeriHeader(title: '统计分析', subtitle: _range.label, showBack: true),
-          const SizedBox(height: 10),
-          _RangeSelector(
-            range: _range,
-            onMonth: () =>
-                setState(() => _range = ReportRange.month(DateTime.now())),
-            onYear: () =>
-                setState(() => _range = ReportRange.year(DateTime.now().year)),
-            onCustom: _pickCustomRange,
-          ),
-          const SizedBox(height: 10),
-          _SummaryCard(summary: summary),
-          if (_range.mode == ReportRangeMode.month) ...<Widget>[
-            const SizedBox(height: 10),
-            _ComparisonCard(
-              comparison: reportMonthlyComparison(
-                controller.entries,
-                _range.start,
+    return Scaffold(
+      body: SafeArea(
+        child: VeriPage(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 40),
+            children: <Widget>[
+              VeriHeader(title: '统计分析', subtitle: _range.label, showBack: true),
+              const SizedBox(height: 10),
+              _RangeSelector(
+                range: _range,
+                onMonth: () =>
+                    setState(() => _range = ReportRange.month(DateTime.now())),
+                onYear: () => setState(
+                  () => _range = ReportRange.year(DateTime.now().year),
+                ),
+                onCustom: _pickCustomRange,
               ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          _DimensionToggle(
-            dimension: _dimension,
-            onChanged: (value) => setState(() => _dimension = value),
+              const SizedBox(height: 10),
+              _SummaryCard(summary: summary),
+              if (_range.mode == ReportRangeMode.month) ...<Widget>[
+                const SizedBox(height: 10),
+                _ComparisonCard(
+                  comparison: reportMonthlyComparison(
+                    controller.entries,
+                    _range.start,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              _DimensionToggle(
+                dimension: _dimension,
+                onChanged: (value) => setState(() => _dimension = value),
+              ),
+              const SizedBox(height: 10),
+              _TrendCard(
+                trend: trend,
+                color: dimensionColor,
+                total: dimensionTotal,
+                dimension: _dimension,
+              ),
+              const SizedBox(height: 10),
+              _CategoryRankCard(
+                stats: stats,
+                color: dimensionColor,
+                dimension: _dimension,
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          _TrendCard(
-            trend: trend,
-            color: dimensionColor,
-            total: dimensionTotal,
-            dimension: _dimension,
-          ),
-          const SizedBox(height: 10),
-          _CategoryRankCard(
-            stats: stats,
-            color: dimensionColor,
-            dimension: _dimension,
-          ),
-        ],
+        ),
       ),
     );
   }
