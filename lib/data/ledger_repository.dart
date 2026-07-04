@@ -28,6 +28,9 @@ abstract interface class LedgerRepository {
   Future<List<Tag>> loadTags();
   Future<void> saveTags(List<Tag> tags);
 
+  Future<List<Attachment>> loadAttachments();
+  Future<void> saveAttachments(List<Attachment> attachments);
+
   Future<Map<String, double>> loadMonthlyBudgets();
   Future<void> saveMonthlyBudgets(Map<String, double> budgets);
 
@@ -124,6 +127,19 @@ class SqliteLedgerRepository implements LedgerRepository {
   @override
   Future<void> saveTags(List<Tag> tags) async {
     await _replaceAll('tags', _indexed(tags, _tagToRow));
+  }
+
+  // ---- 图片附件 ----
+
+  @override
+  Future<List<Attachment>> loadAttachments() async {
+    final rows = await _db.query('attachments', orderBy: 'sort_order ASC');
+    return rows.map(_attachmentFromRow).toList();
+  }
+
+  @override
+  Future<void> saveAttachments(List<Attachment> attachments) async {
+    await _replaceAll('attachments', _indexed(attachments, _attachmentToRow));
   }
 
   // ---- 预算（键值对：月度 / 分类）----
@@ -255,6 +271,20 @@ class SqliteLedgerRepository implements LedgerRepository {
 
   static Tag _tagFromRow(Map<String, Object?> row) =>
       Tag(id: row['id'] as String, label: row['label'] as String);
+
+  static Map<String, Object?> _attachmentToRow(Attachment a, int index) =>
+      <String, Object?>{
+        'id': a.id,
+        'entry_id': a.entryId,
+        'data_url': a.dataUrl,
+        'sort_order': index,
+      };
+
+  static Attachment _attachmentFromRow(Map<String, Object?> row) => Attachment(
+    id: row['id'] as String,
+    entryId: row['entry_id'] as String,
+    dataUrl: row['data_url'] as String,
+  );
 
   static Map<String, Object?> _bookToRow(LedgerBook b, int index) =>
       <String, Object?>{

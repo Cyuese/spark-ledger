@@ -294,6 +294,67 @@ void main() {
     expect(untagged.tagIds, isEmpty);
   });
 
+  test('图片附件 attachments 表往返', () async {
+    final repo = await openRepo();
+    await repo.saveAttachments(<Attachment>[
+      const Attachment(
+        id: 'att1',
+        entryId: 'e1',
+        dataUrl: 'data:image/jpeg;base64,AAAA',
+      ),
+      const Attachment(
+        id: 'att2',
+        entryId: 'e1',
+        dataUrl: 'data:image/jpeg;base64,BBBB',
+      ),
+    ]);
+    final loaded = await repo.loadAttachments();
+    expect(loaded.map((a) => a.id).toList(), <String>['att1', 'att2']);
+    expect(loaded.first.entryId, 'e1');
+    expect(loaded.last.dataUrl, 'data:image/jpeg;base64,BBBB');
+  });
+
+  test('v3 数据库升级到 v4 后有 attachments 表', () async {
+    final dir = await Directory.systemTemp.createTemp('verifin_mig4');
+    final path = '${dir.path}/mig4.db';
+    // v3 库：有 entries(含 tag_ids) 与 tags，但没有 attachments 表。
+    final v3 = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 3,
+        onCreate: (db, _) async {
+          await db.execute('''
+            CREATE TABLE entries (
+              id TEXT PRIMARY KEY, book_id TEXT NOT NULL, type TEXT NOT NULL,
+              amount REAL NOT NULL, category_id TEXT NOT NULL,
+              account_id TEXT NOT NULL, to_account_id TEXT, note TEXT NOT NULL,
+              occurred_at INTEGER NOT NULL, tag_ids TEXT
+            )
+          ''');
+          await db.execute(
+            'CREATE TABLE tags (id TEXT PRIMARY KEY, label TEXT NOT NULL, sort_order INTEGER NOT NULL)',
+          );
+        },
+      ),
+    );
+    await v3.close();
+
+    final db = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+    final repo = SqliteLedgerRepository(db);
+    expect(await repo.loadAttachments(), isEmpty);
+    await repo.saveAttachments(<Attachment>[
+      const Attachment(
+        id: 'a',
+        entryId: 'e',
+        dataUrl: 'data:image/jpeg;base64,X',
+      ),
+    ]);
+    expect((await repo.loadAttachments()).single.id, 'a');
+
+    await db.close();
+    await dir.delete(recursive: true);
+  });
+
   test('v2 数据库升级到 v3 后有 tags 表与 entries.tag_ids', () async {
     final dir = await Directory.systemTemp.createTemp('verifin_mig3');
     final path = '${dir.path}/mig3.db';

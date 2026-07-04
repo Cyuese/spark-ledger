@@ -228,6 +228,42 @@ List<String> _stringList(Object? value) {
   return const <String>[];
 }
 
+/// 交易的图片附件（如票据）。以压缩后的 JPEG data URL 存储在独立表中，
+/// 不放进 entries 表，避免整表覆盖式写入放大；数据落在应用私有的 SQLite 内。
+class Attachment {
+  const Attachment({
+    required this.id,
+    required this.entryId,
+    required this.dataUrl,
+  });
+
+  final String id;
+  final String entryId;
+
+  /// `data:image/jpeg;base64,...` 形式的图片，移动端用内存图片渲染。
+  final String dataUrl;
+
+  Attachment copyWith({String? id, String? entryId, String? dataUrl}) {
+    return Attachment(
+      id: id ?? this.id,
+      entryId: entryId ?? this.entryId,
+      dataUrl: dataUrl ?? this.dataUrl,
+    );
+  }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{'id': id, 'entryId': entryId, 'dataUrl': dataUrl};
+  }
+
+  static Attachment fromJson(Map<String, Object?> json) {
+    return Attachment(
+      id: json['id'] as String,
+      entryId: json['entryId'] as String? ?? '',
+      dataUrl: json['dataUrl'] as String? ?? '',
+    );
+  }
+}
+
 /// 标签：与交易多对多关联，用于跨分类的横向归类与统计。
 class Tag {
   const Tag({required this.id, required this.label});

@@ -72,6 +72,7 @@ class VeriFinController extends ChangeNotifier {
   final List<AccountGroup> _accountGroups = <AccountGroup>[];
   final List<Category> _categories = <Category>[];
   final List<Tag> _tags = <Tag>[];
+  final List<Attachment> _attachments = <Attachment>[];
   final Map<String, double> _monthlyBudgets = <String, double>{};
   final Map<String, double> _categoryBudgets = <String, double>{};
   final Set<String> _collapsedAssetSections = <String>{};
@@ -135,6 +136,53 @@ class VeriFinController extends ChangeNotifier {
   /// 某标签被多少笔交易使用（当前账本无关，统计全部交易）。
   int tagUsageCount(String tagId) {
     return _entries.where((entry) => entry.tagIds.contains(tagId)).length;
+  }
+
+  /// 某交易的图片附件（按加入顺序）。
+  List<Attachment> attachmentsForEntry(String entryId) {
+    return List<Attachment>.unmodifiable(
+      _attachments.where((a) => a.entryId == entryId),
+    );
+  }
+
+  int attachmentCountForEntry(String entryId) {
+    return _attachments.where((a) => a.entryId == entryId).length;
+  }
+
+  /// 为交易新增一张图片附件（[dataUrl] 为压缩后的 JPEG data URL）。
+  void addAttachment(String entryId, String dataUrl) {
+    if (dataUrl.isEmpty) {
+      return;
+    }
+    _attachments.add(
+      Attachment(
+        id: 'att_${DateTime.now().microsecondsSinceEpoch}',
+        entryId: entryId,
+        dataUrl: dataUrl,
+      ),
+    );
+    _persistAttachments();
+    notifyListeners();
+  }
+
+  void removeAttachment(String attachmentId) {
+    final before = _attachments.length;
+    _attachments.removeWhere((a) => a.id == attachmentId);
+    if (_attachments.length == before) {
+      return;
+    }
+    _persistAttachments();
+    notifyListeners();
+  }
+
+  /// 删除若干交易时一并清理它们的附件。返回是否有附件被移除。
+  bool _removeAttachmentsForEntries(Set<String> entryIds) {
+    if (entryIds.isEmpty) {
+      return false;
+    }
+    final before = _attachments.length;
+    _attachments.removeWhere((a) => entryIds.contains(a.entryId));
+    return _attachments.length != before;
   }
 
   ThemePreference get themePreference => _themePreference;
@@ -688,6 +736,10 @@ class VeriFinController extends ChangeNotifier {
       return false;
     }
     _ledgerBooks.removeWhere((item) => item.id == bookId);
+    final removedEntryIds = _entries
+        .where((entry) => entry.bookId == bookId)
+        .map((entry) => entry.id)
+        .toSet();
     _entries.removeWhere((entry) => entry.bookId == bookId);
     _accounts.removeWhere((account) => account.bookId == bookId);
     _accountGroups.removeWhere((group) => group.bookId == bookId);
@@ -699,6 +751,9 @@ class VeriFinController extends ChangeNotifier {
     if (_activeBookId == bookId) {
       _activeBookId = defaultLedgerBookId;
       _store.write(_activeBookKey, _activeBookId);
+    }
+    if (_removeAttachmentsForEntries(removedEntryIds)) {
+      _persistAttachments();
     }
     _persistLedgerBooks();
     _persistEntries();
@@ -720,6 +775,9 @@ class VeriFinController extends ChangeNotifier {
   void deleteEntry(String entryId) {
     _entries.removeWhere((entry) => entry.id == entryId);
     _persistEntries();
+    if (_removeAttachmentsForEntries(<String>{entryId})) {
+      _persistAttachments();
+    }
     notifyListeners();
   }
 
@@ -748,10 +806,17 @@ class VeriFinController extends ChangeNotifier {
   }
 
   void deleteAccountAndRelatedEntries(String accountId) {
+    final removedEntryIds = _entries
+        .where((entry) => entryTouchesAccount(entry, accountId))
+        .map((entry) => entry.id)
+        .toSet();
     _entries.removeWhere((entry) => entryTouchesAccount(entry, accountId));
     _accounts.removeWhere((account) => account.id == accountId);
     _removeAccountFromOrders(accountId);
     _persistEntries();
+    if (_removeAttachmentsForEntries(removedEntryIds)) {
+      _persistAttachments();
+    }
     _persistAssetAccountOrders();
     _persistAccounts();
     notifyListeners();
@@ -1154,6 +1219,7 @@ class VeriFinController extends ChangeNotifier {
       ..clear()
       ..addAll(defaultCategories);
     _tags.clear();
+    _attachments.clear();
     _monthlyBudgets.clear();
     _categoryBudgets.clear();
     _profile = defaultUserProfile;
@@ -1175,6 +1241,7 @@ class VeriFinController extends ChangeNotifier {
     _persistAccountGroups();
     _persistCategories();
     _persistTags();
+    _persistAttachments();
     _persistBudgets();
     _persistCategoryBudgets();
     themePreferenceListenable.value = _themePreference;
@@ -1194,6 +1261,7 @@ class VeriFinController extends ChangeNotifier {
         'accountGroups': _accountGroups.map((group) => group.toJson()).toList(),
         'categories': _categories.map((category) => category.toJson()).toList(),
         'tags': _tags.map((tag) => tag.toJson()).toList(),
+        'attachments': _attachments.map((a) => a.toJson()).toList(),
         'monthlyBudgets': Map<String, double>.from(_monthlyBudgets),
         'categoryBudgets': Map<String, double>.from(_categoryBudgets),
         'profile': _profile.toJson(),
@@ -1265,6 +1333,10 @@ class VeriFinController extends ChangeNotifier {
       ...(importedCategories.isEmpty ? defaultCategories : importedCategories),
     ];
     final nextTags = _decodeModelList<Tag>(data['tags'], Tag.fromJson);
+    final nextAttachments = _decodeModelList<Attachment>(
+      data['attachments'],
+      Attachment.fromJson,
+    );
     final nextMonthlyBudgets = _bookScopedBudgets(
       _decodeBudgets(data['monthlyBudgets']),
     );
@@ -1329,6 +1401,9 @@ class VeriFinController extends ChangeNotifier {
     _tags
       ..clear()
       ..addAll(nextTags);
+    _attachments
+      ..clear()
+      ..addAll(nextAttachments);
     _monthlyBudgets
       ..clear()
       ..addAll(nextMonthlyBudgets);
@@ -1359,6 +1434,7 @@ class VeriFinController extends ChangeNotifier {
     _persistAccountGroups();
     _persistCategories();
     _persistTags();
+    _persistAttachments();
     _persistBudgets();
     _persistCategoryBudgets();
     _store.write(_profileKey, jsonEncode(_profile.toJson()));
@@ -1465,6 +1541,9 @@ class VeriFinController extends ChangeNotifier {
     _tags
       ..clear()
       ..addAll(await _repository.loadTags());
+    _attachments
+      ..clear()
+      ..addAll(await _repository.loadAttachments());
     _monthlyBudgets
       ..clear()
       ..addAll(_bookScopedBudgets(await _repository.loadMonthlyBudgets()));
@@ -1593,6 +1672,10 @@ class VeriFinController extends ChangeNotifier {
 
   void _persistTags() {
     _trackWrite(_repository.saveTags(List<Tag>.of(_tags)));
+  }
+
+  void _persistAttachments() {
+    _trackWrite(_repository.saveAttachments(List<Attachment>.of(_attachments)));
   }
 
   void _persistBudgets() {

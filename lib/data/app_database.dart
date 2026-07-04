@@ -13,7 +13,7 @@ class AppDatabase {
   final Database db;
 
   static const String defaultDatabaseName = 'verifin.db';
-  static const int schemaVersion = 3;
+  static const int schemaVersion = 4;
 
   /// 打开（或创建）数据库。测试通过 [factory]/[path] 注入 ffi 与内存路径；
   /// 真实平台留空则由 [resolveDatabaseFactory]/[resolveDatabasePath] 决定。
@@ -63,6 +63,20 @@ class AppDatabase {
           sort_order INTEGER NOT NULL
         )
       ''');
+    }
+    // v3 → v4：图片附件。独立表，按 entry_id 关联，data_url 存压缩 JPEG。
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE attachments (
+          id TEXT PRIMARY KEY,
+          entry_id TEXT NOT NULL,
+          data_url TEXT NOT NULL,
+          sort_order INTEGER NOT NULL
+        )
+      ''');
+      await db.execute(
+        'CREATE INDEX idx_attachments_entry ON attachments (entry_id)',
+      );
     }
   }
 
@@ -150,5 +164,14 @@ class AppDatabase {
       sort_order INTEGER NOT NULL
     )
     ''',
+    '''
+    CREATE TABLE attachments (
+      id TEXT PRIMARY KEY,
+      entry_id TEXT NOT NULL,
+      data_url TEXT NOT NULL,
+      sort_order INTEGER NOT NULL
+    )
+    ''',
+    'CREATE INDEX idx_attachments_entry ON attachments (entry_id)',
   ];
 }

@@ -13,6 +13,7 @@ class InMemoryLedgerRepository implements LedgerRepository {
   List<AccountGroup> _groups = <AccountGroup>[];
   List<Category> _categories = <Category>[];
   List<Tag> _tags = <Tag>[];
+  List<Attachment> _attachments = <Attachment>[];
   Map<String, double> _monthlyBudgets = <String, double>{};
   Map<String, double> _categoryBudgets = <String, double>{};
 
@@ -65,6 +66,15 @@ class InMemoryLedgerRepository implements LedgerRepository {
   @override
   Future<void> saveTags(List<Tag> tags) async {
     _tags = List<Tag>.of(tags);
+  }
+
+  @override
+  Future<List<Attachment>> loadAttachments() async =>
+      List<Attachment>.of(_attachments);
+
+  @override
+  Future<void> saveAttachments(List<Attachment> attachments) async {
+    _attachments = List<Attachment>.of(attachments);
   }
 
   @override
