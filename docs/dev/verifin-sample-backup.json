@@ -608,6 +608,22 @@
         "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPgPAAEDAQAIicLsAAAAAElFTkSuQmCC"
       }
     ],
+    "recurringRules": [
+      {
+        "id": "recur_rent",
+        "bookId": "default",
+        "type": "expense",
+        "amount": 2600.0,
+        "categoryId": "housing",
+        "accountId": "acc_debit",
+        "toAccountId": null,
+        "note": "房租",
+        "frequency": "monthly",
+        "startDate": "2026-01-01T00:00:00.000",
+        "nextRunDate": "2026-08-01T00:00:00.000",
+        "active": true
+      }
+    ],
     "monthlyBudgets": {
       "default:2026-05": 5200.0,
       "default:2026-06": 5600.0,

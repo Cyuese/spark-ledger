@@ -137,6 +137,8 @@ void main() {
     );
     // 图片附件：样例首条交易带一张附件，导入后应能读回。
     expect(controller.attachmentCountForEntry('entry_20260703_001'), 1);
+    // 周期记账：样例含每月房租规则，导入后应能读回。
+    expect(controller.recurringRules.map((r) => r.note), contains('房租'));
     // 转账手续费：样例转账带 fee，导入后应保留。
     expect(
       controller.entries.firstWhere((e) => e.id == 'entry_20260703_003').fee,
