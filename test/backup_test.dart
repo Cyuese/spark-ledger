@@ -9,6 +9,86 @@ import 'support/test_harness.dart';
 void main() {
   useTestDatabases();
 
+  test(
+    'exports a zip archive backup and re-imports with attachment intact',
+    () async {
+      final source = await makeController();
+      final account = Account(
+        id: 'acc-1',
+        bookId: source.activeBook.id,
+        name: '现金账户',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 0,
+        iconCode: 'wallet',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      );
+      source
+        ..addAccount(account)
+        ..addEntry(
+          LedgerEntry(
+            id: 'entry-att',
+            bookId: source.activeBook.id,
+            type: EntryType.expense,
+            amount: 20,
+            categoryId: 'dining',
+            accountId: account.id,
+            note: '带票据的午餐',
+            occurredAt: DateTime(2026, 7, 4, 12),
+          ),
+        );
+      final dataUrl =
+          'data:image/jpeg;base64,${base64Encode(List<int>.generate(2048, (i) => i % 256))}';
+      source.addAttachment('entry-att', dataUrl);
+
+      final archiveBytes = source.exportBackupArchiveBytes();
+      // 备份产物应为 zip（PK 头），且体积小于内嵌 base64 的 JSON。
+      expect(archiveBytes.sublist(0, 2), <int>[0x50, 0x4B]);
+      expect(
+        archiveBytes.length,
+        lessThan(utf8.encode(source.exportDataJson()).length),
+      );
+
+      final target = await makeController();
+      target.importBackupBytes(archiveBytes);
+
+      expect(target.entries.single.note, '带票据的午餐');
+      final restored = target.attachmentsForEntry('entry-att');
+      expect(restored.single.dataUrl, dataUrl);
+
+      source.dispose();
+      target.dispose();
+    },
+  );
+
+  test('importBackupBytes 也兼容旧版纯 JSON 备份字节', () async {
+    final source = await makeController();
+    source.addAccount(
+      Account(
+        id: 'acc-legacy',
+        bookId: source.activeBook.id,
+        name: '旧备份账户',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 5,
+        iconCode: 'wallet',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      ),
+    );
+    final jsonBytes = utf8.encode(source.exportDataJson());
+
+    final target = await makeController();
+    target.importBackupBytes(jsonBytes);
+
+    expect(target.accounts.single.name, '旧备份账户');
+    source.dispose();
+    target.dispose();
+  });
+
   test('exports and imports a local data backup', () async {
     final source = await makeController();
     final account = Account(

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' hide Category;
 import '../data/ledger_repository.dart';
 import '../local_storage/local_storage.dart';
 import 'app_lock.dart';
+import 'backup/backup_archive.dart';
 import 'backup/backup_settings.dart';
 import 'backup/transaction_import.dart';
 import 'backup/webdav_config.dart';
@@ -1493,6 +1494,23 @@ class VeriFinController extends ChangeNotifier {
       },
     };
     return const JsonEncoder.withIndent('  ').convert(payload);
+  }
+
+  /// 导出为压缩包（zip）字节：把图片附件从 JSON 里剥离、单独存 `attachments/<id>`，
+  /// 控制备份体积（详见 `backup_archive.dart`）。加密备份仍走文本信封路径、不打包，
+  /// 以复用现有加密逻辑；未加密备份用本方法产出精简 zip。
+  Uint8List exportBackupArchiveBytes() {
+    return packBackupArchive(exportDataJson());
+  }
+
+  /// 从备份字节导入：zip（新版精简备份）先解包还原内嵌 JSON，否则按 UTF-8 文本
+  /// （旧版纯 JSON 备份）解析。加密备份需调用方先解密成明文再传入。
+  void importBackupBytes(List<int> bytes) {
+    if (looksLikeZipBytes(bytes)) {
+      importDataJson(unpackBackupArchive(bytes));
+    } else {
+      importDataJson(utf8.decode(bytes));
+    }
   }
 
   void importDataJson(String rawJson) {

@@ -51,6 +51,8 @@ dependencies:
   crypto: ^3.0.6
   # 备份加密：AES-GCM 认证加密 + PBKDF2 密钥派生（纯 Dart，全平台）。
   cryptography: ^2.7.0
+  # 备份打包：把图片附件从 JSON 里剥离、与 data.json 一起打进 zip，控制备份体积。
+  archive: ^4.0.9
   # 生物识别（仅指纹）快捷解锁，调用系统能力，不保存任何生物特征数据。
   local_auth: ^2.3.0
   # 生物识别系统弹窗的中文文案（AndroidAuthMessages），避免中英混杂。
