@@ -24,6 +24,7 @@ import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import 'app_lock_page.dart';
+import 'report_analysis_page.dart';
 import 'reminder_settings_page.dart';
 import 'legal_pages.dart';
 import 'sheets.dart';
@@ -142,82 +143,190 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          VeriCard(
-            child: Column(
-              children: <Widget>[
-                SettingsRow(
-                  icon: Icons.book_outlined,
-                  title: '账本',
-                  trailing: controller.activeBook.name,
-                  trailingIcon: Icons.chevron_right,
-                  onTap: () {
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (context) => const LedgerBooksPage(),
-                      ),
-                    );
-                  },
+          _FeatureGridCard(
+            title: '记账管理',
+            tiles: <_FeatureTileData>[
+              _FeatureTileData(
+                icon: Icons.book_outlined,
+                color: veriRoyal,
+                label: '账本',
+                subtitle: controller.activeBook.name,
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const LedgerBooksPage(),
+                  ),
                 ),
-                const Divider(),
-                SettingsRow(
-                  icon: Icons.category_outlined,
-                  title: '分类管理',
-                  trailing: '${controller.categories.length} 个分类',
-                  trailingIcon: Icons.chevron_right,
-                  onTap: () {
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (context) => const CategoryManagementPage(),
-                      ),
-                    );
-                  },
+              ),
+              _FeatureTileData(
+                icon: Icons.category_outlined,
+                color: veriBlue,
+                label: '分类管理',
+                subtitle: '${controller.categories.length} 个',
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const CategoryManagementPage(),
+                  ),
                 ),
-                const Divider(),
-                SettingsRow(
-                  icon: Icons.label_outline,
-                  title: '标签管理',
-                  trailing: '${controller.tags.length} 个标签',
-                  trailingIcon: Icons.chevron_right,
-                  onTap: () {
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (context) => const TagManagementPage(),
-                      ),
-                    );
-                  },
+              ),
+              _FeatureTileData(
+                icon: Icons.label_outline,
+                color: veriCyan,
+                label: '标签管理',
+                subtitle: '${controller.tags.length} 个',
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const TagManagementPage(),
+                  ),
                 ),
-                const Divider(),
-                SettingsRow(
-                  icon: Icons.repeat,
-                  title: '周期记账',
-                  trailing: '${controller.recurringRules.length} 条规则',
-                  trailingIcon: Icons.chevron_right,
-                  onTap: () {
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (context) => const RecurringRulesPage(),
-                      ),
-                    );
-                  },
+              ),
+              _FeatureTileData(
+                icon: Icons.repeat,
+                color: veriMint,
+                label: '周期记账',
+                subtitle: '${controller.recurringRules.length} 条',
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const RecurringRulesPage(),
+                  ),
                 ),
-                const Divider(),
-                SettingsRow(
-                  icon: Icons.storage_outlined,
-                  title: '数据管理',
-                  trailing: '备份 / 恢复',
-                  trailingIcon: Icons.chevron_right,
-                  onTap: () {
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (context) => const DataManagementPage(),
-                      ),
-                    );
-                  },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _FeatureGridCard(
+            title: '数据与工具',
+            tiles: <_FeatureTileData>[
+              _FeatureTileData(
+                icon: Icons.insights_outlined,
+                color: veriRoyal,
+                label: '统计分析',
+                subtitle: '报表',
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const ReportAnalysisPage(),
+                  ),
                 ),
-              ],
-            ),
+              ),
+              _FeatureTileData(
+                icon: Icons.notifications_active_outlined,
+                color: veriWarning,
+                label: '记账提醒',
+                subtitle: controller.reminderSettings.enabled
+                    ? controller.reminderSettings.timeLabel
+                    : '未开启',
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const ReminderSettingsPage(),
+                  ),
+                ),
+              ),
+              _FeatureTileData(
+                icon: Icons.storage_outlined,
+                color: veriBlue,
+                label: '数据管理',
+                subtitle: '备份 / 恢复',
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const DataManagementPage(),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 我的页功能宫格卡：标题 + 4 列图标宫格。（阶段 4.4）
+class _FeatureGridCard extends StatelessWidget {
+  const _FeatureGridCard({required this.title, required this.tiles});
+
+  final String title;
+  final List<_FeatureTileData> tiles;
+
+  @override
+  Widget build(BuildContext context) {
+    return VeriCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SectionTitle(title: title),
+          const SizedBox(height: 6),
+          GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 0.82,
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
+            children: tiles
+                .map((data) => _FeatureTile(data: data))
+                .toList(growable: false),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureTileData {
+  const _FeatureTileData({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+}
+
+class _FeatureTile extends StatelessWidget {
+  const _FeatureTile({required this.data});
+
+  final _FeatureTileData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(veriRadiusMd),
+      onTap: data.onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            VeriIconBox(icon: data.icon, color: data.color, size: 42),
+            const SizedBox(height: 7),
+            Text(
+              data.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              data.subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.46),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
