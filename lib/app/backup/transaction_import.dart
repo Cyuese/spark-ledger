@@ -15,6 +15,7 @@ class ImportPlan {
     required this.newAccounts,
     required this.newCategories,
     required this.errors,
+    this.source,
   });
 
   final List<LedgerEntry> entries;
@@ -22,21 +23,54 @@ class ImportPlan {
   final List<Category> newCategories;
   final List<ImportRowError> errors;
 
+  /// 识别到的导入来源（钱迹 / 随手记 / 模板），未识别为 null。
+  final ImportSource? source;
+
   int get importedCount => entries.length;
   int get errorCount => errors.length;
   bool get isEmpty => entries.isEmpty && errors.isEmpty;
 }
 
-/// 模板/导入表头别名（中英文兼容）。
+/// 模板/导入表头别名（中英文兼容，含钱迹 / 随手记等常见导出列名）。
 const Map<String, List<String>> _headerAliases = <String, List<String>>{
-  'date': <String>['日期', 'date', '时间', 'time'],
-  'type': <String>['类型', 'type', '收支', '收支类型'],
-  'amount': <String>['金额', 'amount', '数额', '钱数'],
-  'category': <String>['分类', 'category', '类别'],
-  'account': <String>['账户', 'account', '账号', '转出账户'],
-  'toAccount': <String>['转入账户', 'toaccount', 'to account', '目标账户'],
-  'note': <String>['备注', 'note', 'memo', '说明', '描述'],
+  'date': <String>['日期', 'date', '时间', 'time', '交易时间', '记账时间'],
+  'type': <String>['类型', 'type', '收支', '收支类型', '交易类型'],
+  'amount': <String>['金额', 'amount', '数额', '钱数', '金额（元）'],
+  'category': <String>['分类', 'category', '类别', '一级分类', '分类名称'],
+  'account': <String>['账户', 'account', '账号', '转出账户', '账户1', '支付账户'],
+  'toAccount': <String>['转入账户', 'toaccount', 'to account', '目标账户', '账户2'],
+  'note': <String>['备注', 'note', 'memo', '说明', '描述', '备注信息'],
 };
+
+/// 可识别的导入来源，用于给用户友好提示。
+enum ImportSource {
+  veriFin('Veri Fin 模板'),
+  qianji('钱迹'),
+  suishouji('随手记');
+
+  const ImportSource(this.label);
+
+  final String label;
+}
+
+/// 根据表头识别导入来源；无法识别返回 null（仍可能按通用别名解析）。
+ImportSource? detectImportSource(List<String> header) {
+  final cells = header.map((cell) => cell.trim()).toSet();
+  bool has(String name) => cells.contains(name);
+  final hasForeignAccounts = has('账户1') || has('账户2');
+  // 随手记导出以「交易类型」为列名。
+  if (has('交易类型') && (hasForeignAccounts || has('账户'))) {
+    return ImportSource.suishouji;
+  }
+  // 钱迹导出含「类型」+「账户1/账户2」+「一级分类/分类」。
+  if (has('类型') && hasForeignAccounts && (has('一级分类') || has('分类'))) {
+    return ImportSource.qianji;
+  }
+  if (has('类型') && has('账户') && has('金额') && has('日期')) {
+    return ImportSource.veriFin;
+  }
+  return null;
+}
 
 /// CSV 模板内容（带表头与示例行），用户下载后填写再导入。
 String transactionCsvTemplate() {
@@ -145,10 +179,12 @@ double? _parseAmount(String raw) {
     return null;
   }
   final value = double.tryParse(cleaned);
-  if (value == null || value <= 0 || value.isNaN || value.isInfinite) {
+  if (value == null || value.isNaN || value.isInfinite) {
     return null;
   }
-  return value;
+  // 部分导出（如钱迹）支出金额为负，方向由「类型」列决定，这里取绝对值。
+  final magnitude = value.abs();
+  return magnitude == 0 ? null : magnitude;
 }
 
 DateTime? _parseDate(String raw) {
@@ -213,6 +249,7 @@ ImportPlan buildImportPlan({
   if (columns == null) {
     throw const FormatException('缺少必需的列：日期、类型、金额、账户');
   }
+  final source = detectImportSource(rows.first);
 
   final workingAccounts = List<Account>.from(existingAccounts);
   final workingCategories = List<Category>.from(existingCategories);
@@ -373,5 +410,6 @@ ImportPlan buildImportPlan({
     newAccounts: newAccounts,
     newCategories: newCategories,
     errors: errors,
+    source: source,
   );
 }

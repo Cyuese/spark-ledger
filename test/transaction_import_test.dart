@@ -106,7 +106,7 @@ void main() {
         '日期,类型,金额,分类,账户,转入账户,备注\n'
         'bad-date,支出,10,餐饮,现金,,x\n'
         '2026-01-05,飞行,10,餐饮,现金,,x\n'
-        '2026-01-05,支出,-5,餐饮,现金,,x\n'
+        '2026-01-05,支出,abc,餐饮,现金,,x\n'
         '2026-01-05,支出,12,餐饮,现金,,好行',
       );
       expect(plan.importedCount, 1);
@@ -126,6 +126,55 @@ void main() {
         '日期,类型,金额,分类,账户,转入账户,备注\n2026/01/05 09:30,支出,10,餐饮,现金,,x',
       );
       expect(plan.entries.single.occurredAt, DateTime(2026, 1, 5, 9, 30));
+    });
+  });
+
+  group('第三方格式适配', () {
+    test('识别钱迹表头并导入（负数金额取绝对值）', () {
+      final plan = buildImportPlan(
+        rows: parseCsv(
+          '时间,类型,金额,一级分类,账户1,账户2,备注\n'
+          '2026-01-05 12:30,支出,-23.50,餐饮,现金,,午饭\n'
+          '2026-01-06,转账,500,,现金,储蓄卡,取现',
+        ),
+        bookId: 'book_default',
+        existingAccounts: const <Account>[],
+        existingCategories: const <Category>[],
+        now: DateTime(2026, 1, 7),
+      );
+      expect(plan.source, ImportSource.qianji);
+      expect(plan.importedCount, 2);
+      final expense = plan.entries.firstWhere(
+        (e) => e.type == EntryType.expense,
+      );
+      expect(expense.amount, 23.5);
+      final transfer = plan.entries.firstWhere(
+        (e) => e.type == EntryType.transfer,
+      );
+      expect(transfer.toAccountId, isNotNull);
+    });
+
+    test('识别随手记表头（交易类型 + 账户1/账户2）', () {
+      final header = parseCsv(
+        '交易类型,日期,金额,一级分类,账户1,账户2,备注\n'
+        '支出,2026-01-05,30,交通,交通卡,,地铁',
+      );
+      expect(detectImportSource(header.first), ImportSource.suishouji);
+      final plan = buildImportPlan(
+        rows: header,
+        bookId: 'book_default',
+        existingAccounts: const <Account>[],
+        existingCategories: const <Category>[],
+        now: DateTime(2026, 1, 7),
+      );
+      expect(plan.importedCount, 1);
+      expect(plan.entries.single.note, '地铁');
+      expect(plan.newAccounts.single.name, '交通卡');
+    });
+
+    test('模板表头识别为 veriFin', () {
+      final header = parseCsv('日期,类型,金额,分类,账户,转入账户,备注\n').first;
+      expect(detectImportSource(header), ImportSource.veriFin);
     });
   });
 

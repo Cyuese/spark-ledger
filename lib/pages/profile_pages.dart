@@ -1074,6 +1074,14 @@ class DataManagementPage extends StatelessWidget {
                     ),
                     const Divider(),
                     SettingsRow(
+                      icon: Icons.swap_horiz_outlined,
+                      title: '从其他记账软件导入',
+                      trailing: '钱迹 / 随手记',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _importFromOtherApp(context, controller),
+                    ),
+                    const Divider(),
+                    SettingsRow(
                       icon: Icons.file_download_outlined,
                       title: '下载 CSV 模板',
                       trailing: 'Excel 可另存为 CSV',
@@ -1570,18 +1578,42 @@ class DataManagementPage extends StatelessWidget {
     }
   }
 
-  Future<void> _importCsv(
+  Future<void> _importCsv(BuildContext context, VeriFinController controller) {
+    return _runCsvImport(
+      context,
+      controller,
+      title: '导入 CSV 交易？',
+      message:
+          '将按模板列（日期、类型、金额、分类、账户、转入账户、备注）把交易追加到当前账本；'
+          '匹配不到的账户和分类会按名称自动新建。不会删除现有数据。',
+    );
+  }
+
+  Future<void> _importFromOtherApp(
     BuildContext context,
     VeriFinController controller,
-  ) async {
+  ) {
+    return _runCsvImport(
+      context,
+      controller,
+      title: '从其他记账软件导入？',
+      message:
+          '支持钱迹、随手记等导出的 CSV（其他表格若含 日期/类型/金额/账户 列也可尝试）。'
+          '会自动识别来源并把交易追加到当前账本，匹配不到的账户与分类按名称新建，不删除现有数据。',
+    );
+  }
+
+  Future<void> _runCsvImport(
+    BuildContext context,
+    VeriFinController controller, {
+    required String title,
+    required String message,
+  }) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('导入 CSV 交易？'),
-        content: const Text(
-          '将按模板列（日期、类型、金额、分类、账户、转入账户、备注）把交易追加到当前账本；'
-          '匹配不到的账户和分类会按名称自动新建。不会删除现有数据。',
-        ),
+        title: Text(title),
+        content: Text(message),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -1613,9 +1645,15 @@ class DataManagementPage extends StatelessWidget {
         await _showImportResult(context, plan);
         return;
       }
+      final sourceHint =
+          plan.source != null && plan.source != ImportSource.veriFin
+          ? '（识别为${plan.source!.label}）'
+          : '';
       final suffix = plan.errorCount > 0 ? '，${plan.errorCount} 行跳过' : '';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('已导入 ${plan.importedCount} 笔交易$suffix')),
+        SnackBar(
+          content: Text('已导入 ${plan.importedCount} 笔交易$sourceHint$suffix'),
+        ),
       );
       if (plan.errorCount > 0) {
         await _showImportResult(context, plan);
