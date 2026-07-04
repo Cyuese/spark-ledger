@@ -53,6 +53,17 @@
                 android:name="android.service.quicksettings.TOGGLEABLE_TILE"
                 android:value="false" />
         </service>
+        <!-- 桌面小组件：今日支出概览 + 快速记账入口。 -->
+        <receiver
+            android:name=".QuickEntryWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quick_entry_widget_info" />
+        </receiver>
         <!-- flutter_local_notifications 定时通知的接收器；开机后重排已安排的记账提醒。 -->
         <receiver
             android:exported="false"

@@ -144,6 +144,17 @@ List<double> dailyExpenseValues(Iterable<LedgerEntry> entries, DateTime now) {
   return values;
 }
 
+/// 指定日期当天的支出净额合计（用于桌面小组件「今日支出」）。
+double dayExpenseTotal(Iterable<LedgerEntry> entries, DateTime day) {
+  return entries
+      .where(
+        (entry) =>
+            entry.type == EntryType.expense &&
+            DateUtils.isSameDay(entry.occurredAt, day),
+      )
+      .fold<double>(0, (sum, entry) => sum + entry.netAmount);
+}
+
 List<double> monthlyExpenseValues(Iterable<LedgerEntry> entries) {
   final now = DateTime.now();
   final values = List<double>.filled(12, 0);

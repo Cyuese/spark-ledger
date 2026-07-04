@@ -56,7 +56,7 @@ Web/移动/测试差异统一用条件导出模式（`stub` + `if (dart.library.
 - `lib/app/backup/webdav_client_*.dart`：WebDAV 备份 — io 用 `dart:io HttpClient` 手写 PUT/GET/PROPFIND/MKCOL，Web/stub 因跨域不支持。
 - `lib/app/reminder/notification_scheduler_*.dart`：记账提醒本地通知 — io 用 `flutter_local_notifications`+`timezone`+`flutter_timezone`，每日在设定时刻发一条提醒（inexact 调度免精确闹钟权限、`matchDateTimeComponents: time` 每日重复），stub（Web 与测试宿主）不支持。配置 `ReminderSettings`（`reminder/reminder_settings.dart`）存 KV（`verifin.reminder.v1`），是设备本地偏好、不进 JSON 备份；`main.dart` 开屏与配置变化时 `apply` 重排通知。Android 端需 `POST_NOTIFICATIONS`/`RECEIVE_BOOT_COMPLETED` 权限、插件接收器与 core library desugaring。
 
-[lib/app/platform_bridge.dart](lib/app/platform_bridge.dart) 是 Android MethodChannel 桥（快速记账磁贴入口、GitHub Release 更新检查与下载、备份目录 SAF 读写）。
+[lib/app/platform_bridge.dart](lib/app/platform_bridge.dart) 是 Android MethodChannel 桥（快速记账磁贴入口、GitHub Release 更新检查与下载、备份目录 SAF 读写、桌面小组件「今日支出」数据推送 `updateTodayExpenseWidget`）。桌面小组件由原生 `QuickEntryWidgetProvider`（`AppWidgetProvider`）渲染，Flutter 侧 `home_widget_service.dart` 在开屏/回前台/记账后经该桥把「今日支出」写入原生 SharedPreferences 并刷新；点「记一笔」复用快速记账 `ACTION_QUICK_ENTRY`。
 
 ### 数据管理与备份
 

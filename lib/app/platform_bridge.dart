@@ -43,6 +43,23 @@ class AppPlatformBridge {
     }
   }
 
+  /// 推送「今日支出」到 Android 桌面小组件（非 Android 平台静默忽略）。
+  static Future<void> updateTodayExpenseWidget({
+    required String amount,
+    required String label,
+  }) async {
+    try {
+      await _channel.invokeMethod<void>('updateTodayExpenseWidget', {
+        'amount': amount,
+        'label': label,
+      });
+    } on MissingPluginException {
+      // 非 Android 平台没有桌面小组件。
+    } on PlatformException {
+      // 小组件更新失败不影响主流程，忽略。
+    }
+  }
+
   static Future<UpdateCheckResult> checkForUpdate() async {
     try {
       final result = await _channel.invokeMapMethod<String, Object?>(

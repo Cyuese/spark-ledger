@@ -44,6 +44,14 @@ class MainActivity : FlutterFragmentActivity() {
                     pendingQuickEntryIntent = false
                     result.success(shouldOpen)
                 }
+                "updateTodayExpenseWidget" -> {
+                    QuickEntryWidgetProvider.updateData(
+                        this,
+                        call.argument<String>("amount") ?: "0",
+                        call.argument<String>("label") ?: "今日支出",
+                    )
+                    result.success(true)
+                }
                 "checkLatestRelease" -> checkLatestRelease(result)
                 "downloadLatestUpdate" -> downloadLatestUpdate(result)
                 "saveTextToDownloads" -> saveTextToDownloads(

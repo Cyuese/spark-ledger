@@ -58,13 +58,7 @@
 - [x] 4.3 记账提醒：设置页「记账提醒」入口（`ReminderSettingsPage`）开关每日提醒并选提醒时刻；本地通知走 `flutter_local_notifications` + `timezone`（`lib/app/reminder/notification_scheduler_*.dart` 条件导入，io=真实、web/测试=stub），每日在设定时刻发一条通知（inexact 调度免精确闹钟权限，`matchDateTimeComponents: time` 每日重复）；配置存 KV（`verifin.reminder.v1`，`ReminderSettings`，设备本地不进 JSON 备份），`main.dart` 开屏与配置变化时 `apply` 重排；Android 加 `POST_NOTIFICATIONS`/`RECEIVE_BOOT_COMPLETED` 权限、插件接收器与 core library desugaring。注：真机验证待发版后进行
 - [x] 4.4 我的页改版：功能入口由竖排列表改为宫格（`_FeatureGridCard`/`_FeatureTile`，4 列图标磁贴），分「记账管理」（账本/分类管理/标签管理/周期记账）与「数据与工具」（统计分析/记账提醒/数据管理）两组，磁贴带状态副标题；头部齿轮仍进设置，新增「统计分析」「记账提醒」入口
 - [x] 4.5 新用户引导：首启动（同意隐私政策后）弹出 `OnboardingPage`（4 步 PageView：欢迎 / 建首个账户 / 设本月预算 / 完成），账户与预算均可选可跳过，完成或跳过写入 `verifin.onboarding.v1`（只出现一次，初始化数据不清除）；`shell.dart` 在同意后 `_maybeShowOnboarding` 触发，测试脚手架默认预置该标记跳过。**后续新增重要功能需回顾 `_DoneStep` 引导文案是否同步**
-- [ ] 4.6 Android 桌面小组件：今日支出 + 快速记账入口，符合产品视觉风格
-
-## 阶段 5：多币种（复杂，动手前先出设计）
-
-- [ ] 5.1 基准货币设置（我的页/设置页），全局金额展示对应货币符号
-- [ ] 5.2 汇率数据：选择稳定汇率源并做好源失效的降级方案（本地缓存最后一次汇率）；我的页新增「汇率查看」列表，基准货币置顶
-- [ ] 5.3 外币账户与外币记账：账户可设币种，统计按汇率折算为基准货币
+- [x] 4.6 Android 桌面小组件：`QuickEntryWidgetProvider`（`AppWidgetProvider`）展示「今日支出」并提供「记一笔」按钮（复用 `MainActivity.ACTION_QUICK_ENTRY` 快速记账，点主体打开应用）；数据由 Flutter 侧 `pushTodayExpenseToWidget`（`home_widget_service.dart`，纯函数 `dayExpenseTotal`）经 MethodChannel `updateTodayExpenseWidget` 写入原生 SharedPreferences 并刷新，在开屏/回前台/记账后触发；品牌蓝渐变背景（`res/layout/quick_entry_widget.xml` + drawable + `xml/quick_entry_widget_info.xml` + Manifest receiver）。注：真机添加与刷新需发版后验证
 
 ## Backlog（暂不排期）
 
@@ -95,3 +89,4 @@
 | 报销/退款模型 | 退款/报销回款统一记为原支出的 `refundedAmount`（回到原账户、冲抵原交易），不新建收入条目；「待报销」只是标记 | 单字段冲抵最简单，天然满足「回款不计收入」；退款回原账户是最常见场景。代价：跨账户报销（回款到另一账户）暂用近似（记在原账户），后续如需精确可再引入关联结算条目 |
 | 周期记账补记时机 | 打开应用与回前台时 `applyDueRecurring(now)` 一次性补齐所有到期交易，不用后台定时任务/通知 | 本地优先、无服务端；应用不常驻，开屏补记足够且省电；补记逻辑纯函数（`dueDatesFor`/`advanceRecurring`）便于测试；`nextRunDate` 幂等推进保证不重复补记 |
 | 记账提醒通知 | `flutter_local_notifications`+`timezone`+`flutter_timezone`；inexact 调度（`inexactAllowWhileIdle`）+`matchDateTimeComponents: time` 每日重复 | 本地通知属平台能力非简单需求，需成熟库；inexact 免 `SCHEDULE_EXACT_ALARM` 特殊权限，提醒场景对精确到分钟无强需求；`timezone` 保证 zonedSchedule 按本地时区触发。配置为设备本地偏好，存 KV、不进 JSON 备份 |
+| 桌面小组件 | 原生 `AppWidgetProvider` + `RemoteViews`，数据经现有 `verifin/app` MethodChannel 写入原生 SharedPreferences，不引入 `home_widget` 依赖 | 点击快速记账可直接复用已有 `ACTION_QUICK_ENTRY` intent 与 `QuickEntryTileService` 同款机制；数据只是一个「今日支出」字符串，MethodChannel + SharedPreferences 足够，避免为单一小组件引入第三方桥接依赖 |

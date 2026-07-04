@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app/app_theme.dart';
 import 'app/backup/backup_coordinator.dart';
+import 'app/home_widget_service.dart';
 import 'app/models.dart';
 import 'app/reminder/notification_scheduler.dart';
 import 'app/reminder/reminder_settings.dart';
@@ -51,10 +52,13 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     _controller.onReminderChanged = _handleReminderChanged;
     _notifications.apply(_controller.reminderSettings);
     BackupCoordinator.maybeBackupOnOpen(_controller);
+    // 打开应用时刷新桌面小组件「今日支出」。
+    pushTodayExpenseToWidget(_controller);
   }
 
   void _handleEntryAdded() {
     BackupCoordinator.maybeBackupAfterEntry(_controller);
+    pushTodayExpenseToWidget(_controller);
   }
 
   void _handleReminderChanged(ReminderSettings settings) {
@@ -66,6 +70,7 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       _controller.applyDueRecurring(DateTime.now());
       BackupCoordinator.maybeBackupOnOpen(_controller);
+      pushTodayExpenseToWidget(_controller);
     }
   }
 
