@@ -107,3 +107,13 @@ scripts/publish.sh patch
 - 验收清单：`docs/acceptance-checklist.md`
 - UI 参考图：`docs/targetImages/`
 - 贡献和 Agent 规范：`AGENTS.md`
+
+## 许可证
+
+Veri Fin 是自由软件，基于 **GNU 通用公共许可证 v3.0 或更高版本（GPL-3.0-or-later）** 发布，完整条款见仓库根目录的 [`LICENSE`](LICENSE)。
+
+> Copyright (C) 2026 Talyra42
+>
+> This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+>
+> This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
