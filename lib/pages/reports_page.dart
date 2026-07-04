@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/category_tree.dart';
 import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
 import '../app/demo_data.dart';
@@ -849,6 +850,8 @@ class _CategoryStatTile extends StatelessWidget {
   }
 }
 
+/// 分类统计：多级分类按层级聚合，即每笔交易的金额归总到其**顶级祖先**分类，
+/// 子分类的支出滚动计入所属顶级分类。
 List<_CategoryStat> _categoryStats(
   List<LedgerEntry> entries,
   List<Category> categories,
@@ -856,12 +859,13 @@ List<_CategoryStat> _categoryStats(
   final totals = <String, double>{};
   final counts = <String, int>{};
   for (final entry in entries) {
+    final rootId = rootIdOf(categories, entry.categoryId);
     totals.update(
-      entry.categoryId,
+      rootId,
       (value) => value + entry.amount,
       ifAbsent: () => entry.amount,
     );
-    counts.update(entry.categoryId, (value) => value + 1, ifAbsent: () => 1);
+    counts.update(rootId, (value) => value + 1, ifAbsent: () => 1);
   }
 
   final total = totals.values.fold<double>(0, (sum, value) => sum + value);

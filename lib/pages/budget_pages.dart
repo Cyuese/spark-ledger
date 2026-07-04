@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/category_tree.dart';
 import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
 import '../app/demo_data.dart';
@@ -1611,26 +1612,31 @@ List<CategoryBudgetSnapshot> computeCategoryBudgetSnapshots({
   required List<LedgerEntry> monthEntries,
   List<LedgerEntry> previousMonthEntries = const <LedgerEntry>[],
 }) {
+  // 多级分类按层级聚合：每笔支出计入其所属分类**及所有上级分类**，
+  // 这样父分类的预算会包含其子分类的支出。
+  final all = controller.categories;
+  void accumulate(Map<String, double> into, List<LedgerEntry> source) {
+    for (final entry in source.where(
+      (entry) => entry.type == EntryType.expense,
+    )) {
+      final chain = <String>[
+        entry.categoryId,
+        ...ancestorIds(all, entry.categoryId),
+      ];
+      for (final id in chain) {
+        into.update(
+          id,
+          (amount) => amount + entry.amount,
+          ifAbsent: () => entry.amount,
+        );
+      }
+    }
+  }
+
   final spentByCategory = <String, double>{};
-  for (final entry in monthEntries.where(
-    (entry) => entry.type == EntryType.expense,
-  )) {
-    spentByCategory.update(
-      entry.categoryId,
-      (amount) => amount + entry.amount,
-      ifAbsent: () => entry.amount,
-    );
-  }
+  accumulate(spentByCategory, monthEntries);
   final previousSpentByCategory = <String, double>{};
-  for (final entry in previousMonthEntries.where(
-    (entry) => entry.type == EntryType.expense,
-  )) {
-    previousSpentByCategory.update(
-      entry.categoryId,
-      (amount) => amount + entry.amount,
-      ifAbsent: () => entry.amount,
-    );
-  }
+  accumulate(previousSpentByCategory, previousMonthEntries);
 
   final snapshots = controller
       .categoriesForType(EntryType.expense)

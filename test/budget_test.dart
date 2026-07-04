@@ -1,9 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/chart_painters.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/local_storage/local_storage.dart';
+import 'package:verifin/pages/budget_pages.dart';
 import 'package:verifin/pages/home_page.dart';
 
 import 'support/test_harness.dart';
@@ -164,6 +164,59 @@ void main() {
 
     expect(find.text('预算执行'), findsOneWidget);
     expect(find.text('1 个超支'), findsOneWidget);
+  });
+
+  test('category budget rolls up sub-category spending into parent', () async {
+    final controller = await makeController();
+    final month = DateTime(2026, 7);
+    final diningId = controller.categories
+        .firstWhere((c) => c.label == '餐饮')
+        .id;
+    controller.addCategory(
+      type: EntryType.expense,
+      label: '咖啡',
+      iconCode: 'dining',
+      parentId: diningId,
+    );
+    final coffeeId = controller.categories
+        .firstWhere((c) => c.label == '咖啡')
+        .id;
+
+    final entries = <LedgerEntry>[
+      LedgerEntry(
+        id: 'e-dining',
+        bookId: controller.activeBook.id,
+        type: EntryType.expense,
+        amount: 30,
+        categoryId: diningId,
+        accountId: 'cash',
+        note: '',
+        occurredAt: DateTime(2026, 7, 2),
+      ),
+      LedgerEntry(
+        id: 'e-coffee',
+        bookId: controller.activeBook.id,
+        type: EntryType.expense,
+        amount: 20,
+        categoryId: coffeeId,
+        accountId: 'cash',
+        note: '',
+        occurredAt: DateTime(2026, 7, 3),
+      ),
+    ];
+
+    final snapshots = computeCategoryBudgetSnapshots(
+      controller: controller,
+      month: month,
+      monthEntries: entries,
+    );
+    final dining = snapshots.firstWhere((s) => s.category.id == diningId);
+    final coffee = snapshots.firstWhere((s) => s.category.id == coffeeId);
+    // 父分类「餐饮」应包含自身 30 + 子分类「咖啡」20 = 50。
+    expect(dining.spent, 50);
+    // 子分类只计自身。
+    expect(coffee.spent, 20);
+    controller.dispose();
   });
 
   test('isolates budgets between ledger books', () async {
