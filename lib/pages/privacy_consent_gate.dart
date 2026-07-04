@@ -22,9 +22,8 @@ class PrivacyConsentGate extends StatelessWidget {
     // 用独立 Navigator 承载同意页，使页内「查看《隐私政策》」等 push 可用，
     // 且未同意前不构建主界面（避免引导页在同意前抢先触发）。
     return Navigator(
-      onGenerateRoute: (_) => MaterialPageRoute<void>(
-        builder: (_) => const PrivacyConsentPage(),
-      ),
+      onGenerateRoute: (_) =>
+          MaterialPageRoute<void>(builder: (_) => const PrivacyConsentPage()),
     );
   }
 }

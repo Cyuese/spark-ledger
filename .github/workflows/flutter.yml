@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   checks:
-    name: Analyze, Test, Web Build
+    name: Analyze, Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -36,15 +36,6 @@ jobs:
 
       - name: Test
         run: flutter test
-
-      - name: Build web
-        run: flutter build web --pwa-strategy=none
-
-      - name: Upload web artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: verifin-web
-          path: build/web
 
   android:
     name: Android APK

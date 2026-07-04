@@ -4,5 +4,4 @@
 // - web：使用 sqflite_common_ffi_web（sqlite3.wasm）。
 // - stub / 测试：不提供实现，测试用例自行注入 ffi factory。
 export 'database_factory_stub.dart'
-    if (dart.library.html) 'database_factory_web.dart'
     if (dart.library.io) 'database_factory_io.dart';
