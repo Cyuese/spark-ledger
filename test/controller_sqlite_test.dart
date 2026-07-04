@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -171,5 +172,63 @@ void main() {
     );
     expect(reloaded.monthlyBudget(month), 2000);
     expect(reloaded.categoryBudget(month, petCategory.id), 500);
+  });
+
+  test('导入备份写入 SQLite 并被新控制器读回', () async {
+    final rawJson = File(
+      'docs/dev/verifin-sample-backup.json',
+    ).readAsStringSync();
+    final repo = await openRepo();
+    final controller = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    controller.importDataJson(rawJson);
+    await controller.waitForPendingWrites();
+
+    final reloaded = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    expect(reloaded.accounts.length, greaterThanOrEqualTo(8));
+    expect(reloaded.entries.length, greaterThanOrEqualTo(20));
+    expect(reloaded.categories.any((c) => c.id == 'coffee'), isTrue);
+    // 导出应能从 SQLite 恢复出的内存状态重建等价备份。
+    final reExported = jsonDecode(reloaded.exportDataJson()) as Map;
+    expect((reExported['data'] as Map)['entries'], isNotEmpty);
+  });
+
+  test('重置数据会清空 SQLite', () async {
+    final repo = await openRepo();
+    final controller = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    controller.addEntry(entry('4'));
+    await controller.waitForPendingWrites();
+    expect(await repo.loadEntries(), isNotEmpty);
+
+    controller.resetAllData();
+    await controller.waitForPendingWrites();
+    expect(await repo.loadEntries(), isEmpty);
+
+    final reloaded = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    expect(reloaded.entries, isEmpty);
+  });
+
+  test('迁移完成后清理 KV 中已进库的冗余数据', () async {
+    final store = LocalKeyValueStore();
+    store.write(
+      'verifin.entries.v1',
+      jsonEncode(<Map<String, Object?>>[entry('5').toJson()]),
+    );
+    final repo = await openRepo();
+    await VeriFinController.create(store, repository: repo);
+
+    expect(store.read('verifin.migration.entries.v1'), 'true');
+    expect(store.read('verifin.entries.v1'), isNull);
   });
 }

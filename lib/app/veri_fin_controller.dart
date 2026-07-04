@@ -816,6 +816,16 @@ class VeriFinController extends ChangeNotifier {
     for (final page in PanelPageKind.values) {
       _pagePanels[page] = _defaultPanelSettings(page.specs);
     }
+    // 有仓储时把重置后的状态写回 SQLite（否则库中仍是旧数据）。
+    if (_repository != null) {
+      _persistEntries();
+      _persistLedgerBooks();
+      _persistAccounts();
+      _persistAccountGroups();
+      _persistCategories();
+      _persistBudgets();
+      _persistCategoryBudgets();
+    }
     themePreferenceListenable.value = _themePreference;
     notifyListeners();
   }
@@ -1152,7 +1162,27 @@ class VeriFinController extends ChangeNotifier {
       ..clear()
       ..addAll(_bookScopedBudgets(categoryBudgets));
 
+    _cleanupMigratedKvBlobs();
     notifyListeners();
+  }
+
+  /// 迁移完成后清理 KV 中已进库的冗余数据（偏好类小数据保留）。
+  /// 仅删除对应迁移标记已置位的键，确保数据已安全落库。
+  void _cleanupMigratedKvBlobs() {
+    final migrated = <(String, String)>[
+      (_entriesMigratedKey, _entriesKey),
+      (_booksMigratedKey, _ledgerBooksKey),
+      (_accountsMigratedKey, _accountsKey),
+      (_groupsMigratedKey, _accountGroupsKey),
+      (_categoriesMigratedKey, _categoriesKey),
+      (_monthlyBudgetsMigratedKey, _budgetsKey),
+      (_categoryBudgetsMigratedKey, _categoryBudgetsKey),
+    ];
+    for (final (flagKey, dataKey) in migrated) {
+      if (_store.read(flagKey) == 'true') {
+        _store.delete(dataKey);
+      }
+    }
   }
 
   /// 单类实体的载入 / 一次性迁移，返回权威数据（供覆盖内存列表）：
