@@ -74,7 +74,7 @@
   - 同步文档：README / AGENTS / CLAUDE / docs 里所有 `flutter run -d chrome`、`flutter build web`、「Web 端不支持 WebDAV/通知」「三端适配」等措辞改为只讲 Android；本地预览改真机/发版
 - [ ] 5.2 **确认 5.1 Web 清理干净**：全仓搜 `dart.library.html` / `_web.dart` / `sqflite_common_ffi_web` / `build web` 无残留
 - [ ] 5.3 **资产页【排序】按钮消失排查与改善**：当前逻辑是「有账户的分区 ≥2 才显示排序按钮」（`assets_pages.dart:145`）。先按真机反馈确认是「单分区（设计）」还是真 bug；无论如何改善可发现性（如单分区时给说明、或把排序入口移到资产操作菜单），避免按钮无声消失
-- [ ] 5.4 **功能回归系统审查**：拿 `docs/acceptance-checklist.md` 逐条对照现状代码，列出所有「设计上应有、现在没了或路径变了」的功能，判定有意/回归，产出报告后再定改不改
+- [x] 5.4 **功能回归系统审查**：完成，报告见 `docs/dev/regression-audit.md`。六区域并行核查约 85 条断言，**未发现明确回归**；记录 3 处灰色地带待你定夺（①交易分类筛选是否下钻子分类 ②导入非本应用 JSON 是否静默覆盖 ③首页剩余额度夹 0 显示）
 - [~] 5.5 **附件备份改压缩包格式（尽早做）**——分两步：
   - [x] 核心与控制器：`backup_archive.dart` 纯函数（附件字节从 JSON 剥离、与 `backup.json` 打进 zip，解包拼回 `dataUrl`）+ `exportBackupArchiveBytes()`/`importBackupBytes()`（zip 自动识别、兼容旧版纯 JSON）；含往返/体积/兼容测试
   - [ ] 管线与原生（**需真机验证恢复，留待有设备的会话**）：把备份写入管线（手动/自动备份的 SAF 写、导出到 Downloads、WebDAV、加密判定）从文本切到二进制字节，让未加密备份默认产出 zip；新增 Android 原生二进制 I/O（`writeBytesToUri`/`readBytesFromUri`/`saveBytesToDownloads`）、备份文件列表纳入 `.zip`。加密备份可暂保持文本信封路径不打包，复用现有加密逻辑。**原因：这是数据关键路径且原生写入无法离设备验证，不盲改。**
