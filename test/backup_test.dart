@@ -118,6 +118,17 @@ void main() {
       controller.categories.any((category) => category.id == 'coffee'),
       isTrue,
     );
+    // 多级分类：样例中「咖啡」是「餐饮」的子分类，导入后 parentId 应保留。
+    expect(
+      controller.categories
+          .firstWhere((category) => category.id == 'coffee')
+          .parentId,
+      'dining',
+    );
+    expect(
+      controller.childCategories('dining').map((c) => c.id),
+      contains('coffee'),
+    );
     expect(
       controller.categoryBudget(DateTime(2026, 7), 'dining'),
       greaterThan(0),
