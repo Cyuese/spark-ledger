@@ -618,13 +618,29 @@ class _BudgetMetricTile extends StatelessWidget {
   }
 }
 
-class _BudgetTrendCard extends StatelessWidget {
+class _BudgetTrendCard extends StatefulWidget {
   const _BudgetTrendCard({required this.months});
 
   final List<BudgetMonthSnapshot> months;
 
   @override
+  State<_BudgetTrendCard> createState() => _BudgetTrendCardState();
+}
+
+class _BudgetTrendCardState extends State<_BudgetTrendCard> {
+  int? _selectedIndex;
+
+  @override
+  void didUpdateWidget(covariant _BudgetTrendCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.months.length != widget.months.length) {
+      _selectedIndex = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final months = widget.months;
     final maxValue = months.fold<double>(
       0,
       (max, item) => math.max(max, math.max(item.expense, item.budget)),
@@ -657,19 +673,69 @@ class _BudgetTrendCard extends StatelessWidget {
           const SizedBox(height: 10),
           SizedBox(
             height: 132,
-            child: CustomPaint(
-              painter: _BudgetTrendPainter(
-                months: months,
-                labelColor: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.50),
-                yLabels: reportAxisLabels(maxValue),
-              ),
-              child: const SizedBox.expand(),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final size = Size(constraints.maxWidth, constraints.maxHeight);
+                Rect chartRect() =>
+                    trendChartRect(size, hasXLabels: true, hasYLabels: true);
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (details) {
+                    final index = chartSlotIndex(
+                      details.localPosition,
+                      chartRect(),
+                      months.length,
+                    );
+                    setState(() {
+                      _selectedIndex = index == _selectedIndex ? null : index;
+                    });
+                  },
+                  onHorizontalDragUpdate: (details) {
+                    final index = chartSlotIndex(
+                      details.localPosition,
+                      chartRect(),
+                      months.length,
+                    );
+                    if (index != null && index != _selectedIndex) {
+                      setState(() => _selectedIndex = index);
+                    }
+                  },
+                  child: CustomPaint(
+                    painter: _BudgetTrendPainter(
+                      months: months,
+                      labelColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.50),
+                      yLabels: reportAxisLabels(maxValue),
+                      selectedIndex: _selectedIndex,
+                      tooltip: _selectedIndex == null
+                          ? null
+                          : _tooltipFor(months[_selectedIndex!]),
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                );
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+
+  ChartTooltip _tooltipFor(BudgetMonthSnapshot snapshot) {
+    return ChartTooltip(
+      title: '${snapshot.month.year}年${snapshot.month.month}月',
+      lines: <ChartTooltipLine>[
+        ChartTooltipLine(
+          text: '预算 ${formatAmount(snapshot.budget)}',
+          color: veriRoyal,
+        ),
+        ChartTooltipLine(
+          text: '支出 ${formatExpenseAmount(snapshot.expense)}',
+          color: veriExpense,
+        ),
+      ],
     );
   }
 }
@@ -710,23 +776,19 @@ class _BudgetTrendPainter extends CustomPainter {
     required this.months,
     required this.labelColor,
     required this.yLabels,
+    this.selectedIndex,
+    this.tooltip,
   });
 
   final List<BudgetMonthSnapshot> months;
   final Color labelColor;
   final List<String> yLabels;
+  final int? selectedIndex;
+  final ChartTooltip? tooltip;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const leftInset = 30.0;
-    const rightInset = 8.0;
-    const bottomInset = 22.0;
-    final chartRect = Rect.fromLTWH(
-      leftInset,
-      0,
-      size.width - leftInset - rightInset,
-      size.height - bottomInset,
-    );
+    final chartRect = trendChartRect(size, hasXLabels: true, hasYLabels: true);
     final axisPaint = Paint()
       ..color = labelColor.withValues(alpha: 0.14)
       ..strokeWidth = 1;
@@ -800,6 +862,39 @@ class _BudgetTrendPainter extends CustomPainter {
     }
 
     _drawBudgetTrendLabels(canvas, chartRect);
+
+    final selected = selectedIndex;
+    if (selected != null && selected >= 0 && selected < months.length) {
+      final item = months[selected];
+      final centerX = chartRect.left + gap * selected + gap / 2;
+      final budgetY =
+          chartRect.bottom -
+          item.budget / maxValue * chartRect.height * chartValueScale;
+      final barTop =
+          chartRect.bottom -
+          item.expense / maxValue * chartRect.height * chartValueScale;
+      canvas.drawLine(
+        Offset(centerX, chartRect.top),
+        Offset(centerX, chartRect.bottom),
+        Paint()
+          ..color = labelColor.withValues(alpha: 0.45)
+          ..strokeWidth = 1,
+      );
+      canvas.drawCircle(Offset(centerX, budgetY), 5, pointPaint);
+      canvas.drawCircle(
+        Offset(centerX, budgetY),
+        2.3,
+        Paint()..color = Colors.white,
+      );
+      if (tooltip != null) {
+        drawChartTooltip(
+          canvas,
+          size,
+          Offset(centerX, math.min(budgetY, barTop)),
+          tooltip!,
+        );
+      }
+    }
   }
 
   void _drawBudgetTrendLabels(Canvas canvas, Rect chartRect) {
@@ -840,7 +935,9 @@ class _BudgetTrendPainter extends CustomPainter {
   bool shouldRepaint(covariant _BudgetTrendPainter oldDelegate) {
     return oldDelegate.months != months ||
         oldDelegate.labelColor != labelColor ||
-        oldDelegate.yLabels != yLabels;
+        oldDelegate.yLabels != yLabels ||
+        oldDelegate.selectedIndex != selectedIndex ||
+        oldDelegate.tooltip != tooltip;
   }
 }
 

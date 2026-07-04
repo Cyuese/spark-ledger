@@ -323,16 +323,25 @@ class HomeTrendPanel extends StatelessWidget {
               height: 138,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(2, 6, 2, 0),
-                child: CustomPaint(
-                  painter: TrendLinePainter(
-                    color: hasExpense ? veriExpense : mutedColor,
-                    values: values,
-                    xLabels: labelsForWindow(window),
-                    yLabels: reportAxisLabels(values.fold(0, math.max)),
-                    labelColor: mutedColor,
-                    glow: isDark,
-                  ),
-                  child: const SizedBox.expand(),
+                // 图表区域自行响应点击展示数据,不触发卡片跳转。
+                child: InteractiveTrendChart(
+                  color: hasExpense ? veriExpense : mutedColor,
+                  values: values,
+                  xLabels: labelsForWindow(window),
+                  yLabels: reportAxisLabels(values.fold(0, math.max)),
+                  labelColor: mutedColor,
+                  glow: isDark,
+                  tooltipOf: (index) {
+                    final day = window.days[index];
+                    return ChartTooltip(
+                      title: '${day.month}月${day.day}日',
+                      lines: <ChartTooltipLine>[
+                        ChartTooltipLine(
+                          text: '支出 ${formatExpenseAmount(values[index])}',
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -654,19 +663,33 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 180,
-                      child: CustomPaint(
-                        painter: TrendLinePainter(
-                          color: totalColor,
-                          values: windowValues,
-                          xLabels: labelsForWindow(window),
-                          yLabels: reportAxisLabels(
-                            windowValues.fold(0, math.max),
-                          ),
-                          labelColor: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.50),
+                      child: InteractiveTrendChart(
+                        color: totalColor,
+                        values: windowValues,
+                        xLabels: labelsForWindow(window),
+                        yLabels: reportAxisLabels(
+                          windowValues.fold(0, math.max),
                         ),
-                        child: const SizedBox.expand(),
+                        labelColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.50),
+                        tooltipOf: (index) {
+                          final day = window.days[index];
+                          final value = windowValues[index];
+                          final valueText = switch (_type) {
+                            EntryType.expense => formatExpenseAmount(value),
+                            EntryType.income => '+${formatIncomeAmount(value)}',
+                            EntryType.transfer => formatAmount(value),
+                          };
+                          return ChartTooltip(
+                            title: '${day.month}月${day.day}日',
+                            lines: <ChartTooltipLine>[
+                              ChartTooltipLine(
+                                text: '${_type.label} $valueText',
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ],

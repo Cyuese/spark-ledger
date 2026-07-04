@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
@@ -7,6 +8,167 @@ import 'app_theme.dart';
 /// 数值只画到图表高度的这个比例,顶部留白;网格线和纵轴刻度按同一比例
 /// 定位,保证刻度读数与曲线/柱高一致。
 const double chartValueScale = 0.86;
+
+/// 图表点击后展示的数据气泡内容。
+class ChartTooltip {
+  const ChartTooltip({required this.title, required this.lines});
+
+  final String title;
+  final List<ChartTooltipLine> lines;
+}
+
+class ChartTooltipLine {
+  const ChartTooltipLine({required this.text, this.color});
+
+  final String text;
+
+  /// 多序列图表用于区分序列的小圆点颜色;单序列可省略。
+  final Color? color;
+}
+
+/// 曲线图绘图区(与 [TrendLinePainter] 的内边距保持一致)。
+Rect trendChartRect(
+  Size size, {
+  required bool hasXLabels,
+  required bool hasYLabels,
+}) {
+  const leftInset = 30.0;
+  const rightInset = 8.0;
+  const bottomInset = 22.0;
+  return Rect.fromLTWH(
+    hasYLabels ? leftInset : 0,
+    0,
+    size.width - (hasYLabels ? leftInset + rightInset : rightInset),
+    size.height - (hasXLabels ? bottomInset : 0),
+  );
+}
+
+/// 柱状图绘图区(与 [BarChartPainter] 的内边距保持一致)。
+Rect barChartRect(
+  Size size, {
+  required bool hasXLabels,
+  required bool hasYLabels,
+}) {
+  const leftInset = 30.0;
+  const rightInset = 4.0;
+  return Rect.fromLTWH(
+    hasYLabels ? leftInset : 0,
+    0,
+    size.width - (hasYLabels ? leftInset + rightInset : 0),
+    size.height - (hasXLabels ? 22 : 0),
+  );
+}
+
+/// 命中曲线图上离点击横坐标最近的数据点;点击落在图表区外返回 null。
+int? chartNearestIndex(Offset position, Rect chartRect, int count) {
+  if (count <= 0 || !chartRect.inflate(14).contains(position)) {
+    return null;
+  }
+  if (count == 1) {
+    return 0;
+  }
+  final ratio = ((position.dx - chartRect.left) / chartRect.width).clamp(
+    0.0,
+    1.0,
+  );
+  return (ratio * (count - 1)).round();
+}
+
+/// 命中柱状图(等宽槽位)的柱子下标;点击落在图表区外返回 null。
+int? chartSlotIndex(Offset position, Rect chartRect, int count) {
+  if (count <= 0 || !chartRect.inflate(10).contains(position)) {
+    return null;
+  }
+  final gap = chartRect.width / count;
+  return ((position.dx - chartRect.left) / gap).floor().clamp(0, count - 1);
+}
+
+/// 在 [anchor] 附近绘制数据气泡,自动上下翻转并夹紧在画布内。
+/// 气泡固定使用深色底和浅色文字,保证在浅色、深色和图片背景上都可读。
+void drawChartTooltip(
+  Canvas canvas,
+  Size size,
+  Offset anchor,
+  ChartTooltip tooltip,
+) {
+  const padding = 8.0;
+  const dotSize = 6.0;
+  final titlePainter = TextPainter(
+    text: TextSpan(
+      text: tooltip.title,
+      style: const TextStyle(
+        color: Color(0xB3FFFFFF),
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+  final linePainters = <(ChartTooltipLine, TextPainter)>[
+    for (final line in tooltip.lines)
+      (
+        line,
+        TextPainter(
+          text: TextSpan(
+            text: line.text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(),
+      ),
+  ];
+
+  var contentWidth = titlePainter.width;
+  var contentHeight = titlePainter.height;
+  for (final (line, painter) in linePainters) {
+    final lineWidth = painter.width + (line.color == null ? 0 : dotSize + 5);
+    contentWidth = math.max(contentWidth, lineWidth);
+    contentHeight += painter.height + 3;
+  }
+  final bubbleWidth = contentWidth + padding * 2;
+  final bubbleHeight = contentHeight + padding * 2;
+
+  var left = anchor.dx - bubbleWidth / 2;
+  left = left.clamp(2.0, math.max(2.0, size.width - bubbleWidth - 2));
+  var top = anchor.dy - bubbleHeight - 10;
+  if (top < 2) {
+    top = math.min(anchor.dy + 12, size.height - bubbleHeight - 2);
+  }
+
+  final bubble = RRect.fromRectAndRadius(
+    Rect.fromLTWH(left, top, bubbleWidth, bubbleHeight),
+    const Radius.circular(7),
+  );
+  canvas.drawRRect(bubble, Paint()..color = const Color(0xEB1C2430));
+  canvas.drawRRect(
+    bubble,
+    Paint()
+      ..color = Colors.white.withValues(alpha: 0.10)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1,
+  );
+
+  var dy = top + padding;
+  titlePainter.paint(canvas, Offset(left + padding, dy));
+  dy += titlePainter.height + 3;
+  for (final (line, painter) in linePainters) {
+    var dx = left + padding;
+    if (line.color != null) {
+      canvas.drawCircle(
+        Offset(dx + dotSize / 2, dy + painter.height / 2),
+        dotSize / 2,
+        Paint()..color = line.color!,
+      );
+      dx += dotSize + 5;
+    }
+    painter.paint(canvas, Offset(dx, dy));
+    dy += painter.height + 3;
+  }
+}
 
 class TrendLinePainter extends CustomPainter {
   const TrendLinePainter({
@@ -16,6 +178,8 @@ class TrendLinePainter extends CustomPainter {
     this.yLabels = const <String>[],
     this.labelColor,
     this.glow = false,
+    this.selectedIndex,
+    this.tooltip,
   });
 
   final Color color;
@@ -24,17 +188,15 @@ class TrendLinePainter extends CustomPainter {
   final List<String> yLabels;
   final Color? labelColor;
   final bool glow;
+  final int? selectedIndex;
+  final ChartTooltip? tooltip;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const leftInset = 30.0;
-    const rightInset = 8.0;
-    const bottomInset = 22.0;
-    final chartRect = Rect.fromLTWH(
-      yLabels.isEmpty ? 0 : leftInset,
-      0,
-      size.width - (yLabels.isEmpty ? rightInset : leftInset + rightInset),
-      size.height - (xLabels.isEmpty ? 0 : bottomInset),
+    final chartRect = trendChartRect(
+      size,
+      hasXLabels: xLabels.isNotEmpty,
+      hasYLabels: yLabels.isNotEmpty,
     );
     final axisColor = labelColor ?? Colors.white.withValues(alpha: 0.45);
     final gridPaint = Paint()
@@ -132,6 +294,30 @@ class TrendLinePainter extends CustomPainter {
     }
 
     _drawLabels(canvas, chartRect, xLabels, yLabels, axisColor);
+
+    final selected = selectedIndex;
+    if (values.isNotEmpty &&
+        selected != null &&
+        selected >= 0 &&
+        selected < normalized.length) {
+      final x = normalized.length == 1
+          ? chartRect.left
+          : chartRect.left +
+                chartRect.width * selected / (normalized.length - 1);
+      final y = yFor(normalized[selected]);
+      canvas.drawLine(
+        Offset(x, chartRect.top),
+        Offset(x, chartRect.bottom),
+        Paint()
+          ..color = color.withValues(alpha: 0.38)
+          ..strokeWidth = 1,
+      );
+      canvas.drawCircle(Offset(x, y), 5, Paint()..color = color);
+      canvas.drawCircle(Offset(x, y), 2.3, Paint()..color = Colors.white);
+      if (tooltip != null) {
+        drawChartTooltip(canvas, size, Offset(x, y), tooltip!);
+      }
+    }
   }
 
   @override
@@ -141,7 +327,9 @@ class TrendLinePainter extends CustomPainter {
         oldDelegate.xLabels != xLabels ||
         oldDelegate.yLabels != yLabels ||
         oldDelegate.labelColor != labelColor ||
-        oldDelegate.glow != glow;
+        oldDelegate.glow != glow ||
+        oldDelegate.selectedIndex != selectedIndex ||
+        oldDelegate.tooltip != tooltip;
   }
 }
 
@@ -151,22 +339,23 @@ class BarChartPainter extends CustomPainter {
     this.xLabels = const <String>[],
     this.yLabels = const <String>[],
     this.labelColor,
+    this.selectedIndex,
+    this.tooltip,
   });
 
   final List<double> values;
   final List<String> xLabels;
   final List<String> yLabels;
   final Color? labelColor;
+  final int? selectedIndex;
+  final ChartTooltip? tooltip;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const leftInset = 30.0;
-    const rightInset = 4.0;
-    final chartRect = Rect.fromLTWH(
-      yLabels.isEmpty ? 0 : leftInset,
-      0,
-      size.width - (yLabels.isEmpty ? 0 : leftInset + rightInset),
-      size.height - (xLabels.isEmpty ? 0 : 22),
+    final chartRect = barChartRect(
+      size,
+      hasXLabels: xLabels.isNotEmpty,
+      hasYLabels: yLabels.isNotEmpty,
     );
     final axisColor = labelColor ?? Colors.white.withValues(alpha: 0.45);
     final axisPaint = Paint()
@@ -178,6 +367,8 @@ class BarChartPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(Offset.zero & size);
+    // 有选中柱子时,其余柱子弱化,突出当前数据。
+    final dimmedBarPaint = Paint()..color = veriBlue.withValues(alpha: 0.30);
 
     canvas.drawLine(
       Offset(chartRect.left, chartRect.bottom),
@@ -207,9 +398,26 @@ class BarChartPainter extends CustomPainter {
         ),
         const Radius.circular(8),
       );
-      canvas.drawRRect(rect, barPaint);
+      canvas.drawRRect(
+        rect,
+        selectedIndex == null || selectedIndex == i ? barPaint : dimmedBarPaint,
+      );
     }
     _drawLabels(canvas, chartRect, xLabels, yLabels, axisColor);
+
+    final selected = selectedIndex;
+    if (selected != null &&
+        selected >= 0 &&
+        selected < values.length &&
+        tooltip != null) {
+      final barHeight =
+          values[selected] / maxValue * chartRect.height * chartValueScale;
+      final anchor = Offset(
+        chartRect.left + selected * gap + gap / 2,
+        chartRect.bottom - barHeight,
+      );
+      drawChartTooltip(canvas, size, anchor, tooltip!);
+    }
   }
 
   @override
@@ -217,7 +425,9 @@ class BarChartPainter extends CustomPainter {
     return oldDelegate.values != values ||
         oldDelegate.xLabels != xLabels ||
         oldDelegate.yLabels != yLabels ||
-        oldDelegate.labelColor != labelColor;
+        oldDelegate.labelColor != labelColor ||
+        oldDelegate.selectedIndex != selectedIndex ||
+        oldDelegate.tooltip != tooltip;
   }
 }
 
@@ -268,6 +478,182 @@ class BudgetRingPainter extends CustomPainter {
     return oldDelegate.value != value ||
         oldDelegate.trackColor != trackColor ||
         oldDelegate.progressColor != progressColor;
+  }
+}
+
+/// 可交互曲线图:点击或横向滑动选中数据点,弹出数据气泡;
+/// 再次点击同一点或点击图表区外取消。图表区域会拦截点击,
+/// 不会触发外层卡片的跳转。
+class InteractiveTrendChart extends StatefulWidget {
+  const InteractiveTrendChart({
+    super.key,
+    required this.color,
+    required this.values,
+    this.xLabels = const <String>[],
+    this.yLabels = const <String>[],
+    this.labelColor,
+    this.glow = false,
+    required this.tooltipOf,
+  });
+
+  final Color color;
+  final List<double> values;
+  final List<String> xLabels;
+  final List<String> yLabels;
+  final Color? labelColor;
+  final bool glow;
+
+  /// 为选中的数据点构建气泡内容。
+  final ChartTooltip Function(int index) tooltipOf;
+
+  @override
+  State<InteractiveTrendChart> createState() => _InteractiveTrendChartState();
+}
+
+class _InteractiveTrendChartState extends State<InteractiveTrendChart> {
+  int? _selectedIndex;
+
+  @override
+  void didUpdateWidget(covariant InteractiveTrendChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!listEquals(oldWidget.values, widget.values)) {
+      _selectedIndex = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        Rect chartRect() => trendChartRect(
+          size,
+          hasXLabels: widget.xLabels.isNotEmpty,
+          hasYLabels: widget.yLabels.isNotEmpty,
+        );
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (details) {
+            final index = chartNearestIndex(
+              details.localPosition,
+              chartRect(),
+              widget.values.length,
+            );
+            setState(() {
+              _selectedIndex = index == _selectedIndex ? null : index;
+            });
+          },
+          onHorizontalDragUpdate: (details) {
+            final index = chartNearestIndex(
+              details.localPosition,
+              chartRect(),
+              widget.values.length,
+            );
+            if (index != null && index != _selectedIndex) {
+              setState(() => _selectedIndex = index);
+            }
+          },
+          child: CustomPaint(
+            painter: TrendLinePainter(
+              color: widget.color,
+              values: widget.values,
+              xLabels: widget.xLabels,
+              yLabels: widget.yLabels,
+              labelColor: widget.labelColor,
+              glow: widget.glow,
+              selectedIndex: _selectedIndex,
+              tooltip: _selectedIndex == null
+                  ? null
+                  : widget.tooltipOf(_selectedIndex!),
+            ),
+            child: const SizedBox.expand(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// 可交互柱状图:点击或横向滑动选中柱子,弹出数据气泡。
+class InteractiveBarChart extends StatefulWidget {
+  const InteractiveBarChart({
+    super.key,
+    required this.values,
+    this.xLabels = const <String>[],
+    this.yLabels = const <String>[],
+    this.labelColor,
+    required this.tooltipOf,
+  });
+
+  final List<double> values;
+  final List<String> xLabels;
+  final List<String> yLabels;
+  final Color? labelColor;
+  final ChartTooltip Function(int index) tooltipOf;
+
+  @override
+  State<InteractiveBarChart> createState() => _InteractiveBarChartState();
+}
+
+class _InteractiveBarChartState extends State<InteractiveBarChart> {
+  int? _selectedIndex;
+
+  @override
+  void didUpdateWidget(covariant InteractiveBarChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!listEquals(oldWidget.values, widget.values)) {
+      _selectedIndex = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        Rect chartRect() => barChartRect(
+          size,
+          hasXLabels: widget.xLabels.isNotEmpty,
+          hasYLabels: widget.yLabels.isNotEmpty,
+        );
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (details) {
+            final index = chartSlotIndex(
+              details.localPosition,
+              chartRect(),
+              widget.values.length,
+            );
+            setState(() {
+              _selectedIndex = index == _selectedIndex ? null : index;
+            });
+          },
+          onHorizontalDragUpdate: (details) {
+            final index = chartSlotIndex(
+              details.localPosition,
+              chartRect(),
+              widget.values.length,
+            );
+            if (index != null && index != _selectedIndex) {
+              setState(() => _selectedIndex = index);
+            }
+          },
+          child: CustomPaint(
+            painter: BarChartPainter(
+              values: widget.values,
+              xLabels: widget.xLabels,
+              yLabels: widget.yLabels,
+              labelColor: widget.labelColor,
+              selectedIndex: _selectedIndex,
+              tooltip: _selectedIndex == null
+                  ? null
+                  : widget.tooltipOf(_selectedIndex!),
+            ),
+            child: const SizedBox.expand(),
+          ),
+        );
+      },
+    );
   }
 }
 

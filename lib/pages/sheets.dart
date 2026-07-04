@@ -170,9 +170,7 @@ class _AccountPickerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected
-          ? veriRoyal.withValues(alpha: 0.12)
-          : Colors.transparent,
+      color: selected ? veriRoyal.withValues(alpha: 0.12) : Colors.transparent,
       borderRadius: BorderRadius.circular(veriRadiusSm),
       child: ListTile(
         minTileHeight: 48,

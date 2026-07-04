@@ -121,21 +121,30 @@ class ReportsPage extends StatelessWidget {
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 138,
-                  child: CustomPaint(
-                    painter: TrendLinePainter(
-                      color: isZeroAmount(trendExpense)
-                          ? Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.42)
-                          : veriExpense,
-                      values: trendValues,
-                      xLabels: labelsForWindow(trendWindow),
-                      yLabels: reportAxisLabels(trendMax),
-                      labelColor: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.50),
-                    ),
-                    child: const SizedBox.expand(),
+                  child: InteractiveTrendChart(
+                    color: isZeroAmount(trendExpense)
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.42)
+                        : veriExpense,
+                    values: trendValues,
+                    xLabels: labelsForWindow(trendWindow),
+                    yLabels: reportAxisLabels(trendMax),
+                    labelColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.50),
+                    tooltipOf: (index) {
+                      final day = trendWindow.days[index];
+                      return ChartTooltip(
+                        title: '${day.month}月${day.day}日',
+                        lines: <ChartTooltipLine>[
+                          ChartTooltipLine(
+                            text:
+                                '支出 ${formatExpenseAmount(trendValues[index])}',
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
@@ -150,29 +159,35 @@ class ReportsPage extends StatelessWidget {
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 146,
-                  child: CustomPaint(
-                    painter: BarChartPainter(
-                      values: monthlyValues,
-                      xLabels: const <String>[
-                        '1',
-                        '2',
-                        '3',
-                        '4',
-                        '5',
-                        '6',
-                        '7',
-                        '8',
-                        '9',
-                        '10',
-                        '11',
-                        '12',
+                  child: InteractiveBarChart(
+                    values: monthlyValues,
+                    xLabels: const <String>[
+                      '1',
+                      '2',
+                      '3',
+                      '4',
+                      '5',
+                      '6',
+                      '7',
+                      '8',
+                      '9',
+                      '10',
+                      '11',
+                      '12',
+                    ],
+                    yLabels: reportAxisLabels(monthlyMax),
+                    labelColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.50),
+                    tooltipOf: (index) => ChartTooltip(
+                      title: '${index + 1}月',
+                      lines: <ChartTooltipLine>[
+                        ChartTooltipLine(
+                          text:
+                              '支出 ${formatExpenseAmount(monthlyValues[index])}',
+                        ),
                       ],
-                      yLabels: reportAxisLabels(monthlyMax),
-                      labelColor: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.50),
                     ),
-                    child: const SizedBox.expand(),
                   ),
                 ),
               ],
@@ -388,7 +403,7 @@ class _BudgetExecutionMetric extends StatelessWidget {
   }
 }
 
-class _CategoryRingChart extends StatelessWidget {
+class _CategoryRingChart extends StatefulWidget {
   const _CategoryRingChart({
     required this.stats,
     required this.total,
@@ -400,11 +415,60 @@ class _CategoryRingChart extends StatelessWidget {
   final double ringSize;
 
   @override
+  State<_CategoryRingChart> createState() => _CategoryRingChartState();
+}
+
+class _CategoryRingChartState extends State<_CategoryRingChart> {
+  int? _selectedIndex;
+
+  @override
+  void didUpdateWidget(covariant _CategoryRingChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stats != widget.stats) {
+      _selectedIndex = null;
+    }
+  }
+
+  /// 点击环形图:命中环上的分段则选中/取消,命中中心或环外则清除选中。
+  void _handleTap(Offset localPosition, List<_CategoryRingSegment> segments) {
+    final ringSize = widget.ringSize;
+    final center = Offset(ringSize / 2, ringSize / 2);
+    final offset = localPosition - center;
+    final radius = offset.distance;
+    final strokeWidth = math.max(12.0, ringSize * 0.14);
+    final outer = ringSize / 2 + 5;
+    final inner = ringSize / 2 - strokeWidth - 5;
+    int? hit;
+    if (radius <= outer && radius >= inner) {
+      var angle = math.atan2(offset.dy, offset.dx) + math.pi / 2;
+      if (angle < 0) {
+        angle += math.pi * 2;
+      }
+      var start = 0.0;
+      for (final item in segments.indexed) {
+        final sweep = math.pi * 2 * item.$2.percent;
+        if (angle >= start && angle < start + sweep) {
+          hit = item.$1;
+          break;
+        }
+        start += sweep;
+      }
+    }
+    setState(() {
+      _selectedIndex = hit == _selectedIndex ? null : hit;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final segments = _categoryRingSegments(stats);
+    final segments = _categoryRingSegments(widget.stats);
+    final ringSize = widget.ringSize;
     final mutedColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.56);
+    final selected = _selectedIndex != null && _selectedIndex! < segments.length
+        ? segments[_selectedIndex!]
+        : null;
 
     return SizedBox(
       width: double.infinity,
@@ -424,32 +488,73 @@ class _CategoryRingChart extends StatelessWidget {
           SizedBox(
             width: ringSize,
             height: ringSize,
-            child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                CustomPaint(
-                  painter: _CategoryDonutPainter(
-                    segments: segments,
-                    trackColor: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest
-                        .withValues(alpha: 0.64),
-                  ),
-                  child: const SizedBox.expand(),
-                ),
-                SizedBox(
-                  width: ringSize * 0.56,
-                  child: Text(
-                    formatExpenseAmount(total),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapDown: segments.isEmpty
+                  ? null
+                  : (details) => _handleTap(details.localPosition, segments),
+              child: Stack(
+                alignment: Alignment.center,
+                children: <Widget>[
+                  CustomPaint(
+                    painter: _CategoryDonutPainter(
+                      segments: segments,
+                      trackColor: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.64),
+                      selectedIndex: _selectedIndex,
                     ),
+                    child: const SizedBox.expand(),
                   ),
-                ),
-              ],
+                  SizedBox(
+                    width: ringSize * 0.56,
+                    child: selected == null
+                        ? Text(
+                            formatExpenseAmount(widget.total),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                selected.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: mutedColor,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              Text(
+                                formatExpenseAmount(selected.amount),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              Text(
+                                '${(selected.percent * 100).toStringAsFixed(1)}%',
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: selected.color,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -517,10 +622,12 @@ class _CategoryDonutPainter extends CustomPainter {
   const _CategoryDonutPainter({
     required this.segments,
     required this.trackColor,
+    this.selectedIndex,
   });
 
   final List<_CategoryRingSegment> segments;
   final Color trackColor;
+  final int? selectedIndex;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -538,12 +645,19 @@ class _CategoryDonutPainter extends CustomPainter {
     }
 
     var start = -math.pi / 2;
-    for (final segment in segments) {
+    for (final item in segments.indexed) {
+      final segment = item.$2;
       final sweep = math.pi * 2 * segment.percent;
+      // 有选中分段时,其余分段弱化并略微收窄,突出当前分类。
+      final isSelected = selectedIndex == null || selectedIndex == item.$1;
       final paint = Paint()
-        ..color = segment.color
+        ..color = isSelected
+            ? segment.color
+            : segment.color.withValues(alpha: 0.30)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
+        ..strokeWidth = selectedIndex == item.$1
+            ? strokeWidth * 1.14
+            : strokeWidth
         ..strokeCap = StrokeCap.round;
       canvas.drawArc(
         arcRect,
@@ -559,7 +673,8 @@ class _CategoryDonutPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _CategoryDonutPainter oldDelegate) {
     return oldDelegate.segments != segments ||
-        oldDelegate.trackColor != trackColor;
+        oldDelegate.trackColor != trackColor ||
+        oldDelegate.selectedIndex != selectedIndex;
   }
 }
 

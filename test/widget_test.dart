@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:verifin/app/app_theme.dart';
 import 'package:verifin/app/app_version.dart';
+import 'package:verifin/app/chart_painters.dart';
 import 'package:verifin/app/common_widgets.dart';
 import 'package:verifin/app/ledger_math.dart';
 import 'package:verifin/app/models.dart';
@@ -165,6 +166,23 @@ void main() {
     expect(find.text('收支统计'), findsOneWidget);
     expect(find.text('-0'), findsNothing);
     expect(find.text('0'), findsWidgets);
+  });
+
+  testWidgets('home trend chart tap shows data instead of navigating', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const VeriFinApp());
+
+    // 点击图表区域只选中数据点,不进入收支统计页。
+    await tester.tap(find.byType(InteractiveTrendChart).first);
+    await tester.pumpAndSettle();
+    expect(find.text('收支统计'), findsNothing);
+    expect(find.text('支出走势'), findsOneWidget);
+
+    // 点击卡片标题区域仍然进入收支统计页。
+    await tester.tap(find.text('支出走势'));
+    await tester.pumpAndSettle();
+    expect(find.text('收支统计'), findsOneWidget);
   });
 
   testWidgets('edits monthly budget from the home budget card', (

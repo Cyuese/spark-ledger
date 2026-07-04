@@ -254,14 +254,20 @@ class _AssetsPageState extends State<AssetsPage> {
                       const SizedBox(height: 14),
                       SizedBox(
                         height: 112,
-                        child: CustomPaint(
-                          painter: TrendLinePainter(
-                            color: assetCardTextColor,
-                            values: assetTrendValues,
-                            xLabels: evenMonthAxisLabels(),
-                            labelColor: assetCardMutedColor,
+                        child: InteractiveTrendChart(
+                          color: assetCardTextColor,
+                          values: assetTrendValues,
+                          xLabels: evenMonthAxisLabels(),
+                          labelColor: assetCardMutedColor,
+                          tooltipOf: (index) => ChartTooltip(
+                            title: '${index + 1}月',
+                            lines: <ChartTooltipLine>[
+                              ChartTooltipLine(
+                                text:
+                                    '净资产 ${formatAmount(assetTrendValues[index])}',
+                              ),
+                            ],
                           ),
-                          child: const SizedBox.expand(),
                         ),
                       ),
                     ],
@@ -291,12 +297,13 @@ class _AssetsPageState extends State<AssetsPage> {
                       Expanded(
                         child: Text(
                           '拖动右侧手柄调整分组顺序',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.52),
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.52),
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       )
                     else
@@ -1353,19 +1360,27 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     const SizedBox(height: 10),
                     SizedBox(
                       height: 148,
-                      child: CustomPaint(
-                        painter: TrendLinePainter(
-                          color: veriBlue,
-                          values: balanceTrendValues,
-                          xLabels: _monthlyTrend
-                              ? evenMonthAxisLabels()
-                              : monthAxisLabels(DateTime.now()),
-                          yLabels: balanceAxisLabels(balanceTrendValues),
-                          labelColor: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.50),
+                      child: InteractiveTrendChart(
+                        color: veriBlue,
+                        values: balanceTrendValues,
+                        xLabels: _monthlyTrend
+                            ? evenMonthAxisLabels()
+                            : monthAxisLabels(DateTime.now()),
+                        yLabels: balanceAxisLabels(balanceTrendValues),
+                        labelColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.50),
+                        tooltipOf: (index) => ChartTooltip(
+                          title: _monthlyTrend
+                              ? '${index + 1}月'
+                              : '${DateTime.now().month}月${index + 1}日',
+                          lines: <ChartTooltipLine>[
+                            ChartTooltipLine(
+                              text:
+                                  '余额 ${formatAmount(balanceTrendValues[index])}',
+                            ),
+                          ],
                         ),
-                        child: const SizedBox.expand(),
                       ),
                     ),
                     TextButton(
@@ -1890,17 +1905,23 @@ class AccountReportPage extends StatelessWidget {
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 156,
-                      child: CustomPaint(
-                        painter: TrendLinePainter(
-                          color: veriRoyal,
-                          values: reportBalanceValues,
-                          xLabels: monthAxisLabels(DateTime.now()),
-                          yLabels: balanceAxisLabels(reportBalanceValues),
-                          labelColor: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.50),
+                      child: InteractiveTrendChart(
+                        color: veriRoyal,
+                        values: reportBalanceValues,
+                        xLabels: monthAxisLabels(DateTime.now()),
+                        yLabels: balanceAxisLabels(reportBalanceValues),
+                        labelColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.50),
+                        tooltipOf: (index) => ChartTooltip(
+                          title: '${DateTime.now().month}月${index + 1}日',
+                          lines: <ChartTooltipLine>[
+                            ChartTooltipLine(
+                              text:
+                                  '余额 ${formatAmount(reportBalanceValues[index])}',
+                            ),
+                          ],
                         ),
-                        child: const SizedBox.expand(),
                       ),
                     ),
                   ],
