@@ -32,7 +32,7 @@ scripts/publish.sh patch
 Release APK 必须使用稳定签名。当前项目使用 `android/app/verifin-release.jks`，不要再使用 CI runner 临时 debug keystore，否则手机会因为签名变化而无法覆盖安装。
 
 ## 移动端持久化与权限
-非 Web 平台不能使用内存版 `LocalKeyValueStore`。真实 Android/iOS 启动必须先调用 `LocalKeyValueStore.create()`，确保交易、账户、账本、设置等数据写入持久化存储。新增任何本地数据项时，都要确认导出/导入、初始化、进程重启后读取都覆盖到。
+账目类核心数据（交易、账户、分组、账本、分类、预算）存 SQLite，由 `lib/data/` 的 `AppDatabase` + `LedgerRepository` 承载，`VeriFinController` 内存列表仍是读取源、写入时路由到库。偏好类小数据仍走 `LocalKeyValueStore`（`SharedPreferences`），非 Web 平台不能使用内存版实现，真实 Android/iOS 启动必须先 `LocalKeyValueStore.create()` 并 `AppDatabase.open()`。首次启动会把旧版 KV 中的账目数据一次性迁移进库（按实体独立标记、库已有数据则不覆盖）并清理冗余键。新增账目类数据项时，要同步 schema/仓储读写、迁移、导出/导入、初始化和进程重启后读取；新增偏好类数据项仍按 KV 流程覆盖导出/导入与重启读取。修改 `lib/data/` 的表结构须提升 `AppDatabase.schemaVersion` 并在 `_onUpgrade` 写迁移。
 
 Web 专用能力必须有移动端实现或明确提示不可用。本地图片选择使用系统图片选择器，JSON 导入使用系统文件选择器，Android JSON 导出默认写入系统 Downloads，不要只实现 `dart:html` 版本。新增文件、图片、相册、安装包等能力时，要同步检查 Android Manifest 权限、MediaStore/分区存储和 Android 13+ 行为。移动端 data URL 图片预览应使用内存图片渲染，避免 `Image.network`/`NetworkImage` 在真机上黑屏。
 
