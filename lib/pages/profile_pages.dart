@@ -24,6 +24,7 @@ import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import 'app_lock_page.dart';
+import 'reminder_settings_page.dart';
 import 'legal_pages.dart';
 import 'sheets.dart';
 
@@ -1350,6 +1351,22 @@ class SettingsPage extends StatelessWidget {
                         Navigator.of(context).push<void>(
                           MaterialPageRoute<void>(
                             builder: (context) => const AppLockSettingsPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                    SettingsRow(
+                      icon: Icons.notifications_active_outlined,
+                      title: '记账提醒',
+                      trailing: controller.reminderSettings.enabled
+                          ? '每日 ${controller.reminderSettings.timeLabel}'
+                          : '未开启',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () {
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const ReminderSettingsPage(),
                           ),
                         );
                       },

@@ -54,6 +54,7 @@ Web/移动/测试差异统一用条件导出模式（`stub` + `if (dart.library.
 - `lib/app/biometric_auth_*.dart`：应用锁的生物解锁 — io 用 `local_auth`（仅 Android/iOS 生效，不保存生物特征数据；`local_auth` 无法严格排除人脸，故用户文案统一为「生物解锁」），stub（含 Web 与测试宿主）一律不可用。Android 端依赖 `FlutterFragmentActivity`、`USE_BIOMETRIC` 权限与 `minSdk≥23`。
 - `lib/app/backup/backup_storage_*.dart`：备份目录选择与文件读写 — io 上 Android 走 SAF（经 `platform_bridge`）、桌面走 `file_selector`+`dart:io`，Web/stub 不支持持久目录。
 - `lib/app/backup/webdav_client_*.dart`：WebDAV 备份 — io 用 `dart:io HttpClient` 手写 PUT/GET/PROPFIND/MKCOL，Web/stub 因跨域不支持。
+- `lib/app/reminder/notification_scheduler_*.dart`：记账提醒本地通知 — io 用 `flutter_local_notifications`+`timezone`+`flutter_timezone`，每日在设定时刻发一条提醒（inexact 调度免精确闹钟权限、`matchDateTimeComponents: time` 每日重复），stub（Web 与测试宿主）不支持。配置 `ReminderSettings`（`reminder/reminder_settings.dart`）存 KV（`verifin.reminder.v1`），是设备本地偏好、不进 JSON 备份；`main.dart` 开屏与配置变化时 `apply` 重排通知。Android 端需 `POST_NOTIFICATIONS`/`RECEIVE_BOOT_COMPLETED` 权限、插件接收器与 core library desugaring。
 
 [lib/app/platform_bridge.dart](lib/app/platform_bridge.dart) 是 Android MethodChannel 桥（快速记账磁贴入口、GitHub Release 更新检查与下载、备份目录 SAF 读写）。
 

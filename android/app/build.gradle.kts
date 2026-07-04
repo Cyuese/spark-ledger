@@ -10,6 +10,8 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // flutter_local_notifications 需要 core library desugaring 支持 java.time。
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -60,4 +62,6 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     // 备份目录 SAF 读写（DocumentFile 树操作）。
     implementation("androidx.documentfile:documentfile:1.0.1")
+    // flutter_local_notifications 定时通知所需的 desugaring 运行库。
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

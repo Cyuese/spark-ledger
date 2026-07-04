@@ -55,7 +55,7 @@
 
 - [x] 4.1 报表增强：看板右上角「统计分析」入口进入 `ReportAnalysisPage`；时间范围可选本月 / 本年 / 自定义（`showDateRangePicker`），维度可选支出 / 收入；展示收支概览、趋势曲线（短范围按天、整年/跨多月按月，`ReportTrend`）、分类排行（按顶级分类聚合净额）；纯函数在 `lib/app/report_analysis.dart`（`ReportRange`/`reportSummary`/`reportCategoryStats`/`reportTrend`）
 - [x] 4.2 同比 / 环比分析：统计分析页在「本月」范围下展示「同比 · 环比」卡，收入 / 支出 / 结余分别对上月（环比）与去年同月（同比）算变化率；纯函数 `reportMonthlyComparison`/`changeRatio`/`formatChangeRatio`（`report_analysis.dart`），基准为 0 时显示「—」，颜色按「上升是否为好」区分（收入/结余升为绿、支出升为红）
-- [ ] 4.3 记账提醒：用户自定义每日提醒时间，本地通知
+- [x] 4.3 记账提醒：设置页「记账提醒」入口（`ReminderSettingsPage`）开关每日提醒并选提醒时刻；本地通知走 `flutter_local_notifications` + `timezone`（`lib/app/reminder/notification_scheduler_*.dart` 条件导入，io=真实、web/测试=stub），每日在设定时刻发一条通知（inexact 调度免精确闹钟权限，`matchDateTimeComponents: time` 每日重复）；配置存 KV（`verifin.reminder.v1`，`ReminderSettings`，设备本地不进 JSON 备份），`main.dart` 开屏与配置变化时 `apply` 重排；Android 加 `POST_NOTIFICATIONS`/`RECEIVE_BOOT_COMPLETED` 权限、插件接收器与 core library desugaring。注：真机验证待发版后进行
 - [ ] 4.4 我的页改版：宫格等更现代的布局，容纳新增功能入口，优化整体展示
 - [ ] 4.5 新用户引导：首次使用引导建账户、设预算等；**后续功能变动需回顾引导内容是否同步**
 - [ ] 4.6 Android 桌面小组件：今日支出 + 快速记账入口，符合产品视觉风格
@@ -94,3 +94,4 @@
 | 图片附件存储 | 压缩 JPEG（最长边 1600、q80）存 data URL，放**独立 `attachments` 表**（非 entries 表），复用现有 JSON 备份管线 | 放 entries 表会让「整表覆盖式」写入把所有图片 base64 反复重写（放大严重）；独立表只在增删图片时重写。data URL 落在应用私有 SQLite 内，备份天然覆盖，且移动端已有内存图片渲染能力，无需额外文件生命周期管理 |
 | 报销/退款模型 | 退款/报销回款统一记为原支出的 `refundedAmount`（回到原账户、冲抵原交易），不新建收入条目；「待报销」只是标记 | 单字段冲抵最简单，天然满足「回款不计收入」；退款回原账户是最常见场景。代价：跨账户报销（回款到另一账户）暂用近似（记在原账户），后续如需精确可再引入关联结算条目 |
 | 周期记账补记时机 | 打开应用与回前台时 `applyDueRecurring(now)` 一次性补齐所有到期交易，不用后台定时任务/通知 | 本地优先、无服务端；应用不常驻，开屏补记足够且省电；补记逻辑纯函数（`dueDatesFor`/`advanceRecurring`）便于测试；`nextRunDate` 幂等推进保证不重复补记 |
+| 记账提醒通知 | `flutter_local_notifications`+`timezone`+`flutter_timezone`；inexact 调度（`inexactAllowWhileIdle`）+`matchDateTimeComponents: time` 每日重复 | 本地通知属平台能力非简单需求，需成熟库；inexact 免 `SCHEDULE_EXACT_ALARM` 特殊权限，提醒场景对精确到分钟无强需求；`timezone` 保证 zonedSchedule 按本地时区触发。配置为设备本地偏好，存 KV、不进 JSON 备份 |

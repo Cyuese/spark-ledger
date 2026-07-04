@@ -14,6 +14,7 @@ import 'demo_data.dart';
 import 'ledger_math.dart';
 import 'models.dart';
 import 'recurring.dart';
+import 'reminder/reminder_settings.dart';
 
 class VeriFinController extends ChangeNotifier {
   VeriFinController._(this._store, this._repository) {
@@ -52,6 +53,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _backupSettingsKey = 'verifin.backup_settings.v1';
   static const String _backupPassphraseKey = 'verifin.backup_passphrase.v1';
   static const String _webdavKey = 'verifin.webdav.v1';
+  static const String _reminderKey = 'verifin.reminder.v1';
 
   static String _panelsKeyFor(PanelPageKind page) {
     switch (page) {
@@ -101,6 +103,7 @@ class VeriFinController extends ChangeNotifier {
   BackupSettings _backupSettings = const BackupSettings();
   String _backupPassphrase = '';
   WebdavConfig _webdavConfig = const WebdavConfig();
+  ReminderSettings _reminderSettings = ReminderSettings.disabled;
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
     _entries.where((entry) => entry.bookId == _activeBookId),
@@ -450,6 +453,21 @@ class VeriFinController extends ChangeNotifier {
     themePreferenceListenable.value = preference;
     _store.write(_themeKey, preference.name);
     notifyListeners();
+  }
+
+  ReminderSettings get reminderSettings => _reminderSettings;
+
+  /// 记账提醒配置变化时的回调（由 `main.dart` 注入，用于重排本地通知）。
+  ValueChanged<ReminderSettings>? onReminderChanged;
+
+  void setReminderSettings(ReminderSettings settings) {
+    if (_reminderSettings == settings) {
+      return;
+    }
+    _reminderSettings = settings;
+    _store.write(_reminderKey, settings.encode());
+    notifyListeners();
+    onReminderChanged?.call(settings);
   }
 
   void setHapticsEnabled(bool enabled) {
@@ -1676,6 +1694,7 @@ class VeriFinController extends ChangeNotifier {
     _backupSettings = BackupSettings.decode(_store.read(_backupSettingsKey));
     _backupPassphrase = _store.read(_backupPassphraseKey) ?? '';
     _webdavConfig = WebdavConfig.decode(_store.read(_webdavKey));
+    _reminderSettings = ReminderSettings.decode(_store.read(_reminderKey));
   }
 
   /// 从 SQLite 载入账目类数据；全新数据库首启动写入默认账本/账户/分组/分类。

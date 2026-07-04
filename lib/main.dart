@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'app/app_theme.dart';
 import 'app/backup/backup_coordinator.dart';
 import 'app/models.dart';
+import 'app/reminder/notification_scheduler.dart';
+import 'app/reminder/reminder_settings.dart';
 import 'app/veri_fin_controller.dart';
 import 'app/veri_fin_scope.dart';
 import 'data/app_database.dart';
@@ -37,6 +39,7 @@ class VeriFinApp extends StatefulWidget {
 
 class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
   late final VeriFinController _controller = widget.controller;
+  final NotificationScheduler _notifications = NotificationScheduler();
 
   @override
   void initState() {
@@ -44,11 +47,18 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     // 记账后自动备份挂钩；应用打开时按配置尝试一次自动备份。
     _controller.onEntryAdded = _handleEntryAdded;
+    // 记账提醒：配置变化时重排本地通知，开屏按当前配置对齐一次。
+    _controller.onReminderChanged = _handleReminderChanged;
+    _notifications.apply(_controller.reminderSettings);
     BackupCoordinator.maybeBackupOnOpen(_controller);
   }
 
   void _handleEntryAdded() {
     BackupCoordinator.maybeBackupAfterEntry(_controller);
+  }
+
+  void _handleReminderChanged(ReminderSettings settings) {
+    _notifications.apply(settings);
   }
 
   @override
@@ -64,6 +74,9 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     if (_controller.onEntryAdded == _handleEntryAdded) {
       _controller.onEntryAdded = null;
+    }
+    if (_controller.onReminderChanged == _handleReminderChanged) {
+      _controller.onReminderChanged = null;
     }
     _controller.dispose();
     super.dispose();
