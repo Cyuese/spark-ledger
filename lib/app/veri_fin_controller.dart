@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' hide Category;
 import '../data/ledger_repository.dart';
 import '../local_storage/local_storage.dart';
 import 'app_lock.dart';
+import 'backup/backup_settings.dart';
 import 'demo_data.dart';
 import 'ledger_math.dart';
 import 'models.dart';
@@ -44,6 +45,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _assetSectionOrderKey = 'verifin.asset_section_order.v1';
   static const String _homePanelsKey = 'verifin.home_panels.v1';
   static const String _reportPanelsKey = 'verifin.report_panels.v1';
+  static const String _backupSettingsKey = 'verifin.backup_settings.v1';
 
   static String _panelsKeyFor(PanelPageKind page) {
     switch (page) {
@@ -87,6 +89,7 @@ class VeriFinController extends ChangeNotifier {
   bool _privacyConsentAccepted = false;
   AppLockConfig _appLockConfig = const AppLockConfig.none();
   AssetAccountViewMode _assetAccountViewMode = AssetAccountViewMode.type;
+  BackupSettings _backupSettings = const BackupSettings();
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
     _entries.where((entry) => entry.bookId == _activeBookId),
@@ -125,6 +128,61 @@ class VeriFinController extends ChangeNotifier {
   bool get hapticsEnabled => _hapticsEnabled;
 
   AssetAccountViewMode get assetAccountViewMode => _assetAccountViewMode;
+
+  BackupSettings get backupSettings => _backupSettings;
+
+  void _persistBackupSettings() {
+    _store.write(_backupSettingsKey, _backupSettings.encode());
+  }
+
+  /// 保存用户选择的备份目录（Android SAF 树 URI 或桌面路径）。
+  void setBackupDirectory(String uri, String label) {
+    _backupSettings = _backupSettings.copyWith(
+      directoryUri: uri,
+      directoryLabel: label,
+    );
+    _persistBackupSettings();
+    notifyListeners();
+  }
+
+  /// 清除备份目录，同时关闭自动备份。
+  void clearBackupDirectory() {
+    _backupSettings = _backupSettings.copyWith(
+      clearDirectory: true,
+      frequency: BackupFrequency.manual,
+    );
+    _persistBackupSettings();
+    notifyListeners();
+  }
+
+  void setBackupFrequency(BackupFrequency frequency) {
+    _backupSettings = _backupSettings.copyWith(frequency: frequency);
+    _persistBackupSettings();
+    notifyListeners();
+  }
+
+  void setBackupIntervalHours(int hours) {
+    _backupSettings = _backupSettings.copyWith(
+      intervalHours: hours < 1 ? 1 : hours,
+    );
+    _persistBackupSettings();
+    notifyListeners();
+  }
+
+  void setBackupRetention(int retention) {
+    _backupSettings = _backupSettings.copyWith(
+      retention: retention < 1 ? 1 : retention,
+    );
+    _persistBackupSettings();
+    notifyListeners();
+  }
+
+  /// 备份成功后记录时间，供自动备份频率判断与「上次备份时间」展示。
+  void recordBackupTime(DateTime time) {
+    _backupSettings = _backupSettings.copyWith(lastBackupAt: time);
+    _persistBackupSettings();
+    notifyListeners();
+  }
 
   List<Category> categoriesForType(EntryType type) {
     return categoriesFor(type, categories);
@@ -1095,6 +1153,7 @@ class VeriFinController extends ChangeNotifier {
     _loadAssetAccountOrders();
     _loadAssetSectionOrders();
     _loadPagePanels();
+    _backupSettings = BackupSettings.decode(_store.read(_backupSettingsKey));
   }
 
   /// 从 SQLite 载入账目类数据；全新数据库首启动写入默认账本/账户/分组/分类。

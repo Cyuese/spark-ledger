@@ -13,6 +13,7 @@ import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -26,6 +27,7 @@ class MainActivity : FlutterFragmentActivity() {
     private var channel: MethodChannel? = null
     private var pendingQuickEntryIntent = false
     private var pendingDownloadsWrite: PendingDownloadsWrite? = null
+    private var pendingDirectoryPick: MethodChannel.Result? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         rememberQuickEntryIntent(intent)
@@ -48,6 +50,26 @@ class MainActivity : FlutterFragmentActivity() {
                     call.argument<String>("filename") ?: "verifin-backup.json",
                     call.argument<String>("content") ?: "",
                     call.argument<String>("mimeType") ?: "application/json",
+                    result,
+                )
+                "pickBackupDirectory" -> pickBackupDirectory(result)
+                "writeBackupFile" -> writeBackupFile(
+                    call.argument<String>("directoryUri") ?: "",
+                    call.argument<String>("filename") ?: "verifin-backup.json",
+                    call.argument<String>("content") ?: "",
+                    call.argument<String>("mimeType") ?: "application/json",
+                    result,
+                )
+                "listBackupFiles" -> listBackupFiles(
+                    call.argument<String>("directoryUri") ?: "",
+                    result,
+                )
+                "readBackupFile" -> readBackupFile(
+                    call.argument<String>("fileUri") ?: "",
+                    result,
+                )
+                "deleteBackupFile" -> deleteBackupFile(
+                    call.argument<String>("fileUri") ?: "",
                     result,
                 )
                 else -> result.notImplemented()
@@ -396,6 +418,146 @@ class MainActivity : FlutterFragmentActivity() {
         }.start()
     }
 
+    // ---- 备份目录（SAF）----
+
+    private fun pickBackupDirectory(result: MethodChannel.Result) {
+        if (pendingDirectoryPick != null) {
+            result.error("PICK_BUSY", "已有目录选择在进行中，请稍后再试。", null)
+            return
+        }
+        pendingDirectoryPick = result
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+            addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION,
+            )
+        }
+        try {
+            startActivityForResult(intent, REQUEST_PICK_BACKUP_DIR)
+        } catch (error: Exception) {
+            pendingDirectoryPick = null
+            result.error("PICK_FAILED", error.message ?: "无法打开目录选择器。", null)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_PICK_BACKUP_DIR) {
+            return
+        }
+        val pending = pendingDirectoryPick ?: return
+        pendingDirectoryPick = null
+        val treeUri = if (resultCode == RESULT_OK) data?.data else null
+        if (treeUri == null) {
+            pending.success(null)
+            return
+        }
+        try {
+            val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            contentResolver.takePersistableUriPermission(treeUri, flags)
+            val label = DocumentFile.fromTreeUri(this, treeUri)?.name ?: treeUri.lastPathSegment
+            pending.success(
+                mapOf(
+                    "uri" to treeUri.toString(),
+                    "label" to (label ?: treeUri.toString()),
+                ),
+            )
+        } catch (error: Exception) {
+            pending.error("PICK_FAILED", error.message ?: "无法保存目录授权。", null)
+        }
+    }
+
+    private fun backupTree(directoryUri: String): DocumentFile? {
+        if (directoryUri.isEmpty()) {
+            return null
+        }
+        return DocumentFile.fromTreeUri(this, Uri.parse(directoryUri))
+    }
+
+    private fun writeBackupFile(
+        directoryUri: String,
+        filename: String,
+        content: String,
+        mimeType: String,
+        result: MethodChannel.Result,
+    ) {
+        Thread {
+            try {
+                val tree = backupTree(directoryUri)
+                    ?: throw IllegalStateException("备份目录不可用，请重新选择。")
+                tree.findFile(filename)?.delete()
+                val file = tree.createFile(mimeType, filename)
+                    ?: throw IllegalStateException("无法在备份目录创建文件。")
+                contentResolver.openOutputStream(file.uri)?.use { output ->
+                    output.write(content.toByteArray(Charsets.UTF_8))
+                } ?: throw IllegalStateException("无法写入备份文件。")
+                runOnUiThread { result.success(file.uri.toString()) }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    result.error("BACKUP_FAILED", error.message ?: "写入备份失败。", null)
+                }
+            }
+        }.start()
+    }
+
+    private fun listBackupFiles(directoryUri: String, result: MethodChannel.Result) {
+        Thread {
+            try {
+                val tree = backupTree(directoryUri)
+                if (tree == null || !tree.isDirectory) {
+                    runOnUiThread { result.success(emptyList<Map<String, Any>>()) }
+                    return@Thread
+                }
+                val files = tree.listFiles()
+                    .filter { it.isFile && (it.name?.endsWith(".json") == true) }
+                    .map { doc ->
+                        mapOf(
+                            "uri" to doc.uri.toString(),
+                            "name" to (doc.name ?: ""),
+                            "modifiedAt" to doc.lastModified(),
+                            "sizeBytes" to doc.length(),
+                        )
+                    }
+                runOnUiThread { result.success(files) }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    result.error("BACKUP_LIST_FAILED", error.message ?: "读取备份目录失败。", null)
+                }
+            }
+        }.start()
+    }
+
+    private fun readBackupFile(fileUri: String, result: MethodChannel.Result) {
+        Thread {
+            try {
+                val text = contentResolver.openInputStream(Uri.parse(fileUri))?.use { input ->
+                    input.readBytes().toString(Charsets.UTF_8)
+                } ?: throw IllegalStateException("无法读取备份文件。")
+                runOnUiThread { result.success(text) }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    result.error("BACKUP_READ_FAILED", error.message ?: "读取备份文件失败。", null)
+                }
+            }
+        }.start()
+    }
+
+    private fun deleteBackupFile(fileUri: String, result: MethodChannel.Result) {
+        Thread {
+            try {
+                val doc = DocumentFile.fromSingleUri(this, Uri.parse(fileUri))
+                val deleted = doc?.delete() ?: false
+                runOnUiThread { result.success(deleted) }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    result.error("BACKUP_DELETE_FAILED", error.message ?: "删除备份文件失败。", null)
+                }
+            }
+        }.start()
+    }
+
     private fun isNewerVersion(latest: String, current: String): Boolean {
         val latestParts = latest.split(".", "-").map { it.toIntOrNull() ?: 0 }
         val currentParts = current.split(".", "-").map { it.toIntOrNull() ?: 0 }
@@ -421,6 +583,7 @@ class MainActivity : FlutterFragmentActivity() {
         const val ACTION_QUICK_ENTRY = "top.talyra42.verifin.action.QUICK_ENTRY"
         private const val CHANNEL_NAME = "verifin/app"
         private const val REQUEST_WRITE_DOWNLOADS = 4301
+        private const val REQUEST_PICK_BACKUP_DIR = 4302
         private const val RELEASE_API_URL =
             "https://api.github.com/repos/LumiDesk/verifin/releases/latest"
     }

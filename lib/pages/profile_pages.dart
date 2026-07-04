@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../app/app_theme.dart';
 import '../app/app_version.dart';
 import '../app/avatar_picker.dart';
+import '../app/backup/backup_service.dart';
+import '../app/backup/backup_settings.dart';
 import '../app/common_widgets.dart';
 import '../app/data_file_port.dart';
 import '../app/demo_data.dart';
@@ -1057,6 +1059,42 @@ class DataManagementPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
+              _sectionLabel(context, '备份到本地目录'),
+              VeriCard(
+                child: Column(
+                  children: <Widget>[
+                    SettingsRow(
+                      icon: Icons.folder_outlined,
+                      title: '备份目录',
+                      trailing: controller.backupSettings.hasDirectory
+                          ? controller.backupSettings.directoryLabel
+                          : '未选择',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _chooseBackupDirectory(context, controller),
+                    ),
+                    const Divider(),
+                    SettingsRow(
+                      icon: Icons.backup_outlined,
+                      title: '立即备份',
+                      trailing: _lastBackupLabel(controller.backupSettings),
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _backupNow(context, controller),
+                    ),
+                    if (controller.backupSettings.hasDirectory) ...<Widget>[
+                      const Divider(),
+                      SettingsRow(
+                        icon: Icons.link_off,
+                        title: '清除备份目录',
+                        trailing: '停止本地备份',
+                        trailingIcon: Icons.chevron_right,
+                        contentColor: veriExpense,
+                        onTap: () => controller.clearBackupDirectory(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
               VeriCard(
                 child: SettingsRow(
                   icon: Icons.restart_alt,
@@ -1072,6 +1110,90 @@ class DataManagementPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static Widget _sectionLabel(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(6, 4, 6, 8),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  static String _lastBackupLabel(BackupSettings settings) {
+    final last = settings.lastBackupAt;
+    if (last == null) {
+      return '尚未备份';
+    }
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '上次 ${last.year}-${two(last.month)}-${two(last.day)} '
+        '${two(last.hour)}:${two(last.minute)}';
+  }
+
+  Future<void> _chooseBackupDirectory(
+    BuildContext context,
+    VeriFinController controller,
+  ) async {
+    try {
+      final picked = await BackupService.chooseDirectory();
+      if (picked == null || !context.mounted) {
+        return;
+      }
+      controller.setBackupDirectory(picked.uri, picked.label);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('已选择备份目录：${picked.label}')));
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_backupErrorText(error))));
+      }
+    }
+  }
+
+  Future<void> _backupNow(
+    BuildContext context,
+    VeriFinController controller,
+  ) async {
+    if (!controller.backupSettings.hasDirectory) {
+      await _chooseBackupDirectory(context, controller);
+      if (!context.mounted || !controller.backupSettings.hasDirectory) {
+        return;
+      }
+    }
+    try {
+      final now = DateTime.now();
+      final result = await BackupService.writeManualBackup(
+        settings: controller.backupSettings,
+        content: controller.exportDataJson(),
+        now: now,
+      );
+      controller.recordBackupTime(now);
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('已备份：${result.filename}')));
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_backupErrorText(error))));
+      }
+    }
+  }
+
+  static String _backupErrorText(Object error) {
+    final message = error is Exception
+        ? error.toString().replaceFirst('Exception: ', '')
+        : '备份操作失败，请稍后再试';
+    return message.isEmpty ? '备份操作失败，请稍后再试' : message;
   }
 
   Future<void> _exportData(

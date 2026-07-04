@@ -58,4 +58,6 @@ flutter {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
+    // 备份目录 SAF 读写（DocumentFile 树操作）。
+    implementation("androidx.documentfile:documentfile:1.0.1")
 }
