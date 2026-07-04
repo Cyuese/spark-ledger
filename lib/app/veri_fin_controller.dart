@@ -329,6 +329,13 @@ class VeriFinController extends ChangeNotifier {
     return true;
   }
 
+  /// 恢复页面面板为默认顺序并全部开启。
+  void resetPanels(PanelPageKind page) {
+    _pagePanels[page] = _defaultPanelSettings(page.specs);
+    _persistPagePanels(page);
+    notifyListeners();
+  }
+
   void reorderPanels(PanelPageKind page, int oldIndex, int newIndex) {
     final panels = _pagePanels[page]!;
     if (oldIndex < 0 ||

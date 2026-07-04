@@ -90,6 +90,13 @@ class _PanelSettingsPageState extends State<PanelSettingsPage> {
                   subtitle: _sorting ? '拖动手柄调整顺序' : '开关与排序',
                   showBack: true,
                   actions: <Widget>[
+                    if (!_sorting)
+                      HeaderAction(
+                        key: const Key('panel_reset'),
+                        icon: Icons.restart_alt,
+                        tooltip: '恢复默认',
+                        onPressed: () => _confirmReset(context),
+                      ),
                     HeaderAction(
                       key: const Key('panel_sort_toggle'),
                       icon: _sorting ? Icons.check : Icons.swap_vert,
@@ -154,6 +161,29 @@ class _PanelSettingsPageState extends State<PanelSettingsPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmReset(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('恢复默认${widget.kind.label}面板？'),
+        content: const Text('将恢复默认顺序并开启全部面板。'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('恢复默认'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      VeriFinScope.of(context).resetPanels(widget.kind);
+    }
   }
 
   void _togglePanel(String panelId, bool enabled) {

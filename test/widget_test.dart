@@ -783,6 +783,55 @@ void main() {
     controller.dispose();
   });
 
+  testWidgets('resets panels to defaults after confirmation', (
+    WidgetTester tester,
+  ) async {
+    final store = LocalKeyValueStore();
+    final seed = VeriFinController(store);
+    seed
+      ..setPanelEnabled(PanelPageKind.home, 'calendar', false)
+      ..reorderPanels(PanelPageKind.home, 0, 2)
+      ..dispose();
+
+    await tester.pumpWidget(VeriFinApp(store: store));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('panel_settings_entry_home')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('3个首页面板'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('panel_settings_entry_home')));
+    await tester.pumpAndSettle();
+
+    // 取消确认弹窗时不重置。
+    await tester.tap(find.byKey(const Key('panel_reset')));
+    await tester.pumpAndSettle();
+    expect(find.text('恢复默认首页面板？'), findsOneWidget);
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
+
+    final beforeReset = VeriFinController(store);
+    expect(beforeReset.enabledPanelIds(PanelPageKind.home).length, 3);
+    beforeReset.dispose();
+
+    // 确认后恢复默认顺序并开启全部面板。
+    await tester.tap(find.byKey(const Key('panel_reset')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('恢复默认'));
+    await tester.pumpAndSettle();
+
+    final afterReset = VeriFinController(store);
+    expect(
+      afterReset.panelSettings(PanelPageKind.home).map((panel) => panel.id),
+      homePanelSpecs.map((spec) => spec.id),
+    );
+    expect(
+      afterReset.enabledPanelIds(PanelPageKind.home).length,
+      homePanelSpecs.length,
+    );
+    afterReset.dispose();
+  });
+
   testWidgets('isolates accounts between ledger books', (
     WidgetTester tester,
   ) async {
