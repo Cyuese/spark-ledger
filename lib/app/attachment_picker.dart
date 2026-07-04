@@ -1,0 +1,3 @@
+export 'attachment_picker_stub.dart'
+    if (dart.library.html) 'attachment_picker_stub.dart'
+    if (dart.library.io) 'attachment_picker_io.dart';

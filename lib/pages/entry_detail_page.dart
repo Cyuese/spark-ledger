@@ -7,6 +7,7 @@ import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
+import 'attachments_editor.dart';
 import 'sheets.dart';
 
 class EntryDetailPage extends StatefulWidget {
@@ -31,6 +32,8 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   String? _toAccountId;
   DateTime _occurredAt = DateTime.now();
   List<String> _tagIds = <String>[];
+  // 新增交易时先缓存附件 data URL，保存后再按新交易 id 落库。
+  final List<String> _pendingAttachments = <String>[];
   final TextEditingController _noteController = TextEditingController();
 
   @override
@@ -229,6 +232,14 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     tagLabelOf: (id) => controller.tagById(id)?.label,
                     onTap: _pickTags,
                   ),
+                  const Divider(height: 24),
+                  AttachmentsEditor(
+                    dataUrls: _pendingAttachments,
+                    onAddDataUrl: (dataUrl) =>
+                        setState(() => _pendingAttachments.add(dataUrl)),
+                    onRemoveIndex: (index) =>
+                        setState(() => _pendingAttachments.removeAt(index)),
+                  ),
                 ],
               ),
             ),
@@ -409,9 +420,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         .any((account) => account.id == _accountId)) {
       return;
     }
+    final entryId = DateTime.now().microsecondsSinceEpoch.toString();
     controller.addEntry(
       LedgerEntry(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        id: entryId,
         bookId: controller.activeBook.id,
         type: _type,
         amount: _amount,
@@ -423,6 +435,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         tagIds: _tagIds,
       ),
     );
+    for (final dataUrl in _pendingAttachments) {
+      controller.addAttachment(entryId, dataUrl);
+    }
     Navigator.of(context).pop();
   }
 }

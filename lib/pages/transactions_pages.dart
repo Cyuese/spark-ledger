@@ -9,6 +9,7 @@ import '../app/models.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
+import 'attachments_editor.dart';
 import 'sheets.dart';
 
 enum TransactionTimeFilter {
@@ -1053,6 +1054,25 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                         onTap: _pickTags,
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                VeriCard(
+                  child: Builder(
+                    builder: (context) {
+                      final attachments = controller.attachmentsForEntry(
+                        widget.entryId,
+                      );
+                      return AttachmentsEditor(
+                        dataUrls: attachments
+                            .map((a) => a.dataUrl)
+                            .toList(growable: false),
+                        onAddDataUrl: (dataUrl) =>
+                            controller.addAttachment(widget.entryId, dataUrl),
+                        onRemoveIndex: (index) =>
+                            controller.removeAttachment(attachments[index].id),
+                      );
+                    },
                   ),
                 ),
               ],
