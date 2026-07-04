@@ -145,6 +145,7 @@ class LedgerEntry {
     this.toAccountId,
     required this.note,
     required this.occurredAt,
+    this.tagIds = const <String>[],
   });
 
   final String id;
@@ -157,6 +158,9 @@ class LedgerEntry {
   final String note;
   final DateTime occurredAt;
 
+  /// 该交易关联的标签 id 列表（多对多，可为空）。
+  final List<String> tagIds;
+
   LedgerEntry copyWith({
     String? id,
     String? bookId,
@@ -168,6 +172,7 @@ class LedgerEntry {
     bool clearToAccountId = false,
     String? note,
     DateTime? occurredAt,
+    List<String>? tagIds,
   }) {
     return LedgerEntry(
       id: id ?? this.id,
@@ -179,6 +184,7 @@ class LedgerEntry {
       toAccountId: clearToAccountId ? null : toAccountId ?? this.toAccountId,
       note: note ?? this.note,
       occurredAt: occurredAt ?? this.occurredAt,
+      tagIds: tagIds ?? this.tagIds,
     );
   }
 
@@ -193,6 +199,7 @@ class LedgerEntry {
       'toAccountId': toAccountId,
       'note': note,
       'occurredAt': occurredAt.toIso8601String(),
+      if (tagIds.isNotEmpty) 'tagIds': tagIds,
     };
   }
 
@@ -209,6 +216,37 @@ class LedgerEntry {
       occurredAt:
           DateTime.tryParse(json['occurredAt'] as String? ?? '') ??
           DateTime.now(),
+      tagIds: _stringList(json['tagIds']),
+    );
+  }
+}
+
+List<String> _stringList(Object? value) {
+  if (value is List) {
+    return value.map((e) => e.toString()).toList(growable: false);
+  }
+  return const <String>[];
+}
+
+/// 标签：与交易多对多关联，用于跨分类的横向归类与统计。
+class Tag {
+  const Tag({required this.id, required this.label});
+
+  final String id;
+  final String label;
+
+  Tag copyWith({String? id, String? label}) {
+    return Tag(id: id ?? this.id, label: label ?? this.label);
+  }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{'id': id, 'label': label};
+  }
+
+  static Tag fromJson(Map<String, Object?> json) {
+    return Tag(
+      id: json['id'] as String,
+      label: json['label'] as String? ?? '未命名标签',
     );
   }
 }

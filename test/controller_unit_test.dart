@@ -1,4 +1,3 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/ledger_math.dart';
 import 'package:verifin/app/models.dart';
@@ -174,27 +173,30 @@ void main() {
     controller.dispose();
   });
 
-  test('rebase balance updates initial balance without a transaction', () async {
-    final controller = await makeController();
-    final account = Account(
-      id: 'rebase-acc',
-      bookId: controller.activeBook.id,
-      name: '现金',
-      type: AccountType.cash,
-      groupId: null,
-      initialBalance: 100,
-      iconCode: 'wallet',
-      note: '',
-      includeInAssets: true,
-      hidden: false,
-    );
-    controller.addAccount(account);
+  test(
+    'rebase balance updates initial balance without a transaction',
+    () async {
+      final controller = await makeController();
+      final account = Account(
+        id: 'rebase-acc',
+        bookId: controller.activeBook.id,
+        name: '现金',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 100,
+        iconCode: 'wallet',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      );
+      controller.addAccount(account);
 
-    controller.rebaseAccountBalance(account, 250);
+      controller.rebaseAccountBalance(account, 250);
 
-    expect(controller.entries, isEmpty);
-    expect(controller.accountBalance(controller.accounts.single), 250);
-    expect(controller.accounts.single.initialBalance, 250);
-    controller.dispose();
-  });
+      expect(controller.entries, isEmpty);
+      expect(controller.accountBalance(controller.accounts.single), 250);
+      expect(controller.accounts.single.initialBalance, 250);
+      controller.dispose();
+    },
+  );
 }

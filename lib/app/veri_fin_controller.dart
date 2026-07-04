@@ -71,6 +71,7 @@ class VeriFinController extends ChangeNotifier {
   final List<Account> _accounts = <Account>[];
   final List<AccountGroup> _accountGroups = <AccountGroup>[];
   final List<Category> _categories = <Category>[];
+  final List<Tag> _tags = <Tag>[];
   final Map<String, double> _monthlyBudgets = <String, double>{};
   final Map<String, double> _categoryBudgets = <String, double>{};
   final Set<String> _collapsedAssetSections = <String>{};
@@ -125,6 +126,16 @@ class VeriFinController extends ChangeNotifier {
   List<Category> get categories => List<Category>.unmodifiable(
     _categories.isEmpty ? defaultCategories : _categories,
   );
+
+  /// 全部标签（按创建/排序顺序）。标签与账本无关，全局共享。
+  List<Tag> get tags => List<Tag>.unmodifiable(_tags);
+
+  Tag? tagById(String id) => _tags.where((tag) => tag.id == id).firstOrNull;
+
+  /// 某标签被多少笔交易使用（当前账本无关，统计全部交易）。
+  int tagUsageCount(String tagId) {
+    return _entries.where((entry) => entry.tagIds.contains(tagId)).length;
+  }
 
   ThemePreference get themePreference => _themePreference;
 
@@ -948,6 +959,79 @@ class VeriFinController extends ChangeNotifier {
     return _entries.where((entry) => entry.categoryId == categoryId).length;
   }
 
+  // ---- 标签 ----
+
+  /// 新增标签。名称去重（忽略首尾空白，区分大小写），已存在则返回其 id。
+  String? addTag(String label) {
+    final trimmed = label.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    final existing = _tags.where((tag) => tag.label == trimmed).firstOrNull;
+    if (existing != null) {
+      return existing.id;
+    }
+    final tag = Tag(
+      id: 'tag_${DateTime.now().microsecondsSinceEpoch}',
+      label: trimmed,
+    );
+    _tags.add(tag);
+    _persistTags();
+    notifyListeners();
+    return tag.id;
+  }
+
+  void renameTag(String tagId, String label) {
+    final trimmed = label.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+    final index = _tags.indexWhere((tag) => tag.id == tagId);
+    if (index == -1) {
+      return;
+    }
+    _tags[index] = _tags[index].copyWith(label: trimmed);
+    _persistTags();
+    notifyListeners();
+  }
+
+  void reorderTags(int oldIndex, int newIndex) {
+    if (oldIndex < 0 ||
+        oldIndex >= _tags.length ||
+        newIndex < 0 ||
+        newIndex > _tags.length) {
+      return;
+    }
+    final moved = _tags.removeAt(oldIndex);
+    _tags.insert(newIndex.clamp(0, _tags.length), moved);
+    _persistTags();
+    notifyListeners();
+  }
+
+  /// 删除标签，并从所有交易的 tagIds 中移除该标签的引用。
+  void deleteTag(String tagId) {
+    final index = _tags.indexWhere((tag) => tag.id == tagId);
+    if (index == -1) {
+      return;
+    }
+    _tags.removeAt(index);
+    var touchedEntries = false;
+    for (var i = 0; i < _entries.length; i++) {
+      final entry = _entries[i];
+      if (entry.tagIds.contains(tagId)) {
+        _entries[i] = entry.copyWith(
+          tagIds: entry.tagIds.where((id) => id != tagId).toList(),
+        );
+        touchedEntries = true;
+      }
+    }
+    _persistTags();
+    if (touchedEntries) {
+      _persistEntries();
+    }
+    notifyListeners();
+  }
+
   void addAccountGroup(String name) {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
@@ -1069,6 +1153,7 @@ class VeriFinController extends ChangeNotifier {
     _categories
       ..clear()
       ..addAll(defaultCategories);
+    _tags.clear();
     _monthlyBudgets.clear();
     _categoryBudgets.clear();
     _profile = defaultUserProfile;
@@ -1089,6 +1174,7 @@ class VeriFinController extends ChangeNotifier {
     _persistAccounts();
     _persistAccountGroups();
     _persistCategories();
+    _persistTags();
     _persistBudgets();
     _persistCategoryBudgets();
     themePreferenceListenable.value = _themePreference;
@@ -1107,6 +1193,7 @@ class VeriFinController extends ChangeNotifier {
         'accounts': _accounts.map((account) => account.toJson()).toList(),
         'accountGroups': _accountGroups.map((group) => group.toJson()).toList(),
         'categories': _categories.map((category) => category.toJson()).toList(),
+        'tags': _tags.map((tag) => tag.toJson()).toList(),
         'monthlyBudgets': Map<String, double>.from(_monthlyBudgets),
         'categoryBudgets': Map<String, double>.from(_categoryBudgets),
         'profile': _profile.toJson(),
@@ -1177,6 +1264,7 @@ class VeriFinController extends ChangeNotifier {
     final nextCategories = <Category>[
       ...(importedCategories.isEmpty ? defaultCategories : importedCategories),
     ];
+    final nextTags = _decodeModelList<Tag>(data['tags'], Tag.fromJson);
     final nextMonthlyBudgets = _bookScopedBudgets(
       _decodeBudgets(data['monthlyBudgets']),
     );
@@ -1238,6 +1326,9 @@ class VeriFinController extends ChangeNotifier {
     _categories
       ..clear()
       ..addAll(nextCategories);
+    _tags
+      ..clear()
+      ..addAll(nextTags);
     _monthlyBudgets
       ..clear()
       ..addAll(nextMonthlyBudgets);
@@ -1267,6 +1358,7 @@ class VeriFinController extends ChangeNotifier {
     _persistAccounts();
     _persistAccountGroups();
     _persistCategories();
+    _persistTags();
     _persistBudgets();
     _persistCategoryBudgets();
     _store.write(_profileKey, jsonEncode(_profile.toJson()));
@@ -1370,6 +1462,9 @@ class VeriFinController extends ChangeNotifier {
     _entries
       ..clear()
       ..addAll(entries);
+    _tags
+      ..clear()
+      ..addAll(await _repository.loadTags());
     _monthlyBudgets
       ..clear()
       ..addAll(_bookScopedBudgets(await _repository.loadMonthlyBudgets()));
@@ -1494,6 +1589,10 @@ class VeriFinController extends ChangeNotifier {
 
   void _persistCategories() {
     _trackWrite(_repository.saveCategories(List<Category>.of(_categories)));
+  }
+
+  void _persistTags() {
+    _trackWrite(_repository.saveTags(List<Tag>.of(_tags)));
   }
 
   void _persistBudgets() {

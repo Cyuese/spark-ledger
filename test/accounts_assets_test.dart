@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/app_theme.dart';
@@ -247,77 +246,80 @@ void main() {
     expect(find.text('默认账本账户'), findsNothing);
   });
 
-  test('persists asset account view mode collapse and manual ordering', () async {
-    final store = LocalKeyValueStore();
-    final source = await makeController(store);
-    final first = Account(
-      id: 'order-a',
-      bookId: source.activeBook.id,
-      name: 'A 账户',
-      type: AccountType.cash,
-      groupId: null,
-      initialBalance: 0,
-      iconCode: 'cash',
-      note: '',
-      includeInAssets: true,
-      hidden: false,
-    );
-    final second = Account(
-      id: 'order-b',
-      bookId: source.activeBook.id,
-      name: 'B 账户',
-      type: AccountType.cash,
-      groupId: null,
-      initialBalance: 0,
-      iconCode: 'cash',
-      note: '',
-      includeInAssets: true,
-      hidden: false,
-    );
-    source
-      ..addAccount(first)
-      ..addAccount(second)
-      ..toggleAssetSectionCollapsed(
-        mode: AssetAccountViewMode.type,
-        sectionId: AccountType.cash.name,
+  test(
+    'persists asset account view mode collapse and manual ordering',
+    () async {
+      final store = LocalKeyValueStore();
+      final source = await makeController(store);
+      final first = Account(
+        id: 'order-a',
+        bookId: source.activeBook.id,
+        name: 'A 账户',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 0,
+        iconCode: 'cash',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
       );
-    final sorted = source.sortedAccountsForAssetSection(
-      mode: AssetAccountViewMode.type,
-      sectionId: AccountType.cash.name,
-      accounts: source.accounts,
-    );
-    source
-      ..reorderAssetAccounts(
+      final second = Account(
+        id: 'order-b',
+        bookId: source.activeBook.id,
+        name: 'B 账户',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 0,
+        iconCode: 'cash',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      );
+      source
+        ..addAccount(first)
+        ..addAccount(second)
+        ..toggleAssetSectionCollapsed(
+          mode: AssetAccountViewMode.type,
+          sectionId: AccountType.cash.name,
+        );
+      final sorted = source.sortedAccountsForAssetSection(
         mode: AssetAccountViewMode.type,
         sectionId: AccountType.cash.name,
-        accounts: sorted,
-        oldIndex: 0,
-        newIndex: 1,
-      )
-      ..dispose();
+        accounts: source.accounts,
+      );
+      source
+        ..reorderAssetAccounts(
+          mode: AssetAccountViewMode.type,
+          sectionId: AccountType.cash.name,
+          accounts: sorted,
+          oldIndex: 0,
+          newIndex: 1,
+        )
+        ..dispose();
 
-    final target = await makeController(store);
-    final targetSorted = target.sortedAccountsForAssetSection(
-      mode: AssetAccountViewMode.type,
-      sectionId: AccountType.cash.name,
-      accounts: target.accounts,
-    );
-
-    expect(target.assetAccountViewMode, AssetAccountViewMode.type);
-    expect(
-      target.isAssetSectionCollapsed(
+      final target = await makeController(store);
+      final targetSorted = target.sortedAccountsForAssetSection(
         mode: AssetAccountViewMode.type,
         sectionId: AccountType.cash.name,
-      ),
-      isTrue,
-    );
-    expect(targetSorted.map((account) => account.id), <String>[
-      'order-b',
-      'order-a',
-    ]);
+        accounts: target.accounts,
+      );
 
-    target.dispose();
-  });
+      expect(target.assetAccountViewMode, AssetAccountViewMode.type);
+      expect(
+        target.isAssetSectionCollapsed(
+          mode: AssetAccountViewMode.type,
+          sectionId: AccountType.cash.name,
+        ),
+        isTrue,
+      );
+      expect(targetSorted.map((account) => account.id), <String>[
+        'order-b',
+        'order-a',
+      ]);
+
+      target.dispose();
+    },
+  );
 
   test('persists manual asset section ordering', () async {
     final store = LocalKeyValueStore();

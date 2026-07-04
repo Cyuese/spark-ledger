@@ -13,7 +13,7 @@ class AppDatabase {
   final Database db;
 
   static const String defaultDatabaseName = 'verifin.db';
-  static const int schemaVersion = 2;
+  static const int schemaVersion = 3;
 
   /// 打开（或创建）数据库。测试通过 [factory]/[path] 注入 ffi 与内存路径；
   /// 真实平台留空则由 [resolveDatabaseFactory]/[resolveDatabasePath] 决定。
@@ -38,7 +38,7 @@ class AppDatabase {
 
   static Future<void> _onCreate(Database db, int version) async {
     final batch = db.batch();
-    for (final statement in _schemaV1) {
+    for (final statement in _schemaCurrent) {
       batch.execute(statement);
     }
     await batch.commit(noResult: true);
@@ -53,10 +53,22 @@ class AppDatabase {
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE categories ADD COLUMN parent_id TEXT');
     }
+    // v2 → v3：标签系统。新增 tags 表；交易新增可空 tag_ids 列（JSON 数组）。
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE entries ADD COLUMN tag_ids TEXT');
+      await db.execute('''
+        CREATE TABLE tags (
+          id TEXT PRIMARY KEY,
+          label TEXT NOT NULL,
+          sort_order INTEGER NOT NULL
+        )
+      ''');
+    }
   }
 
-  /// v1 建表语句。字段命名用 snake_case；布尔存 0/1；时间存毫秒时间戳。
-  static const List<String> _schemaV1 = <String>[
+  /// 当前完整建表语句（供全新数据库 onCreate 用）。字段命名用 snake_case；
+  /// 布尔存 0/1；时间存毫秒时间戳。已含历次迁移引入的列/表（parent_id、tags 等）。
+  static const List<String> _schemaCurrent = <String>[
     '''
     CREATE TABLE ledger_books (
       id TEXT PRIMARY KEY,
@@ -76,7 +88,8 @@ class AppDatabase {
       account_id TEXT NOT NULL,
       to_account_id TEXT,
       note TEXT NOT NULL,
-      occurred_at INTEGER NOT NULL
+      occurred_at INTEGER NOT NULL,
+      tag_ids TEXT
     )
     ''',
     'CREATE INDEX idx_entries_book ON entries (book_id)',
@@ -128,6 +141,13 @@ class AppDatabase {
     CREATE TABLE category_budgets (
       scope_key TEXT PRIMARY KEY,
       amount REAL NOT NULL
+    )
+    ''',
+    '''
+    CREATE TABLE tags (
+      id TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      sort_order INTEGER NOT NULL
     )
     ''',
   ];

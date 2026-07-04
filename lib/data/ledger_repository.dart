@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:sqflite_common/sqlite_api.dart';
 
 import '../app/models.dart';
@@ -22,6 +24,9 @@ abstract interface class LedgerRepository {
 
   Future<List<Category>> loadCategories();
   Future<void> saveCategories(List<Category> categories);
+
+  Future<List<Tag>> loadTags();
+  Future<void> saveTags(List<Tag> tags);
 
   Future<Map<String, double>> loadMonthlyBudgets();
   Future<void> saveMonthlyBudgets(Map<String, double> budgets);
@@ -106,6 +111,19 @@ class SqliteLedgerRepository implements LedgerRepository {
   @override
   Future<void> saveCategories(List<Category> categories) async {
     await _replaceAll('categories', _indexed(categories, _categoryToRow));
+  }
+
+  // ---- 标签 ----
+
+  @override
+  Future<List<Tag>> loadTags() async {
+    final rows = await _db.query('tags', orderBy: 'sort_order ASC');
+    return rows.map(_tagFromRow).toList();
+  }
+
+  @override
+  Future<void> saveTags(List<Tag> tags) async {
+    await _replaceAll('tags', _indexed(tags, _tagToRow));
   }
 
   // ---- 预算（键值对：月度 / 分类）----
@@ -202,6 +220,8 @@ class SqliteLedgerRepository implements LedgerRepository {
     'to_account_id': e.toAccountId,
     'note': e.note,
     'occurred_at': e.occurredAt.millisecondsSinceEpoch,
+    // 标签 id 列表以 JSON 数组存单列（整表覆盖式读写，无需关联表）。
+    'tag_ids': e.tagIds.isEmpty ? null : jsonEncode(e.tagIds),
   };
 
   static LedgerEntry _entryFromRow(Map<String, Object?> row) => LedgerEntry(
@@ -214,7 +234,27 @@ class SqliteLedgerRepository implements LedgerRepository {
     toAccountId: row['to_account_id'] as String?,
     note: row['note'] as String? ?? '',
     occurredAt: DateTime.fromMillisecondsSinceEpoch(row['occurred_at'] as int),
+    tagIds: _decodeTagIds(row['tag_ids']),
   );
+
+  static List<String> _decodeTagIds(Object? raw) {
+    if (raw is String && raw.isNotEmpty) {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList(growable: false);
+      }
+    }
+    return const <String>[];
+  }
+
+  static Map<String, Object?> _tagToRow(Tag t, int index) => <String, Object?>{
+    'id': t.id,
+    'label': t.label,
+    'sort_order': index,
+  };
+
+  static Tag _tagFromRow(Map<String, Object?> row) =>
+      Tag(id: row['id'] as String, label: row['label'] as String);
 
   static Map<String, Object?> _bookToRow(LedgerBook b, int index) =>
       <String, Object?>{

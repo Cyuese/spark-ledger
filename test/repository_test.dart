@@ -214,6 +214,15 @@ void main() {
               sort_order INTEGER NOT NULL
             )
           ''');
+          // 真实 v1 库总有 entries 表；后续 v3 迁移会 ALTER 它加 tag_ids。
+          await db.execute('''
+            CREATE TABLE entries (
+              id TEXT PRIMARY KEY, book_id TEXT NOT NULL, type TEXT NOT NULL,
+              amount REAL NOT NULL, category_id TEXT NOT NULL,
+              account_id TEXT NOT NULL, to_account_id TEXT, note TEXT NOT NULL,
+              occurred_at INTEGER NOT NULL
+            )
+          ''');
         },
       ),
     );
@@ -249,6 +258,82 @@ void main() {
       null,
       'dining',
     ]);
+
+    await db.close();
+    await dir.delete(recursive: true);
+  });
+
+  test('交易标签 tag_ids 与 tags 表往返', () async {
+    final repo = await openRepo();
+    await repo.saveTags(<Tag>[
+      const Tag(id: 'tag_food', label: '外食'),
+      const Tag(id: 'tag_work', label: '工作'),
+    ]);
+    expect((await repo.loadTags()).map((t) => t.id).toList(), <String>[
+      'tag_food',
+      'tag_work',
+    ]);
+
+    final entry = LedgerEntry(
+      id: 'e-tagged',
+      bookId: defaultLedgerBookId,
+      type: EntryType.expense,
+      amount: 20,
+      categoryId: 'dining',
+      accountId: 'cash',
+      note: '',
+      occurredAt: DateTime(2026, 7, 4),
+      tagIds: const <String>['tag_food', 'tag_work'],
+    );
+    final plain = entry.copyWith(id: 'e-plain', tagIds: const <String>[]);
+    await repo.saveEntries(<LedgerEntry>[entry, plain]);
+    final loaded = await repo.loadEntries();
+    final tagged = loaded.firstWhere((e) => e.id == 'e-tagged');
+    final untagged = loaded.firstWhere((e) => e.id == 'e-plain');
+    expect(tagged.tagIds, <String>['tag_food', 'tag_work']);
+    expect(untagged.tagIds, isEmpty);
+  });
+
+  test('v2 数据库升级到 v3 后有 tags 表与 entries.tag_ids', () async {
+    final dir = await Directory.systemTemp.createTemp('verifin_mig3');
+    final path = '${dir.path}/mig3.db';
+    // 建一个 v2 库（entries 无 tag_ids、无 tags 表）。
+    final v2 = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 2,
+        onCreate: (db, _) async {
+          await db.execute('''
+            CREATE TABLE entries (
+              id TEXT PRIMARY KEY, book_id TEXT NOT NULL, type TEXT NOT NULL,
+              amount REAL NOT NULL, category_id TEXT NOT NULL,
+              account_id TEXT NOT NULL, to_account_id TEXT, note TEXT NOT NULL,
+              occurred_at INTEGER NOT NULL
+            )
+          ''');
+        },
+      ),
+    );
+    await v2.insert('entries', <String, Object?>{
+      'id': 'old',
+      'book_id': 'default',
+      'type': 'expense',
+      'amount': 5,
+      'category_id': 'dining',
+      'account_id': 'cash',
+      'note': '',
+      'occurred_at': DateTime(2026, 1, 1).millisecondsSinceEpoch,
+    });
+    await v2.close();
+
+    final db = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+    final repo = SqliteLedgerRepository(db);
+    final migrated = await repo.loadEntries();
+    expect(migrated.single.id, 'old');
+    expect(migrated.single.tagIds, isEmpty);
+    // tags 表存在且可写。
+    await repo.saveTags(<Tag>[const Tag(id: 't1', label: '标签')]);
+    expect((await repo.loadTags()).single.label, '标签');
 
     await db.close();
     await dir.delete(recursive: true);
