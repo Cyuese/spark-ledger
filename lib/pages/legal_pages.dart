@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
@@ -78,83 +79,105 @@ class LegalBody extends StatelessWidget {
 
 final RegExp _headingPattern = RegExp(r'^[一二三四五六七八九十]+、');
 
-/// 首启动的隐私政策 / 用户协议同意弹窗（不可通过返回键关闭）。
+/// 首启动的隐私政策 / 用户协议同意页（全屏、不可通过返回键关闭）。
 ///
-/// 返回 `true` 表示用户同意；用户点击「不同意并退出」时不会返回（直接退出应用）。
-Future<bool?> showPrivacyConsentDialog(BuildContext context) {
-  return showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const _PrivacyConsentDialog(),
-  );
-}
-
-class _PrivacyConsentDialog extends StatelessWidget {
-  const _PrivacyConsentDialog();
+/// 由 [PrivacyConsentGate] 在未同意时呈现，取代旧的一次性弹窗，避免
+/// 「拒绝退出后进程未死、热启动回到前台时不再询问」的问题：门卫每次 build
+/// 都按 `privacyConsentAccepted` 决定是否显示本页。
+///
+/// 「同意并继续」记录同意（门卫随即切换到主界面）；「不同意并退出」退出应用。
+class PrivacyConsentPage extends StatelessWidget {
+  const PrivacyConsentPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return PopScope(
       canPop: false,
-      child: AlertDialog(
-        title: const Text('隐私政策与用户协议'),
-        content: SizedBox(
-          width: 360,
-          child: SingleChildScrollView(
+      child: Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  legalConsentSummary,
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
+                  '隐私政策与用户协议',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          legalConsentSummary,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            height: 1.7,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 6,
+                          children: <Widget>[
+                            for (final document in LegalDocument.values)
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  minimumSize: const Size(0, 36),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push<void>(
+                                    MaterialPageRoute<void>(
+                                      builder: (context) =>
+                                          LegalDocumentPage(document: document),
+                                    ),
+                                  );
+                                },
+                                child: Text('《${document.title}》'),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  children: <Widget>[
-                    for (final document in LegalDocument.values)
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          minimumSize: const Size(0, 36),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).push<void>(
-                            MaterialPageRoute<void>(
-                              builder: (context) =>
-                                  LegalDocumentPage(document: document),
-                            ),
-                          );
-                        },
-                        child: Text('《${document.title}》'),
-                      ),
-                  ],
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const Key('privacy_consent_accept'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: veriRoyal,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: () =>
+                        VeriFinScope.of(context).acceptPrivacyConsent(),
+                    child: const Text('同意并继续'),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => SystemNavigator.pop(),
+                    child: Text(
+                      '不同意并退出',
+                      style: TextStyle(color: theme.colorScheme.onSurface),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              '不同意并退出',
-              style: TextStyle(color: theme.colorScheme.onSurface),
-            ),
-          ),
-          FilledButton(
-            key: const Key('privacy_consent_accept'),
-            style: FilledButton.styleFrom(backgroundColor: veriRoyal),
-            onPressed: () {
-              VeriFinScope.of(context).acceptPrivacyConsent();
-              Navigator.of(context).pop(true);
-            },
-            child: const Text('同意并继续'),
-          ),
-        ],
       ),
     );
   }

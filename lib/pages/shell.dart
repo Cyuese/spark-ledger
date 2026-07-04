@@ -9,7 +9,6 @@ import '../l10n/app_localizations.dart';
 import 'assets_pages.dart';
 import 'entry_detail_page.dart';
 import 'home_page.dart';
-import 'legal_pages.dart';
 import 'onboarding_page.dart';
 import 'profile_pages.dart';
 import 'reports_page.dart';
@@ -30,11 +29,8 @@ class _VeriFinShellState extends State<VeriFinShell> {
     super.initState();
     AppPlatformBridge.setQuickEntryHandler(_openQuickEntryFromPlatform);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // 首启动须先取得隐私政策 / 用户协议同意，未同意则退出应用。
-      if (!await _ensurePrivacyConsent() || !mounted) {
-        return;
-      }
-      // 同意后、新用户首启动展示引导（建首个账户 / 设预算），只出现一次。
+      // 隐私政策 / 用户协议同意由 PrivacyConsentGate 门卫处理；本壳只在同意后
+      // 才会被构建，故此处直接展示新用户引导。
       await _maybeShowOnboarding();
       if (!mounted) {
         return;
@@ -43,19 +39,6 @@ class _VeriFinShellState extends State<VeriFinShell> {
         await _openQuickEntryFromPlatform();
       }
     });
-  }
-
-  /// 首启动弹出同意弹窗；已同意直接返回 true。用户点「不同意」则退出应用并返回 false。
-  Future<bool> _ensurePrivacyConsent() async {
-    if (VeriFinScope.of(context).privacyConsentAccepted) {
-      return true;
-    }
-    final accepted = await showPrivacyConsentDialog(context);
-    if (accepted == true) {
-      return true;
-    }
-    await SystemNavigator.pop();
-    return false;
   }
 
   /// 新用户首启动展示引导页；已完成则跳过。

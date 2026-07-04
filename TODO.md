@@ -60,6 +60,26 @@
 - [x] 4.5 新用户引导：首启动（同意隐私政策后）弹出 `OnboardingPage`（4 步 PageView：欢迎 / 建首个账户 / 设本月预算 / 完成），账户与预算均可选可跳过，完成或跳过写入 `verifin.onboarding.v1`（只出现一次，初始化数据不清除）；`shell.dart` 在同意后 `_maybeShowOnboarding` 触发，测试脚手架默认预置该标记跳过。**后续新增重要功能需回顾 `_DoneStep` 引导文案是否同步**
 - [x] 4.6 Android 桌面小组件：`QuickEntryWidgetProvider`（`AppWidgetProvider`）展示「今日支出」并提供「记一笔」按钮（复用 `MainActivity.ACTION_QUICK_ENTRY` 快速记账，点主体打开应用）；数据由 Flutter 侧 `pushTodayExpenseToWidget`（`home_widget_service.dart`，纯函数 `dayExpenseTotal`）经 MethodChannel `updateTodayExpenseWidget` 写入原生 SharedPreferences 并刷新，在开屏/回前台/记账后触发；品牌蓝渐变背景（`res/layout/quick_entry_widget.xml` + drawable + `xml/quick_entry_widget_info.xml` + Manifest receiver）。注：真机添加与刷新需发版后验证
 
+## 阶段 5：维护与清理（1.3 后）
+
+按顺序推进，每项一个独立提交，完成一项勾一项。
+
+- [ ] 5.1 **移除 Web 端，只保留 Android**（一个提交）
+  - 删 `web/` 整个目录（含浏览器版 SQLite 的 `sqlite3.wasm`、`sqflite_sw.js`，Android 打包不用）
+  - 删 6 个 `_web.dart`：`local_storage_web` / `data/database_factory_web` / `avatar_picker_web` / `data_file_port_web` / `backup/backup_storage_web` / `backup/webdav_client_web`
+  - 改 7 个条件导出入口，各删 `if (dart.library.html) ...` 一行：`local_storage.dart` / `data/database_factory.dart` / `avatar_picker.dart` / `data_file_port.dart` / `backup/backup_storage.dart` / `backup/webdav_client.dart` / `attachment_picker.dart`；`_stub.dart` 保留不动
+  - 依赖清单只删一行 `sqflite_common_ffi_web`（**勿动** `sqflite_common_ffi` 测试用、`sqflite_common` Android 用）
+  - 改 CI `.github/workflows/flutter.yml`：删「构建 Web」「上传 Web 产物」两步、job 名去掉「Web Build」（`android` 的 `needs: checks` 保留）
+  - `flutter analyze` + `flutter test` 全绿
+  - 同步文档：README / AGENTS / CLAUDE / docs 里所有 `flutter run -d chrome`、`flutter build web`、「Web 端不支持 WebDAV/通知」「三端适配」等措辞改为只讲 Android；本地预览改真机/发版
+- [ ] 5.2 **确认 5.1 Web 清理干净**：全仓搜 `dart.library.html` / `_web.dart` / `sqflite_common_ffi_web` / `build web` 无残留
+- [ ] 5.3 **资产页【排序】按钮消失排查与改善**：当前逻辑是「有账户的分区 ≥2 才显示排序按钮」（`assets_pages.dart:145`）。先按真机反馈确认是「单分区（设计）」还是真 bug；无论如何改善可发现性（如单分区时给说明、或把排序入口移到资产操作菜单），避免按钮无声消失
+- [ ] 5.4 **功能回归系统审查**：拿 `docs/acceptance-checklist.md` 逐条对照现状代码，列出所有「设计上应有、现在没了或路径变了」的功能，判定有意/回归，产出报告后再定改不改
+- [ ] 5.5 **附件备份改压缩包格式（尽早做）**：导出/备份/导入从「图片 base64 内嵌 JSON」改为「JSON + 图片文件夹打成 zip」，图片不再内嵌，避免附件多时备份臃肿与性能问题；导入需兼容旧的内嵌式 JSON 备份（老备份仍能导入）
+- [ ] 5.6 **深层结构审查（有空再做）**：核心状态文件 `veri_fin_controller.dart` 体量/耦合/可拆分点评估，必要时拆分
+
+> 已放弃项：数据库迁移「压平成基线」——迁移不影响性能（全新装不跑迁移、老设备每步只跑一次），不做。
+
 ## Backlog（暂不排期）
 
 - 借贷管理（借入/借出、应收应付、分期）

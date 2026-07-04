@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/local_storage/local_storage.dart';
+import 'package:verifin/main.dart';
 
 import 'support/test_harness.dart';
 
@@ -45,6 +46,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('隐私政策与用户协议'), findsNothing);
+  });
+
+  testWidgets('consent keeps blocking after declining and relaunching', (
+    WidgetTester tester,
+  ) async {
+    final store = LocalKeyValueStore();
+    await pumpApp(tester, store, false);
+    await tester.pumpAndSettle();
+    expect(find.text('隐私政策与用户协议'), findsOneWidget);
+    expect(find.text('不同意并退出'), findsOneWidget);
+
+    // 模拟未同意就退出、进程未被杀而重新进入（同一 store 重建应用）：仍要求同意，
+    // 不会像旧的一次性弹窗那样在热启动后漏掉。
+    final relaunched = await makeController(store, false);
+    await tester.pumpWidget(VeriFinApp(controller: relaunched));
+    await tester.pumpAndSettle();
+    expect(find.text('隐私政策与用户协议'), findsOneWidget);
+    expect(relaunched.privacyConsentAccepted, isFalse);
   });
 
   testWidgets('can view privacy policy and user agreement from settings', (
