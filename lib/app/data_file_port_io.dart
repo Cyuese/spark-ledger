@@ -41,7 +41,7 @@ Future<String?> pickTextFile() async {
   final file = await openFile(
     acceptedTypeGroups: const <XTypeGroup>[jsonGroup],
   );
-  return file?.readAsString();
+  return _readAsUtf8(file);
 }
 
 Future<String?> pickCsvFile() async {
@@ -51,5 +51,15 @@ Future<String?> pickCsvFile() async {
     mimeTypes: <String>['text/csv', 'text/plain'],
   );
   final file = await openFile(acceptedTypeGroups: const <XTypeGroup>[csvGroup]);
-  return file?.readAsString();
+  return _readAsUtf8(file);
+}
+
+/// 显式按 UTF-8 解码，不用 `XFile.readAsString()`：后者在 Android 上对
+/// `content://` 选中的文件可能按平台默认编码解码，导致中文变乱码。与备份恢复
+/// 路径（`backup_storage_io.dart`）保持一致。
+Future<String?> _readAsUtf8(XFile? file) async {
+  if (file == null) {
+    return null;
+  }
+  return utf8.decode(await file.readAsBytes());
 }
