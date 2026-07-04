@@ -54,6 +54,8 @@ dependencies:
   cryptography: ^2.7.0
   # 生物识别（仅指纹）快捷解锁，调用系统能力，不保存任何生物特征数据。
   local_auth: ^2.3.0
+  # 生物识别系统弹窗的中文文案（AndroidAuthMessages），避免中英混杂。
+  local_auth_android: ^1.0.56
   # 记账提醒的本地通知（每日定时），及其时区支持（zonedSchedule 需按本地时区计算）。
   flutter_local_notifications: ^22.0.1
   timezone: ^0.11.1
