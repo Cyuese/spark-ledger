@@ -7,3 +7,16 @@
 5. 应用锁，生物识别的地方，我看到了中文和英语同时出现，这里应该仅仅出现一个语言才对
 6. 我的，统计分析页面，顶部直接到android 的那个时间栏了，可能是顶部没有做好高度处理？还是这个页面有问题？请你排查。
 7. 小组件，数字没有展示完全，数字的下部分直接被截断了
+---
+
+## 修复记录（Claude 自测通过，真机验证见手机清单）
+
+- **1. 隐私同意拒绝后重开不再询问** ✅ 改为根门卫 `PrivacyConsentGate`（放 MaterialApp.builder、应用锁之外），每次 build 按 `privacyConsentAccepted` 决定是否显示全屏同意页，不再依赖进程被杀。加了「拒绝+重启仍要求同意」回归测试。
+- **2. 批量操作看不懂** — 按你的答复保持现状，不动。
+- **3. 导入导出中文乱码** ✅ 数据/CSV 导入改为 `utf8.decode(readAsBytes())`（原 `XFile.readAsString()` 在 Android 对 content:// 按平台默认编码解码），与备份恢复路径一致。JSON 层中文往返已有测试覆盖。
+- **4. 图案密码滑动误滚页面** ✅ 改用 `RawGestureDetector` + 自定义 `_PatternPanRecognizer`（判负时立即 acceptGesture），在图案区抢下手势，不再被滚动视图夺走。图案解锁测试通过。
+- **5. 生物识别中英文混杂** ✅ 补中文 `AndroidAuthMessages`（取消/验证身份/前往设置等），`local_auth_android` 提为直接依赖。
+- **6. 统计分析页顶到状态栏** ✅ 补 `Scaffold(body: SafeArea(...))`，与其它被 push 页一致。
+- **7. 小组件数字被截断** ✅ 上下 padding 收到 10dp、数字 24sp + `includeFontPadding=false`，内容放进 70dp 行高。
+
+全量测试 202 项通过。1/5/7 涉及真机行为（生物识别系统弹窗、小组件渲染、SAF 文件编码），请按手机验证清单确认。
