@@ -1,0 +1,130 @@
+import 'package:sqflite_common/sqlite_api.dart';
+
+import 'database_factory.dart';
+
+/// Veri Fin 本地 SQLite 数据库。负责建表、版本迁移与连接持有。
+///
+/// 具体的按类型读写在 [LedgerRepository]。数据库只承载「账目」类核心数据；
+/// 偏好类小数据（主题、触感、面板配置、资产排序等）仍保留在 KV。
+class AppDatabase {
+  AppDatabase._(this.db);
+
+  /// 底层 sqflite 连接，供仓储层执行 SQL。
+  final Database db;
+
+  static const String defaultDatabaseName = 'verifin.db';
+  static const int schemaVersion = 1;
+
+  /// 打开（或创建）数据库。测试通过 [factory]/[path] 注入 ffi 与内存路径；
+  /// 真实平台留空则由 [resolveDatabaseFactory]/[resolveDatabasePath] 决定。
+  static Future<AppDatabase> open({
+    DatabaseFactory? factory,
+    String? path,
+  }) async {
+    final resolvedFactory = factory ?? await resolveDatabaseFactory();
+    final resolvedPath = path ?? await resolveDatabasePath(defaultDatabaseName);
+    final database = await resolvedFactory.openDatabase(
+      resolvedPath,
+      options: OpenDatabaseOptions(
+        version: schemaVersion,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      ),
+    );
+    return AppDatabase._(database);
+  }
+
+  Future<void> close() => db.close();
+
+  static Future<void> _onCreate(Database db, int version) async {
+    final batch = db.batch();
+    for (final statement in _schemaV1) {
+      batch.execute(statement);
+    }
+    await batch.commit(noResult: true);
+  }
+
+  static Future<void> _onUpgrade(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    // 目前只有 v1，尚无升级路径。后续 schema 变更在此按版本区间追加。
+  }
+
+  /// v1 建表语句。字段命名用 snake_case；布尔存 0/1；时间存毫秒时间戳。
+  static const List<String> _schemaV1 = <String>[
+    '''
+    CREATE TABLE ledger_books (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      is_default INTEGER NOT NULL,
+      sort_order INTEGER NOT NULL
+    )
+    ''',
+    '''
+    CREATE TABLE entries (
+      id TEXT PRIMARY KEY,
+      book_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      amount REAL NOT NULL,
+      category_id TEXT NOT NULL,
+      account_id TEXT NOT NULL,
+      to_account_id TEXT,
+      note TEXT NOT NULL,
+      occurred_at INTEGER NOT NULL
+    )
+    ''',
+    'CREATE INDEX idx_entries_book ON entries (book_id)',
+    'CREATE INDEX idx_entries_occurred ON entries (occurred_at)',
+    '''
+    CREATE TABLE accounts (
+      id TEXT PRIMARY KEY,
+      book_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      group_id TEXT,
+      initial_balance REAL NOT NULL,
+      icon_code TEXT NOT NULL,
+      note TEXT NOT NULL,
+      include_in_assets INTEGER NOT NULL,
+      hidden INTEGER NOT NULL,
+      card_last4 TEXT NOT NULL,
+      sort_order INTEGER NOT NULL
+    )
+    ''',
+    'CREATE INDEX idx_accounts_book ON accounts (book_id)',
+    '''
+    CREATE TABLE account_groups (
+      id TEXT PRIMARY KEY,
+      book_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      icon_code TEXT NOT NULL,
+      sort_order INTEGER NOT NULL
+    )
+    ''',
+    'CREATE INDEX idx_account_groups_book ON account_groups (book_id)',
+    '''
+    CREATE TABLE categories (
+      id TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      type TEXT NOT NULL,
+      icon_code TEXT NOT NULL,
+      sort_order INTEGER NOT NULL
+    )
+    ''',
+    '''
+    CREATE TABLE monthly_budgets (
+      scope_key TEXT PRIMARY KEY,
+      amount REAL NOT NULL
+    )
+    ''',
+    '''
+    CREATE TABLE category_budgets (
+      scope_key TEXT PRIMARY KEY,
+      amount REAL NOT NULL
+    )
+    ''',
+  ];
+}
