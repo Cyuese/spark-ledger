@@ -369,6 +369,38 @@ void main() {
     expect(find.text('交通'), findsNothing);
   });
 
+  testWidgets('transfer entry shows a fee field and records it', (
+    WidgetTester tester,
+  ) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    Account acc(String id, String name) => Account(
+      id: id,
+      bookId: controller.activeBook.id,
+      name: name,
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 500,
+      iconCode: 'cash',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+    );
+    controller
+      ..addAccount(acc('from-fee', '转出'))
+      ..addAccount(acc('to-fee', '转入'))
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 0);
+    await createQuickEntry(tester);
+
+    // 切到转账，手续费字段出现。
+    await tester.tap(find.text('转账'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('fee_field')), findsOneWidget);
+  });
+
   test('addEntry keeps entries sorted latest first', () async {
     final controller = await makeController();
     final bookId = controller.activeBook.id;

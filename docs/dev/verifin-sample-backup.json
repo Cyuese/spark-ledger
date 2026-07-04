@@ -51,7 +51,8 @@
         "accountId": "acc_debit",
         "toAccountId": "acc_alipay",
         "note": "银行卡转入支付宝",
-        "occurredAt": "2026-07-03T18:00:00.000"
+        "occurredAt": "2026-07-03T18:00:00.000",
+        "fee": 2.0
       },
       {
         "id": "entry_20260702_001",

@@ -22,7 +22,8 @@ double accountDeltaForEntry(LedgerEntry entry, String accountId) {
       return entry.accountId == accountId ? entry.amount : 0;
     case EntryType.transfer:
       if (entry.accountId == accountId) {
-        return -entry.amount;
+        // 转出账户额外扣除手续费。
+        return -(entry.amount + entry.fee);
       }
       if (entry.toAccountId == accountId) {
         return entry.amount;

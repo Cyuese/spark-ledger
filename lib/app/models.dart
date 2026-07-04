@@ -146,6 +146,7 @@ class LedgerEntry {
     required this.note,
     required this.occurredAt,
     this.tagIds = const <String>[],
+    this.fee = 0,
   });
 
   final String id;
@@ -161,6 +162,10 @@ class LedgerEntry {
   /// 该交易关联的标签 id 列表（多对多，可为空）。
   final List<String> tagIds;
 
+  /// 转账手续费（仅 [EntryType.transfer] 有意义），由转出账户承担；
+  /// 转出账户余额额外减少该金额，转入账户不变。
+  final double fee;
+
   LedgerEntry copyWith({
     String? id,
     String? bookId,
@@ -173,6 +178,7 @@ class LedgerEntry {
     String? note,
     DateTime? occurredAt,
     List<String>? tagIds,
+    double? fee,
   }) {
     return LedgerEntry(
       id: id ?? this.id,
@@ -185,6 +191,7 @@ class LedgerEntry {
       note: note ?? this.note,
       occurredAt: occurredAt ?? this.occurredAt,
       tagIds: tagIds ?? this.tagIds,
+      fee: fee ?? this.fee,
     );
   }
 
@@ -200,6 +207,7 @@ class LedgerEntry {
       'note': note,
       'occurredAt': occurredAt.toIso8601String(),
       if (tagIds.isNotEmpty) 'tagIds': tagIds,
+      if (fee != 0) 'fee': fee,
     };
   }
 
@@ -217,6 +225,7 @@ class LedgerEntry {
           DateTime.tryParse(json['occurredAt'] as String? ?? '') ??
           DateTime.now(),
       tagIds: _stringList(json['tagIds']),
+      fee: (json['fee'] as num?)?.toDouble() ?? 0,
     );
   }
 }

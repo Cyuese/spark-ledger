@@ -842,6 +842,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   late String? _toAccountId;
   late DateTime _occurredAt;
   late List<String> _tagIds;
+  late double _fee;
   late final TextEditingController _noteController;
 
   @override
@@ -864,6 +865,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     _toAccountId = entry.toAccountId;
     _occurredAt = entry.occurredAt;
     _tagIds = List<String>.of(entry.tagIds);
+    _fee = entry.fee;
     _noteController = TextEditingController(text: entry.note);
   }
 
@@ -1017,6 +1019,12 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                               ? null
                               : () => _pickToAccount(accounts),
                         ),
+                        DetailInfoRow(
+                          label: '手续费',
+                          value: _fee > 0 ? formatAmount(_fee) : '无',
+                          placeholder: _fee <= 0,
+                          onTap: _editFee,
+                        ),
                       ] else
                         DetailInfoRow(
                           label: '账户',
@@ -1098,6 +1106,24 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       return;
     }
     setState(() => _amount = amount);
+  }
+
+  Future<void> _editFee() async {
+    final fee = await showModalBottomSheet<double>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => NumberPadSheet(
+        title: '转账手续费',
+        initialAmount: _fee > 0 ? _fee : null,
+        allowZero: true,
+        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
+      ),
+    );
+    if (fee == null || fee < 0 || !mounted) {
+      return;
+    }
+    setState(() => _fee = fee);
   }
 
   Future<void> _pickType() async {
@@ -1265,6 +1291,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
         note: _noteController.text.trim(),
         occurredAt: _occurredAt,
         tagIds: _tagIds,
+        fee: _type == EntryType.transfer ? _fee : 0,
       ),
     );
     Navigator.of(context).pop();

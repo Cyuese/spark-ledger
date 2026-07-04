@@ -31,6 +31,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   late String _accountId = widget.initialAccountId ?? '';
   String? _toAccountId;
   DateTime _occurredAt = DateTime.now();
+  double _fee = 0;
   List<String> _tagIds = <String>[];
   // 新增交易时先缓存附件 data URL，保存后再按新交易 id 落库。
   final List<String> _pendingAttachments = <String>[];
@@ -180,6 +181,14 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                           ? null
                           : () => _pickToAccount(accounts),
                     ),
+                    const SizedBox(height: 10),
+                    SelectField(
+                      key: const Key('fee_field'),
+                      label: '手续费',
+                      value: _fee > 0 ? formatAmount(_fee) : '无（点击填写）',
+                      icon: Icons.paid_outlined,
+                      onTap: _editFee,
+                    ),
                   ] else if (hasAccounts)
                     SelectField(
                       key: const Key('account_dropdown'),
@@ -278,6 +287,24 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     }
 
     setState(() => _amount = amount);
+  }
+
+  Future<void> _editFee() async {
+    final fee = await showModalBottomSheet<double>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => NumberPadSheet(
+        title: '转账手续费',
+        initialAmount: _fee > 0 ? _fee : null,
+        allowZero: true,
+        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
+      ),
+    );
+    if (!mounted || fee == null || fee < 0) {
+      return;
+    }
+    setState(() => _fee = fee);
   }
 
   Future<void> _showAllCategories() async {
@@ -433,6 +460,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         note: _noteController.text.trim(),
         occurredAt: _occurredAt,
         tagIds: _tagIds,
+        fee: _type == EntryType.transfer ? _fee : 0,
       ),
     );
     for (final dataUrl in _pendingAttachments) {

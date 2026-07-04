@@ -238,6 +238,7 @@ class SqliteLedgerRepository implements LedgerRepository {
     'occurred_at': e.occurredAt.millisecondsSinceEpoch,
     // 标签 id 列表以 JSON 数组存单列（整表覆盖式读写，无需关联表）。
     'tag_ids': e.tagIds.isEmpty ? null : jsonEncode(e.tagIds),
+    'fee': e.fee,
   };
 
   static LedgerEntry _entryFromRow(Map<String, Object?> row) => LedgerEntry(
@@ -251,6 +252,7 @@ class SqliteLedgerRepository implements LedgerRepository {
     note: row['note'] as String? ?? '',
     occurredAt: DateTime.fromMillisecondsSinceEpoch(row['occurred_at'] as int),
     tagIds: _decodeTagIds(row['tag_ids']),
+    fee: (row['fee'] as num?)?.toDouble() ?? 0,
   );
 
   static List<String> _decodeTagIds(Object? raw) {

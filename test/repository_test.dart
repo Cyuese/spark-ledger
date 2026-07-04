@@ -294,6 +294,63 @@ void main() {
     expect(untagged.tagIds, isEmpty);
   });
 
+  test('转账手续费 fee 列往返', () async {
+    final repo = await openRepo();
+    final entry = LedgerEntry(
+      id: 't1',
+      bookId: defaultLedgerBookId,
+      type: EntryType.transfer,
+      amount: 100,
+      categoryId: 'transfer_out',
+      accountId: 'a',
+      toAccountId: 'b',
+      note: '',
+      occurredAt: DateTime(2026, 7, 4),
+      fee: 2.5,
+    );
+    await repo.saveEntries(<LedgerEntry>[entry]);
+    expect((await repo.loadEntries()).single.fee, 2.5);
+  });
+
+  test('v4 数据库升级到 v5 后 entries 有 fee 列（旧行默认 0）', () async {
+    final dir = await Directory.systemTemp.createTemp('verifin_mig5');
+    final path = '${dir.path}/mig5.db';
+    final v4 = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 4,
+        onCreate: (db, _) async {
+          await db.execute('''
+            CREATE TABLE entries (
+              id TEXT PRIMARY KEY, book_id TEXT NOT NULL, type TEXT NOT NULL,
+              amount REAL NOT NULL, category_id TEXT NOT NULL,
+              account_id TEXT NOT NULL, to_account_id TEXT, note TEXT NOT NULL,
+              occurred_at INTEGER NOT NULL, tag_ids TEXT
+            )
+          ''');
+        },
+      ),
+    );
+    await v4.insert('entries', <String, Object?>{
+      'id': 'old',
+      'book_id': 'default',
+      'type': 'transfer',
+      'amount': 50,
+      'category_id': 'transfer_out',
+      'account_id': 'a',
+      'note': '',
+      'occurred_at': DateTime(2026, 1, 1).millisecondsSinceEpoch,
+    });
+    await v4.close();
+
+    final db = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+    final repo = SqliteLedgerRepository(db);
+    expect((await repo.loadEntries()).single.fee, 0);
+
+    await db.close();
+    await dir.delete(recursive: true);
+  });
+
   test('图片附件 attachments 表往返', () async {
     final repo = await openRepo();
     await repo.saveAttachments(<Attachment>[
