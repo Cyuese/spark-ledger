@@ -34,6 +34,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _activeBookKey = 'verifin.active_book.v1';
   static const String _assetCoverKey = 'verifin.asset_cover.v1';
   static const String _hapticsKey = 'verifin.haptics.v1';
+  static const String _privacyConsentKey = 'verifin.privacy_consent.v1';
   static const String _assetViewModeKey = 'verifin.asset_view_mode.v1';
   static const String _assetSectionCollapsedKey =
       'verifin.asset_section_collapsed.v1';
@@ -81,6 +82,7 @@ class VeriFinController extends ChangeNotifier {
   String _activeBookId = defaultLedgerBookId;
   String _assetCoverUrl = '';
   bool _hapticsEnabled = true;
+  bool _privacyConsentAccepted = false;
   AssetAccountViewMode _assetAccountViewMode = AssetAccountViewMode.type;
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
@@ -171,6 +173,19 @@ class VeriFinController extends ChangeNotifier {
   void setHapticsEnabled(bool enabled) {
     _hapticsEnabled = enabled;
     _store.write(_hapticsKey, enabled.toString());
+    notifyListeners();
+  }
+
+  /// 用户是否已同意隐私政策与用户协议（首启动前为 false）。
+  bool get privacyConsentAccepted => _privacyConsentAccepted;
+
+  /// 记录用户已同意隐私政策与用户协议。一经同意即持久化，重启后不再询问。
+  void acceptPrivacyConsent() {
+    if (_privacyConsentAccepted) {
+      return;
+    }
+    _privacyConsentAccepted = true;
+    _store.write(_privacyConsentKey, 'true');
     notifyListeners();
   }
 
@@ -1012,6 +1027,7 @@ class VeriFinController extends ChangeNotifier {
     _activeBookId = _store.read(_activeBookKey) ?? defaultLedgerBookId;
     _assetCoverUrl = _store.read(_assetCoverKey) ?? '';
     _hapticsEnabled = _store.read(_hapticsKey) != 'false';
+    _privacyConsentAccepted = _store.read(_privacyConsentKey) == 'true';
     _assetAccountViewMode = AssetAccountViewMode.fromStorage(
       _store.read(_assetViewModeKey),
     );

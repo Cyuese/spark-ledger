@@ -9,11 +9,13 @@ import '../app/demo_data.dart';
 import '../app/image_cropper.dart';
 import '../app/image_sources.dart';
 import '../app/ledger_math.dart';
+import '../app/legal_content.dart';
 import '../app/models.dart';
 import '../app/platform_bridge.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
+import 'legal_pages.dart';
 import 'sheets.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -948,6 +950,33 @@ class SettingsPage extends StatelessWidget {
                       contentColor: veriExpense,
                       onTap: () => _confirmReset(context, controller),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: Column(
+                  children: <Widget>[
+                    for (final entry
+                        in LegalDocument.values.indexed) ...<Widget>[
+                      if (entry.$1 != 0) const Divider(),
+                      SettingsRow(
+                        icon: entry.$2 == LegalDocument.privacyPolicy
+                            ? Icons.privacy_tip_outlined
+                            : Icons.description_outlined,
+                        title: entry.$2.title,
+                        trailing: '查看',
+                        trailingIcon: Icons.chevron_right,
+                        onTap: () {
+                          Navigator.of(context).push<void>(
+                            MaterialPageRoute<void>(
+                              builder: (context) =>
+                                  LegalDocumentPage(document: entry.$2),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ],
                 ),
               ),

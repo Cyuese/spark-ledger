@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/app_version.dart';
@@ -34,9 +33,10 @@ void main() {
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
     expect(find.text('触感反馈'), findsOneWidget);
-    expect(find.text('VeriFin $appVersionLabel'), findsOneWidget);
     expect(find.text('同步方式'), findsNothing);
     expect(find.text('Android 打包'), findsNothing);
+    await tester.scrollUntilVisible(find.text('VeriFin $appVersionLabel'), 120);
+    expect(find.text('VeriFin $appVersionLabel'), findsOneWidget);
 
     await tester.tap(find.text('主题模式'));
     await tester.pumpAndSettle();

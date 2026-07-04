@@ -24,8 +24,17 @@ void useTestDatabases() {
 }
 
 /// 构造控制器：相同 [store] 复用同一内存仓储；省略/新 store 则得到独立仓储。
-Future<VeriFinController> makeController([LocalKeyValueStore? store]) async {
+///
+/// [acceptConsent] 默认为 true，预置隐私政策同意标记，使 widget 测试不被首启动
+/// 同意弹窗阻塞；测试同意流程本身时传 false。
+Future<VeriFinController> makeController([
+  LocalKeyValueStore? store,
+  bool acceptConsent = true,
+]) async {
   final resolvedStore = store ?? LocalKeyValueStore();
+  if (acceptConsent) {
+    resolvedStore.write('verifin.privacy_consent.v1', 'true');
+  }
   final repository = _repoForStore.putIfAbsent(
     resolvedStore,
     InMemoryLedgerRepository.new,
@@ -37,8 +46,9 @@ Future<VeriFinController> makeController([LocalKeyValueStore? store]) async {
 Future<VeriFinController> pumpApp(
   WidgetTester tester, [
   LocalKeyValueStore? store,
+  bool acceptConsent = true,
 ]) async {
-  final controller = await makeController(store);
+  final controller = await makeController(store, acceptConsent);
   await tester.pumpWidget(VeriFinApp(controller: controller));
   return controller;
 }
