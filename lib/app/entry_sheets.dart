@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_theme.dart';
+import 'category_tree.dart';
 import 'common_widgets.dart';
 import 'demo_data.dart';
 import 'ledger_math.dart';
@@ -248,18 +249,58 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
   }
 }
 
-class CategoryPickerSheet extends StatelessWidget {
+/// 记账时选择分类的底部弹窗。支持多级分类：父分类可展开/收起，
+/// 子分类缩进显示，点选任意层级的分类（父或子）都会返回其 id。
+class CategoryPickerSheet extends StatefulWidget {
   const CategoryPickerSheet({
     super.key,
     required this.categories,
     required this.selectedId,
   });
 
+  /// 当前类型下的全部分类（含各级子分类），由调用方按类型过滤后传入。
   final List<Category> categories;
   final String selectedId;
 
   @override
+  State<CategoryPickerSheet> createState() => _CategoryPickerSheetState();
+}
+
+class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
+  late final Set<String> _collapsed;
+
+  @override
+  void initState() {
+    super.initState();
+    // 默认展开全部；但收起与当前选中项无关的分支，保持已选项可见。
+    _collapsed = <String>{};
+  }
+
+  /// 按折叠状态前序展开可见节点。
+  List<CategoryNode> _visibleNodes() {
+    final result = <CategoryNode>[];
+    final visited = <String>{};
+    void walk(String? parentId, int depth) {
+      final children = widget.categories.where((c) => c.parentId == parentId);
+      for (final child in children) {
+        if (!visited.add(child.id)) {
+          continue;
+        }
+        result.add(CategoryNode(category: child, depth: depth));
+        final hasKids = widget.categories.any((c) => c.parentId == child.id);
+        if (hasKids && !_collapsed.contains(child.id)) {
+          walk(child.id, depth + 1);
+        }
+      }
+    }
+
+    walk(null, 0);
+    return result;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final nodes = _visibleNodes();
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 0, 14, 18),
       child: Column(
@@ -276,7 +317,7 @@ class CategoryPickerSheet extends StatelessWidget {
           Flexible(
             child: ListView.separated(
               shrinkWrap: true,
-              itemCount: categories.length,
+              itemCount: nodes.length,
               separatorBuilder: (_, _) => Divider(
                 height: 1,
                 color: Theme.of(
@@ -284,8 +325,13 @@ class CategoryPickerSheet extends StatelessWidget {
                 ).colorScheme.onSurface.withValues(alpha: 0.06),
               ),
               itemBuilder: (context, index) {
-                final category = categories[index];
-                final isSelected = category.id == selectedId;
+                final node = nodes[index];
+                final category = node.category;
+                final isSelected = category.id == widget.selectedId;
+                final hasKids = widget.categories.any(
+                  (c) => c.parentId == category.id,
+                );
+                final collapsed = _collapsed.contains(category.id);
                 return Material(
                   color: isSelected
                       ? veriRoyal.withValues(alpha: 0.12)
@@ -294,7 +340,10 @@ class CategoryPickerSheet extends StatelessWidget {
                   child: ListTile(
                     minTileHeight: 48,
                     dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    contentPadding: EdgeInsets.only(
+                      left: 8 + node.depth * 20,
+                      right: 8,
+                    ),
                     leading: VeriIconBox(
                       icon: iconForCode(category.iconCode),
                       color: colorForType(category.type),
@@ -308,9 +357,33 @@ class CategoryPickerSheet extends StatelessWidget {
                             : FontWeight.w600,
                       ),
                     ),
-                    trailing: isSelected
-                        ? const Icon(Icons.check, color: veriRoyal, size: 18)
-                        : null,
+                    trailing: hasKids
+                        ? IconButton(
+                            visualDensity: VisualDensity.compact,
+                            iconSize: 22,
+                            icon: Icon(
+                              collapsed
+                                  ? Icons.chevron_right
+                                  : Icons.expand_more,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.55),
+                            ),
+                            onPressed: () => setState(() {
+                              if (collapsed) {
+                                _collapsed.remove(category.id);
+                              } else {
+                                _collapsed.add(category.id);
+                              }
+                            }),
+                          )
+                        : (isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: veriRoyal,
+                                  size: 18,
+                                )
+                              : null),
                     onTap: () => Navigator.of(context).pop(category.id),
                   ),
                 );
