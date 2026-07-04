@@ -34,6 +34,8 @@ Future<VeriFinController> makeController([
   final resolvedStore = store ?? LocalKeyValueStore();
   if (acceptConsent) {
     resolvedStore.write('verifin.privacy_consent.v1', 'true');
+    // 跳过新用户引导页，避免 widget 测试被首启动引导阻塞。
+    resolvedStore.write('verifin.onboarding.v1', 'true');
   }
   final repository = _repoForStore.putIfAbsent(
     resolvedStore,

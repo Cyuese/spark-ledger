@@ -54,6 +54,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _backupPassphraseKey = 'verifin.backup_passphrase.v1';
   static const String _webdavKey = 'verifin.webdav.v1';
   static const String _reminderKey = 'verifin.reminder.v1';
+  static const String _onboardingKey = 'verifin.onboarding.v1';
 
   static String _panelsKeyFor(PanelPageKind page) {
     switch (page) {
@@ -98,6 +99,7 @@ class VeriFinController extends ChangeNotifier {
   String _assetCoverUrl = '';
   bool _hapticsEnabled = true;
   bool _privacyConsentAccepted = false;
+  bool _onboardingCompleted = false;
   AppLockConfig _appLockConfig = const AppLockConfig.none();
   AssetAccountViewMode _assetAccountViewMode = AssetAccountViewMode.type;
   BackupSettings _backupSettings = const BackupSettings();
@@ -477,6 +479,17 @@ class VeriFinController extends ChangeNotifier {
   }
 
   /// 用户是否已同意隐私政策与用户协议（首启动前为 false）。
+  bool get onboardingCompleted => _onboardingCompleted;
+
+  /// 标记新用户引导已完成（只走一次，初始化数据不清除）。
+  void completeOnboarding() {
+    if (_onboardingCompleted) {
+      return;
+    }
+    _onboardingCompleted = true;
+    _store.write(_onboardingKey, 'true');
+  }
+
   bool get privacyConsentAccepted => _privacyConsentAccepted;
 
   /// 记录用户已同意隐私政策与用户协议。一经同意即持久化，重启后不再询问。
@@ -1683,6 +1696,7 @@ class VeriFinController extends ChangeNotifier {
     _assetCoverUrl = _store.read(_assetCoverKey) ?? '';
     _hapticsEnabled = _store.read(_hapticsKey) != 'false';
     _privacyConsentAccepted = _store.read(_privacyConsentKey) == 'true';
+    _onboardingCompleted = _store.read(_onboardingKey) == 'true';
     _loadAppLock();
     _assetAccountViewMode = AssetAccountViewMode.fromStorage(
       _store.read(_assetViewModeKey),

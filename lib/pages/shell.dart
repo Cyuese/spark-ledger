@@ -10,6 +10,7 @@ import 'assets_pages.dart';
 import 'entry_detail_page.dart';
 import 'home_page.dart';
 import 'legal_pages.dart';
+import 'onboarding_page.dart';
 import 'profile_pages.dart';
 import 'reports_page.dart';
 
@@ -33,6 +34,11 @@ class _VeriFinShellState extends State<VeriFinShell> {
       if (!await _ensurePrivacyConsent() || !mounted) {
         return;
       }
+      // 同意后、新用户首启动展示引导（建首个账户 / 设预算），只出现一次。
+      await _maybeShowOnboarding();
+      if (!mounted) {
+        return;
+      }
       if (await AppPlatformBridge.consumeInitialQuickEntryIntent() && mounted) {
         await _openQuickEntryFromPlatform();
       }
@@ -50,6 +56,19 @@ class _VeriFinShellState extends State<VeriFinShell> {
     }
     await SystemNavigator.pop();
     return false;
+  }
+
+  /// 新用户首启动展示引导页；已完成则跳过。
+  Future<void> _maybeShowOnboarding() async {
+    if (VeriFinScope.of(context).onboardingCompleted) {
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (context) => const OnboardingPage(),
+      ),
+    );
   }
 
   @override
