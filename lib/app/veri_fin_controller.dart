@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' hide Category;
 
 import '../data/ledger_repository.dart';
 import '../local_storage/local_storage.dart';
+import 'app_lock.dart';
 import 'demo_data.dart';
 import 'ledger_math.dart';
 import 'models.dart';
@@ -35,6 +36,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _assetCoverKey = 'verifin.asset_cover.v1';
   static const String _hapticsKey = 'verifin.haptics.v1';
   static const String _privacyConsentKey = 'verifin.privacy_consent.v1';
+  static const String _appLockKey = 'verifin.app_lock.v1';
   static const String _assetViewModeKey = 'verifin.asset_view_mode.v1';
   static const String _assetSectionCollapsedKey =
       'verifin.asset_section_collapsed.v1';
@@ -83,6 +85,7 @@ class VeriFinController extends ChangeNotifier {
   String _assetCoverUrl = '';
   bool _hapticsEnabled = true;
   bool _privacyConsentAccepted = false;
+  AppLockConfig _appLockConfig = const AppLockConfig.none();
   AssetAccountViewMode _assetAccountViewMode = AssetAccountViewMode.type;
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
@@ -187,6 +190,62 @@ class VeriFinController extends ChangeNotifier {
     _privacyConsentAccepted = true;
     _store.write(_privacyConsentKey, 'true');
     notifyListeners();
+  }
+
+  /// 当前应用锁配置（含锁类型、加盐哈希、生物识别开关）。
+  AppLockConfig get appLockConfig => _appLockConfig;
+
+  /// 是否已启用应用锁（PIN 或图案）。
+  bool get appLockEnabled => _appLockConfig.enabled;
+
+  /// 当前锁类型。
+  AppLockKind get appLockKind => _appLockConfig.kind;
+
+  /// 是否开启了生物识别快捷解锁（仅在已启用应用锁时有意义）。
+  bool get biometricUnlockEnabled =>
+      _appLockConfig.enabled && _appLockConfig.biometricEnabled;
+
+  /// 设置或修改应用锁密钥（PIN 数字串或图案点序列）。生成新盐并落库，不存明文。
+  void setAppLock({required AppLockKind kind, required String secret}) {
+    assert(kind != AppLockKind.none, 'setAppLock 不能用于关闭应用锁');
+    _appLockConfig = AppLockConfig.fromSecret(
+      kind: kind,
+      secret: secret,
+      biometricEnabled: _appLockConfig.biometricEnabled,
+    );
+    _persistAppLock();
+    notifyListeners();
+  }
+
+  /// 校验输入的密钥是否匹配当前应用锁。
+  bool verifyAppLock(String input) => _appLockConfig.verify(input);
+
+  /// 关闭应用锁（同时关闭生物识别）。
+  void disableAppLock() {
+    if (!_appLockConfig.enabled) {
+      return;
+    }
+    _appLockConfig = const AppLockConfig.none();
+    _persistAppLock();
+    notifyListeners();
+  }
+
+  /// 开关生物识别快捷解锁。仅在已启用应用锁时生效。
+  void setBiometricUnlockEnabled(bool enabled) {
+    if (!_appLockConfig.enabled || _appLockConfig.biometricEnabled == enabled) {
+      return;
+    }
+    _appLockConfig = _appLockConfig.copyWith(biometricEnabled: enabled);
+    _persistAppLock();
+    notifyListeners();
+  }
+
+  void _persistAppLock() {
+    if (_appLockConfig.enabled) {
+      _store.write(_appLockKey, jsonEncode(_appLockConfig.toJson()));
+    } else {
+      _store.delete(_appLockKey);
+    }
   }
 
   void toggleAssetAccountViewMode() {
@@ -1028,6 +1087,7 @@ class VeriFinController extends ChangeNotifier {
     _assetCoverUrl = _store.read(_assetCoverKey) ?? '';
     _hapticsEnabled = _store.read(_hapticsKey) != 'false';
     _privacyConsentAccepted = _store.read(_privacyConsentKey) == 'true';
+    _loadAppLock();
     _assetAccountViewMode = AssetAccountViewMode.fromStorage(
       _store.read(_assetViewModeKey),
     );
@@ -1117,6 +1177,22 @@ class VeriFinController extends ChangeNotifier {
     } catch (_) {
       _store.delete(_profileKey);
       _profile = defaultUserProfile;
+    }
+  }
+
+  void _loadAppLock() {
+    final raw = _store.read(_appLockKey);
+    if (raw == null || raw.isEmpty) {
+      _appLockConfig = const AppLockConfig.none();
+      return;
+    }
+    try {
+      _appLockConfig = AppLockConfig.fromJson(
+        Map<String, dynamic>.from(jsonDecode(raw) as Map<dynamic, dynamic>),
+      );
+    } catch (_) {
+      _store.delete(_appLockKey);
+      _appLockConfig = const AppLockConfig.none();
     }
   }
 

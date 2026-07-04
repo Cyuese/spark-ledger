@@ -8,6 +8,7 @@ import 'data/app_database.dart';
 import 'data/ledger_repository.dart';
 import 'l10n/app_localizations.dart';
 import 'local_storage/local_storage.dart';
+import 'pages/app_lock_gate.dart';
 import 'pages/shell.dart';
 
 Future<void> main() async {
@@ -57,6 +58,8 @@ class _VeriFinAppState extends State<VeriFinApp> {
             themeMode: themePreference.themeMode,
             theme: buildVeriFinTheme(Brightness.light),
             darkTheme: buildVeriFinTheme(Brightness.dark),
+            builder: (context, child) =>
+                AppLockGate(child: child ?? const SizedBox.shrink()),
             home: const VeriFinShell(),
           );
         },

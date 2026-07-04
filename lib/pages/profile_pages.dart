@@ -15,6 +15,7 @@ import '../app/platform_bridge.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
+import 'app_lock_page.dart';
 import 'legal_pages.dart';
 import 'sheets.dart';
 
@@ -904,6 +905,20 @@ class SettingsPage extends StatelessWidget {
                       title: const Text('触感反馈'),
                       value: controller.hapticsEnabled,
                       onChanged: controller.setHapticsEnabled,
+                    ),
+                    const Divider(height: 1),
+                    SettingsRow(
+                      icon: Icons.lock_outline,
+                      title: '应用锁',
+                      trailing: controller.appLockEnabled ? '已开启' : '未开启',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () {
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const AppLockSettingsPage(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
