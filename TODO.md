@@ -78,7 +78,7 @@
 - [~] 5.5 **附件备份改压缩包格式（尽早做）**——分两步：
   - [x] 核心与控制器：`backup_archive.dart` 纯函数（附件字节从 JSON 剥离、与 `backup.json` 打进 zip，解包拼回 `dataUrl`）+ `exportBackupArchiveBytes()`/`importBackupBytes()`（zip 自动识别、兼容旧版纯 JSON）；含往返/体积/兼容测试
   - [ ] 管线与原生（**需真机验证恢复，留待有设备的会话**）：把备份写入管线（手动/自动备份的 SAF 写、导出到 Downloads、WebDAV、加密判定）从文本切到二进制字节，让未加密备份默认产出 zip；新增 Android 原生二进制 I/O（`writeBytesToUri`/`readBytesFromUri`/`saveBytesToDownloads`）、备份文件列表纳入 `.zip`。加密备份可暂保持文本信封路径不打包，复用现有加密逻辑。**原因：这是数据关键路径且原生写入无法离设备验证，不盲改。**
-- [ ] 5.6 **深层结构审查（有空再做）**：核心状态文件 `veri_fin_controller.dart` 体量/耦合/可拆分点评估，必要时拆分
+- [x] 5.6 **深层结构审查**：评估完成，报告见 `docs/dev/structure-review.md`。结论：结构总体健康、目录划分清晰、无结构性隐患；重构候选（part 拆 controller、抽通用确认弹窗、拆 profile_pages）均属风格/大改动面，按「只改明确的」原则**留待你决定**后再逐项做
 
 > 已放弃项：数据库迁移「压平成基线」——迁移不影响性能（全新装不跑迁移、老设备每步只跑一次），不做。
 
