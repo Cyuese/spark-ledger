@@ -13,7 +13,7 @@ class AppDatabase {
   final Database db;
 
   static const String defaultDatabaseName = 'verifin.db';
-  static const int schemaVersion = 1;
+  static const int schemaVersion = 2;
 
   /// 打开（或创建）数据库。测试通过 [factory]/[path] 注入 ffi 与内存路径；
   /// 真实平台留空则由 [resolveDatabaseFactory]/[resolveDatabasePath] 决定。
@@ -49,7 +49,10 @@ class AppDatabase {
     int oldVersion,
     int newVersion,
   ) async {
-    // 目前只有 v1，尚无升级路径。后续 schema 变更在此按版本区间追加。
+    // v1 → v2：分类支持多级树形结构，新增可空的 parent_id 列（顶级为 NULL）。
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE categories ADD COLUMN parent_id TEXT');
+    }
   }
 
   /// v1 建表语句。字段命名用 snake_case；布尔存 0/1；时间存毫秒时间戳。
@@ -111,7 +114,8 @@ class AppDatabase {
       label TEXT NOT NULL,
       type TEXT NOT NULL,
       icon_code TEXT NOT NULL,
-      sort_order INTEGER NOT NULL
+      sort_order INTEGER NOT NULL,
+      parent_id TEXT
     )
     ''',
     '''

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:verifin/app/models.dart';
@@ -103,7 +105,10 @@ void main() {
     ];
     await repo.saveBooks(books);
     final loadedBooks = await repo.loadBooks();
-    expect(loadedBooks.map((b) => b.id).toList(), <String>['default', 'travel']);
+    expect(loadedBooks.map((b) => b.id).toList(), <String>[
+      'default',
+      'travel',
+    ]);
     expect(loadedBooks[1].isDefault, isFalse);
 
     final accounts = <Account>[
@@ -136,7 +141,10 @@ void main() {
     ];
     await repo.saveAccounts(accounts);
     final loadedAccounts = await repo.loadAccounts();
-    expect(loadedAccounts.map((a) => a.id).toList(), <String>['alipay', 'card']);
+    expect(loadedAccounts.map((a) => a.id).toList(), <String>[
+      'alipay',
+      'card',
+    ]);
     expect(loadedAccounts[1].hidden, isTrue);
     expect(loadedAccounts[1].includeInAssets, isFalse);
     expect(loadedAccounts[1].cardLast4, '8888');
@@ -162,6 +170,13 @@ void main() {
         iconCode: 'food',
       ),
       const Category(
+        id: 'coffee',
+        label: '咖啡',
+        type: EntryType.expense,
+        iconCode: 'food',
+        parentId: 'dining',
+      ),
+      const Category(
         id: 'salary',
         label: '工资',
         type: EntryType.income,
@@ -170,11 +185,73 @@ void main() {
     ];
     await repo.saveCategories(categories);
     final loadedCategories = await repo.loadCategories();
-    expect(
-      loadedCategories.map((c) => c.id).toList(),
-      <String>['dining', 'salary'],
+    expect(loadedCategories.map((c) => c.id).toList(), <String>[
+      'dining',
+      'coffee',
+      'salary',
+    ]);
+    expect(loadedCategories[2].type, EntryType.income);
+    // 多级分类的 parentId 应完整往返（顶级为 null，子分类指向父级）。
+    expect(loadedCategories[0].parentId, isNull);
+    expect(loadedCategories[1].parentId, 'dining');
+  });
+
+  test('v1 数据库升级到 v2 后 categories 具备 parent_id 列', () async {
+    // 以旧版 v1 schema 建库（无 parent_id 列）并写入一条分类。
+    final dir = await Directory.systemTemp.createTemp('verifin_mig');
+    final path = '${dir.path}/mig.db';
+    final v1 = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 1,
+        onCreate: (db, _) async {
+          await db.execute('''
+            CREATE TABLE categories (
+              id TEXT PRIMARY KEY,
+              label TEXT NOT NULL,
+              type TEXT NOT NULL,
+              icon_code TEXT NOT NULL,
+              sort_order INTEGER NOT NULL
+            )
+          ''');
+        },
+      ),
     );
-    expect(loadedCategories[1].type, EntryType.income);
+    await v1.insert('categories', <String, Object?>{
+      'id': 'dining',
+      'label': '餐饮',
+      'type': 'expense',
+      'icon_code': 'food',
+      'sort_order': 0,
+    });
+    await v1.close();
+
+    // 通过 AppDatabase.open（当前 schemaVersion）触发 _onUpgrade 迁移。
+    final db = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+    final repo = SqliteLedgerRepository(db);
+    final migrated = await repo.loadCategories();
+    expect(migrated.single.id, 'dining');
+    expect(migrated.single.parentId, isNull);
+
+    // 迁移后可写入子分类并读回。
+    await repo.saveCategories(<Category>[
+      ...migrated,
+      const Category(
+        id: 'coffee',
+        label: '咖啡',
+        type: EntryType.expense,
+        iconCode: 'food',
+        parentId: 'dining',
+      ),
+    ]);
+    final withChild = await repo.loadCategories();
+    expect(withChild.map((c) => c.parentId).toList(), <String?>[
+      null,
+      'dining',
+    ]);
+
+    await db.close();
+    await dir.delete(recursive: true);
   });
 
   test('预算键值映射保存读回', () async {

@@ -285,6 +285,7 @@ class SqliteLedgerRepository implements LedgerRepository {
         'type': c.type.storageValue,
         'icon_code': c.iconCode,
         'sort_order': index,
+        'parent_id': c.parentId,
       };
 
   static Category _categoryFromRow(Map<String, Object?> row) => Category(
@@ -292,5 +293,6 @@ class SqliteLedgerRepository implements LedgerRepository {
     label: row['label'] as String,
     type: EntryType.fromStorage(row['type'] as String),
     iconCode: row['icon_code'] as String,
+    parentId: row['parent_id'] as String?,
   );
 }

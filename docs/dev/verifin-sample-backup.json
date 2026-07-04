@@ -504,7 +504,8 @@
         "id": "coffee",
         "label": "咖啡",
         "type": "expense",
-        "iconCode": "dining"
+        "iconCode": "dining",
+        "parentId": "dining"
       },
       {
         "id": "pet",
@@ -516,7 +517,8 @@
         "id": "travel",
         "label": "旅行",
         "type": "expense",
-        "iconCode": "transport"
+        "iconCode": "transport",
+        "parentId": "transport"
       },
       {
         "id": "balance_adjust_expense",
