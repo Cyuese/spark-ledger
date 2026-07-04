@@ -163,6 +163,20 @@ class ProfilePage extends StatelessWidget {
                     );
                   },
                 ),
+                const Divider(),
+                SettingsRow(
+                  icon: Icons.storage_outlined,
+                  title: '数据管理',
+                  trailing: '备份 / 恢复',
+                  trailingIcon: Icons.chevron_right,
+                  onTap: () {
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const DataManagementPage(),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -925,47 +939,12 @@ class SettingsPage extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               VeriCard(
-                child: Column(
-                  children: <Widget>[
-                    SettingsRow(
-                      icon: Icons.download_outlined,
-                      title: '导出数据',
-                      trailing: 'JSON 备份',
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () => _exportData(context, controller),
-                    ),
-                    const Divider(),
-                    SettingsRow(
-                      icon: Icons.upload_file_outlined,
-                      title: '导入数据',
-                      trailing: '从文件恢复',
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () => _confirmImport(context, controller),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              VeriCard(
-                child: Column(
-                  children: <Widget>[
-                    SettingsRow(
-                      icon: Icons.system_update_alt_outlined,
-                      title: '检查更新',
-                      trailing: 'GitHub Release',
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () => _checkForUpdate(context),
-                    ),
-                    const Divider(),
-                    SettingsRow(
-                      icon: Icons.restart_alt,
-                      title: '初始化数据',
-                      trailing: '删除所有本地数据',
-                      trailingIcon: Icons.chevron_right,
-                      contentColor: veriExpense,
-                      onTap: () => _confirmReset(context, controller),
-                    ),
-                  ],
+                child: SettingsRow(
+                  icon: Icons.system_update_alt_outlined,
+                  title: '检查更新',
+                  trailing: 'GitHub Release',
+                  trailingIcon: Icons.chevron_right,
+                  onTap: () => _checkForUpdate(context),
                 ),
               ),
               const SizedBox(height: 10),
@@ -1027,6 +1006,72 @@ class SettingsPage extends StatelessWidget {
     if (selected != null) {
       controller.setThemePreference(selected);
     }
+  }
+
+  Future<void> _checkForUpdate(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => const _UpdateCheckDialog(),
+    );
+  }
+}
+
+class DataManagementPage extends StatelessWidget {
+  const DataManagementPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+
+    return Scaffold(
+      body: SafeArea(
+        child: VeriPage(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
+            children: <Widget>[
+              const VeriHeader(
+                title: '数据管理',
+                subtitle: '备份与恢复本地数据',
+                showBack: true,
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: Column(
+                  children: <Widget>[
+                    SettingsRow(
+                      icon: Icons.download_outlined,
+                      title: '导出数据',
+                      trailing: 'JSON 备份',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _exportData(context, controller),
+                    ),
+                    const Divider(),
+                    SettingsRow(
+                      icon: Icons.upload_file_outlined,
+                      title: '导入数据',
+                      trailing: '从文件恢复',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _confirmImport(context, controller),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: SettingsRow(
+                  icon: Icons.restart_alt,
+                  title: '初始化数据',
+                  trailing: '删除所有本地数据',
+                  trailingIcon: Icons.chevron_right,
+                  contentColor: veriExpense,
+                  onTap: () => _confirmReset(context, controller),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _exportData(
@@ -1105,13 +1150,6 @@ class SettingsPage extends StatelessWidget {
         ).showSnackBar(const SnackBar(content: Text('导入失败，请检查文件后重试')));
       }
     }
-  }
-
-  Future<void> _checkForUpdate(BuildContext context) async {
-    await showDialog<void>(
-      context: context,
-      builder: (context) => const _UpdateCheckDialog(),
-    );
   }
 
   Future<void> _confirmReset(

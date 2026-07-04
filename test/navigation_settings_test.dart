@@ -53,7 +53,7 @@ void main() {
     await pumpApp(tester);
 
     await tapBottomTab(tester, 3);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.tap(find.text('数据管理'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('初始化数据'));
     await tester.pumpAndSettle();
