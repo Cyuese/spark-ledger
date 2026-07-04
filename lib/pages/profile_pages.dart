@@ -468,7 +468,12 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                   buildDefaultDragHandles: false,
                   itemCount: categories.length,
                   onReorderItem: (oldIndex, newIndex) {
-                    controller.reorderCategories(_type, oldIndex, newIndex);
+                    controller.reorderCategories(
+                      _type,
+                      null,
+                      oldIndex,
+                      newIndex,
+                    );
                   },
                   itemBuilder: (context, index) {
                     final category = categories[index];

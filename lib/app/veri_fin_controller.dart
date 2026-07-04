@@ -9,6 +9,7 @@ import 'app_lock.dart';
 import 'backup/backup_settings.dart';
 import 'backup/transaction_import.dart';
 import 'backup/webdav_config.dart';
+import 'category_tree.dart';
 import 'demo_data.dart';
 import 'ledger_math.dart';
 import 'models.dart';
@@ -238,6 +239,26 @@ class VeriFinController extends ChangeNotifier {
 
   Category categoryById(String id) {
     return categoryByIdFrom(categories, id);
+  }
+
+  /// 指定类型的顶级分类（多级分类树的根）。
+  List<Category> rootCategoriesForType(EntryType type) {
+    return rootCategories(categories, type);
+  }
+
+  /// 某分类的直接子分类。
+  List<Category> childCategories(String parentId) {
+    return childrenOf(categories, parentId);
+  }
+
+  /// 某分类的完整路径标签，如「餐饮 / 咖啡」。
+  String categoryPathLabel(String id) {
+    return pathLabel(categories, id);
+  }
+
+  /// 前序展开某类型的整棵分类树（携带层级深度），供缩进列表渲染。
+  List<CategoryNode> categoryTreeForType(EntryType type) {
+    return flattenTree(categories, type);
   }
 
   double monthlyBudget(DateTime month) {
@@ -770,25 +791,72 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 新增分类。传入 [parentId] 则创建为该分类的子分类（多级分类）；
+  /// 子分类的类型强制继承父分类，[type] 仅在创建顶级分类时生效。
   void addCategory({
     required EntryType type,
     required String label,
     required String iconCode,
+    String? parentId,
   }) {
     final trimmedLabel = label.trim();
     if (trimmedLabel.isEmpty) {
       return;
     }
+    var resolvedType = type;
+    if (parentId != null) {
+      final parent = _categories
+          .where((category) => category.id == parentId)
+          .firstOrNull;
+      if (parent == null) {
+        return;
+      }
+      // 子分类类型必须与父分类一致。
+      resolvedType = parent.type;
+    }
     _categories.add(
       Category(
         id: 'category_${DateTime.now().microsecondsSinceEpoch}',
         label: trimmedLabel,
-        type: type,
+        type: resolvedType,
         iconCode: iconCode,
+        parentId: parentId,
       ),
     );
     _persistCategories();
     notifyListeners();
+  }
+
+  /// 移动分类到新的父分类下（[newParentId] 为 null 表示移到顶级）。
+  /// 拦截：系统分类、指向自身、成环（移到自己的后代下）、跨类型。
+  bool moveCategory(String categoryId, String? newParentId) {
+    if (_isProtectedCategory(categoryId) || categoryId == newParentId) {
+      return false;
+    }
+    final index = _categories.indexWhere((c) => c.id == categoryId);
+    if (index == -1) {
+      return false;
+    }
+    final category = _categories[index];
+    if (category.parentId == newParentId) {
+      return false;
+    }
+    if (newParentId != null) {
+      final parent = _categories.where((c) => c.id == newParentId).firstOrNull;
+      if (parent == null || parent.type != category.type) {
+        return false;
+      }
+      // 不能移动到自己的后代之下，否则会成环。
+      if (isDescendantOf(_categories, newParentId, categoryId)) {
+        return false;
+      }
+    }
+    // 从原位置摘出并追加到末尾，成为新父级下的最后一个同级。
+    _categories.removeAt(index);
+    _categories.add(category.copyWith(parentId: newParentId));
+    _persistCategories();
+    notifyListeners();
+    return true;
   }
 
   void renameCategory(String categoryId, String label) {
@@ -819,33 +887,33 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void reorderCategories(EntryType type, int oldIndex, int newIndex) {
-    final typeCategories = categoriesForType(type).toList();
+  /// 在同一父级（[parentId] 为 null 即顶级）的兄弟分类间重排。
+  /// 仅在这些兄弟节点占据的全局位置上做置换，不影响其余分类与各自子树。
+  void reorderCategories(
+    EntryType type,
+    String? parentId,
+    int oldIndex,
+    int newIndex,
+  ) {
+    final positions = <int>[];
+    for (var i = 0; i < _categories.length; i++) {
+      final category = _categories[i];
+      if (category.type == type && category.parentId == parentId) {
+        positions.add(i);
+      }
+    }
     if (oldIndex < 0 ||
-        oldIndex >= typeCategories.length ||
+        oldIndex >= positions.length ||
         newIndex < 0 ||
-        newIndex > typeCategories.length) {
+        newIndex > positions.length) {
       return;
     }
-    final moved = typeCategories.removeAt(oldIndex);
-    final targetIndex = newIndex.clamp(0, typeCategories.length);
-    typeCategories.insert(targetIndex, moved);
-
-    final categoriesByType = <EntryType, List<Category>>{
-      for (final entryType in EntryType.values)
-        entryType: _categories
-            .where((category) => category.type == entryType)
-            .toList(),
-    };
-    categoriesByType[type] = typeCategories;
-
-    _categories
-      ..clear()
-      ..addAll(
-        EntryType.values.expand(
-          (entryType) => categoriesByType[entryType] ?? const <Category>[],
-        ),
-      );
+    final siblings = <Category>[for (final p in positions) _categories[p]];
+    final moved = siblings.removeAt(oldIndex);
+    siblings.insert(newIndex.clamp(0, siblings.length), moved);
+    for (var k = 0; k < positions.length; k++) {
+      _categories[positions[k]] = siblings[k];
+    }
     _persistCategories();
     notifyListeners();
   }
@@ -860,11 +928,18 @@ class VeriFinController extends ChangeNotifier {
     if (category == null || categoryUsageCount(categoryId) > 0) {
       return false;
     }
+    // 有子分类时不能直接删除，需先移动或删除子分类。
+    if (hasChildren(_categories, categoryId)) {
+      return false;
+    }
     if (categoriesForType(category.type).length <= 1) {
       return false;
     }
     _categories.removeWhere((item) => item.id == categoryId);
+    // 清理该分类在各账本/月份下的分类预算，避免残留孤儿键。
+    _categoryBudgets.removeWhere((key, _) => key.endsWith(':$categoryId'));
     _persistCategories();
+    _persistCategoryBudgets();
     notifyListeners();
     return true;
   }

@@ -45,7 +45,7 @@ void main() {
     final coffeeIndex = source
         .categoriesForType(EntryType.expense)
         .indexWhere((category) => category.label == '咖啡');
-    source.reorderCategories(EntryType.expense, coffeeIndex, 0);
+    source.reorderCategories(EntryType.expense, null, coffeeIndex, 0);
 
     final backup = source.exportDataJson();
     final target = await makeController();
