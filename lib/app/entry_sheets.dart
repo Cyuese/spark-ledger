@@ -395,3 +395,97 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
     );
   }
 }
+
+/// 记账时给交易多选标签的底部弹窗。展示已有标签的 FilterChip 供多选，
+/// 并可即时新建标签。点「完成」返回选中的标签 id 列表（取消返回 null）。
+class TagSelectorSheet extends StatefulWidget {
+  const TagSelectorSheet({
+    super.key,
+    required this.tags,
+    required this.selectedIds,
+    required this.onCreateTag,
+  });
+
+  final List<Tag> tags;
+  final List<String> selectedIds;
+
+  /// 新建标签：由调用方弹出输入框、创建标签，并返回新标签（重名返回已有，取消返回 null）。
+  final Future<Tag?> Function() onCreateTag;
+
+  @override
+  State<TagSelectorSheet> createState() => _TagSelectorSheetState();
+}
+
+class _TagSelectorSheetState extends State<TagSelectorSheet> {
+  late final Set<String> _selected = <String>{...widget.selectedIds};
+  late List<Tag> _tags = <Tag>[...widget.tags];
+
+  Future<void> _createTag() async {
+    final tag = await widget.onCreateTag();
+    if (!mounted || tag == null) {
+      return;
+    }
+    setState(() {
+      if (!_tags.any((t) => t.id == tag.id)) {
+        _tags = <Tag>[..._tags, tag];
+      }
+      _selected.add(tag.id);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Text(
+                '选择标签',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(_selected.toList()),
+                child: const Text('完成'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  for (final tag in _tags)
+                    FilterChip(
+                      label: Text(tag.label),
+                      selected: _selected.contains(tag.id),
+                      onSelected: (value) => setState(() {
+                        if (value) {
+                          _selected.add(tag.id);
+                        } else {
+                          _selected.remove(tag.id);
+                        }
+                      }),
+                    ),
+                  ActionChip(
+                    avatar: const Icon(Icons.add, size: 18),
+                    label: const Text('新建标签'),
+                    onPressed: _createTag,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

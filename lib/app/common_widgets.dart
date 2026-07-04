@@ -1543,3 +1543,93 @@ Future<T> runWithLoadingDialog<T>({
     }
   }
 }
+
+/// 记账表单里的「标签」行：展示已选标签 chip（空时提示点击添加），整行可点击打开多选。
+class EntryTagField extends StatelessWidget {
+  const EntryTagField({
+    super.key,
+    required this.tagIds,
+    required this.tagLabelOf,
+    required this.onTap,
+  });
+
+  final List<String> tagIds;
+
+  /// 由 id 取标签名；返回 null 表示标签已被删除，忽略展示。
+  final String? Function(String id) tagLabelOf;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final labels = <String>[
+      for (final id in tagIds)
+        if (tagLabelOf(id) case final String label) label,
+    ];
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(
+                Icons.label_outline,
+                size: 20,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: labels.isEmpty
+                    ? Text(
+                        '添加标签',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      )
+                    : Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: <Widget>[
+                          for (final label in labels)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: veriRoyal.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                label,
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(
+                                      color: veriRoyal,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ),
+                        ],
+                      ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -784,6 +784,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   late String _accountId;
   late String? _toAccountId;
   late DateTime _occurredAt;
+  late List<String> _tagIds;
   late final TextEditingController _noteController;
 
   @override
@@ -805,6 +806,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     _accountId = entry.accountId;
     _toAccountId = entry.toAccountId;
     _occurredAt = entry.occurredAt;
+    _tagIds = List<String>.of(entry.tagIds);
     _noteController = TextEditingController(text: entry.note);
   }
 
@@ -985,6 +987,14 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                             : _noteController.text.trim(),
                         placeholder: _noteController.text.trim().isEmpty,
                         onTap: _editNote,
+                      ),
+                      DetailInfoRow(
+                        label: '标签',
+                        value: _tagLabels(controller).isEmpty
+                            ? '点击添加标签'
+                            : _tagLabels(controller).join('、'),
+                        placeholder: _tagLabels(controller).isEmpty,
+                        onTap: _pickTags,
                       ),
                     ],
                   ),
@@ -1178,9 +1188,25 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
         clearToAccountId: _type != EntryType.transfer,
         note: _noteController.text.trim(),
         occurredAt: _occurredAt,
+        tagIds: _tagIds,
       ),
     );
     Navigator.of(context).pop();
+  }
+
+  List<String> _tagLabels(VeriFinController controller) {
+    return <String>[
+      for (final id in _tagIds)
+        if (controller.tagById(id) case final Tag tag) tag.label,
+    ];
+  }
+
+  Future<void> _pickTags() async {
+    final result = await pickEntryTags(context: context, selectedIds: _tagIds);
+    if (!mounted || result == null) {
+      return;
+    }
+    setState(() => _tagIds = result);
   }
 }
 

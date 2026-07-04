@@ -30,6 +30,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   late String _accountId = widget.initialAccountId ?? '';
   String? _toAccountId;
   DateTime _occurredAt = DateTime.now();
+  List<String> _tagIds = <String>[];
   final TextEditingController _noteController = TextEditingController();
 
   @override
@@ -222,6 +223,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 14),
+                  EntryTagField(
+                    tagIds: _tagIds,
+                    tagLabelOf: (id) => controller.tagById(id)?.label,
+                    onTap: _pickTags,
+                  ),
                 ],
               ),
             ),
@@ -387,6 +394,14 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     });
   }
 
+  Future<void> _pickTags() async {
+    final result = await pickEntryTags(context: context, selectedIds: _tagIds);
+    if (!mounted || result == null) {
+      return;
+    }
+    setState(() => _tagIds = result);
+  }
+
   void _save() {
     final controller = VeriFinScope.of(context);
     if (!controller.accounts
@@ -405,6 +420,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         toAccountId: _type == EntryType.transfer ? _toAccountId : null,
         note: _noteController.text.trim(),
         occurredAt: _occurredAt,
+        tagIds: _tagIds,
       ),
     );
     Navigator.of(context).pop();

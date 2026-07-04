@@ -4,6 +4,7 @@ import '../app/account_icon_assets.dart';
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
 import '../app/demo_data.dart';
+import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
@@ -451,3 +452,44 @@ Future<void> confirmDeleteAccount(
 }
 
 enum AccountDeleteAction { hide, delete }
+
+/// 打开标签多选弹窗，返回用户选定的标签 id 列表（取消返回 null）。
+/// 新建标签直接写入 controller（标签全局共享，即时生效）。
+Future<List<String>?> pickEntryTags({
+  required BuildContext context,
+  required List<String> selectedIds,
+}) {
+  final controller = VeriFinScope.of(context);
+  return showModalBottomSheet<List<String>>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
+    ),
+    builder: (sheetContext) => SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.6,
+        ),
+        child: TagSelectorSheet(
+          tags: controller.tags,
+          selectedIds: selectedIds,
+          onCreateTag: () async {
+            final label = await showTextInputDialog(
+              context: sheetContext,
+              title: '新建标签',
+              label: '标签名称',
+            );
+            if (label == null) {
+              return null;
+            }
+            final id = controller.addTag(label);
+            return id == null ? null : controller.tagById(id);
+          },
+        ),
+      ),
+    ),
+  );
+}

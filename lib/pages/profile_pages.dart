@@ -172,6 +172,20 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const Divider(),
                 SettingsRow(
+                  icon: Icons.label_outline,
+                  title: '标签管理',
+                  trailing: '${controller.tags.length} 个标签',
+                  trailingIcon: Icons.chevron_right,
+                  onTap: () {
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const TagManagementPage(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(),
+                SettingsRow(
                   icon: Icons.storage_outlined,
                   title: '数据管理',
                   trailing: '备份 / 恢复',
@@ -813,6 +827,239 @@ class _CategoryManageRow extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.48),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ReorderableDragStartListener(
+                index: index,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.drag_handle,
+                    size: 18,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.38),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TagManagementPage extends StatefulWidget {
+  const TagManagementPage({super.key});
+
+  @override
+  State<TagManagementPage> createState() => _TagManagementPageState();
+}
+
+class _TagManagementPageState extends State<TagManagementPage> {
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final tags = controller.tags;
+
+    return Scaffold(
+      body: SafeArea(
+        child: VeriPage(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
+            children: <Widget>[
+              VeriHeader(
+                title: '标签管理',
+                subtitle: '记账时可给交易打多个标签',
+                showBack: true,
+                actions: <Widget>[
+                  HeaderAction(
+                    icon: Icons.add,
+                    tooltip: '新增标签',
+                    onPressed: _createTag,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              if (tags.isEmpty)
+                VeriCard(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: Text(
+                        '还没有标签，点击右上角新增',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                VeriCard(
+                  padding: EdgeInsets.zero,
+                  child: ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    buildDefaultDragHandles: false,
+                    itemCount: tags.length,
+                    onReorderItem: (oldIndex, newIndex) {
+                      controller.reorderTags(oldIndex, newIndex);
+                    },
+                    itemBuilder: (context, index) {
+                      final tag = tags[index];
+                      return _TagManageRow(
+                        key: ValueKey<String>(tag.id),
+                        index: index,
+                        tag: tag,
+                        usageCount: controller.tagUsageCount(tag.id),
+                        onTap: () => _showTagActions(tag),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createTag() async {
+    final label = await showTextInputDialog(
+      context: context,
+      title: '新增标签',
+      label: '标签名称',
+    );
+    if (!mounted || label == null) {
+      return;
+    }
+    VeriFinScope.of(context).addTag(label);
+  }
+
+  Future<void> _showTagActions(Tag tag) async {
+    final selected = await showOptionSheet<String>(
+      context: context,
+      title: tag.label,
+      values: const <String>['rename', 'delete'],
+      selected: 'rename',
+      showSelectedMarker: false,
+      labelOf: (value) => switch (value) {
+        'rename' => '重命名',
+        'delete' => '删除标签',
+        _ => value,
+      },
+    );
+    if (!mounted || selected == null) {
+      return;
+    }
+    switch (selected) {
+      case 'rename':
+        await _renameTag(tag);
+      case 'delete':
+        await _deleteTag(tag);
+    }
+  }
+
+  Future<void> _renameTag(Tag tag) async {
+    final label = await showTextInputDialog(
+      context: context,
+      title: '重命名标签',
+      label: '标签名称',
+      initialValue: tag.label,
+    );
+    if (!mounted || label == null) {
+      return;
+    }
+    VeriFinScope.of(context).renameTag(tag.id, label);
+  }
+
+  Future<void> _deleteTag(Tag tag) async {
+    final controller = VeriFinScope.of(context);
+    final usage = controller.tagUsageCount(tag.id);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('删除标签？'),
+        content: Text(
+          usage > 0
+              ? '标签「${tag.label}」正被 $usage 笔交易使用，删除后会从这些交易上移除。'
+              : '标签「${tag.label}」删除后无法恢复。',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) {
+      return;
+    }
+    controller.deleteTag(tag.id);
+  }
+}
+
+class _TagManageRow extends StatelessWidget {
+  const _TagManageRow({
+    super.key,
+    required this.index,
+    required this.tag,
+    required this.usageCount,
+    required this.onTap,
+  });
+
+  final int index;
+  final Tag tag;
+  final int usageCount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+          child: Row(
+            children: <Widget>[
+              Icon(
+                Icons.label,
+                size: 22,
+                color: veriRoyal.withValues(alpha: 0.75),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      tag.label,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '$usageCount 笔交易',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(
                           context,

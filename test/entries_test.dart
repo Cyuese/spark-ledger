@@ -258,6 +258,53 @@ void main() {
     expect(find.textContaining('个子分类'), findsWidgets);
   });
 
+  testWidgets('creates a tag in the tag management page', (
+    WidgetTester tester,
+  ) async {
+    await pumpApp(tester);
+
+    await tapBottomTab(tester, 3);
+    await tester.tap(find.text('标签管理'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('标签管理'), findsWidgets);
+    await tester.tap(find.byTooltip('新增标签'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, '报销');
+    await tester.tap(find.text('确认'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('报销'), findsOneWidget);
+    expect(find.text('0 笔交易'), findsOneWidget);
+  });
+
+  testWidgets('tags an entry through the entry form', (
+    WidgetTester tester,
+  ) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    controller.addTag('必要');
+    controller.dispose();
+
+    await pumpApp(tester, store);
+    await addTestAccount(tester, '现金账户');
+    await tapBottomTab(tester, 0);
+    await createQuickEntry(tester);
+
+    // 记账表单里点击「添加标签」行，勾选「必要」，完成。
+    await tester.tap(find.text('添加标签'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('必要'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('完成'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('save_entry_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('最近交易'), findsOneWidget);
+  });
+
   test('addEntry keeps entries sorted latest first', () async {
     final controller = await makeController();
     final bookId = controller.activeBook.id;
