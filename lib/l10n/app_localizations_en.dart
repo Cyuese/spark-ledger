@@ -795,4 +795,301 @@ class AppLocalizationsEn extends AppLocalizations {
   String monthlyRepayLine(int day) {
     return 'Repay on day $day of each month';
   }
+
+  @override
+  String get attachTakePhoto => 'Take photo';
+
+  @override
+  String get attachFromGallery => 'Choose from gallery';
+
+  @override
+  String get attachTitle => 'Attachments';
+
+  @override
+  String attachCount(int count) {
+    return '$count images';
+  }
+
+  @override
+  String get attachUnsupported =>
+      'Adding attachments isn\'t supported on this platform';
+
+  @override
+  String get attachDeleteTooltip => 'Remove this image';
+
+  @override
+  String get entryDetailSubtitle => 'Entry detail';
+
+  @override
+  String get commonCategory => 'Category';
+
+  @override
+  String get allLabel => 'All';
+
+  @override
+  String get transferOutAccount => 'From account';
+
+  @override
+  String get transferInAccount => 'To account';
+
+  @override
+  String get pleaseSelect => 'Select';
+
+  @override
+  String get feeLabel => 'Fee';
+
+  @override
+  String get feeNoneTapToFill => 'None (tap to set)';
+
+  @override
+  String get accountLabel => 'Account';
+
+  @override
+  String get noUsableAccountTitle => 'No available account';
+
+  @override
+  String get noUsableAccountDesc =>
+      'Add or unhide an account on the Assets page first.';
+
+  @override
+  String get noteHint => 'Tap to add a note';
+
+  @override
+  String get commonSave => 'Save';
+
+  @override
+  String get amountEditTitle => 'Edit amount';
+
+  @override
+  String get transferFeeTitle => 'Transfer fee';
+
+  @override
+  String get pickTransferOutAccount => 'Choose source account';
+
+  @override
+  String get pickAccountTitle => 'Choose account';
+
+  @override
+  String get pickTransferInAccount => 'Choose destination account';
+
+  @override
+  String get timeAll => 'All time';
+
+  @override
+  String get timeYear => 'This year';
+
+  @override
+  String get timeQuarter => 'This quarter';
+
+  @override
+  String get timeWeek => 'This week';
+
+  @override
+  String get timeLast12Months => 'Last 12 months';
+
+  @override
+  String get timeLast30Days => 'Last 30 days';
+
+  @override
+  String get timeLast6Weeks => 'Last 6 weeks';
+
+  @override
+  String get sortDateDesc => 'Date, newest first';
+
+  @override
+  String get sortDateAsc => 'Date, oldest first';
+
+  @override
+  String get sortAmountDesc => 'Amount, high to low';
+
+  @override
+  String get sortAmountAsc => 'Amount, low to high';
+
+  @override
+  String selectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get dayEntriesTitle => 'Day\'s transactions';
+
+  @override
+  String get entriesListTitle => 'Transactions';
+
+  @override
+  String get exitMultiSelect => 'Exit multi-select';
+
+  @override
+  String get multiSelect => 'Multi-select';
+
+  @override
+  String entriesCountFull(int count) {
+    return '$count transactions';
+  }
+
+  @override
+  String get netLabel => 'Net';
+
+  @override
+  String get noMatchTitle => 'No matching transactions';
+
+  @override
+  String get noMatchDesc => 'Try a different keyword, account, or category.';
+
+  @override
+  String get emptyEntriesDesc => 'Saved transactions appear here by date.';
+
+  @override
+  String get filterTimeTitle => 'Filter by time';
+
+  @override
+  String get sortTitle => 'Sort order';
+
+  @override
+  String get filterAccountTitle => 'Filter by account';
+
+  @override
+  String get allAccounts => 'All accounts';
+
+  @override
+  String get filterCategoryTitle => 'Filter by category';
+
+  @override
+  String get filterTagTitle => 'Filter by tag';
+
+  @override
+  String get allTags => 'All tags';
+
+  @override
+  String get unknownTag => 'Unknown tag';
+
+  @override
+  String get tagLabel => 'Tag';
+
+  @override
+  String deleteEntriesTitle(int count) {
+    return 'Delete $count transactions?';
+  }
+
+  @override
+  String get deleteEntriesMessage =>
+      'This cannot be undone; related attachments are removed too.';
+
+  @override
+  String get changeCategoryTitle => 'Change category (same-type entries only)';
+
+  @override
+  String changedCategoryCount(int count) {
+    return 'Changed category of $count transactions';
+  }
+
+  @override
+  String get changeAccountTitle => 'Change account';
+
+  @override
+  String changedAccountCount(int count) {
+    return 'Changed account of $count transactions';
+  }
+
+  @override
+  String yearLabel(int year) {
+    return '$year';
+  }
+
+  @override
+  String quarterLabel(int quarter) {
+    return 'Q$quarter';
+  }
+
+  @override
+  String weekNumber(int week) {
+    return 'W$week';
+  }
+
+  @override
+  String yearWeek(int year, int week) {
+    return '$year W$week';
+  }
+
+  @override
+  String get prevRange => 'Previous';
+
+  @override
+  String get nextRange => 'Next';
+
+  @override
+  String get searchHint => 'Search notes, categories, accounts, or amounts';
+
+  @override
+  String get clearFilters => 'Clear filters';
+
+  @override
+  String get prevDay => 'Previous day';
+
+  @override
+  String get nextDay => 'Next day';
+
+  @override
+  String get entryMissing => 'Transaction not found';
+
+  @override
+  String get deleteEntryTooltip => 'Delete transaction';
+
+  @override
+  String get saveEntryTooltip => 'Save transaction';
+
+  @override
+  String get amountLabel => 'Amount';
+
+  @override
+  String get dateLabel => 'Date';
+
+  @override
+  String get timeLabel => 'Time';
+
+  @override
+  String get markReimbursable => 'Mark reimbursable';
+
+  @override
+  String get refundLabel => 'Refund / reimbursement';
+
+  @override
+  String refundedAmountLabel(String amount) {
+    return 'Offset $amount';
+  }
+
+  @override
+  String get refundAmountTitle => 'Refund / reimbursement amount';
+
+  @override
+  String get pickTypeTitle => 'Choose type';
+
+  @override
+  String get noteEditTitle => 'Edit note';
+
+  @override
+  String get transferNeedsTwoAccounts =>
+      'Transfers need two different accounts; add a destination account first.';
+
+  @override
+  String get deleteEntryTitle => 'Delete this transaction?';
+
+  @override
+  String get deleteEntryMessage =>
+      'This cannot be undone; the locally saved record will be removed.';
+
+  @override
+  String get todayLabel => 'Today';
+
+  @override
+  String get yesterdayLabel => 'Yesterday';
+
+  @override
+  String get selectAll => 'Select all';
+
+  @override
+  String get changeCategoryShort => 'Category';
+
+  @override
+  String get changeAccountShort => 'Account';
 }

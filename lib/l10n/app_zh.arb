@@ -498,5 +498,175 @@
         "type": "int"
       }
     }
-  }
+  },
+  "attachTakePhoto": "拍照",
+  "attachFromGallery": "从相册选择",
+  "attachTitle": "图片附件",
+  "attachCount": "{count} 张",
+  "@attachCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attachUnsupported": "当前平台不支持添加图片附件",
+  "attachDeleteTooltip": "删除这张",
+  "entryDetailSubtitle": "记账详情",
+  "commonCategory": "分类",
+  "allLabel": "全部",
+  "transferOutAccount": "转出账户",
+  "transferInAccount": "转入账户",
+  "pleaseSelect": "请选择",
+  "feeLabel": "手续费",
+  "feeNoneTapToFill": "无（点击填写）",
+  "accountLabel": "账户",
+  "noUsableAccountTitle": "没有可用账户",
+  "noUsableAccountDesc": "请先在资产页添加或取消隐藏一个账户。",
+  "noteHint": "点击添加备注",
+  "commonSave": "保存",
+  "amountEditTitle": "修改金额",
+  "transferFeeTitle": "转账手续费",
+  "pickTransferOutAccount": "选择转出账户",
+  "pickAccountTitle": "选择账户",
+  "pickTransferInAccount": "选择转入账户",
+  "timeAll": "全部时间",
+  "timeYear": "本年",
+  "timeQuarter": "本季",
+  "timeWeek": "本周",
+  "timeLast12Months": "近12个月",
+  "timeLast30Days": "近30天",
+  "timeLast6Weeks": "近6周",
+  "sortDateDesc": "日期降序",
+  "sortDateAsc": "日期升序",
+  "sortAmountDesc": "金额降序",
+  "sortAmountAsc": "金额升序",
+  "selectedCount": "已选 {count} 项",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dayEntriesTitle": "当日交易",
+  "entriesListTitle": "交易明细",
+  "exitMultiSelect": "退出多选",
+  "multiSelect": "多选",
+  "entriesCountFull": "{count}笔交易",
+  "@entriesCountFull": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "netLabel": "结余",
+  "noMatchTitle": "没有匹配交易",
+  "noMatchDesc": "换一个关键词、账户或分类再试。",
+  "emptyEntriesDesc": "保存交易后会在这里按日期展示。",
+  "filterTimeTitle": "筛选时间",
+  "sortTitle": "排序方式",
+  "filterAccountTitle": "筛选账户",
+  "allAccounts": "全部账户",
+  "filterCategoryTitle": "筛选分类",
+  "filterTagTitle": "筛选标签",
+  "allTags": "全部标签",
+  "unknownTag": "未知标签",
+  "tagLabel": "标签",
+  "deleteEntriesTitle": "删除 {count} 笔交易？",
+  "@deleteEntriesTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteEntriesMessage": "删除后无法恢复，相关图片附件也会一并移除。",
+  "changeCategoryTitle": "改分类（仅改同类型交易）",
+  "changedCategoryCount": "已修改 {count} 笔交易的分类",
+  "@changedCategoryCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "changeAccountTitle": "改账户",
+  "changedAccountCount": "已修改 {count} 笔交易的账户",
+  "@changedAccountCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yearLabel": "{year}年",
+  "@yearLabel": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "quarterLabel": "季度{quarter}",
+  "@quarterLabel": {
+    "placeholders": {
+      "quarter": {
+        "type": "int"
+      }
+    }
+  },
+  "weekNumber": "{week}周",
+  "@weekNumber": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "yearWeek": "{year}年{week}周",
+  "@yearWeek": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "prevRange": "上一段",
+  "nextRange": "下一段",
+  "searchHint": "搜索备注、分类、账户或金额",
+  "clearFilters": "清空筛选",
+  "prevDay": "前一天",
+  "nextDay": "后一天",
+  "entryMissing": "交易不存在",
+  "deleteEntryTooltip": "删除交易",
+  "saveEntryTooltip": "保存交易",
+  "amountLabel": "金额",
+  "dateLabel": "日期",
+  "timeLabel": "时间",
+  "markReimbursable": "标记待报销",
+  "refundLabel": "退款 / 报销回款",
+  "refundedAmountLabel": "已冲抵 {amount}",
+  "@refundedAmountLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "refundAmountTitle": "退款 / 报销回款金额",
+  "pickTypeTitle": "选择类型",
+  "noteEditTitle": "编辑备注",
+  "transferNeedsTwoAccounts": "转账需要两个不同的账户,请先添加转入账户。",
+  "deleteEntryTitle": "删除此交易？",
+  "deleteEntryMessage": "删除后无法恢复，本地保存的这笔记录会被移除。",
+  "todayLabel": "今天",
+  "yesterdayLabel": "昨天",
+  "selectAll": "全选",
+  "changeCategoryShort": "改分类",
+  "changeAccountShort": "改账户"
 }

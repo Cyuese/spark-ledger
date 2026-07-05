@@ -92,7 +92,7 @@
 - [x] 6.3 模型显示名与控制器消息（models / veri_fin_controller / demo_data / account_icon_assets）：枚举 `label` 全部改为 `label(AppLocalizations)` 方法并修全部调用点；面板目录 `PagePanelSpec` 名称/描述按 id 从 ARB 解析；图标名 `iconLabelForCode` 接 l10n（品牌/银行图标名是专有名词不翻译，仅分组名本地化）；种子数据（默认账本名/分类/个人简介）按首启动语言播种（`systemIsEnglish` 由 main 传入，「跟随系统」时生效；播种后是用户数据不再切换）；余额调整备注由调用方传本地化文案
 - [x] 6.4 首页与记账表单（home_page / entry_sheets）：走势卡/预算卡/最近交易/收支统计/空态/图表气泡全部迁 ARB（日期用 DateTime 占位符按语言格式化）；首页页头副标题改为真实当前账本名（此前误为固定「日常账本」）
 - [x] 6.5 资产页（assets_pages）：资产卡/分组管理/隐藏账户/账户表单与详情/账户报告/还款提醒条约 110 条文案全部迁 ARB；封面预设与「未分组」占位改为 l10n 解析
-- [ ] 6.6 交易列表与详情（transactions_pages / entry_detail_page / attachments_editor）
+- [x] 6.6 交易列表与详情（transactions_pages / entry_detail_page / attachments_editor）：时间筛选/排序枚举改 l10n 方法，列表/多选/筛选/详情表单/删除确认/附件编辑器全部迁 ARB；记账详情页头改为当前账本名（此前误为固定「日常账本」）
 - [ ] 6.7 预算页（budget_pages）
 - [ ] 6.8 看板与统计分析（reports_page / report_analysis* / chart_painters / series_math / panel_settings_page）
 - [ ] 6.9 我的页与设置（profile_pages / legal_pages / recurring_page / reminder_settings_page / onboarding_page）

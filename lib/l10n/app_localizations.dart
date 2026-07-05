@@ -1531,6 +1531,546 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'每月 {day} 日还款'**
   String monthlyRepayLine(int day);
+
+  /// No description provided for @attachTakePhoto.
+  ///
+  /// In zh, this message translates to:
+  /// **'拍照'**
+  String get attachTakePhoto;
+
+  /// No description provided for @attachFromGallery.
+  ///
+  /// In zh, this message translates to:
+  /// **'从相册选择'**
+  String get attachFromGallery;
+
+  /// No description provided for @attachTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片附件'**
+  String get attachTitle;
+
+  /// No description provided for @attachCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 张'**
+  String attachCount(int count);
+
+  /// No description provided for @attachUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前平台不支持添加图片附件'**
+  String get attachUnsupported;
+
+  /// No description provided for @attachDeleteTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除这张'**
+  String get attachDeleteTooltip;
+
+  /// No description provided for @entryDetailSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账详情'**
+  String get entryDetailSubtitle;
+
+  /// No description provided for @commonCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类'**
+  String get commonCategory;
+
+  /// No description provided for @allLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部'**
+  String get allLabel;
+
+  /// No description provided for @transferOutAccount.
+  ///
+  /// In zh, this message translates to:
+  /// **'转出账户'**
+  String get transferOutAccount;
+
+  /// No description provided for @transferInAccount.
+  ///
+  /// In zh, this message translates to:
+  /// **'转入账户'**
+  String get transferInAccount;
+
+  /// No description provided for @pleaseSelect.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择'**
+  String get pleaseSelect;
+
+  /// No description provided for @feeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'手续费'**
+  String get feeLabel;
+
+  /// No description provided for @feeNoneTapToFill.
+  ///
+  /// In zh, this message translates to:
+  /// **'无（点击填写）'**
+  String get feeNoneTapToFill;
+
+  /// No description provided for @accountLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户'**
+  String get accountLabel;
+
+  /// No description provided for @noUsableAccountTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可用账户'**
+  String get noUsableAccountTitle;
+
+  /// No description provided for @noUsableAccountDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先在资产页添加或取消隐藏一个账户。'**
+  String get noUsableAccountDesc;
+
+  /// No description provided for @noteHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击添加备注'**
+  String get noteHint;
+
+  /// No description provided for @commonSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get commonSave;
+
+  /// No description provided for @amountEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改金额'**
+  String get amountEditTitle;
+
+  /// No description provided for @transferFeeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'转账手续费'**
+  String get transferFeeTitle;
+
+  /// No description provided for @pickTransferOutAccount.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择转出账户'**
+  String get pickTransferOutAccount;
+
+  /// No description provided for @pickAccountTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择账户'**
+  String get pickAccountTitle;
+
+  /// No description provided for @pickTransferInAccount.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择转入账户'**
+  String get pickTransferInAccount;
+
+  /// No description provided for @timeAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部时间'**
+  String get timeAll;
+
+  /// No description provided for @timeYear.
+  ///
+  /// In zh, this message translates to:
+  /// **'本年'**
+  String get timeYear;
+
+  /// No description provided for @timeQuarter.
+  ///
+  /// In zh, this message translates to:
+  /// **'本季'**
+  String get timeQuarter;
+
+  /// No description provided for @timeWeek.
+  ///
+  /// In zh, this message translates to:
+  /// **'本周'**
+  String get timeWeek;
+
+  /// No description provided for @timeLast12Months.
+  ///
+  /// In zh, this message translates to:
+  /// **'近12个月'**
+  String get timeLast12Months;
+
+  /// No description provided for @timeLast30Days.
+  ///
+  /// In zh, this message translates to:
+  /// **'近30天'**
+  String get timeLast30Days;
+
+  /// No description provided for @timeLast6Weeks.
+  ///
+  /// In zh, this message translates to:
+  /// **'近6周'**
+  String get timeLast6Weeks;
+
+  /// No description provided for @sortDateDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'日期降序'**
+  String get sortDateDesc;
+
+  /// No description provided for @sortDateAsc.
+  ///
+  /// In zh, this message translates to:
+  /// **'日期升序'**
+  String get sortDateAsc;
+
+  /// No description provided for @sortAmountDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'金额降序'**
+  String get sortAmountDesc;
+
+  /// No description provided for @sortAmountAsc.
+  ///
+  /// In zh, this message translates to:
+  /// **'金额升序'**
+  String get sortAmountAsc;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选 {count} 项'**
+  String selectedCount(int count);
+
+  /// No description provided for @dayEntriesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'当日交易'**
+  String get dayEntriesTitle;
+
+  /// No description provided for @entriesListTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'交易明细'**
+  String get entriesListTitle;
+
+  /// No description provided for @exitMultiSelect.
+  ///
+  /// In zh, this message translates to:
+  /// **'退出多选'**
+  String get exitMultiSelect;
+
+  /// No description provided for @multiSelect.
+  ///
+  /// In zh, this message translates to:
+  /// **'多选'**
+  String get multiSelect;
+
+  /// No description provided for @entriesCountFull.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count}笔交易'**
+  String entriesCountFull(int count);
+
+  /// No description provided for @netLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'结余'**
+  String get netLabel;
+
+  /// No description provided for @noMatchTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有匹配交易'**
+  String get noMatchTitle;
+
+  /// No description provided for @noMatchDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'换一个关键词、账户或分类再试。'**
+  String get noMatchDesc;
+
+  /// No description provided for @emptyEntriesDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存交易后会在这里按日期展示。'**
+  String get emptyEntriesDesc;
+
+  /// No description provided for @filterTimeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'筛选时间'**
+  String get filterTimeTitle;
+
+  /// No description provided for @sortTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序方式'**
+  String get sortTitle;
+
+  /// No description provided for @filterAccountTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'筛选账户'**
+  String get filterAccountTitle;
+
+  /// No description provided for @allAccounts.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部账户'**
+  String get allAccounts;
+
+  /// No description provided for @filterCategoryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'筛选分类'**
+  String get filterCategoryTitle;
+
+  /// No description provided for @filterTagTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'筛选标签'**
+  String get filterTagTitle;
+
+  /// No description provided for @allTags.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部标签'**
+  String get allTags;
+
+  /// No description provided for @unknownTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'未知标签'**
+  String get unknownTag;
+
+  /// No description provided for @tagLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'标签'**
+  String get tagLabel;
+
+  /// No description provided for @deleteEntriesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除 {count} 笔交易？'**
+  String deleteEntriesTitle(int count);
+
+  /// No description provided for @deleteEntriesMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除后无法恢复，相关图片附件也会一并移除。'**
+  String get deleteEntriesMessage;
+
+  /// No description provided for @changeCategoryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'改分类（仅改同类型交易）'**
+  String get changeCategoryTitle;
+
+  /// No description provided for @changedCategoryCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'已修改 {count} 笔交易的分类'**
+  String changedCategoryCount(int count);
+
+  /// No description provided for @changeAccountTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'改账户'**
+  String get changeAccountTitle;
+
+  /// No description provided for @changedAccountCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'已修改 {count} 笔交易的账户'**
+  String changedAccountCount(int count);
+
+  /// No description provided for @yearLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'{year}年'**
+  String yearLabel(int year);
+
+  /// No description provided for @quarterLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'季度{quarter}'**
+  String quarterLabel(int quarter);
+
+  /// No description provided for @weekNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'{week}周'**
+  String weekNumber(int week);
+
+  /// No description provided for @yearWeek.
+  ///
+  /// In zh, this message translates to:
+  /// **'{year}年{week}周'**
+  String yearWeek(int year, int week);
+
+  /// No description provided for @prevRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'上一段'**
+  String get prevRange;
+
+  /// No description provided for @nextRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'下一段'**
+  String get nextRange;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索备注、分类、账户或金额'**
+  String get searchHint;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空筛选'**
+  String get clearFilters;
+
+  /// No description provided for @prevDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'前一天'**
+  String get prevDay;
+
+  /// No description provided for @nextDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'后一天'**
+  String get nextDay;
+
+  /// No description provided for @entryMissing.
+  ///
+  /// In zh, this message translates to:
+  /// **'交易不存在'**
+  String get entryMissing;
+
+  /// No description provided for @deleteEntryTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除交易'**
+  String get deleteEntryTooltip;
+
+  /// No description provided for @saveEntryTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存交易'**
+  String get saveEntryTooltip;
+
+  /// No description provided for @amountLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'金额'**
+  String get amountLabel;
+
+  /// No description provided for @dateLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'日期'**
+  String get dateLabel;
+
+  /// No description provided for @timeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间'**
+  String get timeLabel;
+
+  /// No description provided for @markReimbursable.
+  ///
+  /// In zh, this message translates to:
+  /// **'标记待报销'**
+  String get markReimbursable;
+
+  /// No description provided for @refundLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'退款 / 报销回款'**
+  String get refundLabel;
+
+  /// No description provided for @refundedAmountLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'已冲抵 {amount}'**
+  String refundedAmountLabel(String amount);
+
+  /// No description provided for @refundAmountTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'退款 / 报销回款金额'**
+  String get refundAmountTitle;
+
+  /// No description provided for @pickTypeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择类型'**
+  String get pickTypeTitle;
+
+  /// No description provided for @noteEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑备注'**
+  String get noteEditTitle;
+
+  /// No description provided for @transferNeedsTwoAccounts.
+  ///
+  /// In zh, this message translates to:
+  /// **'转账需要两个不同的账户,请先添加转入账户。'**
+  String get transferNeedsTwoAccounts;
+
+  /// No description provided for @deleteEntryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除此交易？'**
+  String get deleteEntryTitle;
+
+  /// No description provided for @deleteEntryMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除后无法恢复，本地保存的这笔记录会被移除。'**
+  String get deleteEntryMessage;
+
+  /// No description provided for @todayLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'今天'**
+  String get todayLabel;
+
+  /// No description provided for @yesterdayLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'昨天'**
+  String get yesterdayLabel;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全选'**
+  String get selectAll;
+
+  /// No description provided for @changeCategoryShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'改分类'**
+  String get changeCategoryShort;
+
+  /// No description provided for @changeAccountShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'改账户'**
+  String get changeAccountShort;
 }
 
 class _AppLocalizationsDelegate

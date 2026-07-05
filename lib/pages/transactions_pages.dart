@@ -15,29 +15,55 @@ import 'attachments_editor.dart';
 import 'sheets.dart';
 
 enum TransactionTimeFilter {
-  all('全部时间'),
-  year('本年'),
-  quarter('本季'),
-  month('本月'),
-  week('本周'),
-  last12Months('近12个月'),
-  last30Days('近30天'),
-  last6Weeks('近6周');
+  all,
+  year,
+  quarter,
+  month,
+  week,
+  last12Months,
+  last30Days,
+  last6Weeks;
 
-  const TransactionTimeFilter(this.label);
-
-  final String label;
+  String label(AppLocalizations l10n) {
+    switch (this) {
+      case TransactionTimeFilter.all:
+        return l10n.timeAll;
+      case TransactionTimeFilter.year:
+        return l10n.timeYear;
+      case TransactionTimeFilter.quarter:
+        return l10n.timeQuarter;
+      case TransactionTimeFilter.month:
+        return l10n.thisMonth;
+      case TransactionTimeFilter.week:
+        return l10n.timeWeek;
+      case TransactionTimeFilter.last12Months:
+        return l10n.timeLast12Months;
+      case TransactionTimeFilter.last30Days:
+        return l10n.timeLast30Days;
+      case TransactionTimeFilter.last6Weeks:
+        return l10n.timeLast6Weeks;
+    }
+  }
 }
 
 enum TransactionSortOrder {
-  dateDesc('日期降序'),
-  dateAsc('日期升序'),
-  amountDesc('金额降序'),
-  amountAsc('金额升序');
+  dateDesc,
+  dateAsc,
+  amountDesc,
+  amountAsc;
 
-  const TransactionSortOrder(this.label);
-
-  final String label;
+  String label(AppLocalizations l10n) {
+    switch (this) {
+      case TransactionSortOrder.dateDesc:
+        return l10n.sortDateDesc;
+      case TransactionSortOrder.dateAsc:
+        return l10n.sortDateAsc;
+      case TransactionSortOrder.amountDesc:
+        return l10n.sortAmountDesc;
+      case TransactionSortOrder.amountAsc:
+        return l10n.sortAmountAsc;
+    }
+  }
 }
 
 class TransactionsPage extends StatefulWidget {
@@ -120,8 +146,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
               children: <Widget>[
                 VeriHeader(
                   title: _selectionMode
-                      ? '已选 ${_selectedIds.length} 项'
-                      : (widget.title ?? (_dateMode ? '当日交易' : '交易明细')),
+                      ? AppLocalizations.of(
+                          context,
+                        ).selectedCount(_selectedIds.length)
+                      : (widget.title ??
+                            (_dateMode
+                                ? AppLocalizations.of(context).dayEntriesTitle
+                                : AppLocalizations.of(
+                                    context,
+                                  ).entriesListTitle)),
                   subtitle: _selectionMode
                       ? null
                       : (_dateMode
@@ -132,7 +165,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     if (_selectionMode)
                       HeaderAction(
                         icon: Icons.close,
-                        tooltip: '退出多选',
+                        tooltip: AppLocalizations.of(context).exitMultiSelect,
                         onPressed: () => setState(() {
                           _selectionMode = false;
                           _selectedIds.clear();
@@ -141,7 +174,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     else if (entries.isNotEmpty)
                       HeaderAction(
                         icon: Icons.checklist,
-                        tooltip: '多选',
+                        tooltip: AppLocalizations.of(context).multiSelect,
                         onPressed: () => setState(() => _selectionMode = true),
                       ),
                   ],
@@ -166,7 +199,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       ),
                       const SizedBox(width: 10),
                       FilterPill(
-                        label: _sortOrder.label,
+                        label: _sortOrder.label(AppLocalizations.of(context)),
                         onTap: _pickSortOrder,
                       ),
                     ],
@@ -184,7 +217,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       ),
                       const SizedBox(width: 10),
                       FilterPill(
-                        label: _sortOrder.label,
+                        label: _sortOrder.label(AppLocalizations.of(context)),
                         onTap: _pickSortOrder,
                       ),
                     ],
@@ -225,7 +258,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '${entries.length}笔交易',
+                  AppLocalizations.of(context).entriesCountFull(entries.length),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Theme.of(
                       context,
@@ -242,7 +275,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   child: Row(
                     children: <Widget>[
                       SummaryMetric(
-                        label: '支出',
+                        label: AppLocalizations.of(context).entryTypeExpense,
                         value: formatExpenseAmount(expense),
                         color: isZeroAmount(expense)
                             ? Theme.of(
@@ -251,7 +284,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             : veriExpense,
                       ),
                       SummaryMetric(
-                        label: '收入',
+                        label: AppLocalizations.of(context).entryTypeIncome,
                         value: formatAmount(income),
                         color: isZeroAmount(income)
                             ? Theme.of(
@@ -260,7 +293,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             : veriIncome,
                       ),
                       SummaryMetric(
-                        label: '结余',
+                        label: AppLocalizations.of(context).netLabel,
                         value: formatSignedAmount(income - expense),
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -272,10 +305,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   VeriCard(
                     child: EmptyState(
                       icon: Icons.receipt_long_outlined,
-                      title: _hasSecondaryFilters ? '没有匹配交易' : '暂无交易',
+                      title: _hasSecondaryFilters
+                          ? AppLocalizations.of(context).noMatchTitle
+                          : AppLocalizations.of(context).noEntriesTitle,
                       description: _hasSecondaryFilters
-                          ? '换一个关键词、账户或分类再试。'
-                          : '保存交易后会在这里按日期展示。',
+                          ? AppLocalizations.of(context).noMatchDesc
+                          : AppLocalizations.of(context).emptyEntriesDesc,
                     ),
                   )
                 else
@@ -429,10 +464,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
   Future<void> _pickTimeFilter() async {
     final selected = await showOptionSheet<TransactionTimeFilter>(
       context: context,
-      title: '筛选时间',
+      title: AppLocalizations.of(context).filterTimeTitle,
       values: TransactionTimeFilter.values,
       selected: _timeFilter,
-      labelOf: (value) => value.label,
+      labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected != null) {
       setState(() {
@@ -446,10 +481,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
   Future<void> _pickSortOrder() async {
     final selected = await showOptionSheet<TransactionSortOrder>(
       context: context,
-      title: '排序方式',
+      title: AppLocalizations.of(context).sortTitle,
       values: TransactionSortOrder.values,
       selected: _sortOrder,
-      labelOf: (value) => value.label,
+      labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected != null) {
       setState(() => _sortOrder = selected);
@@ -463,11 +498,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
     ];
     final selected = await showOptionSheet<String>(
       context: context,
-      title: '筛选账户',
+      title: AppLocalizations.of(context).filterAccountTitle,
       values: values,
       selected: _selectedAccountId ?? _allFilterValue,
       labelOf: (value) => value == _allFilterValue
-          ? '全部账户'
+          ? AppLocalizations.of(context).allAccounts
           : accountById(controller.accounts, value).name,
     );
     if (selected != null) {
@@ -489,11 +524,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
     }
     final selected = await showOptionSheet<String>(
       context: context,
-      title: '筛选分类',
+      title: AppLocalizations.of(context).filterCategoryTitle,
       values: values,
       selected: _selectedCategoryId ?? _allFilterValue,
       labelOf: (value) => value == _allFilterValue
-          ? '全部分类'
+          ? AppLocalizations.of(context).categoryAll
           : '${'　' * (depthOfId[value] ?? 0)}${controller.categoryById(value).label}',
     );
     if (selected != null) {
@@ -506,7 +541,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   String _accountFilterLabel(VeriFinController controller) {
     final accountId = _selectedAccountId;
     if (accountId == null) {
-      return '全部账户';
+      return AppLocalizations.of(context).allAccounts;
     }
     return accountById(controller.accounts, accountId).name;
   }
@@ -514,7 +549,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   String _categoryFilterLabel(VeriFinController controller) {
     final categoryId = _selectedCategoryId;
     if (categoryId == null) {
-      return '全部分类';
+      return AppLocalizations.of(context).categoryAll;
     }
     return controller.categoryById(categoryId).label;
   }
@@ -526,12 +561,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
     ];
     final selected = await showOptionSheet<String>(
       context: context,
-      title: '筛选标签',
+      title: AppLocalizations.of(context).filterTagTitle,
       values: values,
       selected: _selectedTagId ?? _allFilterValue,
       labelOf: (value) => value == _allFilterValue
-          ? '全部标签'
-          : (controller.tagById(value)?.label ?? '未知标签'),
+          ? AppLocalizations.of(context).allTags
+          : (controller.tagById(value)?.label ??
+                AppLocalizations.of(context).unknownTag),
     );
     if (selected != null) {
       setState(() {
@@ -543,9 +579,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
   String _tagFilterLabel(VeriFinController controller) {
     final tagId = _selectedTagId;
     if (tagId == null) {
-      return '标签';
+      return AppLocalizations.of(context).tagLabel;
     }
-    return controller.tagById(tagId)?.label ?? '标签';
+    return controller.tagById(tagId)?.label ??
+        AppLocalizations.of(context).tagLabel;
   }
 
   void _toggleSelected(String id) {
@@ -568,16 +605,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('删除 $count 笔交易？'),
-        content: const Text('删除后无法恢复，相关图片附件也会一并移除。'),
+        title: Text(AppLocalizations.of(context).deleteEntriesTitle(count)),
+        content: Text(AppLocalizations.of(context).deleteEntriesMessage),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('删除'),
+            child: Text(AppLocalizations.of(context).commonDelete),
           ),
         ],
       ),
@@ -592,7 +629,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   Future<void> _batchChangeCategory(VeriFinController controller) async {
     final selected = await showOptionSheet<String>(
       context: context,
-      title: '改分类（仅改同类型交易）',
+      title: AppLocalizations.of(context).changeCategoryTitle,
       values: controller.categories.map((c) => c.id).toList(),
       selected: controller.categories.first.id,
       labelOf: (id) => controller.categoryById(id).label,
@@ -605,9 +642,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
       selected,
     );
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('已修改 $changed 笔交易的分类')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).changedCategoryCount(changed),
+          ),
+        ),
+      );
     }
     _exitSelection();
   }
@@ -618,7 +659,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
     }
     final selected = await showOptionSheet<String>(
       context: context,
-      title: '改账户',
+      title: AppLocalizations.of(context).changeAccountTitle,
       values: controller.accounts.map((a) => a.id).toList(),
       selected: controller.accounts.first.id,
       labelOf: (id) => accountById(controller.accounts, id).name,
@@ -631,9 +672,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
       selected,
     );
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('已修改 $changed 笔交易的账户')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).changedAccountCount(changed),
+          ),
+        ),
+      );
     }
     _exitSelection();
   }
@@ -689,27 +734,31 @@ class _TransactionsPageState extends State<TransactionsPage> {
     final now = DateTime.now();
     final period = _activePeriod();
     if (period == null) {
-      return _timeFilter.label;
+      return _timeFilter.label(AppLocalizations.of(context));
     }
     final anchor = _periodAnchor;
     switch (_timeFilter) {
       case TransactionTimeFilter.all:
-        return _timeFilter.label;
+        return _timeFilter.label(AppLocalizations.of(context));
       case TransactionTimeFilter.year:
-        return anchor.year == now.year ? '本年' : '${anchor.year}年';
+        return anchor.year == now.year
+            ? AppLocalizations.of(context).timeYear
+            : AppLocalizations.of(context).yearLabel(anchor.year);
       case TransactionTimeFilter.quarter:
         final quarter = ((anchor.month - 1) ~/ 3) + 1;
         return anchor.year == now.year
-            ? '季度$quarter'
+            ? AppLocalizations.of(context).quarterLabel(quarter)
             : '${twoDigitYear(anchor.year)}.Q$quarter';
       case TransactionTimeFilter.month:
         return anchor.year == now.year
-            ? '${anchor.month}月'
+            ? AppLocalizations.of(context).monthNumber(anchor.month)
             : '${twoDigitYear(anchor.year)}.${anchor.month.toString().padLeft(2, '0')}';
       case TransactionTimeFilter.week:
         final week = isoWeekNumber(anchor);
         final year = isoWeekYear(anchor);
-        return year == now.year ? '$week周' : '$year年$week周';
+        return year == now.year
+            ? AppLocalizations.of(context).weekNumber(week)
+            : AppLocalizations.of(context).yearWeek(year, week);
       case TransactionTimeFilter.last12Months:
       case TransactionTimeFilter.last30Days:
         return '${period.start.month}.${period.start.day}-${period.end.month}.${period.end.day}';
@@ -778,13 +827,13 @@ class _TransactionFilterBar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         IconButton(
-          tooltip: '上一段',
+          tooltip: AppLocalizations.of(context).prevRange,
           onPressed: onPrevious,
           icon: const Icon(Icons.chevron_left, size: 18),
         ),
         FilterPill(label: label, onTap: onTap),
         IconButton(
-          tooltip: '下一段',
+          tooltip: AppLocalizations.of(context).nextRange,
           onPressed: onNext,
           icon: const Icon(Icons.chevron_right, size: 18),
         ),
@@ -845,12 +894,12 @@ class _TransactionSearchFilters extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
             decoration: InputDecoration(
               isDense: true,
-              hintText: '搜索备注、分类、账户或金额',
+              hintText: AppLocalizations.of(context).searchHint,
               prefixIcon: const Icon(Icons.search, size: 18),
               suffixIcon: onClear == null
                   ? null
                   : IconButton(
-                      tooltip: '清空筛选',
+                      tooltip: AppLocalizations.of(context).clearFilters,
                       onPressed: onClear,
                       icon: const Icon(Icons.close, size: 18),
                     ),
@@ -902,13 +951,13 @@ class _TransactionSearchFilters extends StatelessWidget {
                 ),
                 if (onPickTag != null)
                   FilterPill(
-                    label: tagLabel ?? '标签',
+                    label: tagLabel ?? AppLocalizations.of(context).tagLabel,
                     icon: tagSelected ? Icons.label : Icons.label_outline,
                     onTap: onPickTag,
                   ),
                 if (onToggleReimbursable != null)
                   FilterPill(
-                    label: '待报销',
+                    label: AppLocalizations.of(context).badgeReimbursable,
                     icon: reimbursableOnly
                         ? Icons.check_circle
                         : Icons.receipt_long_outlined,
@@ -942,13 +991,13 @@ class _DateFilterBar extends StatelessWidget {
     return Row(
       children: <Widget>[
         IconButton(
-          tooltip: '前一天',
+          tooltip: AppLocalizations.of(context).prevDay,
           onPressed: onPrevious,
           icon: const Icon(Icons.chevron_left),
         ),
         FilterPill(label: '${date.month}.${date.day}', onTap: onTap),
         IconButton(
-          tooltip: '后一天',
+          tooltip: AppLocalizations.of(context).nextDay,
           onPressed: onNext,
           icon: const Icon(Icons.chevron_right),
         ),
@@ -982,7 +1031,7 @@ class _DateGroupHeader extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: Text(
-              '${formatDate(date)}  ${_relativeDay(date)}',
+              '${formatDate(date)}  ${_relativeDay(AppLocalizations.of(context), date)}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(
                   context,
@@ -1068,8 +1117,10 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     final controller = VeriFinScope.of(context);
     final entry = _initialEntry;
     if (entry == null) {
-      return const Scaffold(
-        body: SafeArea(child: Center(child: Text('交易不存在'))),
+      return Scaffold(
+        body: SafeArea(
+          child: Center(child: Text(AppLocalizations.of(context).entryMissing)),
+        ),
       );
     }
 
@@ -1119,13 +1170,13 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                   actions: <Widget>[
                     HeaderAction(
                       icon: Icons.delete_outline,
-                      tooltip: '删除交易',
+                      tooltip: AppLocalizations.of(context).deleteEntryTooltip,
                       destructive: true,
                       onPressed: () => _confirmDeleteEntry(context, entry),
                     ),
                     HeaderAction(
                       icon: Icons.check,
-                      tooltip: '保存交易',
+                      tooltip: AppLocalizations.of(context).saveEntryTooltip,
                       onPressed: canSave ? _save : null,
                     ),
                   ],
@@ -1142,7 +1193,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              '金额',
+                              AppLocalizations.of(context).amountLabel,
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(
                                     color: Theme.of(context)
@@ -1177,18 +1228,20 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                   child: Column(
                     children: <Widget>[
                       DetailInfoRow(
-                        label: '类型',
+                        label: AppLocalizations.of(context).commonType,
                         value: _type.label(AppLocalizations.of(context)),
                         onTap: _pickType,
                       ),
                       DetailInfoRow(
-                        label: '分类',
+                        label: AppLocalizations.of(context).commonCategory,
                         value: category.label,
                         onTap: _pickCategory,
                       ),
                       if (_type == EntryType.transfer) ...<Widget>[
                         DetailInfoRow(
-                          label: '转出账户',
+                          label: AppLocalizations.of(
+                            context,
+                          ).transferOutAccount,
                           value:
                               '${account.name} (${formatAmount(controller.accountBalance(account))})',
                           onTap: accounts.isEmpty
@@ -1196,9 +1249,9 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                               : () => _pickAccount(accounts),
                         ),
                         DetailInfoRow(
-                          label: '转入账户',
+                          label: AppLocalizations.of(context).transferInAccount,
                           value: toAccount == null
-                              ? '请选择'
+                              ? AppLocalizations.of(context).pleaseSelect
                               : '${toAccount.name} (${formatAmount(controller.accountBalance(toAccount))})',
                           placeholder: toAccount == null,
                           onTap: accounts.length < 2
@@ -1206,14 +1259,16 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                               : () => _pickToAccount(accounts),
                         ),
                         DetailInfoRow(
-                          label: '手续费',
-                          value: _fee > 0 ? formatAmount(_fee) : '无',
+                          label: AppLocalizations.of(context).feeLabel,
+                          value: _fee > 0
+                              ? formatAmount(_fee)
+                              : AppLocalizations.of(context).commonNoneShort,
                           placeholder: _fee <= 0,
                           onTap: _editFee,
                         ),
                       ] else
                         DetailInfoRow(
-                          label: '账户',
+                          label: AppLocalizations.of(context).accountLabel,
                           value:
                               '${account.name} (${formatAmount(controller.accountBalance(account))})',
                           onTap: accounts.isEmpty
@@ -1221,28 +1276,28 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                               : () => _pickAccount(accounts),
                         ),
                       DetailInfoRow(
-                        label: '日期',
+                        label: AppLocalizations.of(context).dateLabel,
                         value:
-                            '${formatDate(_occurredAt)}  ${_relativeDay(_occurredAt)}',
+                            '${formatDate(_occurredAt)}  ${_relativeDay(AppLocalizations.of(context), _occurredAt)}',
                         onTap: _pickDate,
                       ),
                       DetailInfoRow(
-                        label: '时间',
+                        label: AppLocalizations.of(context).timeLabel,
                         value: formatTime(_occurredAt),
                         onTap: _pickTime,
                       ),
                       DetailInfoRow(
-                        label: '备注',
+                        label: AppLocalizations.of(context).commonNote,
                         value: _noteController.text.trim().isEmpty
-                            ? '点击添加备注'
+                            ? AppLocalizations.of(context).noteHint
                             : _noteController.text.trim(),
                         placeholder: _noteController.text.trim().isEmpty,
                         onTap: _editNote,
                       ),
                       DetailInfoRow(
-                        label: '标签',
+                        label: AppLocalizations.of(context).tagLabel,
                         value: _tagLabels(controller).isEmpty
-                            ? '点击添加标签'
+                            ? AppLocalizations.of(context).entryAddTags
                             : _tagLabels(controller).join('、'),
                         placeholder: _tagLabels(controller).isEmpty,
                         onTap: _pickTags,
@@ -1252,7 +1307,11 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Row(
                             children: <Widget>[
-                              const Expanded(child: Text('标记待报销')),
+                              Expanded(
+                                child: Text(
+                                  AppLocalizations.of(context).markReimbursable,
+                                ),
+                              ),
                               Switch(
                                 value: _reimbursable,
                                 onChanged: (value) =>
@@ -1262,10 +1321,14 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                           ),
                         ),
                         DetailInfoRow(
-                          label: '退款 / 报销回款',
+                          label: AppLocalizations.of(context).refundLabel,
                           value: _refundedAmount > 0
-                              ? '已冲抵 ${formatAmount(_refundedAmount)}'
-                              : '无',
+                              ? AppLocalizations.of(
+                                  context,
+                                ).refundedAmountLabel(
+                                  formatAmount(_refundedAmount),
+                                )
+                              : AppLocalizations.of(context).commonNoneShort,
                           placeholder: _refundedAmount <= 0,
                           onTap: _editRefund,
                         ),
@@ -1306,7 +1369,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => NumberPadSheet(
-        title: '修改金额',
+        title: AppLocalizations.of(context).amountEditTitle,
         initialAmount: _amount,
         hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
       ),
@@ -1323,7 +1386,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => NumberPadSheet(
-        title: '转账手续费',
+        title: AppLocalizations.of(context).transferFeeTitle,
         initialAmount: _fee > 0 ? _fee : null,
         allowZero: true,
         hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
@@ -1341,7 +1404,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => NumberPadSheet(
-        title: '退款 / 报销回款金额',
+        title: AppLocalizations.of(context).refundAmountTitle,
         initialAmount: _refundedAmount > 0 ? _refundedAmount : null,
         allowZero: true,
         hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
@@ -1357,7 +1420,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   Future<void> _pickType() async {
     final selected = await showOptionSheet<EntryType>(
       context: context,
-      title: '选择类型',
+      title: AppLocalizations.of(context).pickTypeTitle,
       values: EntryType.values,
       selected: _type,
       labelOf: (value) => value.label(AppLocalizations.of(context)),
@@ -1392,7 +1455,9 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   Future<void> _pickAccount(List<Account> accounts) async {
     final selected = await showAccountPickerSheet(
       context: context,
-      title: _type == EntryType.transfer ? '选择转出账户' : '选择账户',
+      title: _type == EntryType.transfer
+          ? AppLocalizations.of(context).pickTransferOutAccount
+          : AppLocalizations.of(context).pickAccountTitle,
       accounts: accounts,
       selectedId: _accountId,
       balanceOf: VeriFinScope.of(context).accountBalance,
@@ -1414,7 +1479,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     }
     final selected = await showAccountPickerSheet(
       context: context,
-      title: '选择转入账户',
+      title: AppLocalizations.of(context).pickTransferInAccount,
       accounts: selectableAccounts,
       selectedId: _toAccountId,
       balanceOf: VeriFinScope.of(context).accountBalance,
@@ -1486,8 +1551,8 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   Future<void> _editNote() async {
     final note = await showTextInputDialog(
       context: context,
-      title: '编辑备注',
-      label: '备注',
+      title: AppLocalizations.of(context).noteEditTitle,
+      label: AppLocalizations.of(context).commonNote,
       initialValue: _noteController.text,
       allowEmpty: true,
     );
@@ -1503,9 +1568,11 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     }
     if (_type == EntryType.transfer &&
         (_toAccountId == null || _toAccountId == _accountId)) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('转账需要两个不同的账户,请先添加转入账户。')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).transferNeedsTwoAccounts),
+        ),
+      );
       return;
     }
     VeriFinScope.of(context).updateEntry(
@@ -1551,16 +1618,16 @@ Future<void> _confirmDeleteEntry(
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('删除此交易？'),
-      content: const Text('删除后无法恢复，本地保存的这笔记录会被移除。'),
+      title: Text(AppLocalizations.of(context).deleteEntryTitle),
+      content: Text(AppLocalizations.of(context).deleteEntryMessage),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('取消'),
+          child: Text(AppLocalizations.of(context).commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('删除'),
+          child: Text(AppLocalizations.of(context).commonDelete),
         ),
       ],
     ),
@@ -1596,16 +1663,16 @@ List<_DateEntryGroup> _groupEntriesByDate(List<LedgerEntry> entries) {
     ..sort((a, b) => b.date.compareTo(a.date));
 }
 
-String _relativeDay(DateTime date) {
+String _relativeDay(AppLocalizations l10n, DateTime date) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final target = DateTime(date.year, date.month, date.day);
   final diff = today.difference(target).inDays;
   if (diff == 0) {
-    return '今天';
+    return l10n.todayLabel;
   }
   if (diff == 1) {
-    return '昨天';
+    return l10n.yesterdayLabel;
   }
   return '';
 }
@@ -1647,22 +1714,22 @@ class _BatchActionBar extends StatelessWidget {
           children: <Widget>[
             _BatchAction(
               icon: Icons.select_all,
-              label: '全选',
+              label: AppLocalizations.of(context).selectAll,
               onTap: onSelectAll,
             ),
             _BatchAction(
               icon: Icons.category_outlined,
-              label: '改分类',
+              label: AppLocalizations.of(context).changeCategoryShort,
               onTap: onChangeCategory,
             ),
             _BatchAction(
               icon: Icons.account_balance_wallet_outlined,
-              label: '改账户',
+              label: AppLocalizations.of(context).changeAccountShort,
               onTap: onChangeAccount,
             ),
             _BatchAction(
               icon: Icons.delete_outline,
-              label: '删除',
+              label: AppLocalizations.of(context).commonDelete,
               destructive: true,
               onTap: onDelete,
             ),

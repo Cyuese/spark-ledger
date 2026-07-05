@@ -74,9 +74,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
                 children: <Widget>[
-                  const VeriHeader(
-                    title: '日常账本',
-                    subtitle: '记账详情',
+                  VeriHeader(
+                    // 标题展示当前账本名（此前误为固定文案）。
+                    title: controller.activeBook.name,
+                    subtitle: AppLocalizations.of(context).entryDetailSubtitle,
                     showBack: true,
                   ),
                   const SizedBox(height: 12),
@@ -122,7 +123,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     ),
                   ),
                   const Divider(height: 24),
-                  Text('分类', style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    AppLocalizations.of(context).commonCategory,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
@@ -145,7 +149,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                           ),
                       ActionChip(
                         avatar: const Icon(Icons.more_horiz, size: 18),
-                        label: const Text('全部'),
+                        label: Text(AppLocalizations.of(context).allLabel),
                         onPressed: _showAllCategories,
                       ),
                     ],
@@ -154,7 +158,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                   if (hasAccounts && _type == EntryType.transfer) ...<Widget>[
                     SelectField(
                       key: const Key('account_dropdown'),
-                      label: '转出账户',
+                      label: AppLocalizations.of(context).transferOutAccount,
                       value:
                           '${accountById(accounts, _accountId).name} (${formatAmount(controller.accountBalance(accountById(accounts, _accountId)))})',
                       leading: AccountIconBox(
@@ -166,9 +170,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     const SizedBox(height: 10),
                     SelectField(
                       key: const Key('to_account_dropdown'),
-                      label: '转入账户',
+                      label: AppLocalizations.of(context).transferInAccount,
                       value: _toAccountId == null
-                          ? '请选择'
+                          ? AppLocalizations.of(context).pleaseSelect
                           : '${accountById(accounts, _toAccountId!).name} (${formatAmount(controller.accountBalance(accountById(accounts, _toAccountId!)))})',
                       icon: _toAccountId == null ? Icons.call_received : null,
                       leading: _toAccountId == null
@@ -187,15 +191,17 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     const SizedBox(height: 10),
                     SelectField(
                       key: const Key('fee_field'),
-                      label: '手续费',
-                      value: _fee > 0 ? formatAmount(_fee) : '无（点击填写）',
+                      label: AppLocalizations.of(context).feeLabel,
+                      value: _fee > 0
+                          ? formatAmount(_fee)
+                          : AppLocalizations.of(context).feeNoneTapToFill,
                       icon: Icons.paid_outlined,
                       onTap: _editFee,
                     ),
                   ] else if (hasAccounts)
                     SelectField(
                       key: const Key('account_dropdown'),
-                      label: '账户',
+                      label: AppLocalizations.of(context).accountLabel,
                       value:
                           '${accountById(accounts, _accountId).name} (${formatAmount(controller.accountBalance(accountById(accounts, _accountId)))})',
                       leading: AccountIconBox(
@@ -205,20 +211,22 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       onTap: () => _pickAccount(accounts),
                     )
                   else
-                    const EmptyState(
+                    EmptyState(
                       icon: Icons.account_balance_wallet_outlined,
-                      title: '没有可用账户',
-                      description: '请先在资产页添加或取消隐藏一个账户。',
+                      title: AppLocalizations.of(context).noUsableAccountTitle,
+                      description: AppLocalizations.of(
+                        context,
+                      ).noUsableAccountDesc,
                     ),
                   const SizedBox(height: 14),
                   TextField(
                     key: const Key('entry_note_field'),
                     controller: _noteController,
                     maxLines: 1,
-                    decoration: const InputDecoration(
-                      labelText: '备注',
-                      hintText: '点击添加备注',
-                      prefixIcon: Icon(Icons.notes),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).commonNote,
+                      hintText: AppLocalizations.of(context).noteHint,
+                      prefixIcon: const Icon(Icons.notes),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -263,7 +271,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 child: FilledButton(
                   key: const Key('save_entry_button'),
                   onPressed: _canSave(accounts) ? _save : null,
-                  child: const Text('保存'),
+                  child: Text(AppLocalizations.of(context).commonSave),
                 ),
               ),
             ),
@@ -279,7 +287,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => NumberPadSheet(
-        title: '修改金额',
+        title: AppLocalizations.of(context).amountEditTitle,
         initialAmount: _amount,
         hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
       ),
@@ -298,7 +306,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => NumberPadSheet(
-        title: '转账手续费',
+        title: AppLocalizations.of(context).transferFeeTitle,
         initialAmount: _fee > 0 ? _fee : null,
         allowZero: true,
         hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
@@ -330,7 +338,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   Future<void> _pickAccount(List<Account> accounts) async {
     final selected = await showAccountPickerSheet(
       context: context,
-      title: _type == EntryType.transfer ? '选择转出账户' : '选择账户',
+      title: _type == EntryType.transfer
+          ? AppLocalizations.of(context).pickTransferOutAccount
+          : AppLocalizations.of(context).pickAccountTitle,
       accounts: accounts,
       selectedId: _accountId,
       balanceOf: VeriFinScope.of(context).accountBalance,
@@ -353,7 +363,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     }
     final selected = await showAccountPickerSheet(
       context: context,
-      title: '选择转入账户',
+      title: AppLocalizations.of(context).pickTransferInAccount,
       accounts: selectableAccounts,
       selectedId: _toAccountId,
       balanceOf: VeriFinScope.of(context).accountBalance,

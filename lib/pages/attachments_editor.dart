@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/app_theme.dart';
 import '../app/attachment_picker.dart';
 import '../app/image_sources.dart';
+import '../l10n/app_localizations.dart';
 
 /// 记账表单里的图片附件编辑区：横向缩略图 + 添加按钮（拍照 / 相册），
 /// 点击缩略图全屏查看，长按或查看页可删除。[dataUrls] 为当前附件（压缩 JPEG）。
@@ -28,12 +29,12 @@ class AttachmentsEditor extends StatelessWidget {
           children: <Widget>[
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('拍照'),
+              title: Text(AppLocalizations.of(context).attachTakePhoto),
               onTap: () => Navigator.of(sheetContext).pop(true),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('从相册选择'),
+              title: Text(AppLocalizations.of(context).attachFromGallery),
               onTap: () => Navigator.of(sheetContext).pop(false),
             ),
           ],
@@ -66,14 +67,14 @@ class AttachmentsEditor extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              '图片附件',
+              AppLocalizations.of(context).attachTitle,
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             const Spacer(),
             Text(
-              '${dataUrls.length} 张',
+              AppLocalizations.of(context).attachCount(dataUrls.length),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: Theme.of(
                   context,
@@ -106,7 +107,7 @@ class AttachmentsEditor extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              '当前平台不支持添加图片附件',
+              AppLocalizations.of(context).attachUnsupported,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: Theme.of(
                   context,
@@ -248,7 +249,7 @@ class _AttachmentViewerPageState extends State<_AttachmentViewerPage> {
         ),
         actions: <Widget>[
           IconButton(
-            tooltip: '删除这张',
+            tooltip: AppLocalizations.of(context).attachDeleteTooltip,
             onPressed: () {
               widget.onRemoveIndex(_index);
               Navigator.of(context).pop();

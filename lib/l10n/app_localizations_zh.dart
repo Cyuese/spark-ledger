@@ -782,4 +782,296 @@ class AppLocalizationsZh extends AppLocalizations {
   String monthlyRepayLine(int day) {
     return '每月 $day 日还款';
   }
+
+  @override
+  String get attachTakePhoto => '拍照';
+
+  @override
+  String get attachFromGallery => '从相册选择';
+
+  @override
+  String get attachTitle => '图片附件';
+
+  @override
+  String attachCount(int count) {
+    return '$count 张';
+  }
+
+  @override
+  String get attachUnsupported => '当前平台不支持添加图片附件';
+
+  @override
+  String get attachDeleteTooltip => '删除这张';
+
+  @override
+  String get entryDetailSubtitle => '记账详情';
+
+  @override
+  String get commonCategory => '分类';
+
+  @override
+  String get allLabel => '全部';
+
+  @override
+  String get transferOutAccount => '转出账户';
+
+  @override
+  String get transferInAccount => '转入账户';
+
+  @override
+  String get pleaseSelect => '请选择';
+
+  @override
+  String get feeLabel => '手续费';
+
+  @override
+  String get feeNoneTapToFill => '无（点击填写）';
+
+  @override
+  String get accountLabel => '账户';
+
+  @override
+  String get noUsableAccountTitle => '没有可用账户';
+
+  @override
+  String get noUsableAccountDesc => '请先在资产页添加或取消隐藏一个账户。';
+
+  @override
+  String get noteHint => '点击添加备注';
+
+  @override
+  String get commonSave => '保存';
+
+  @override
+  String get amountEditTitle => '修改金额';
+
+  @override
+  String get transferFeeTitle => '转账手续费';
+
+  @override
+  String get pickTransferOutAccount => '选择转出账户';
+
+  @override
+  String get pickAccountTitle => '选择账户';
+
+  @override
+  String get pickTransferInAccount => '选择转入账户';
+
+  @override
+  String get timeAll => '全部时间';
+
+  @override
+  String get timeYear => '本年';
+
+  @override
+  String get timeQuarter => '本季';
+
+  @override
+  String get timeWeek => '本周';
+
+  @override
+  String get timeLast12Months => '近12个月';
+
+  @override
+  String get timeLast30Days => '近30天';
+
+  @override
+  String get timeLast6Weeks => '近6周';
+
+  @override
+  String get sortDateDesc => '日期降序';
+
+  @override
+  String get sortDateAsc => '日期升序';
+
+  @override
+  String get sortAmountDesc => '金额降序';
+
+  @override
+  String get sortAmountAsc => '金额升序';
+
+  @override
+  String selectedCount(int count) {
+    return '已选 $count 项';
+  }
+
+  @override
+  String get dayEntriesTitle => '当日交易';
+
+  @override
+  String get entriesListTitle => '交易明细';
+
+  @override
+  String get exitMultiSelect => '退出多选';
+
+  @override
+  String get multiSelect => '多选';
+
+  @override
+  String entriesCountFull(int count) {
+    return '$count笔交易';
+  }
+
+  @override
+  String get netLabel => '结余';
+
+  @override
+  String get noMatchTitle => '没有匹配交易';
+
+  @override
+  String get noMatchDesc => '换一个关键词、账户或分类再试。';
+
+  @override
+  String get emptyEntriesDesc => '保存交易后会在这里按日期展示。';
+
+  @override
+  String get filterTimeTitle => '筛选时间';
+
+  @override
+  String get sortTitle => '排序方式';
+
+  @override
+  String get filterAccountTitle => '筛选账户';
+
+  @override
+  String get allAccounts => '全部账户';
+
+  @override
+  String get filterCategoryTitle => '筛选分类';
+
+  @override
+  String get filterTagTitle => '筛选标签';
+
+  @override
+  String get allTags => '全部标签';
+
+  @override
+  String get unknownTag => '未知标签';
+
+  @override
+  String get tagLabel => '标签';
+
+  @override
+  String deleteEntriesTitle(int count) {
+    return '删除 $count 笔交易？';
+  }
+
+  @override
+  String get deleteEntriesMessage => '删除后无法恢复，相关图片附件也会一并移除。';
+
+  @override
+  String get changeCategoryTitle => '改分类（仅改同类型交易）';
+
+  @override
+  String changedCategoryCount(int count) {
+    return '已修改 $count 笔交易的分类';
+  }
+
+  @override
+  String get changeAccountTitle => '改账户';
+
+  @override
+  String changedAccountCount(int count) {
+    return '已修改 $count 笔交易的账户';
+  }
+
+  @override
+  String yearLabel(int year) {
+    return '$year年';
+  }
+
+  @override
+  String quarterLabel(int quarter) {
+    return '季度$quarter';
+  }
+
+  @override
+  String weekNumber(int week) {
+    return '$week周';
+  }
+
+  @override
+  String yearWeek(int year, int week) {
+    return '$year年$week周';
+  }
+
+  @override
+  String get prevRange => '上一段';
+
+  @override
+  String get nextRange => '下一段';
+
+  @override
+  String get searchHint => '搜索备注、分类、账户或金额';
+
+  @override
+  String get clearFilters => '清空筛选';
+
+  @override
+  String get prevDay => '前一天';
+
+  @override
+  String get nextDay => '后一天';
+
+  @override
+  String get entryMissing => '交易不存在';
+
+  @override
+  String get deleteEntryTooltip => '删除交易';
+
+  @override
+  String get saveEntryTooltip => '保存交易';
+
+  @override
+  String get amountLabel => '金额';
+
+  @override
+  String get dateLabel => '日期';
+
+  @override
+  String get timeLabel => '时间';
+
+  @override
+  String get markReimbursable => '标记待报销';
+
+  @override
+  String get refundLabel => '退款 / 报销回款';
+
+  @override
+  String refundedAmountLabel(String amount) {
+    return '已冲抵 $amount';
+  }
+
+  @override
+  String get refundAmountTitle => '退款 / 报销回款金额';
+
+  @override
+  String get pickTypeTitle => '选择类型';
+
+  @override
+  String get noteEditTitle => '编辑备注';
+
+  @override
+  String get transferNeedsTwoAccounts => '转账需要两个不同的账户,请先添加转入账户。';
+
+  @override
+  String get deleteEntryTitle => '删除此交易？';
+
+  @override
+  String get deleteEntryMessage => '删除后无法恢复，本地保存的这笔记录会被移除。';
+
+  @override
+  String get todayLabel => '今天';
+
+  @override
+  String get yesterdayLabel => '昨天';
+
+  @override
+  String get selectAll => '全选';
+
+  @override
+  String get changeCategoryShort => '改分类';
+
+  @override
+  String get changeAccountShort => '改账户';
 }
