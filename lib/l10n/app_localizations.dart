@@ -2443,6 +2443,192 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'降低 {points} 个点'**
   String usageDown(String points);
+
+  /// No description provided for @statAnalysisTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'统计分析'**
+  String get statAnalysisTitle;
+
+  /// No description provided for @pickTimeRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择时间范围'**
+  String get pickTimeRange;
+
+  /// No description provided for @okLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定'**
+  String get okLabel;
+
+  /// No description provided for @customRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义'**
+  String get customRange;
+
+  /// No description provided for @overviewTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'收支概览'**
+  String get overviewTitle;
+
+  /// No description provided for @yoyMomTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'同比 · 环比'**
+  String get yoyMomTitle;
+
+  /// No description provided for @yoyMomDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'较上月为环比，较去年同期为同比'**
+  String get yoyMomDesc;
+
+  /// No description provided for @momLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'环比'**
+  String get momLabel;
+
+  /// No description provided for @yoyLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'同比'**
+  String get yoyLabel;
+
+  /// No description provided for @monthlyTrendTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'月度趋势'**
+  String get monthlyTrendTitle;
+
+  /// No description provided for @categoryRank.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类排行'**
+  String get categoryRank;
+
+  /// No description provided for @noDimData.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无{dim}数据'**
+  String noDimData(String dim);
+
+  /// No description provided for @noDimDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'该时间范围内没有{dim}记录。'**
+  String noDimDesc(String dim);
+
+  /// No description provided for @reportsSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据看板'**
+  String get reportsSubtitle;
+
+  /// No description provided for @noCategoryData.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无分类数据'**
+  String get noCategoryData;
+
+  /// No description provided for @noCategoryDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存支出记录后会在这里显示分类排行。'**
+  String get noCategoryDesc;
+
+  /// No description provided for @thisYearLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'今年'**
+  String get thisYearLabel;
+
+  /// No description provided for @noTagData.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无标签数据'**
+  String get noTagData;
+
+  /// No description provided for @noTagDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'给交易打上标签后，会在这里按标签汇总支出。'**
+  String get noTagDesc;
+
+  /// No description provided for @overBudgetLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'已超预算'**
+  String get overBudgetLabel;
+
+  /// No description provided for @remainingBudgetLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'剩余预算'**
+  String get remainingBudgetLabel;
+
+  /// No description provided for @expenseOnlyNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅记录支出'**
+  String get expenseOnlyNote;
+
+  /// No description provided for @usedPercent.
+  ///
+  /// In zh, this message translates to:
+  /// **'已用 {percent}%'**
+  String usedPercent(String percent);
+
+  /// No description provided for @monthBudgetLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月预算'**
+  String get monthBudgetLabel;
+
+  /// No description provided for @countItems.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个'**
+  String countItems(int count);
+
+  /// No description provided for @overCountLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个超支'**
+  String overCountLabel(int count);
+
+  /// No description provided for @normalLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'正常'**
+  String get normalLabel;
+
+  /// No description provided for @othersLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他'**
+  String get othersLabel;
+
+  /// No description provided for @tagShareOfExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'占支出 {percent}%'**
+  String tagShareOfExpense(String percent);
+
+  /// No description provided for @bookkeepingDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账天数'**
+  String get bookkeepingDays;
+
+  /// No description provided for @bookkeepingYears.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账年数'**
+  String get bookkeepingYears;
 }
 
 class _AppLocalizationsDelegate

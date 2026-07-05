@@ -94,7 +94,7 @@
 - [x] 6.5 资产页（assets_pages）：资产卡/分组管理/隐藏账户/账户表单与详情/账户报告/还款提醒条约 110 条文案全部迁 ARB；封面预设与「未分组」占位改为 l10n 解析
 - [x] 6.6 交易列表与详情（transactions_pages / entry_detail_page / attachments_editor）：时间筛选/排序枚举改 l10n 方法，列表/多选/筛选/详情表单/删除确认/附件编辑器全部迁 ARB；记账详情页头改为当前账本名（此前误为固定「日常账本」）
 - [x] 6.7 预算页（budget_pages）：预算设置/指标磁贴/分类预算/预算历史/趋势图例与气泡/洞察卡全部迁 ARB；趋势画笔月份标签由调用方按语言注入
-- [ ] 6.8 看板与统计分析（reports_page / report_analysis* / chart_painters / series_math / panel_settings_page）
+- [x] 6.8 看板与统计分析（reports_page / report_analysis* / chart_painters / series_math / panel_settings_page）：看板各面板/统计分析页/同环比表/面板管理页迁 ARB；`ReportRange.label` 与 `bookkeepingDurationStat` 改为接收 l10n，趋势点 `tooltipTitle` 字段删除、由页面按粒度用日期键格式化
 - [ ] 6.9 我的页与设置（profile_pages / legal_pages / recurring_page / reminder_settings_page / onboarding_page）
 - [ ] 6.10 应用锁与隐私同意（app_lock_page / app_lock_gate / privacy_consent_gate / biometric）
 - [ ] 6.11 备份子系统用户可见消息（backup/* / data_file_port / transaction_import）

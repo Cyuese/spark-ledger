@@ -125,6 +125,7 @@ class ProfilePage extends StatelessWidget {
                         child: Builder(
                           builder: (context) {
                             final (value, label) = bookkeepingDurationStat(
+                              AppLocalizations.of(context),
                               bookkeepingDays(controller.entries),
                             );
                             return ProfileStat(label: label, value: value);

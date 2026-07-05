@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:verifin/l10n/app_localizations_zh.dart';
 import 'package:verifin/app/image_cropper.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/app/series_math.dart';
@@ -103,10 +104,11 @@ void main() {
   });
 
   test('bookkeeping duration switches to years after one year', () async {
-    expect(bookkeepingDurationStat(20), ('20', '记账天数'));
-    expect(bookkeepingDurationStat(365), ('365', '记账天数'));
-    expect(bookkeepingDurationStat(438), ('1.2', '记账年数'));
-    expect(bookkeepingDurationStat(730), ('2', '记账年数'));
+    final l10n = AppLocalizationsZh();
+    expect(bookkeepingDurationStat(l10n, 20), ('20', '记账天数'));
+    expect(bookkeepingDurationStat(l10n, 365), ('365', '记账天数'));
+    expect(bookkeepingDurationStat(l10n, 438), ('1.2', '记账年数'));
+    expect(bookkeepingDurationStat(l10n, 730), ('2', '记账年数'));
   });
 
   test('cropper pan shift maps offset=±1 exactly to the image edge', () async {

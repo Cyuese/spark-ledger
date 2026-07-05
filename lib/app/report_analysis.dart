@@ -4,6 +4,7 @@ import 'category_tree.dart';
 import 'demo_data.dart';
 import 'ledger_math.dart';
 import 'models.dart';
+import '../l10n/app_localizations.dart';
 
 /// 报表分析的时间范围类型。
 enum ReportRangeMode { month, year, custom }
@@ -52,13 +53,13 @@ class ReportRange {
   /// 含起止的天数。
   int get dayCount => end.difference(start).inDays + 1;
 
-  /// 展示用文案。
-  String get label {
+  /// 展示用文案（月/年按当前语言格式化，自定义范围为数字、语言无关）。
+  String label(AppLocalizations l10n) {
     switch (mode) {
       case ReportRangeMode.month:
-        return '${start.year}年${start.month}月';
+        return l10n.yearMonth(start);
       case ReportRangeMode.year:
-        return '${start.year}年';
+        return l10n.yearLabel(start.year);
       case ReportRangeMode.custom:
         final sameYear = start.year == end.year;
         final startText =
@@ -242,7 +243,6 @@ class ReportTrendPoint {
     required this.date,
     required this.value,
     required this.label,
-    required this.tooltipTitle,
   });
 
   final DateTime date;
@@ -252,7 +252,6 @@ class ReportTrendPoint {
   final String label;
 
   /// 数据气泡标题。
-  final String tooltipTitle;
 }
 
 @immutable
@@ -316,7 +315,6 @@ ReportTrend _dailyTrend(
         date: days[i],
         value: values[i],
         label: '${days[i].month}.${days[i].day}',
-        tooltipTitle: '${days[i].month}月${days[i].day}日',
       ),
   ];
   return ReportTrend(granularity: ReportTrendGranularity.daily, points: points);
@@ -366,7 +364,6 @@ ReportTrend _monthlyTrend(
         label: singleYear
             ? '${months[i].month}'
             : '${months[i].year % 100}.${months[i].month}',
-        tooltipTitle: '${months[i].year}年${months[i].month}月',
       ),
   ];
   return ReportTrend(

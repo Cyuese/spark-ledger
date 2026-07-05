@@ -1313,4 +1313,109 @@ class AppLocalizationsZh extends AppLocalizations {
   String usageDown(String points) {
     return '降低 $points 个点';
   }
+
+  @override
+  String get statAnalysisTitle => '统计分析';
+
+  @override
+  String get pickTimeRange => '选择时间范围';
+
+  @override
+  String get okLabel => '确定';
+
+  @override
+  String get customRange => '自定义';
+
+  @override
+  String get overviewTitle => '收支概览';
+
+  @override
+  String get yoyMomTitle => '同比 · 环比';
+
+  @override
+  String get yoyMomDesc => '较上月为环比，较去年同期为同比';
+
+  @override
+  String get momLabel => '环比';
+
+  @override
+  String get yoyLabel => '同比';
+
+  @override
+  String get monthlyTrendTitle => '月度趋势';
+
+  @override
+  String get categoryRank => '分类排行';
+
+  @override
+  String noDimData(String dim) {
+    return '暂无$dim数据';
+  }
+
+  @override
+  String noDimDesc(String dim) {
+    return '该时间范围内没有$dim记录。';
+  }
+
+  @override
+  String get reportsSubtitle => '数据看板';
+
+  @override
+  String get noCategoryData => '暂无分类数据';
+
+  @override
+  String get noCategoryDesc => '保存支出记录后会在这里显示分类排行。';
+
+  @override
+  String get thisYearLabel => '今年';
+
+  @override
+  String get noTagData => '暂无标签数据';
+
+  @override
+  String get noTagDesc => '给交易打上标签后，会在这里按标签汇总支出。';
+
+  @override
+  String get overBudgetLabel => '已超预算';
+
+  @override
+  String get remainingBudgetLabel => '剩余预算';
+
+  @override
+  String get expenseOnlyNote => '仅记录支出';
+
+  @override
+  String usedPercent(String percent) {
+    return '已用 $percent%';
+  }
+
+  @override
+  String get monthBudgetLabel => '本月预算';
+
+  @override
+  String countItems(int count) {
+    return '$count 个';
+  }
+
+  @override
+  String overCountLabel(int count) {
+    return '$count 个超支';
+  }
+
+  @override
+  String get normalLabel => '正常';
+
+  @override
+  String get othersLabel => '其他';
+
+  @override
+  String tagShareOfExpense(String percent) {
+    return '占支出 $percent%';
+  }
+
+  @override
+  String get bookkeepingDays => '记账天数';
+
+  @override
+  String get bookkeepingYears => '记账年数';
 }

@@ -14,6 +14,7 @@ import '../app/veri_fin_scope.dart';
 import 'budget_pages.dart';
 import 'panel_settings_page.dart';
 import 'report_analysis_page.dart';
+import '../l10n/app_localizations.dart';
 
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
@@ -74,9 +75,9 @@ class ReportsPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 SectionTitle(
-                  title: '分类统计',
+                  title: AppLocalizations.of(context).panelCategoryRingLabel,
                   trailing:
-                      '${formatExpenseAmount(monthExpense)} · ${DateTime.now().month}月 · 支出',
+                      '${formatExpenseAmount(monthExpense)} · ${AppLocalizations.of(context).monthNumber(DateTime.now().month)} · ${AppLocalizations.of(context).entryTypeExpense}',
                 ),
                 const SizedBox(height: 12),
                 LayoutBuilder(
@@ -97,13 +98,16 @@ class ReportsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const SectionTitle(title: '分类明细', trailing: '支出'),
+                SectionTitle(
+                  title: AppLocalizations.of(context).panelCategoryRankLabel,
+                  trailing: AppLocalizations.of(context).entryTypeExpense,
+                ),
                 const SizedBox(height: 8),
                 if (categoryStats.isEmpty)
-                  const EmptyState(
+                  EmptyState(
                     icon: Icons.donut_small_outlined,
-                    title: '暂无分类数据',
-                    description: '保存支出记录后会在这里显示分类排行。',
+                    title: AppLocalizations.of(context).noCategoryData,
+                    description: AppLocalizations.of(context).noCategoryDesc,
                   )
                 else
                   ...categoryStats
@@ -118,7 +122,7 @@ class ReportsPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 SectionTitle(
-                  title: '日趋势',
+                  title: AppLocalizations.of(context).panelDailyTrendLabel,
                   trailing: formatExpenseAmount(trendExpense),
                 ),
                 const SizedBox(height: 12),
@@ -139,11 +143,13 @@ class ReportsPage extends StatelessWidget {
                     tooltipOf: (index) {
                       final day = trendWindow.days[index];
                       return ChartTooltip(
-                        title: '${day.month}月${day.day}日',
+                        title: AppLocalizations.of(context).dateMonthDay(day),
                         lines: <ChartTooltipLine>[
                           ChartTooltipLine(
-                            text:
-                                '支出 ${formatExpenseAmount(trendValues[index])}',
+                            text: AppLocalizations.of(context)
+                                .expenseAmountLabel(
+                                  formatExpenseAmount(trendValues[index]),
+                                ),
                           ),
                         ],
                       );
@@ -158,7 +164,12 @@ class ReportsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const SectionTitle(title: '月度收支', trailing: '今年'),
+                SectionTitle(
+                  title: AppLocalizations.of(
+                    context,
+                  ).panelMonthlyStructureLabel,
+                  trailing: AppLocalizations.of(context).thisYearLabel,
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 146,
@@ -183,11 +194,14 @@ class ReportsPage extends StatelessWidget {
                       context,
                     ).colorScheme.onSurface.withValues(alpha: 0.50),
                     tooltipOf: (index) => ChartTooltip(
-                      title: '${index + 1}月',
+                      title: AppLocalizations.of(
+                        context,
+                      ).monthNumber(index + 1),
                       lines: <ChartTooltipLine>[
                         ChartTooltipLine(
-                          text:
-                              '支出 ${formatExpenseAmount(monthlyValues[index])}',
+                          text: AppLocalizations.of(context).expenseAmountLabel(
+                            formatExpenseAmount(monthlyValues[index]),
+                          ),
                         ),
                       ],
                     ),
@@ -201,13 +215,16 @@ class ReportsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const SectionTitle(title: '标签统计', trailing: '本月支出'),
+                SectionTitle(
+                  title: AppLocalizations.of(context).panelTagStatsLabel,
+                  trailing: AppLocalizations.of(context).budgetMonthExpense,
+                ),
                 const SizedBox(height: 8),
                 if (tagStats.isEmpty)
-                  const EmptyState(
+                  EmptyState(
                     icon: Icons.label_outline,
-                    title: '暂无标签数据',
-                    description: '给交易打上标签后，会在这里按标签汇总支出。',
+                    title: AppLocalizations.of(context).noTagData,
+                    description: AppLocalizations.of(context).noTagDesc,
                   )
                 else
                   ...tagStats.take(8).map((stat) => _TagStatTile(stat: stat)),
@@ -224,11 +241,11 @@ class ReportsPage extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 8, 14, 82),
         children: <Widget>[
           PageHeader(
-            title: '看板',
-            subtitle: '数据看板',
+            title: AppLocalizations.of(context).tabReports,
+            subtitle: AppLocalizations.of(context).reportsSubtitle,
             trailing: HeaderAction(
               icon: Icons.insights_outlined,
-              tooltip: '统计分析',
+              tooltip: AppLocalizations.of(context).statAnalysisTitle,
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const ReportAnalysisPage(),
@@ -286,14 +303,14 @@ class _BudgetExecutionCard extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  '预算执行',
+                  AppLocalizations.of(context).panelBudgetExecutionLabel,
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
                 ),
               ),
               Text(
-                '${DateTime.now().month}月',
+                AppLocalizations.of(context).monthNumber(DateTime.now().month),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Theme.of(
                     context,
@@ -313,10 +330,10 @@ class _BudgetExecutionCard extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       budget <= 0
-                          ? '未设置预算'
+                          ? AppLocalizations.of(context).notSetBudget
                           : remaining < 0
-                          ? '已超预算'
-                          : '剩余预算',
+                          ? AppLocalizations.of(context).overBudgetLabel
+                          : AppLocalizations.of(context).remainingBudgetLabel,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(
                           context,
@@ -341,8 +358,10 @@ class _BudgetExecutionCard extends StatelessWidget {
               ),
               Text(
                 budget <= 0
-                    ? '仅记录支出'
-                    : '已用 ${(ratio * 100).toStringAsFixed(0)}%',
+                    ? AppLocalizations.of(context).expenseOnlyNote
+                    : AppLocalizations.of(
+                        context,
+                      ).usedPercent((ratio * 100).toStringAsFixed(0)),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Theme.of(
                     context,
@@ -369,21 +388,25 @@ class _BudgetExecutionCard extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: _BudgetExecutionMetric(
-                  label: '本月预算',
+                  label: AppLocalizations.of(context).monthBudgetLabel,
                   value: formatAmount(budget),
                 ),
               ),
               Expanded(
                 child: _BudgetExecutionMetric(
-                  label: '本月支出',
+                  label: AppLocalizations.of(context).budgetMonthExpense,
                   value: formatExpenseAmount(expense),
                 ),
               ),
               Expanded(
                 child: _BudgetExecutionMetric(
-                  label: '分类预算',
-                  value: '$budgetedCount 个',
-                  accent: overBudgetCount > 0 ? '$overBudgetCount 个超支' : '正常',
+                  label: AppLocalizations.of(context).categoryBudgetTitle,
+                  value: AppLocalizations.of(context).countItems(budgetedCount),
+                  accent: overBudgetCount > 0
+                      ? AppLocalizations.of(
+                          context,
+                        ).overCountLabel(overBudgetCount)
+                      : AppLocalizations.of(context).normalLabel,
                   accentColor: overBudgetCount > 0 ? veriExpense : veriIncome,
                 ),
               ),
@@ -510,7 +533,10 @@ class _CategoryRingChartState extends State<_CategoryRingChart> {
 
   @override
   Widget build(BuildContext context) {
-    final segments = _categoryRingSegments(widget.stats);
+    final segments = _categoryRingSegments(
+      AppLocalizations.of(context),
+      widget.stats,
+    );
     final ringSize = widget.ringSize;
     final mutedColor = Theme.of(
       context,
@@ -626,7 +652,10 @@ class _CategoryRingSegment {
   final Color color;
 }
 
-List<_CategoryRingSegment> _categoryRingSegments(List<_CategoryStat> stats) {
+List<_CategoryRingSegment> _categoryRingSegments(
+  AppLocalizations l10n,
+  List<_CategoryStat> stats,
+) {
   if (stats.isEmpty) {
     return const <_CategoryRingSegment>[];
   }
@@ -657,7 +686,7 @@ List<_CategoryRingSegment> _categoryRingSegments(List<_CategoryStat> stats) {
   if (otherAmount > 0) {
     segments.add(
       _CategoryRingSegment(
-        label: '其他',
+        label: l10n.othersLabel,
         amount: otherAmount,
         percent: otherAmount / total,
         color: colors.last,
@@ -865,7 +894,7 @@ class _CategoryStatTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${(stat.percent * 100).toStringAsFixed(1)}% · ${stat.count}笔',
+                  '${(stat.percent * 100).toStringAsFixed(1)}% · ${AppLocalizations.of(context).entriesCount(stat.count)}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -930,7 +959,7 @@ class _TagStatTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '占支出 ${(stat.percent * 100).toStringAsFixed(1)}% · ${stat.count}笔',
+                  '${AppLocalizations.of(context).tagShareOfExpense((stat.percent * 100).toStringAsFixed(1))} · ${AppLocalizations.of(context).entriesCount(stat.count)}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(
                       context,

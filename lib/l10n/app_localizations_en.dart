@@ -1336,4 +1336,112 @@ class AppLocalizationsEn extends AppLocalizations {
   String usageDown(String points) {
     return 'down $points pts';
   }
+
+  @override
+  String get statAnalysisTitle => 'Analytics';
+
+  @override
+  String get pickTimeRange => 'Select time range';
+
+  @override
+  String get okLabel => 'OK';
+
+  @override
+  String get customRange => 'Custom';
+
+  @override
+  String get overviewTitle => 'Overview';
+
+  @override
+  String get yoyMomTitle => 'YoY · MoM';
+
+  @override
+  String get yoyMomDesc =>
+      'MoM compares to last month; YoY to the same month last year';
+
+  @override
+  String get momLabel => 'MoM';
+
+  @override
+  String get yoyLabel => 'YoY';
+
+  @override
+  String get monthlyTrendTitle => 'Monthly trend';
+
+  @override
+  String get categoryRank => 'Category ranking';
+
+  @override
+  String noDimData(String dim) {
+    return 'No $dim data';
+  }
+
+  @override
+  String noDimDesc(String dim) {
+    return 'No $dim records in this time range.';
+  }
+
+  @override
+  String get reportsSubtitle => 'Dashboard';
+
+  @override
+  String get noCategoryData => 'No category data';
+
+  @override
+  String get noCategoryDesc =>
+      'Expense records will show a category ranking here.';
+
+  @override
+  String get thisYearLabel => 'This year';
+
+  @override
+  String get noTagData => 'No tag data';
+
+  @override
+  String get noTagDesc =>
+      'Tag your transactions to see spending summarized by tag.';
+
+  @override
+  String get overBudgetLabel => 'Over budget';
+
+  @override
+  String get remainingBudgetLabel => 'Remaining budget';
+
+  @override
+  String get expenseOnlyNote => 'Expenses only';
+
+  @override
+  String usedPercent(String percent) {
+    return '$percent% used';
+  }
+
+  @override
+  String get monthBudgetLabel => 'This month\'s budget';
+
+  @override
+  String countItems(int count) {
+    return '$count';
+  }
+
+  @override
+  String overCountLabel(int count) {
+    return '$count over budget';
+  }
+
+  @override
+  String get normalLabel => 'OK';
+
+  @override
+  String get othersLabel => 'Others';
+
+  @override
+  String tagShareOfExpense(String percent) {
+    return '$percent% of spending';
+  }
+
+  @override
+  String get bookkeepingDays => 'Days tracked';
+
+  @override
+  String get bookkeepingYears => 'Years tracked';
 }

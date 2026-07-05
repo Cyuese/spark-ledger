@@ -932,5 +932,78 @@
         "type": "String"
       }
     }
-  }
+  },
+  "statAnalysisTitle": "统计分析",
+  "pickTimeRange": "选择时间范围",
+  "okLabel": "确定",
+  "customRange": "自定义",
+  "overviewTitle": "收支概览",
+  "yoyMomTitle": "同比 · 环比",
+  "yoyMomDesc": "较上月为环比，较去年同期为同比",
+  "momLabel": "环比",
+  "yoyLabel": "同比",
+  "monthlyTrendTitle": "月度趋势",
+  "categoryRank": "分类排行",
+  "noDimData": "暂无{dim}数据",
+  "@noDimData": {
+    "placeholders": {
+      "dim": {
+        "type": "String"
+      }
+    }
+  },
+  "noDimDesc": "该时间范围内没有{dim}记录。",
+  "@noDimDesc": {
+    "placeholders": {
+      "dim": {
+        "type": "String"
+      }
+    }
+  },
+  "reportsSubtitle": "数据看板",
+  "noCategoryData": "暂无分类数据",
+  "noCategoryDesc": "保存支出记录后会在这里显示分类排行。",
+  "thisYearLabel": "今年",
+  "noTagData": "暂无标签数据",
+  "noTagDesc": "给交易打上标签后，会在这里按标签汇总支出。",
+  "overBudgetLabel": "已超预算",
+  "remainingBudgetLabel": "剩余预算",
+  "expenseOnlyNote": "仅记录支出",
+  "usedPercent": "已用 {percent}%",
+  "@usedPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "monthBudgetLabel": "本月预算",
+  "countItems": "{count} 个",
+  "@countItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "overCountLabel": "{count} 个超支",
+  "@overCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "normalLabel": "正常",
+  "othersLabel": "其他",
+  "tagShareOfExpense": "占支出 {percent}%",
+  "@tagShareOfExpense": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "bookkeepingDays": "记账天数",
+  "bookkeepingYears": "记账年数"
 }

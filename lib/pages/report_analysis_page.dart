@@ -9,6 +9,7 @@ import '../app/models.dart';
 import '../app/report_analysis.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 
 /// 统计分析页：支持本月 / 本年 / 自定义时间范围，支出与收入两个维度，
 /// 展示收支汇总、趋势曲线与分类排行。（阶段 4.1）
@@ -34,8 +35,8 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
       firstDate: DateTime(now.year - 10),
       lastDate: DateTime(now.year + 1, 12, 31),
       initialDateRange: initial,
-      helpText: '选择时间范围',
-      saveText: '确定',
+      helpText: AppLocalizations.of(context).pickTimeRange,
+      saveText: AppLocalizations.of(context).okLabel,
     );
     if (picked != null && mounted) {
       setState(() {
@@ -68,7 +69,11 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 40),
             children: <Widget>[
-              VeriHeader(title: '统计分析', subtitle: _range.label, showBack: true),
+              VeriHeader(
+                title: AppLocalizations.of(context).statAnalysisTitle,
+                subtitle: _range.label(AppLocalizations.of(context)),
+                showBack: true,
+              ),
               const SizedBox(height: 10),
               _RangeSelector(
                 range: _range,
@@ -134,19 +139,21 @@ class _RangeSelector extends StatelessWidget {
     return Row(
       children: <Widget>[
         _RangeChip(
-          label: '本月',
+          label: AppLocalizations.of(context).thisMonth,
           selected: range.mode == ReportRangeMode.month,
           onTap: onMonth,
         ),
         const SizedBox(width: 8),
         _RangeChip(
-          label: '本年',
+          label: AppLocalizations.of(context).timeYear,
           selected: range.mode == ReportRangeMode.year,
           onTap: onYear,
         ),
         const SizedBox(width: 8),
         _RangeChip(
-          label: range.mode == ReportRangeMode.custom ? range.label : '自定义',
+          label: range.mode == ReportRangeMode.custom
+              ? range.label(AppLocalizations.of(context))
+              : AppLocalizations.of(context).customRange,
           selected: range.mode == ReportRangeMode.custom,
           icon: Icons.date_range_outlined,
           onTap: onCustom,
@@ -237,13 +244,13 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const SectionTitle(title: '收支概览'),
+          SectionTitle(title: AppLocalizations.of(context).overviewTitle),
           const SizedBox(height: 12),
           Row(
             children: <Widget>[
               Expanded(
                 child: _SummaryMetric(
-                  label: '收入',
+                  label: AppLocalizations.of(context).entryTypeIncome,
                   value: formatIncomeAmount(summary.income),
                   color: veriIncome,
                   count: summary.incomeCount,
@@ -251,7 +258,7 @@ class _SummaryCard extends StatelessWidget {
               ),
               Expanded(
                 child: _SummaryMetric(
-                  label: '支出',
+                  label: AppLocalizations.of(context).entryTypeExpense,
                   value: '-${formatAmount(summary.expense)}',
                   color: veriExpense,
                   count: summary.expenseCount,
@@ -259,7 +266,7 @@ class _SummaryCard extends StatelessWidget {
               ),
               Expanded(
                 child: _SummaryMetric(
-                  label: '结余',
+                  label: AppLocalizations.of(context).netLabel,
                   value: formatSignedAmount(summary.net),
                   color: summary.net >= 0 ? veriRoyal : veriExpense,
                 ),
@@ -313,7 +320,7 @@ class _SummaryMetric extends StatelessWidget {
         if (count != null) ...<Widget>[
           const SizedBox(height: 2),
           Text(
-            '$count 笔',
+            AppLocalizations.of(context).entriesCount(count!),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: muted,
               fontWeight: FontWeight.w700,
@@ -352,10 +359,10 @@ class _ComparisonCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const SectionTitle(title: '同比 · 环比'),
+          SectionTitle(title: AppLocalizations.of(context).yoyMomTitle),
           const SizedBox(height: 4),
           Text(
-            '较上月为环比，较去年同期为同比',
+            AppLocalizations.of(context).yoyMomDesc,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: muted,
               fontWeight: FontWeight.w600,
@@ -365,27 +372,27 @@ class _ComparisonCard extends StatelessWidget {
           Row(
             children: <Widget>[
               const Expanded(flex: 4, child: SizedBox.shrink()),
-              headerCell('环比'),
-              headerCell('同比'),
+              headerCell(AppLocalizations.of(context).momLabel),
+              headerCell(AppLocalizations.of(context).yoyLabel),
             ],
           ),
           const SizedBox(height: 4),
           _ComparisonRow(
-            label: '收入',
+            label: AppLocalizations.of(context).entryTypeIncome,
             current: comparison.current.income,
             momBase: comparison.previousMonth.income,
             yoyBase: comparison.sameMonthLastYear.income,
             higherIsGood: true,
           ),
           _ComparisonRow(
-            label: '支出',
+            label: AppLocalizations.of(context).entryTypeExpense,
             current: comparison.current.expense,
             momBase: comparison.previousMonth.expense,
             yoyBase: comparison.sameMonthLastYear.expense,
             higherIsGood: false,
           ),
           _ComparisonRow(
-            label: '结余',
+            label: AppLocalizations.of(context).netLabel,
             current: comparison.current.net,
             momBase: comparison.previousMonth.net,
             yoyBase: comparison.sameMonthLastYear.net,
@@ -543,9 +550,17 @@ class _DimensionToggle extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          segment('支出', EntryType.expense, veriExpense),
+          segment(
+            AppLocalizations.of(context).entryTypeExpense,
+            EntryType.expense,
+            veriExpense,
+          ),
           const SizedBox(width: 4),
-          segment('收入', EntryType.income, veriIncome),
+          segment(
+            AppLocalizations.of(context).entryTypeIncome,
+            EntryType.income,
+            veriIncome,
+          ),
         ],
       ),
     );
@@ -569,9 +584,9 @@ class _TrendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isZero = isZeroAmount(total);
     final title = trend.granularity == ReportTrendGranularity.monthly
-        ? '月度趋势'
-        : '日趋势';
-    final dimLabel = dimension == EntryType.expense ? '支出' : '收入';
+        ? AppLocalizations.of(context).monthlyTrendTitle
+        : AppLocalizations.of(context).panelDailyTrendLabel;
+    final dimLabel = dimension.label(AppLocalizations.of(context));
     return VeriCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -602,7 +617,9 @@ class _TrendCard extends StatelessWidget {
                     ? formatExpenseAmount(point.value)
                     : formatIncomeAmount(point.value);
                 return ChartTooltip(
-                  title: point.tooltipTitle,
+                  title: trend.granularity == ReportTrendGranularity.daily
+                      ? AppLocalizations.of(context).dateMonthDay(point.date)
+                      : AppLocalizations.of(context).yearMonth(point.date),
                   lines: <ChartTooltipLine>[
                     ChartTooltipLine(text: '$dimLabel $amount'),
                   ],
@@ -641,18 +658,21 @@ class _CategoryRankCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dimLabel = dimension == EntryType.expense ? '支出' : '收入';
+    final dimLabel = dimension.label(AppLocalizations.of(context));
     return VeriCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SectionTitle(title: '分类排行', trailing: dimLabel),
+          SectionTitle(
+            title: AppLocalizations.of(context).categoryRank,
+            trailing: dimLabel,
+          ),
           const SizedBox(height: 8),
           if (stats.isEmpty)
             EmptyState(
               icon: Icons.donut_small_outlined,
-              title: '暂无$dimLabel数据',
-              description: '该时间范围内没有$dimLabel记录。',
+              title: AppLocalizations.of(context).noDimData(dimLabel),
+              description: AppLocalizations.of(context).noDimDesc(dimLabel),
             )
           else
             ...stats.map((stat) => _CategoryRankTile(stat: stat, color: color)),
@@ -715,7 +735,7 @@ class _CategoryRankTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${(stat.percent * 100).toStringAsFixed(1)}% · ${stat.count}笔',
+                  '${(stat.percent * 100).toStringAsFixed(1)}% · ${AppLocalizations.of(context).entriesCount(stat.count)}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(
                       context,

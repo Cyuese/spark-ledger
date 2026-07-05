@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'ledger_math.dart';
 import 'models.dart';
+import '../l10n/app_localizations.dart';
 
 bool isInMonth(LedgerEntry entry, DateTime month) {
   return entry.occurredAt.year == month.year &&
@@ -182,14 +183,14 @@ int bookkeepingDays(List<LedgerEntry> entries) {
 }
 
 /// 记账时长的展示文案:一年以内显示天数,超过一年显示 1.2、2 这样的年数。
-(String, String) bookkeepingDurationStat(int days) {
+(String, String) bookkeepingDurationStat(AppLocalizations l10n, int days) {
   if (days <= 365) {
-    return ('$days', '记账天数');
+    return ('$days', l10n.bookkeepingDays);
   }
   final years = days / 365;
   final text = years.toStringAsFixed(1);
   return (
     text.endsWith('.0') ? text.substring(0, text.length - 2) : text,
-    '记账年数',
+    l10n.bookkeepingYears,
   );
 }
