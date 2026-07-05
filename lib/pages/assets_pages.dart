@@ -37,22 +37,22 @@ class AssetsPage extends StatefulWidget {
 class _AssetsPageState extends State<AssetsPage> {
   static const List<_AssetCoverPreset> _coverPresets = <_AssetCoverPreset>[
     _AssetCoverPreset(
-      label: '蓝色城市',
+      id: 'blue_city',
       url:
           'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?auto=format&fit=crop&w=1200&q=80',
     ),
     _AssetCoverPreset(
-      label: '极光夜色',
+      id: 'aurora',
       url:
           'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
     ),
     _AssetCoverPreset(
-      label: '金融办公',
+      id: 'finance_office',
       url:
           'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
     ),
     _AssetCoverPreset(
-      label: '深蓝渐层',
+      id: 'deep_blue',
       url:
           'https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&w=1200&q=80',
     ),
@@ -101,7 +101,7 @@ class _AssetsPageState extends State<AssetsPage> {
       AccountGroup(
         id: 'ungrouped',
         bookId: controller.activeBook.id,
-        name: '未分组',
+        name: AppLocalizations.of(context).assetsUngrouped,
         iconCode: 'folder',
         sortOrder: 999,
       ),
@@ -155,11 +155,11 @@ class _AssetsPageState extends State<AssetsPage> {
         padding: const EdgeInsets.fromLTRB(14, 8, 14, 82),
         children: <Widget>[
           PageHeader(
-            title: '资产',
-            subtitle: '净资产',
+            title: AppLocalizations.of(context).tabAssets,
+            subtitle: AppLocalizations.of(context).netAssets,
             trailing: HeaderAction(
               icon: Icons.add,
-              tooltip: '资产操作',
+              tooltip: AppLocalizations.of(context).assetsActions,
               onPressed: () => _showAssetActions(context),
             ),
           ),
@@ -212,12 +212,14 @@ class _AssetsPageState extends State<AssetsPage> {
                         children: <Widget>[
                           Expanded(
                             child: Text(
-                              '净资产',
+                              AppLocalizations.of(context).netAssets,
                               style: TextStyle(color: assetCardMutedColor),
                             ),
                           ),
                           IconButton(
-                            tooltip: '更换资产卡片背景',
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).assetsChangeCover,
                             onPressed: () =>
                                 _changeAssetCover(context, controller),
                             style: IconButton.styleFrom(
@@ -248,11 +250,15 @@ class _AssetsPageState extends State<AssetsPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
                           Text(
-                            '资产 ${formatAmount(assets)}',
+                            AppLocalizations.of(
+                              context,
+                            ).assetsAmount(formatAmount(assets)),
                             style: TextStyle(color: assetCardTextColor),
                           ),
                           Text(
-                            '负债 ${formatAmount(liabilities.abs())}',
+                            AppLocalizations.of(context).liabilitiesAmount(
+                              formatAmount(liabilities.abs()),
+                            ),
                             style: TextStyle(color: assetCardTextColor),
                           ),
                         ],
@@ -266,11 +272,15 @@ class _AssetsPageState extends State<AssetsPage> {
                           xLabels: evenMonthAxisLabels(),
                           labelColor: assetCardMutedColor,
                           tooltipOf: (index) => ChartTooltip(
-                            title: '${index + 1}月',
+                            title: AppLocalizations.of(
+                              context,
+                            ).monthNumber(index + 1),
                             lines: <ChartTooltipLine>[
                               ChartTooltipLine(
-                                text:
-                                    '净资产 ${formatAmount(assetTrendValues[index])}',
+                                text: AppLocalizations.of(context)
+                                    .netAssetsAmount(
+                                      formatAmount(assetTrendValues[index]),
+                                    ),
                               ),
                             ],
                           ),
@@ -284,11 +294,11 @@ class _AssetsPageState extends State<AssetsPage> {
           ),
           const SizedBox(height: 12),
           if (visibleAssetSections.isEmpty) ...[
-            const VeriCard(
+            VeriCard(
               child: EmptyState(
                 icon: Icons.account_balance_wallet_outlined,
-                title: '还没有资产账户',
-                description: '请先点击右上角添加资产，之后可以在这里按类型或分组查看资产。',
+                title: AppLocalizations.of(context).assetsEmptyTitle,
+                description: AppLocalizations.of(context).assetsEmptyDesc,
               ),
             ),
             const SizedBox(height: 12),
@@ -304,7 +314,7 @@ class _AssetsPageState extends State<AssetsPage> {
                   Expanded(
                     child: sortingSections
                         ? Text(
-                            '拖动右侧手柄调整分组顺序',
+                            AppLocalizations.of(context).assetsSortHint,
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
                                   color: Theme.of(context).colorScheme.onSurface
@@ -434,7 +444,9 @@ class _AssetsPageState extends State<AssetsPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${hiddenAccounts.length}个隐藏账户',
+                      AppLocalizations.of(
+                        context,
+                      ).hiddenAccountsCount(hiddenAccounts.length),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(
                           context,
@@ -472,15 +484,15 @@ class _AssetsPageState extends State<AssetsPage> {
   ) async {
     final action = await showOptionSheet<String>(
       context: context,
-      title: '资产卡片背景',
+      title: AppLocalizations.of(context).assetsCoverTitle,
       values: const <String>['online', 'custom_url', 'local', 'clear'],
       selected: 'online',
       labelOf: (value) {
         return switch (value) {
-          'online' => '使用线上图片',
-          'custom_url' => '输入图片链接',
-          'local' => '选择本地图片',
-          'clear' => '清除背景图片',
+          'online' => AppLocalizations.of(context).coverUseOnline,
+          'custom_url' => AppLocalizations.of(context).coverEnterUrl,
+          'local' => AppLocalizations.of(context).coverPickLocal,
+          'clear' => AppLocalizations.of(context).coverClear,
           _ => value,
         };
       },
@@ -493,13 +505,13 @@ class _AssetsPageState extends State<AssetsPage> {
       case 'online':
         final selected = await showOptionSheet<_AssetCoverPreset>(
           context: context,
-          title: '选择线上图片',
+          title: AppLocalizations.of(context).coverPickOnlineTitle,
           values: _coverPresets,
           selected: _coverPresets.firstWhere(
             (item) => item.url == controller.assetCoverUrl,
             orElse: () => _coverPresets.first,
           ),
-          labelOf: (value) => value.label,
+          labelOf: (value) => value.label(AppLocalizations.of(context)),
         );
         if (selected != null) {
           controller.setAssetCoverUrl(selected.url);
@@ -507,8 +519,8 @@ class _AssetsPageState extends State<AssetsPage> {
       case 'custom_url':
         final url = await showTextInputDialog(
           context: context,
-          title: '自定义图片',
-          label: '图片链接',
+          title: AppLocalizations.of(context).coverCustomTitle,
+          label: AppLocalizations.of(context).coverUrlLabel,
           initialValue: controller.assetCoverUrl.startsWith('http')
               ? controller.assetCoverUrl
               : '',
@@ -524,7 +536,7 @@ class _AssetsPageState extends State<AssetsPage> {
         final crop = await showImageCropper(
           context: context,
           imageDataUrl: rawImage,
-          title: '裁剪资产背景',
+          title: AppLocalizations.of(context).coverCropTitle,
           aspectRatio: assetCoverAspectRatio,
         );
         if (crop == null || !context.mounted) {
@@ -532,7 +544,7 @@ class _AssetsPageState extends State<AssetsPage> {
         }
         final dataUrl = await runWithLoadingDialog<String?>(
           context: context,
-          message: '正在生成背景图…',
+          message: AppLocalizations.of(context).coverGenerating,
           task: () => cropImageDataUrl(
             sourceDataUrl: rawImage,
             targetWidth: assetCoverTargetWidth,
@@ -554,7 +566,7 @@ class _AssetsPageState extends State<AssetsPage> {
     final controller = VeriFinScope.of(context);
     final selected = await showOptionSheet<String>(
       context: context,
-      title: '资产操作',
+      title: AppLocalizations.of(context).assetsActions,
       values: const <String>[
         'add_account',
         'manage_groups',
@@ -564,12 +576,12 @@ class _AssetsPageState extends State<AssetsPage> {
       selected: 'add_account',
       labelOf: (value) {
         return switch (value) {
-          'add_account' => '添加账户',
-          'manage_groups' => '管理分组',
+          'add_account' => AppLocalizations.of(context).accountAdd,
+          'manage_groups' => AppLocalizations.of(context).groupManage,
           'switch_view' => controller.assetAccountViewMode.toggleLabel(
             AppLocalizations.of(context),
           ),
-          'sort_sections' => '排序分组',
+          'sort_sections' => AppLocalizations.of(context).sectionSort,
           _ => value,
         };
       },
@@ -601,9 +613,11 @@ class _AssetsPageState extends State<AssetsPage> {
     if (_visibleSectionCount >= 2) {
       setState(() => _sortingSections = true);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('至少有 2 个分组才能排序')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).sectionSortNeedTwo),
+        ),
+      );
     }
   }
 }
@@ -619,7 +633,11 @@ class _SectionSortButton extends StatelessWidget {
     return TextButton.icon(
       onPressed: onTap,
       icon: Icon(sorting ? Icons.check : Icons.swap_vert, size: 16),
-      label: Text(sorting ? '完成' : '排序'),
+      label: Text(
+        sorting
+            ? AppLocalizations.of(context).commonDone
+            : AppLocalizations.of(context).sortLabel,
+      ),
       style: TextButton.styleFrom(
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
@@ -649,10 +667,24 @@ class _AssetAccountSection {
 }
 
 class _AssetCoverPreset {
-  const _AssetCoverPreset({required this.label, required this.url});
+  const _AssetCoverPreset({required this.id, required this.url});
 
-  final String label;
+  final String id;
   final String url;
+
+  String label(AppLocalizations l10n) {
+    switch (id) {
+      case 'blue_city':
+        return l10n.coverBlueCity;
+      case 'aurora':
+        return l10n.coverAurora;
+      case 'finance_office':
+        return l10n.coverFinanceOffice;
+      case 'deep_blue':
+        return l10n.coverDeepBlue;
+    }
+    return id;
+  }
 }
 
 String _effectiveGroupId(Account account) {
@@ -701,19 +733,26 @@ class HiddenAccountsPage extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
-              const VeriHeader(title: '隐藏账户', showBack: true),
+              VeriHeader(
+                title: AppLocalizations.of(context).hiddenAccountsTitle,
+                showBack: true,
+              ),
               const SizedBox(height: 10),
               if (accounts.isEmpty)
-                const VeriCard(
+                VeriCard(
                   child: EmptyState(
                     icon: Icons.visibility_off_outlined,
-                    title: '暂无隐藏账户',
-                    description: '隐藏账户会在这里集中展示。',
+                    title: AppLocalizations.of(
+                      context,
+                    ).hiddenAccountsEmptyTitle,
+                    description: AppLocalizations.of(
+                      context,
+                    ).hiddenAccountsEmptyDesc,
                   ),
                 )
               else
                 AccountGroupCard(
-                  title: '隐藏账户',
+                  title: AppLocalizations.of(context).hiddenAccountsTitle,
                   accounts: _sortedAccounts(accounts),
                   balances: balances,
                   onAccountTap: (account) {
@@ -757,12 +796,12 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
                 child: VeriHeader(
-                  title: '账户分组',
+                  title: AppLocalizations.of(context).accountGroupsTitle,
                   showBack: true,
                   actions: <Widget>[
                     HeaderAction(
                       icon: Icons.add,
-                      tooltip: '新增分组',
+                      tooltip: AppLocalizations.of(context).groupAdd,
                       onPressed: () => _showGroupNameDialog(context),
                     ),
                   ],
@@ -772,12 +811,16 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                 child: groups.isEmpty
                     ? ListView(
                         padding: const EdgeInsets.fromLTRB(14, 10, 14, 86),
-                        children: const <Widget>[
+                        children: <Widget>[
                           VeriCard(
                             child: EmptyState(
                               icon: Icons.folder_open_outlined,
-                              title: '还没有账户分组',
-                              description: '点击右上角加号创建分组，用来整理不同账户。',
+                              title: AppLocalizations.of(
+                                context,
+                              ).groupsEmptyTitle,
+                              description: AppLocalizations.of(
+                                context,
+                              ).groupsEmptyDesc,
                             ),
                           ),
                         ],
@@ -846,7 +889,11 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                                                   ),
                                             ),
                                             child: Text(
-                                              '${groupAccounts.length}个账户',
+                                              AppLocalizations.of(
+                                                context,
+                                              ).accountsCount(
+                                                groupAccounts.length,
+                                              ),
                                               style: Theme.of(
                                                 context,
                                               ).textTheme.labelSmall,
@@ -896,7 +943,7 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                           groupId: _selectedGroupId,
                         ),
                         icon: const Icon(Icons.edit),
-                        label: const Text('重命名'),
+                        label: Text(AppLocalizations.of(context).commonRename),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -904,7 +951,7 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                       child: FilledButton.tonalIcon(
                         onPressed: () => _showIconDialog(context),
                         icon: const Icon(Icons.palette_outlined),
-                        label: const Text('图标'),
+                        label: Text(AppLocalizations.of(context).commonIcon),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -915,7 +962,7 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                           setState(() => _selectedGroupId = null);
                         },
                         icon: const Icon(Icons.delete_outline),
-                        label: const Text('删除'),
+                        label: Text(AppLocalizations.of(context).commonDelete),
                       ),
                     ),
                   ],
@@ -939,20 +986,26 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(groupId == null ? '新增分组' : '重命名分组'),
+        title: Text(
+          groupId == null
+              ? AppLocalizations.of(context).groupAdd
+              : AppLocalizations.of(context).groupRenameTitle,
+        ),
         content: TextField(
           controller: textController,
           autofocus: true,
-          decoration: const InputDecoration(labelText: '分组名称'),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context).groupNameLabel,
+          ),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(textController.text),
-            child: const Text('确认'),
+            child: Text(AppLocalizations.of(context).commonConfirm),
           ),
         ],
       ),
@@ -981,7 +1034,7 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
         .firstOrNull;
     final iconCode = await showOptionSheet<String>(
       context: context,
-      title: '选择分组图标',
+      title: AppLocalizations.of(context).groupIconPickerTitle,
       values: accountIconCodes,
       selected: current?.iconCode ?? 'folder',
       labelOf: (code) => iconLabelForCode(AppLocalizations.of(context), code),
@@ -1017,8 +1070,8 @@ class _AccountIconSelectField extends StatelessWidget {
         borderRadius: BorderRadius.circular(veriRadiusMd),
         onTap: onTap,
         child: InputDecorator(
-          decoration: const InputDecoration(
-            labelText: '账户图标',
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context).accountIconLabel,
             suffixIcon: Icon(Icons.keyboard_arrow_down),
           ),
           child: Row(
@@ -1084,19 +1137,19 @@ class _AddAccountPageState extends State<AddAccountPage> {
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
               children: <Widget>[
                 VeriHeader(
-                  title: '添加账户',
+                  title: AppLocalizations.of(context).accountAdd,
                   showBack: true,
                   actions: <Widget>[
                     HeaderAction(
                       icon: Icons.check,
-                      tooltip: '保存账户',
+                      tooltip: AppLocalizations.of(context).accountSaveTooltip,
                       onPressed: _save,
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 SelectField(
-                  label: '账户类型',
+                  label: AppLocalizations.of(context).accountTypeLabel,
                   value: _type.label(AppLocalizations.of(context)),
                   icon: Icons.category_outlined,
                   onTap: _pickAccountType,
@@ -1104,10 +1157,12 @@ class _AddAccountPageState extends State<AddAccountPage> {
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: '账户名称'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).accountNameLabel,
+                  ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return '账户名称必填';
+                      return AppLocalizations.of(context).accountNameRequired;
                     }
                     return null;
                   },
@@ -1118,8 +1173,8 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     controller: _cardLast4Controller,
                     maxLength: 4,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: '卡号后四位',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).cardLast4Label,
                       counterText: '',
                     ),
                     validator: (value) {
@@ -1128,7 +1183,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                         return null;
                       }
                       if (!RegExp(r'^\d{1,4}$').hasMatch(text)) {
-                        return '请输入 1-4 位数字';
+                        return AppLocalizations.of(context).cardLast4Invalid;
                       }
                       return null;
                     },
@@ -1141,9 +1196,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     decimal: true,
                     signed: true,
                   ),
-                  decoration: const InputDecoration(
-                    labelText: '账户余额',
-                    hintText: '不填默认为 0',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).accountBalanceLabel,
+                    hintText: AppLocalizations.of(context).accountBalanceHint,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -1156,11 +1211,13 @@ class _AddAccountPageState extends State<AddAccountPage> {
                 TextField(
                   controller: _noteController,
                   maxLines: 1,
-                  decoration: const InputDecoration(labelText: '账户备注'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).accountNoteLabel,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 SelectField(
-                  label: '账户分组',
+                  label: AppLocalizations.of(context).accountGroupLabel,
                   value: _groupLabel(groups),
                   icon: Icons.folder_outlined,
                   onTap: () => _pickAccountGroup(groups),
@@ -1176,7 +1233,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
   Future<void> _pickAccountType() async {
     final selected = await showOptionSheet<AccountType>(
       context: context,
-      title: '选择账户类型',
+      title: AppLocalizations.of(context).accountTypePickerTitle,
       values: AccountType.values,
       selected: _type,
       labelOf: (value) => value.label(AppLocalizations.of(context)),
@@ -1219,20 +1276,20 @@ class _AddAccountPageState extends State<AddAccountPage> {
     final values = <String>['ungrouped', ...groups.map((group) => group.id)];
     final selected = await showOptionSheet<String>(
       context: context,
-      title: '选择账户分组',
+      title: AppLocalizations.of(context).accountGroupPickerTitle,
       values: values,
       selected: _groupId,
       labelOf: (value) {
         if (value == 'ungrouped') {
-          return '未分组';
+          return AppLocalizations.of(context).assetsUngrouped;
         }
         return groups
             .firstWhere(
               (group) => group.id == value,
-              orElse: () => const AccountGroup(
+              orElse: () => AccountGroup(
                 id: 'ungrouped',
                 bookId: defaultLedgerBookId,
-                name: '未分组',
+                name: AppLocalizations.of(context).assetsUngrouped,
                 iconCode: 'folder',
                 sortOrder: 999,
               ),
@@ -1247,15 +1304,15 @@ class _AddAccountPageState extends State<AddAccountPage> {
 
   String _groupLabel(List<AccountGroup> groups) {
     if (_groupId == 'ungrouped') {
-      return '未分组';
+      return AppLocalizations.of(context).assetsUngrouped;
     }
     return groups
         .firstWhere(
           (group) => group.id == _groupId,
-          orElse: () => const AccountGroup(
+          orElse: () => AccountGroup(
             id: 'ungrouped',
             bookId: defaultLedgerBookId,
-            name: '未分组',
+            name: AppLocalizations.of(context).assetsUngrouped,
             iconCode: 'folder',
             sortOrder: 999,
           ),
@@ -1319,7 +1376,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       (group) => group.id == currentAccount.groupId,
     );
     final groupName = matchingGroups.isEmpty
-        ? '未分组'
+        ? AppLocalizations.of(context).assetsUngrouped
         : matchingGroups.first.name;
 
     return Scaffold(
@@ -1337,7 +1394,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                 actions: <Widget>[
                   HeaderAction(
                     icon: Icons.edit_outlined,
-                    tooltip: '调整余额',
+                    tooltip: AppLocalizations.of(context).balanceAdjustTooltip,
                     onPressed: () => _editBalance(currentAccount, balance),
                   ),
                 ],
@@ -1356,7 +1413,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          const Text('当前余额'),
+                          Text(AppLocalizations.of(context).currentBalance),
                           const SizedBox(height: 6),
                           Text(
                             formatAmount(balance),
@@ -1382,15 +1439,15 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                       children: <Widget>[
                         Expanded(
                           child: Text(
-                            '余额趋势',
+                            AppLocalizations.of(context).balanceTrend,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
                         _MiniSegmentedToggle(
                           value: _monthlyTrend,
-                          leftLabel: '日',
-                          rightLabel: '月',
+                          leftLabel: AppLocalizations.of(context).dayShort,
+                          rightLabel: AppLocalizations.of(context).monthShort,
                           onChanged: (value) =>
                               setState(() => _monthlyTrend = value),
                         ),
@@ -1411,12 +1468,21 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                         ).colorScheme.onSurface.withValues(alpha: 0.50),
                         tooltipOf: (index) => ChartTooltip(
                           title: _monthlyTrend
-                              ? '${index + 1}月'
-                              : '${DateTime.now().month}月${index + 1}日',
+                              ? AppLocalizations.of(
+                                  context,
+                                ).monthNumber(index + 1)
+                              : AppLocalizations.of(context).dateMonthDay(
+                                  DateTime(
+                                    DateTime.now().year,
+                                    DateTime.now().month,
+                                    index + 1,
+                                  ),
+                                ),
                           lines: <ChartTooltipLine>[
                             ChartTooltipLine(
-                              text:
-                                  '余额 ${formatAmount(balanceTrendValues[index])}',
+                              text: AppLocalizations.of(context).balanceAmount(
+                                formatAmount(balanceTrendValues[index]),
+                              ),
                             ),
                           ],
                         ),
@@ -1431,7 +1497,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                           ),
                         );
                       },
-                      child: const Text('查看报告'),
+                      child: Text(AppLocalizations.of(context).viewReport),
                     ),
                   ],
                 ),
@@ -1445,14 +1511,14 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                       children: <Widget>[
                         Expanded(
                           child: Text(
-                            '最近交易',
+                            AppLocalizations.of(context).panelRecentLabel,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
                         VeriSectionAction(
                           icon: Icons.add,
-                          tooltip: '记一笔',
+                          tooltip: AppLocalizations.of(context).addEntryTooltip,
                           onPressed: () =>
                               _startEntryForAccount(context, currentAccount),
                         ),
@@ -1460,10 +1526,12 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     ),
                     const SizedBox(height: 6),
                     if (entries.isEmpty)
-                      const EmptyState(
+                      EmptyState(
                         icon: Icons.receipt_long_outlined,
-                        title: '暂无交易',
-                        description: '该账户还没有交易记录。',
+                        title: AppLocalizations.of(context).noEntriesTitle,
+                        description: AppLocalizations.of(
+                          context,
+                        ).accountNoEntriesDesc,
                       )
                     else
                       ...entries
@@ -1482,12 +1550,14 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                           MaterialPageRoute<void>(
                             builder: (context) => TransactionsPage(
                               accountId: currentAccount.id,
-                              title: '${currentAccount.name}交易',
+                              title: AppLocalizations.of(
+                                context,
+                              ).accountEntriesTitle(currentAccount.name),
                             ),
                           ),
                         );
                       },
-                      child: const Text('所有交易'),
+                      child: Text(AppLocalizations.of(context).allEntries),
                     ),
                   ],
                 ),
@@ -1498,7 +1568,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                   children: <Widget>[
                     CompactSwitchRow(
                       icon: Icons.account_balance_wallet_outlined,
-                      title: const Text('计入资产'),
+                      title: Text(AppLocalizations.of(context).includeInAssets),
                       value: currentAccount.includeInAssets,
                       onChanged: (value) {
                         controller.updateAccount(
@@ -1509,7 +1579,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     const Divider(height: 1),
                     CompactSwitchRow(
                       icon: Icons.visibility_off_outlined,
-                      title: const Text('隐藏账户'),
+                      title: Text(AppLocalizations.of(context).accountHide),
                       value: currentAccount.hidden,
                       onChanged: (value) {
                         controller.updateAccount(
@@ -1526,7 +1596,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                   children: <Widget>[
                     SettingsRow(
                       icon: Icons.category_outlined,
-                      title: '类型',
+                      title: AppLocalizations.of(context).commonType,
                       trailing: currentAccount.type.label(
                         AppLocalizations.of(context),
                       ),
@@ -1536,7 +1606,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     const Divider(),
                     SettingsRow(
                       icon: Icons.badge_outlined,
-                      title: '名称',
+                      title: AppLocalizations.of(context).commonName,
                       trailing: currentAccount.name,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _editAccountName(currentAccount),
@@ -1545,9 +1615,9 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     if (currentAccount.type.supportsCardLast4) ...<Widget>[
                       SettingsRow(
                         icon: Icons.credit_card,
-                        title: '卡号后四位',
+                        title: AppLocalizations.of(context).cardLast4Label,
                         trailing: currentAccount.cardLast4.isEmpty
-                            ? '未设置'
+                            ? AppLocalizations.of(context).notSet
                             : currentAccount.cardLast4,
                         trailingIcon: Icons.chevron_right,
                         onTap: () => _editCardLast4(currentAccount),
@@ -1558,20 +1628,24 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                         AccountType.creditCard) ...<Widget>[
                       SettingsRow(
                         icon: Icons.event_note_outlined,
-                        title: '账单日',
+                        title: AppLocalizations.of(context).statementDay,
                         trailing: currentAccount.statementDay == null
-                            ? '未设置'
-                            : '每月 ${currentAccount.statementDay} 日',
+                            ? AppLocalizations.of(context).notSet
+                            : AppLocalizations.of(
+                                context,
+                              ).monthlyDayLabel(currentAccount.statementDay!),
                         trailingIcon: Icons.chevron_right,
                         onTap: () => _pickBillingDay(currentAccount, false),
                       ),
                       const Divider(),
                       SettingsRow(
                         icon: Icons.event_available_outlined,
-                        title: '还款日',
+                        title: AppLocalizations.of(context).dueDay,
                         trailing: currentAccount.dueDay == null
-                            ? '未设置'
-                            : '每月 ${currentAccount.dueDay} 日',
+                            ? AppLocalizations.of(context).notSet
+                            : AppLocalizations.of(
+                                context,
+                              ).monthlyDayLabel(currentAccount.dueDay!),
                         trailingIcon: Icons.chevron_right,
                         onTap: () => _pickBillingDay(currentAccount, true),
                       ),
@@ -1579,7 +1653,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     ],
                     SettingsRow(
                       icon: Icons.image_outlined,
-                      title: '图标',
+                      title: AppLocalizations.of(context).commonIcon,
                       trailing: iconLabelForCode(
                         AppLocalizations.of(context),
                         currentAccount.iconCode,
@@ -1588,17 +1662,17 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                       onTap: () => _pickAccountIcon(currentAccount),
                     ),
                     const Divider(),
-                    const SettingsRow(
+                    SettingsRow(
                       icon: Icons.currency_yuan,
-                      title: '货币',
-                      trailing: '人民币',
+                      title: AppLocalizations.of(context).commonCurrency,
+                      trailing: AppLocalizations.of(context).currencyCny,
                     ),
                     const Divider(),
                     SettingsRow(
                       icon: Icons.notes,
-                      title: '备注',
+                      title: AppLocalizations.of(context).commonNote,
                       trailing: currentAccount.note.isEmpty
-                          ? '无'
+                          ? AppLocalizations.of(context).commonNoneShort
                           : currentAccount.note,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _editAccountNote(currentAccount),
@@ -1606,7 +1680,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     const Divider(),
                     SettingsRow(
                       icon: Icons.folder_outlined,
-                      title: '分组',
+                      title: AppLocalizations.of(context).commonGroup,
                       trailing: groupName,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _pickAccountGroup(currentAccount),
@@ -1614,8 +1688,10 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     const Divider(),
                     SettingsRow(
                       icon: Icons.delete_outline,
-                      title: '删除账户',
-                      trailing: entries.isEmpty ? '可删除' : '已有交易',
+                      title: AppLocalizations.of(context).accountDelete,
+                      trailing: entries.isEmpty
+                          ? AppLocalizations.of(context).deletableLabel
+                          : AppLocalizations.of(context).hasEntriesLabel,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => confirmDeleteAccount(
                         context,
@@ -1639,7 +1715,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => NumberPadSheet(
-        title: '调整余额',
+        title: AppLocalizations.of(context).balanceAdjustTooltip,
         initialAmount: balance,
         allowNegative: true,
         allowZero: true,
@@ -1654,19 +1730,25 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('是否确认修改余额？'),
+          title: Text(AppLocalizations.of(context).balanceEditConfirmTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('将把「${account.name}」的余额调整为 ${formatAmount(amount)}。'),
+              Text(
+                AppLocalizations.of(
+                  context,
+                ).balanceEditConfirmMessage(account.name, formatAmount(amount)),
+              ),
               const SizedBox(height: 8),
               CheckboxListTile(
                 value: recordEntry,
                 onChanged: (value) =>
                     setDialogState(() => recordEntry = value ?? true),
-                title: const Text('计入收支'),
-                subtitle: const Text('生成一笔余额调整交易；不勾选则直接修改账户初始余额，不影响收支统计。'),
+                title: Text(AppLocalizations.of(context).balanceEditRecord),
+                subtitle: Text(
+                  AppLocalizations.of(context).balanceEditRecordDesc,
+                ),
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
               ),
@@ -1675,11 +1757,11 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('取消'),
+              child: Text(AppLocalizations.of(context).commonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('确认'),
+              child: Text(AppLocalizations.of(context).commonConfirm),
             ),
           ],
         ),
@@ -1709,7 +1791,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => NumberPadSheet(
-        title: '快速记账',
+        title: AppLocalizations.of(context).quickEntry,
         hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
       ),
     );
@@ -1729,7 +1811,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
   Future<void> _pickAccountType(Account account) async {
     final selected = await showOptionSheet<AccountType>(
       context: context,
-      title: '选择账户类型',
+      title: AppLocalizations.of(context).accountTypePickerTitle,
       values: AccountType.values,
       selected: account.type,
       labelOf: (value) => value.label(AppLocalizations.of(context)),
@@ -1747,8 +1829,8 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
   Future<void> _editAccountName(Account account) async {
     final name = await showTextInputDialog(
       context: context,
-      title: '编辑账户名称',
-      label: '账户名称',
+      title: AppLocalizations.of(context).accountNameEditTitle,
+      label: AppLocalizations.of(context).accountNameLabel,
       initialValue: account.name,
     );
     if (name != null && mounted) {
@@ -1762,8 +1844,8 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
   Future<void> _editCardLast4(Account account) async {
     final cardLast4 = await showTextInputDialog(
       context: context,
-      title: '编辑卡号后四位',
-      label: '卡号后四位',
+      title: AppLocalizations.of(context).cardLast4EditTitle,
+      label: AppLocalizations.of(context).cardLast4Label,
       initialValue: account.cardLast4,
       allowEmpty: true,
       keyboardType: TextInputType.number,
@@ -1800,10 +1882,14 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
         (isDue ? account.dueDay : account.statementDay) ?? clearValue;
     final selected = await showOptionSheet<int>(
       context: context,
-      title: isDue ? '选择还款日' : '选择账单日',
+      title: isDue
+          ? AppLocalizations.of(context).pickDueDay
+          : AppLocalizations.of(context).pickStatementDay,
       values: <int>[clearValue, for (var d = 1; d <= 28; d++) d],
       selected: current,
-      labelOf: (value) => value == clearValue ? '不设置' : '每月 $value 日',
+      labelOf: (value) => value == clearValue
+          ? AppLocalizations.of(context).clearOption
+          : AppLocalizations.of(context).monthlyDayLabel(value),
     );
     if (selected == null || !mounted) {
       return;
@@ -1829,8 +1915,8 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
   Future<void> _editAccountNote(Account account) async {
     final note = await showTextInputDialog(
       context: context,
-      title: '编辑账户备注',
-      label: '备注',
+      title: AppLocalizations.of(context).accountNoteEditTitle,
+      label: AppLocalizations.of(context).commonNote,
       initialValue: account.note,
       allowEmpty: true,
     );
@@ -1845,12 +1931,12 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
     final values = <String>['ungrouped', ...groups.map((group) => group.id)];
     final selected = await showOptionSheet<String>(
       context: context,
-      title: '选择账户分组',
+      title: AppLocalizations.of(context).accountGroupPickerTitle,
       values: values,
       selected: account.groupId ?? 'ungrouped',
       labelOf: (value) {
         if (value == 'ungrouped') {
-          return '未分组';
+          return AppLocalizations.of(context).assetsUngrouped;
         }
         return groups.firstWhere((group) => group.id == value).name;
       },
@@ -1966,7 +2052,7 @@ class AccountReportPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               VeriHeader(
-                title: '账户报告',
+                title: AppLocalizations.of(context).accountReportTitle,
                 subtitle: currentAccount.name,
                 showBack: true,
               ),
@@ -1979,17 +2065,17 @@ class AccountReportPage extends StatelessWidget {
                 child: Row(
                   children: <Widget>[
                     SummaryMetric(
-                      label: '当前余额',
+                      label: AppLocalizations.of(context).currentBalance,
                       value: formatAmount(balance),
                       color: balance < 0 ? veriExpense : veriRoyal,
                     ),
                     SummaryMetric(
-                      label: '收入',
+                      label: AppLocalizations.of(context).entryTypeIncome,
                       value: formatAmount(income),
                       color: veriIncome,
                     ),
                     SummaryMetric(
-                      label: '支出',
+                      label: AppLocalizations.of(context).entryTypeExpense,
                       value: formatExpenseAmount(expense),
                       color: isZeroAmount(expense)
                           ? Theme.of(
@@ -2005,7 +2091,10 @@ class AccountReportPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const SectionTitle(title: '余额趋势', trailing: '本月'),
+                    SectionTitle(
+                      title: AppLocalizations.of(context).balanceTrend,
+                      trailing: AppLocalizations.of(context).thisMonth,
+                    ),
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 156,
@@ -2018,11 +2107,18 @@ class AccountReportPage extends StatelessWidget {
                           context,
                         ).colorScheme.onSurface.withValues(alpha: 0.50),
                         tooltipOf: (index) => ChartTooltip(
-                          title: '${DateTime.now().month}月${index + 1}日',
+                          title: AppLocalizations.of(context).dateMonthDay(
+                            DateTime(
+                              DateTime.now().year,
+                              DateTime.now().month,
+                              index + 1,
+                            ),
+                          ),
                           lines: <ChartTooltipLine>[
                             ChartTooltipLine(
-                              text:
-                                  '余额 ${formatAmount(reportBalanceValues[index])}',
+                              text: AppLocalizations.of(context).balanceAmount(
+                                formatAmount(reportBalanceValues[index]),
+                              ),
                             ),
                           ],
                         ),
@@ -2036,13 +2132,18 @@ class AccountReportPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const SectionTitle(title: '最近交易', trailing: null),
+                    SectionTitle(
+                      title: AppLocalizations.of(context).panelRecentLabel,
+                      trailing: null,
+                    ),
                     const SizedBox(height: 6),
                     if (entries.isEmpty)
-                      const EmptyState(
+                      EmptyState(
                         icon: Icons.receipt_long_outlined,
-                        title: '暂无交易',
-                        description: '该账户还没有交易记录。',
+                        title: AppLocalizations.of(context).noEntriesTitle,
+                        description: AppLocalizations.of(
+                          context,
+                        ).accountNoEntriesDesc,
                       )
                     else
                       ...entries
@@ -2079,7 +2180,8 @@ class _CreditCardDueBanner extends StatelessWidget {
     final days = daysUntilDue(dueDay, now);
     final urgent = days <= 3;
     final color = urgent ? veriExpense : veriRoyal;
-    final daysText = days == 0 ? '就是今天' : '还有 $days 天';
+    final l10n = AppLocalizations.of(context);
+    final daysText = days == 0 ? l10n.dueToday : l10n.dueInDays(days);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -2095,7 +2197,7 @@ class _CreditCardDueBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  '还款日 ${due.month}月${due.day}日 · $daysText',
+                  '${l10n.dueDay} ${l10n.dateMonthDay(due)} · $daysText',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: color,
                     fontWeight: FontWeight.w800,
@@ -2103,7 +2205,7 @@ class _CreditCardDueBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '每月 $dueDay 日还款',
+                  l10n.monthlyRepayLine(dueDay),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(
                       context,

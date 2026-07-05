@@ -91,7 +91,7 @@
 - [x] 6.2 壳层与通用组件（shell / common_widgets / sheets）：交易行徽标、页头返回、日历卡、加载对话框、标签行、账户图标/删除/隐藏弹窗、文本输入弹窗按钮；直接 pump 单页的测试改用 `zhMaterialApp`（脚手架新增，带中文本地化代理）
 - [x] 6.3 模型显示名与控制器消息（models / veri_fin_controller / demo_data / account_icon_assets）：枚举 `label` 全部改为 `label(AppLocalizations)` 方法并修全部调用点；面板目录 `PagePanelSpec` 名称/描述按 id 从 ARB 解析；图标名 `iconLabelForCode` 接 l10n（品牌/银行图标名是专有名词不翻译，仅分组名本地化）；种子数据（默认账本名/分类/个人简介）按首启动语言播种（`systemIsEnglish` 由 main 传入，「跟随系统」时生效；播种后是用户数据不再切换）；余额调整备注由调用方传本地化文案
 - [x] 6.4 首页与记账表单（home_page / entry_sheets）：走势卡/预算卡/最近交易/收支统计/空态/图表气泡全部迁 ARB（日期用 DateTime 占位符按语言格式化）；首页页头副标题改为真实当前账本名（此前误为固定「日常账本」）
-- [ ] 6.5 资产页（assets_pages）
+- [x] 6.5 资产页（assets_pages）：资产卡/分组管理/隐藏账户/账户表单与详情/账户报告/还款提醒条约 110 条文案全部迁 ARB；封面预设与「未分组」占位改为 l10n 解析
 - [ ] 6.6 交易列表与详情（transactions_pages / entry_detail_page / attachments_editor）
 - [ ] 6.7 预算页（budget_pages）
 - [ ] 6.8 看板与统计分析（reports_page / report_analysis* / chart_painters / series_math / panel_settings_page）

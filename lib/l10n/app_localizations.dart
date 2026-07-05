@@ -937,6 +937,600 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'选择标签'**
   String get tagPickerTitle;
+
+  /// No description provided for @coverBlueCity.
+  ///
+  /// In zh, this message translates to:
+  /// **'蓝色城市'**
+  String get coverBlueCity;
+
+  /// No description provided for @coverAurora.
+  ///
+  /// In zh, this message translates to:
+  /// **'极光夜色'**
+  String get coverAurora;
+
+  /// No description provided for @coverFinanceOffice.
+  ///
+  /// In zh, this message translates to:
+  /// **'金融办公'**
+  String get coverFinanceOffice;
+
+  /// No description provided for @coverDeepBlue.
+  ///
+  /// In zh, this message translates to:
+  /// **'深蓝渐层'**
+  String get coverDeepBlue;
+
+  /// No description provided for @assetsUngrouped.
+  ///
+  /// In zh, this message translates to:
+  /// **'未分组'**
+  String get assetsUngrouped;
+
+  /// No description provided for @netAssets.
+  ///
+  /// In zh, this message translates to:
+  /// **'净资产'**
+  String get netAssets;
+
+  /// No description provided for @assetsActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'资产操作'**
+  String get assetsActions;
+
+  /// No description provided for @assetsChangeCover.
+  ///
+  /// In zh, this message translates to:
+  /// **'更换资产卡片背景'**
+  String get assetsChangeCover;
+
+  /// No description provided for @assetsAmount.
+  ///
+  /// In zh, this message translates to:
+  /// **'资产 {amount}'**
+  String assetsAmount(String amount);
+
+  /// No description provided for @liabilitiesAmount.
+  ///
+  /// In zh, this message translates to:
+  /// **'负债 {amount}'**
+  String liabilitiesAmount(String amount);
+
+  /// No description provided for @netAssetsAmount.
+  ///
+  /// In zh, this message translates to:
+  /// **'净资产 {amount}'**
+  String netAssetsAmount(String amount);
+
+  /// 按月份序号的短月份标签(图表气泡/坐标)
+  ///
+  /// In zh, this message translates to:
+  /// **'{month}月'**
+  String monthNumber(int month);
+
+  /// No description provided for @assetsEmptyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有资产账户'**
+  String get assetsEmptyTitle;
+
+  /// No description provided for @assetsEmptyDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先点击右上角添加资产，之后可以在这里按类型或分组查看资产。'**
+  String get assetsEmptyDesc;
+
+  /// No description provided for @assetsSortHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'拖动右侧手柄调整分组顺序'**
+  String get assetsSortHint;
+
+  /// No description provided for @hiddenAccountsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count}个隐藏账户'**
+  String hiddenAccountsCount(int count);
+
+  /// No description provided for @assetsCoverTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'资产卡片背景'**
+  String get assetsCoverTitle;
+
+  /// No description provided for @coverUseOnline.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用线上图片'**
+  String get coverUseOnline;
+
+  /// No description provided for @coverEnterUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入图片链接'**
+  String get coverEnterUrl;
+
+  /// No description provided for @coverPickLocal.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择本地图片'**
+  String get coverPickLocal;
+
+  /// No description provided for @coverClear.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除背景图片'**
+  String get coverClear;
+
+  /// No description provided for @coverPickOnlineTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择线上图片'**
+  String get coverPickOnlineTitle;
+
+  /// No description provided for @coverCustomTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义图片'**
+  String get coverCustomTitle;
+
+  /// No description provided for @coverUrlLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片链接'**
+  String get coverUrlLabel;
+
+  /// No description provided for @coverCropTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'裁剪资产背景'**
+  String get coverCropTitle;
+
+  /// No description provided for @coverGenerating.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在生成背景图…'**
+  String get coverGenerating;
+
+  /// No description provided for @accountAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加账户'**
+  String get accountAdd;
+
+  /// No description provided for @groupManage.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理分组'**
+  String get groupManage;
+
+  /// No description provided for @sectionSort.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序分组'**
+  String get sectionSort;
+
+  /// No description provided for @sectionSortNeedTwo.
+  ///
+  /// In zh, this message translates to:
+  /// **'至少有 2 个分组才能排序'**
+  String get sectionSortNeedTwo;
+
+  /// No description provided for @sortLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序'**
+  String get sortLabel;
+
+  /// No description provided for @hiddenAccountsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏账户'**
+  String get hiddenAccountsTitle;
+
+  /// No description provided for @hiddenAccountsEmptyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无隐藏账户'**
+  String get hiddenAccountsEmptyTitle;
+
+  /// No description provided for @hiddenAccountsEmptyDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏账户会在这里集中展示。'**
+  String get hiddenAccountsEmptyDesc;
+
+  /// No description provided for @accountGroupsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户分组'**
+  String get accountGroupsTitle;
+
+  /// No description provided for @groupAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增分组'**
+  String get groupAdd;
+
+  /// No description provided for @groupsEmptyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有账户分组'**
+  String get groupsEmptyTitle;
+
+  /// No description provided for @groupsEmptyDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击右上角加号创建分组，用来整理不同账户。'**
+  String get groupsEmptyDesc;
+
+  /// No description provided for @accountsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count}个账户'**
+  String accountsCount(int count);
+
+  /// No description provided for @commonRename.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名'**
+  String get commonRename;
+
+  /// No description provided for @commonIcon.
+  ///
+  /// In zh, this message translates to:
+  /// **'图标'**
+  String get commonIcon;
+
+  /// No description provided for @groupRenameTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名分组'**
+  String get groupRenameTitle;
+
+  /// No description provided for @groupNameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'分组名称'**
+  String get groupNameLabel;
+
+  /// No description provided for @groupIconPickerTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择分组图标'**
+  String get groupIconPickerTitle;
+
+  /// No description provided for @accountIconLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户图标'**
+  String get accountIconLabel;
+
+  /// No description provided for @accountSaveTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存账户'**
+  String get accountSaveTooltip;
+
+  /// No description provided for @accountTypeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户类型'**
+  String get accountTypeLabel;
+
+  /// No description provided for @accountNameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户名称'**
+  String get accountNameLabel;
+
+  /// No description provided for @accountNameRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户名称必填'**
+  String get accountNameRequired;
+
+  /// No description provided for @cardLast4Label.
+  ///
+  /// In zh, this message translates to:
+  /// **'卡号后四位'**
+  String get cardLast4Label;
+
+  /// No description provided for @cardLast4Invalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 1-4 位数字'**
+  String get cardLast4Invalid;
+
+  /// No description provided for @accountBalanceLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户余额'**
+  String get accountBalanceLabel;
+
+  /// No description provided for @accountBalanceHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'不填默认为 0'**
+  String get accountBalanceHint;
+
+  /// No description provided for @accountNoteLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户备注'**
+  String get accountNoteLabel;
+
+  /// No description provided for @accountGroupLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户分组'**
+  String get accountGroupLabel;
+
+  /// No description provided for @accountTypePickerTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择账户类型'**
+  String get accountTypePickerTitle;
+
+  /// No description provided for @accountGroupPickerTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择账户分组'**
+  String get accountGroupPickerTitle;
+
+  /// No description provided for @balanceAdjustTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'调整余额'**
+  String get balanceAdjustTooltip;
+
+  /// No description provided for @currentBalance.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前余额'**
+  String get currentBalance;
+
+  /// No description provided for @balanceTrend.
+  ///
+  /// In zh, this message translates to:
+  /// **'余额趋势'**
+  String get balanceTrend;
+
+  /// No description provided for @dayShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'日'**
+  String get dayShort;
+
+  /// No description provided for @monthShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'月'**
+  String get monthShort;
+
+  /// No description provided for @balanceAmount.
+  ///
+  /// In zh, this message translates to:
+  /// **'余额 {amount}'**
+  String balanceAmount(String amount);
+
+  /// No description provided for @viewReport.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看报告'**
+  String get viewReport;
+
+  /// No description provided for @addEntryTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'记一笔'**
+  String get addEntryTooltip;
+
+  /// No description provided for @noEntriesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无交易'**
+  String get noEntriesTitle;
+
+  /// No description provided for @accountNoEntriesDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'该账户还没有交易记录。'**
+  String get accountNoEntriesDesc;
+
+  /// No description provided for @accountEntriesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'{name}交易'**
+  String accountEntriesTitle(String name);
+
+  /// No description provided for @allEntries.
+  ///
+  /// In zh, this message translates to:
+  /// **'所有交易'**
+  String get allEntries;
+
+  /// No description provided for @includeInAssets.
+  ///
+  /// In zh, this message translates to:
+  /// **'计入资产'**
+  String get includeInAssets;
+
+  /// No description provided for @commonType.
+  ///
+  /// In zh, this message translates to:
+  /// **'类型'**
+  String get commonType;
+
+  /// No description provided for @commonName.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称'**
+  String get commonName;
+
+  /// No description provided for @notSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'未设置'**
+  String get notSet;
+
+  /// No description provided for @clearOption.
+  ///
+  /// In zh, this message translates to:
+  /// **'不设置'**
+  String get clearOption;
+
+  /// No description provided for @statementDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'账单日'**
+  String get statementDay;
+
+  /// No description provided for @dueDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'还款日'**
+  String get dueDay;
+
+  /// No description provided for @monthlyDayLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'每月 {day} 日'**
+  String monthlyDayLabel(int day);
+
+  /// No description provided for @commonCurrency.
+  ///
+  /// In zh, this message translates to:
+  /// **'货币'**
+  String get commonCurrency;
+
+  /// No description provided for @currencyCny.
+  ///
+  /// In zh, this message translates to:
+  /// **'人民币'**
+  String get currencyCny;
+
+  /// No description provided for @commonNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'备注'**
+  String get commonNote;
+
+  /// No description provided for @commonNoneShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'无'**
+  String get commonNoneShort;
+
+  /// No description provided for @commonGroup.
+  ///
+  /// In zh, this message translates to:
+  /// **'分组'**
+  String get commonGroup;
+
+  /// No description provided for @accountDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除账户'**
+  String get accountDelete;
+
+  /// No description provided for @deletableLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'可删除'**
+  String get deletableLabel;
+
+  /// No description provided for @hasEntriesLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'已有交易'**
+  String get hasEntriesLabel;
+
+  /// No description provided for @balanceEditConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'是否确认修改余额？'**
+  String get balanceEditConfirmTitle;
+
+  /// No description provided for @balanceEditConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将把「{name}」的余额调整为 {amount}。'**
+  String balanceEditConfirmMessage(String name, String amount);
+
+  /// No description provided for @balanceEditRecord.
+  ///
+  /// In zh, this message translates to:
+  /// **'计入收支'**
+  String get balanceEditRecord;
+
+  /// No description provided for @balanceEditRecordDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'生成一笔余额调整交易；不勾选则直接修改账户初始余额，不影响收支统计。'**
+  String get balanceEditRecordDesc;
+
+  /// No description provided for @accountNameEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑账户名称'**
+  String get accountNameEditTitle;
+
+  /// No description provided for @cardLast4EditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑卡号后四位'**
+  String get cardLast4EditTitle;
+
+  /// No description provided for @pickDueDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择还款日'**
+  String get pickDueDay;
+
+  /// No description provided for @pickStatementDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择账单日'**
+  String get pickStatementDay;
+
+  /// No description provided for @accountNoteEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑账户备注'**
+  String get accountNoteEditTitle;
+
+  /// No description provided for @accountReportTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户报告'**
+  String get accountReportTitle;
+
+  /// No description provided for @thisMonth.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月'**
+  String get thisMonth;
+
+  /// No description provided for @dueToday.
+  ///
+  /// In zh, this message translates to:
+  /// **'就是今天'**
+  String get dueToday;
+
+  /// No description provided for @dueInDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'还有 {days} 天'**
+  String dueInDays(int days);
+
+  /// No description provided for @monthlyRepayLine.
+  ///
+  /// In zh, this message translates to:
+  /// **'每月 {day} 日还款'**
+  String monthlyRepayLine(int day);
 }
 
 class _AppLocalizationsDelegate

@@ -461,4 +461,325 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tagPickerTitle => '选择标签';
+
+  @override
+  String get coverBlueCity => '蓝色城市';
+
+  @override
+  String get coverAurora => '极光夜色';
+
+  @override
+  String get coverFinanceOffice => '金融办公';
+
+  @override
+  String get coverDeepBlue => '深蓝渐层';
+
+  @override
+  String get assetsUngrouped => '未分组';
+
+  @override
+  String get netAssets => '净资产';
+
+  @override
+  String get assetsActions => '资产操作';
+
+  @override
+  String get assetsChangeCover => '更换资产卡片背景';
+
+  @override
+  String assetsAmount(String amount) {
+    return '资产 $amount';
+  }
+
+  @override
+  String liabilitiesAmount(String amount) {
+    return '负债 $amount';
+  }
+
+  @override
+  String netAssetsAmount(String amount) {
+    return '净资产 $amount';
+  }
+
+  @override
+  String monthNumber(int month) {
+    return '$month月';
+  }
+
+  @override
+  String get assetsEmptyTitle => '还没有资产账户';
+
+  @override
+  String get assetsEmptyDesc => '请先点击右上角添加资产，之后可以在这里按类型或分组查看资产。';
+
+  @override
+  String get assetsSortHint => '拖动右侧手柄调整分组顺序';
+
+  @override
+  String hiddenAccountsCount(int count) {
+    return '$count个隐藏账户';
+  }
+
+  @override
+  String get assetsCoverTitle => '资产卡片背景';
+
+  @override
+  String get coverUseOnline => '使用线上图片';
+
+  @override
+  String get coverEnterUrl => '输入图片链接';
+
+  @override
+  String get coverPickLocal => '选择本地图片';
+
+  @override
+  String get coverClear => '清除背景图片';
+
+  @override
+  String get coverPickOnlineTitle => '选择线上图片';
+
+  @override
+  String get coverCustomTitle => '自定义图片';
+
+  @override
+  String get coverUrlLabel => '图片链接';
+
+  @override
+  String get coverCropTitle => '裁剪资产背景';
+
+  @override
+  String get coverGenerating => '正在生成背景图…';
+
+  @override
+  String get accountAdd => '添加账户';
+
+  @override
+  String get groupManage => '管理分组';
+
+  @override
+  String get sectionSort => '排序分组';
+
+  @override
+  String get sectionSortNeedTwo => '至少有 2 个分组才能排序';
+
+  @override
+  String get sortLabel => '排序';
+
+  @override
+  String get hiddenAccountsTitle => '隐藏账户';
+
+  @override
+  String get hiddenAccountsEmptyTitle => '暂无隐藏账户';
+
+  @override
+  String get hiddenAccountsEmptyDesc => '隐藏账户会在这里集中展示。';
+
+  @override
+  String get accountGroupsTitle => '账户分组';
+
+  @override
+  String get groupAdd => '新增分组';
+
+  @override
+  String get groupsEmptyTitle => '还没有账户分组';
+
+  @override
+  String get groupsEmptyDesc => '点击右上角加号创建分组，用来整理不同账户。';
+
+  @override
+  String accountsCount(int count) {
+    return '$count个账户';
+  }
+
+  @override
+  String get commonRename => '重命名';
+
+  @override
+  String get commonIcon => '图标';
+
+  @override
+  String get groupRenameTitle => '重命名分组';
+
+  @override
+  String get groupNameLabel => '分组名称';
+
+  @override
+  String get groupIconPickerTitle => '选择分组图标';
+
+  @override
+  String get accountIconLabel => '账户图标';
+
+  @override
+  String get accountSaveTooltip => '保存账户';
+
+  @override
+  String get accountTypeLabel => '账户类型';
+
+  @override
+  String get accountNameLabel => '账户名称';
+
+  @override
+  String get accountNameRequired => '账户名称必填';
+
+  @override
+  String get cardLast4Label => '卡号后四位';
+
+  @override
+  String get cardLast4Invalid => '请输入 1-4 位数字';
+
+  @override
+  String get accountBalanceLabel => '账户余额';
+
+  @override
+  String get accountBalanceHint => '不填默认为 0';
+
+  @override
+  String get accountNoteLabel => '账户备注';
+
+  @override
+  String get accountGroupLabel => '账户分组';
+
+  @override
+  String get accountTypePickerTitle => '选择账户类型';
+
+  @override
+  String get accountGroupPickerTitle => '选择账户分组';
+
+  @override
+  String get balanceAdjustTooltip => '调整余额';
+
+  @override
+  String get currentBalance => '当前余额';
+
+  @override
+  String get balanceTrend => '余额趋势';
+
+  @override
+  String get dayShort => '日';
+
+  @override
+  String get monthShort => '月';
+
+  @override
+  String balanceAmount(String amount) {
+    return '余额 $amount';
+  }
+
+  @override
+  String get viewReport => '查看报告';
+
+  @override
+  String get addEntryTooltip => '记一笔';
+
+  @override
+  String get noEntriesTitle => '暂无交易';
+
+  @override
+  String get accountNoEntriesDesc => '该账户还没有交易记录。';
+
+  @override
+  String accountEntriesTitle(String name) {
+    return '$name交易';
+  }
+
+  @override
+  String get allEntries => '所有交易';
+
+  @override
+  String get includeInAssets => '计入资产';
+
+  @override
+  String get commonType => '类型';
+
+  @override
+  String get commonName => '名称';
+
+  @override
+  String get notSet => '未设置';
+
+  @override
+  String get clearOption => '不设置';
+
+  @override
+  String get statementDay => '账单日';
+
+  @override
+  String get dueDay => '还款日';
+
+  @override
+  String monthlyDayLabel(int day) {
+    return '每月 $day 日';
+  }
+
+  @override
+  String get commonCurrency => '货币';
+
+  @override
+  String get currencyCny => '人民币';
+
+  @override
+  String get commonNote => '备注';
+
+  @override
+  String get commonNoneShort => '无';
+
+  @override
+  String get commonGroup => '分组';
+
+  @override
+  String get accountDelete => '删除账户';
+
+  @override
+  String get deletableLabel => '可删除';
+
+  @override
+  String get hasEntriesLabel => '已有交易';
+
+  @override
+  String get balanceEditConfirmTitle => '是否确认修改余额？';
+
+  @override
+  String balanceEditConfirmMessage(String name, String amount) {
+    return '将把「$name」的余额调整为 $amount。';
+  }
+
+  @override
+  String get balanceEditRecord => '计入收支';
+
+  @override
+  String get balanceEditRecordDesc => '生成一笔余额调整交易；不勾选则直接修改账户初始余额，不影响收支统计。';
+
+  @override
+  String get accountNameEditTitle => '编辑账户名称';
+
+  @override
+  String get cardLast4EditTitle => '编辑卡号后四位';
+
+  @override
+  String get pickDueDay => '选择还款日';
+
+  @override
+  String get pickStatementDay => '选择账单日';
+
+  @override
+  String get accountNoteEditTitle => '编辑账户备注';
+
+  @override
+  String get accountReportTitle => '账户报告';
+
+  @override
+  String get thisMonth => '本月';
+
+  @override
+  String get dueToday => '就是今天';
+
+  @override
+  String dueInDays(int days) {
+    return '还有 $days 天';
+  }
+
+  @override
+  String monthlyRepayLine(int day) {
+    return '每月 $day 日还款';
+  }
 }

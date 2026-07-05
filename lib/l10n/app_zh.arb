@@ -311,5 +311,192 @@
     }
   },
   "categoryAll": "全部分类",
-  "tagPickerTitle": "选择标签"
+  "tagPickerTitle": "选择标签",
+  "coverBlueCity": "蓝色城市",
+  "coverAurora": "极光夜色",
+  "coverFinanceOffice": "金融办公",
+  "coverDeepBlue": "深蓝渐层",
+  "assetsUngrouped": "未分组",
+  "netAssets": "净资产",
+  "assetsActions": "资产操作",
+  "assetsChangeCover": "更换资产卡片背景",
+  "assetsAmount": "资产 {amount}",
+  "@assetsAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "liabilitiesAmount": "负债 {amount}",
+  "@liabilitiesAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "netAssetsAmount": "净资产 {amount}",
+  "@netAssetsAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "monthNumber": "{month}月",
+  "@monthNumber": {
+    "description": "按月份序号的短月份标签(图表气泡/坐标)",
+    "placeholders": {
+      "month": {
+        "type": "int"
+      }
+    }
+  },
+  "assetsEmptyTitle": "还没有资产账户",
+  "assetsEmptyDesc": "请先点击右上角添加资产，之后可以在这里按类型或分组查看资产。",
+  "assetsSortHint": "拖动右侧手柄调整分组顺序",
+  "hiddenAccountsCount": "{count}个隐藏账户",
+  "@hiddenAccountsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assetsCoverTitle": "资产卡片背景",
+  "coverUseOnline": "使用线上图片",
+  "coverEnterUrl": "输入图片链接",
+  "coverPickLocal": "选择本地图片",
+  "coverClear": "清除背景图片",
+  "coverPickOnlineTitle": "选择线上图片",
+  "coverCustomTitle": "自定义图片",
+  "coverUrlLabel": "图片链接",
+  "coverCropTitle": "裁剪资产背景",
+  "coverGenerating": "正在生成背景图…",
+  "accountAdd": "添加账户",
+  "groupManage": "管理分组",
+  "sectionSort": "排序分组",
+  "sectionSortNeedTwo": "至少有 2 个分组才能排序",
+  "sortLabel": "排序",
+  "hiddenAccountsTitle": "隐藏账户",
+  "hiddenAccountsEmptyTitle": "暂无隐藏账户",
+  "hiddenAccountsEmptyDesc": "隐藏账户会在这里集中展示。",
+  "accountGroupsTitle": "账户分组",
+  "groupAdd": "新增分组",
+  "groupsEmptyTitle": "还没有账户分组",
+  "groupsEmptyDesc": "点击右上角加号创建分组，用来整理不同账户。",
+  "accountsCount": "{count}个账户",
+  "@accountsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonRename": "重命名",
+  "commonIcon": "图标",
+  "groupRenameTitle": "重命名分组",
+  "groupNameLabel": "分组名称",
+  "groupIconPickerTitle": "选择分组图标",
+  "accountIconLabel": "账户图标",
+  "accountSaveTooltip": "保存账户",
+  "accountTypeLabel": "账户类型",
+  "accountNameLabel": "账户名称",
+  "accountNameRequired": "账户名称必填",
+  "cardLast4Label": "卡号后四位",
+  "cardLast4Invalid": "请输入 1-4 位数字",
+  "accountBalanceLabel": "账户余额",
+  "accountBalanceHint": "不填默认为 0",
+  "accountNoteLabel": "账户备注",
+  "accountGroupLabel": "账户分组",
+  "accountTypePickerTitle": "选择账户类型",
+  "accountGroupPickerTitle": "选择账户分组",
+  "balanceAdjustTooltip": "调整余额",
+  "currentBalance": "当前余额",
+  "balanceTrend": "余额趋势",
+  "dayShort": "日",
+  "monthShort": "月",
+  "balanceAmount": "余额 {amount}",
+  "@balanceAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "viewReport": "查看报告",
+  "addEntryTooltip": "记一笔",
+  "noEntriesTitle": "暂无交易",
+  "accountNoEntriesDesc": "该账户还没有交易记录。",
+  "accountEntriesTitle": "{name}交易",
+  "@accountEntriesTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "allEntries": "所有交易",
+  "includeInAssets": "计入资产",
+  "commonType": "类型",
+  "commonName": "名称",
+  "notSet": "未设置",
+  "clearOption": "不设置",
+  "statementDay": "账单日",
+  "dueDay": "还款日",
+  "monthlyDayLabel": "每月 {day} 日",
+  "@monthlyDayLabel": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "commonCurrency": "货币",
+  "currencyCny": "人民币",
+  "commonNote": "备注",
+  "commonNoneShort": "无",
+  "commonGroup": "分组",
+  "accountDelete": "删除账户",
+  "deletableLabel": "可删除",
+  "hasEntriesLabel": "已有交易",
+  "balanceEditConfirmTitle": "是否确认修改余额？",
+  "balanceEditConfirmMessage": "将把「{name}」的余额调整为 {amount}。",
+  "@balanceEditConfirmMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceEditRecord": "计入收支",
+  "balanceEditRecordDesc": "生成一笔余额调整交易；不勾选则直接修改账户初始余额，不影响收支统计。",
+  "accountNameEditTitle": "编辑账户名称",
+  "cardLast4EditTitle": "编辑卡号后四位",
+  "pickDueDay": "选择还款日",
+  "pickStatementDay": "选择账单日",
+  "accountNoteEditTitle": "编辑账户备注",
+  "accountReportTitle": "账户报告",
+  "thisMonth": "本月",
+  "dueToday": "就是今天",
+  "dueInDays": "还有 {days} 天",
+  "@dueInDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "monthlyRepayLine": "每月 {day} 日还款",
+  "@monthlyRepayLine": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  }
 }
