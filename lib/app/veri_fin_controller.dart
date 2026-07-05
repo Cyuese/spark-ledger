@@ -17,6 +17,26 @@ import 'models.dart';
 import 'recurring.dart';
 import 'reminder/reminder_settings.dart';
 
+/// 导入校验用的已知备份数据键：`data` 里出现其一即认定为本应用备份（配合 `app`
+/// 标记）。用于拦截「格式合法却非本应用」的 JSON，避免其把数据静默覆盖为初始态。
+const Set<String> _knownBackupDataKeys = <String>{
+  'ledgerBooks',
+  'activeBookId',
+  'entries',
+  'accounts',
+  'accountGroups',
+  'categories',
+  'tags',
+  'attachments',
+  'recurringRules',
+  'monthlyBudgets',
+  'categoryBudgets',
+  'profile',
+  'themePreference',
+  'homePanels',
+  'reportPanels',
+};
+
 class VeriFinController extends ChangeNotifier {
   VeriFinController._(this._store, this._repository) {
     _loadPreferences();
@@ -1524,6 +1544,15 @@ class VeriFinController extends ChangeNotifier {
       throw const FormatException('备份文件缺少数据内容');
     }
     final data = Map<String, Object?>.from(dataValue);
+
+    // 只接受本应用的备份：带 app 标记，或至少含一个已知数据键。否则（如一个格式
+    // 合法却无关的 JSON）直接报错，绝不在导入前清空/覆盖现有数据。
+    final looksLikeVeriFinBackup =
+        root['app'] == 'verifin' ||
+        data.keys.any(_knownBackupDataKeys.contains);
+    if (!looksLikeVeriFinBackup) {
+      throw const FormatException('不是本应用的备份文件');
+    }
 
     final importedBooks = _decodeModelList<LedgerBook>(
       data['ledgerBooks'],

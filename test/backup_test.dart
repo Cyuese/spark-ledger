@@ -276,6 +276,40 @@ void main() {
     controller.dispose();
   });
 
+  test('拒绝导入非本应用的合法 JSON，且不清空现有数据', () async {
+    final controller = await makeController();
+    controller.addAccount(
+      Account(
+        id: 'keep-me',
+        bookId: controller.activeBook.id,
+        name: '要保住的账户',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 30,
+        iconCode: 'wallet',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      ),
+    );
+
+    // 合法 JSON 但不是本应用备份：应报错，且现有数据原封不动。
+    expect(
+      () => controller.importDataJson('{"foo":1,"bar":[2,3]}'),
+      throwsFormatException,
+    );
+    expect(controller.accounts.single.name, '要保住的账户');
+
+    // 带 app 标记但 data 为空对象也应被拦截（无任何已知键）。
+    expect(
+      () => controller.importDataJson('{"app":"other","data":{"x":1}}'),
+      throwsFormatException,
+    );
+    expect(controller.accounts.single.name, '要保住的账户');
+
+    controller.dispose();
+  });
+
   test('imports legacy backup budget keys into the default book', () async {
     // 旧备份里预算键没有 bookId 前缀，导入时应归入默认账本。
     final controller = await makeController();
