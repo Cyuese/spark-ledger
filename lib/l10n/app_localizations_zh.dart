@@ -909,7 +909,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String entriesCountFull(int count) {
-    return '$count笔交易';
+    return '$count 笔交易';
   }
 
   @override
@@ -1418,4 +1418,823 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get bookkeepingYears => '记账年数';
+
+  @override
+  String get reminderPickTime => '选择提醒时间';
+
+  @override
+  String get reminderTitle => '记账提醒';
+
+  @override
+  String get reminderDaily => '每日提醒';
+
+  @override
+  String get reminderTimeLabel => '提醒时间';
+
+  @override
+  String get reminderDescSupported =>
+      '开启后每天到点会收到一条本地通知，提醒你记录当天收支。若长时间未收到，请在系统设置中确认已允许通知。';
+
+  @override
+  String get reminderDescUnsupported =>
+      '当前平台不支持本地通知，此设置仅在 Android / iOS 手机上生效。';
+
+  @override
+  String reminderDailyAt(String time) {
+    return '每日 $time';
+  }
+
+  @override
+  String get recurringTitle => '周期记账';
+
+  @override
+  String get recurringSubtitle => '打开应用时自动补记到期交易';
+
+  @override
+  String get recurringAddTooltip => '新增规则';
+
+  @override
+  String get recurringEmpty => '还没有周期规则，点击右上角新增\n例如每月房租、每月工资';
+
+  @override
+  String nextRun(String date) {
+    return '下次 $date';
+  }
+
+  @override
+  String get recurringNewTitle => '新增周期规则';
+
+  @override
+  String get recurringEditTitle => '编辑周期规则';
+
+  @override
+  String get recurringDeleteTooltip => '删除规则';
+
+  @override
+  String get tapToFill => '点击填写';
+
+  @override
+  String get addAccountFirst => '请先添加账户';
+
+  @override
+  String get frequencyLabel => '频率';
+
+  @override
+  String get startDateLabel => '开始日期';
+
+  @override
+  String get pickFrequencyTitle => '选择频率';
+
+  @override
+  String get skipLabel => '跳过';
+
+  @override
+  String get startBookkeeping => '开始记账';
+
+  @override
+  String get nextStep => '下一步';
+
+  @override
+  String get onboardWelcomeTitle => '欢迎使用 Veri Fin';
+
+  @override
+  String get onboardWelcomeDesc =>
+      '一款完全免费、数据自主、本地优先的记账应用。\n\n你的账目只保存在本机，不上传服务器；可随时导出 JSON 备份或加密上传到自己的 WebDAV。\n\n下面用几步帮你快速开始。';
+
+  @override
+  String get onboardAccountTitle => '创建第一个账户';
+
+  @override
+  String get onboardAccountDesc =>
+      '账户是记账的基础，比如「现金」「工资卡」。填写名称与当前余额即可，也可以稍后在「资产」页添加。';
+
+  @override
+  String get onboardAccountNameLabel => '账户名称（可选）';
+
+  @override
+  String get onboardAccountNameHint => '如：现金 / 工资卡';
+
+  @override
+  String get onboardBalanceLabel => '当前余额（可选）';
+
+  @override
+  String get onboardBudgetDesc =>
+      '设定每月预算后，首页与看板会展示预算执行进度，帮你控制支出。留空则暂不设预算，之后可在首页预算卡随时修改。';
+
+  @override
+  String get onboardBudgetLabel => '本月预算（可选）';
+
+  @override
+  String get onboardBudgetHint => '如：3000';
+
+  @override
+  String get onboardDoneTitle => '一切就绪';
+
+  @override
+  String get onboardDoneDesc =>
+      '点击首页右下角的「+」即可快速记一笔。\n\n在「我的」页可以管理账本、分类、标签、周期记账，查看统计分析，设置记账提醒与数据备份。\n\n祝你记账愉快！';
+
+  @override
+  String legalUpdated(String date) {
+    return '更新日期：$date';
+  }
+
+  @override
+  String get privacyAndTerms => '隐私政策与用户协议';
+
+  @override
+  String get agreeContinue => '同意并继续';
+
+  @override
+  String get disagreeExit => '不同意并退出';
+
+  @override
+  String get legalPrivacyPolicy => '隐私政策';
+
+  @override
+  String get legalUserAgreement => '用户协议';
+
+  @override
+  String get profileCenterSubtitle => '个人中心';
+
+  @override
+  String get settingsTooltip => '设置';
+
+  @override
+  String get entryCountStat => '交易笔数';
+
+  @override
+  String get bookkeepingMgmt => '记账管理';
+
+  @override
+  String get ledgerLabel => '账本';
+
+  @override
+  String get categoryMgmt => '分类管理';
+
+  @override
+  String get tagMgmt => '标签管理';
+
+  @override
+  String countRules(int count) {
+    return '$count 条';
+  }
+
+  @override
+  String get dataAndTools => '数据与工具';
+
+  @override
+  String get reportShort => '报表';
+
+  @override
+  String get notEnabled => '未开启';
+
+  @override
+  String get dataManagement => '数据管理';
+
+  @override
+  String get backupRestoreShort => '备份 / 恢复';
+
+  @override
+  String currentBookLabel(String name) {
+    return '当前：$name';
+  }
+
+  @override
+  String get bookAdd => '新增账本';
+
+  @override
+  String get bookNameLabel => '账本名称';
+
+  @override
+  String get defaultBookLabel => '默认账本';
+
+  @override
+  String get bookActions => '账本操作';
+
+  @override
+  String get defaultBookUndeletable => '默认账本不可删除';
+
+  @override
+  String get bookRenameTitle => '重命名账本';
+
+  @override
+  String get bookDeleteTitle => '删除账本？';
+
+  @override
+  String bookDeleteMessage(String name) {
+    return '账本「$name」及其中交易会被删除，此操作无法恢复。';
+  }
+
+  @override
+  String get categoryMgmtSubtitle => '支持多级分类，用于记账和统计';
+
+  @override
+  String get addTopCategory => '新增顶级分类';
+
+  @override
+  String addCategoryTitle(String type) {
+    return '新增$type分类';
+  }
+
+  @override
+  String addSubCategoryTitle(String parent) {
+    return '在「$parent」下新增子分类';
+  }
+
+  @override
+  String get categoryNameLabel => '分类名称';
+
+  @override
+  String get changeIcon => '更换图标';
+
+  @override
+  String get addSubCategory => '新增子分类';
+
+  @override
+  String get moveTo => '移动到…';
+
+  @override
+  String get deleteCategory => '删除分类';
+
+  @override
+  String get noMoveTarget => '没有可移动到的目标';
+
+  @override
+  String moveCategoryTitle(String name) {
+    return '移动「$name」到';
+  }
+
+  @override
+  String get topCategory => '顶级分类';
+
+  @override
+  String get cannotMoveHere => '该分类无法移动到此处';
+
+  @override
+  String get renameCategoryTitle => '重命名分类';
+
+  @override
+  String get pickIconTitle => '选择图标';
+
+  @override
+  String get systemCategoryUndeletable => '系统分类不能删除';
+
+  @override
+  String categoryInUse(int count) {
+    return '已有 $count 笔交易使用该分类，不能删除';
+  }
+
+  @override
+  String get moveSubFirst => '请先移动或删除其子分类';
+
+  @override
+  String get keepOneCategory => '至少需要保留一个分类';
+
+  @override
+  String get deleteCategoryTitle => '删除分类？';
+
+  @override
+  String deleteCategoryMessage(String name) {
+    return '分类「$name」删除后无法恢复。';
+  }
+
+  @override
+  String get categoryUndeletable => '该分类暂时不能删除';
+
+  @override
+  String catSubChildren(String type, int children, int count) {
+    return '$type · $children 个子分类 · $count 笔';
+  }
+
+  @override
+  String catSubPlain(String type, int count) {
+    return '$type · $count 笔交易';
+  }
+
+  @override
+  String get tagMgmtSubtitle => '记账时可给交易打多个标签';
+
+  @override
+  String get tagAdd => '新增标签';
+
+  @override
+  String get tagsEmpty => '还没有标签，点击右上角新增';
+
+  @override
+  String get deleteTag => '删除标签';
+
+  @override
+  String get tagRenameTitle => '重命名标签';
+
+  @override
+  String get tagDeleteTitle => '删除标签？';
+
+  @override
+  String tagDeleteInUse(String name, int count) {
+    return '标签「$name」正被 $count 笔交易使用，删除后会从这些交易上移除。';
+  }
+
+  @override
+  String tagDeleteMessage(String name) {
+    return '标签「$name」删除后无法恢复。';
+  }
+
+  @override
+  String get personalInfo => '个人信息';
+
+  @override
+  String get nicknameLabel => '昵称';
+
+  @override
+  String get bioLabel => '简介';
+
+  @override
+  String get genderLabel => '性别';
+
+  @override
+  String get birthdayLabel => '生日';
+
+  @override
+  String get cityLabel => '城市';
+
+  @override
+  String get occupationLabel => '职业';
+
+  @override
+  String get pickGenderTitle => '选择性别';
+
+  @override
+  String get cropAvatarTitle => '裁剪头像';
+
+  @override
+  String get avatarGenerating => '正在生成头像…';
+
+  @override
+  String get profileDefaultBio => '完全免费 · 数据自主';
+
+  @override
+  String get settingsTitle => '设置';
+
+  @override
+  String get themeMode => '主题模式';
+
+  @override
+  String get hapticsLabel => '触感反馈';
+
+  @override
+  String get appLockLabel => '应用锁';
+
+  @override
+  String get enabledLabel => '已开启';
+
+  @override
+  String get checkUpdate => '检查更新';
+
+  @override
+  String get viewLabel => '查看';
+
+  @override
+  String get themePickerTitle => '选择主题模式';
+
+  @override
+  String get dataMgmtSubtitle => '备份与恢复本地数据';
+
+  @override
+  String get exportData => '导出数据';
+
+  @override
+  String get jsonBackup => 'JSON 备份';
+
+  @override
+  String get importData => '导入数据';
+
+  @override
+  String get restoreFromFile => '从文件恢复';
+
+  @override
+  String get importFromSheets => '从表格导入交易';
+
+  @override
+  String get importCsv => '导入 CSV 交易';
+
+  @override
+  String get byTemplate => '按模板';
+
+  @override
+  String get importFromOtherApps => '从其他记账软件导入';
+
+  @override
+  String get otherAppsHint => '钱迹 / 随手记';
+
+  @override
+  String get downloadCsvTemplate => '下载 CSV 模板';
+
+  @override
+  String get excelHint => 'Excel 可另存为 CSV';
+
+  @override
+  String get backupToLocalDir => '备份到本地目录';
+
+  @override
+  String get backupDirLabel => '备份目录';
+
+  @override
+  String get notChosen => '未选择';
+
+  @override
+  String get backupNow => '立即备份';
+
+  @override
+  String get clearBackupDir => '清除备份目录';
+
+  @override
+  String get stopLocalBackup => '停止本地备份';
+
+  @override
+  String get autoBackup => '自动备份';
+
+  @override
+  String get backupFrequencyLabel => '备份频率';
+
+  @override
+  String get backupIntervalLabel => '备份间隔';
+
+  @override
+  String everyNHoursLabel(int n) {
+    return '每 $n 小时';
+  }
+
+  @override
+  String get retentionLabel => '保留份数';
+
+  @override
+  String latestNCopies(int n) {
+    return '最近 $n 份';
+  }
+
+  @override
+  String get backupEncryption => '备份加密';
+
+  @override
+  String get encryptionKey => '加密密钥';
+
+  @override
+  String get clearEncryptionKey => '清除加密密钥';
+
+  @override
+  String get noEncryptHint => '后续备份不加密';
+
+  @override
+  String get webdavSection => 'WebDAV 云备份';
+
+  @override
+  String get webdavServer => 'WebDAV 服务器';
+
+  @override
+  String get configuredLabel => '已配置';
+
+  @override
+  String get notConfigured => '未配置';
+
+  @override
+  String get uploadToWebdav => '上传到 WebDAV';
+
+  @override
+  String get uploadNow => '立即上传';
+
+  @override
+  String get restoreFromWebdav => '从 WebDAV 恢复';
+
+  @override
+  String get chooseBackup => '选择备份';
+
+  @override
+  String get autoUploadWebdav => '自动上传到 WebDAV';
+
+  @override
+  String get clearWebdav => '清除 WebDAV 配置';
+
+  @override
+  String get disconnectLabel => '断开连接';
+
+  @override
+  String get resetData => '初始化数据';
+
+  @override
+  String get deleteAllLocal => '删除所有本地数据';
+
+  @override
+  String get neverBackedUp => '尚未备份';
+
+  @override
+  String lastBackupAt(String time) {
+    return '上次 $time';
+  }
+
+  @override
+  String chosenBackupDir(String label) {
+    return '已选择备份目录：$label';
+  }
+
+  @override
+  String backedUpFile(String name) {
+    return '已备份：$name';
+  }
+
+  @override
+  String get backupFailedRetry => '备份操作失败，请稍后再试';
+
+  @override
+  String get pickBackupFrequency => '选择自动备份频率';
+
+  @override
+  String get backupIntervalTitle => '每隔多久备份一次';
+
+  @override
+  String get retentionTitle => '保留最近几份备份';
+
+  @override
+  String get encryptedSuffix => '（已加密）';
+
+  @override
+  String exportedTo(String hint) {
+    return '已导出本地数据备份$hint，位置：下载目录';
+  }
+
+  @override
+  String get exportFailed => '导出失败，请稍后再试';
+
+  @override
+  String get enterBackupKeyTitle => '输入备份密钥';
+
+  @override
+  String get enterBackupKeyMessage => '该备份已加密，请输入导出时设置的密钥。';
+
+  @override
+  String get backupKeyLabel => '备份密钥';
+
+  @override
+  String get changeKeyTitle => '修改加密密钥';
+
+  @override
+  String get setKeyTitle => '设置加密密钥';
+
+  @override
+  String get setKeyMessage =>
+      '设置后，导出与备份文件会用该密钥加密；导入时需要输入相同密钥。密钥仅存于本机，忘记只能清除后重设。';
+
+  @override
+  String get keyMinLabel => '密钥（至少 4 位）';
+
+  @override
+  String get keyRepeatLabel => '再次输入密钥';
+
+  @override
+  String get keyTooShort => '密钥至少 4 位';
+
+  @override
+  String get keyMismatch => '两次输入不一致';
+
+  @override
+  String get keySet => '已设置备份加密密钥';
+
+  @override
+  String get clearKeyTitle => '清除加密密钥？';
+
+  @override
+  String get clearKeyMessage => '清除后新的导出与备份将不再加密。已经用旧密钥加密的备份文件，导入时仍需输入当时的密钥。';
+
+  @override
+  String get clearLabel => '清除';
+
+  @override
+  String get webdavUrlLabel => '服务器目录地址';
+
+  @override
+  String get webdavUserLabel => '账号';
+
+  @override
+  String get webdavPassLabel => '密码';
+
+  @override
+  String get testingConnection => '正在测试连接...';
+
+  @override
+  String get connectionOk => '连接成功';
+
+  @override
+  String connectionFailed(String error) {
+    return '连接失败：$error';
+  }
+
+  @override
+  String get testConnection => '测试连接';
+
+  @override
+  String get fillServerUrl => '请填写服务器地址';
+
+  @override
+  String get webdavSaved => '已保存 WebDAV 配置';
+
+  @override
+  String get uploadingWebdav => '正在上传到 WebDAV...';
+
+  @override
+  String uploadedFile(String name) {
+    return '已上传：$name';
+  }
+
+  @override
+  String uploadFailed(String error) {
+    return '上传失败：$error';
+  }
+
+  @override
+  String readFailed(String error) {
+    return '读取失败：$error';
+  }
+
+  @override
+  String get noWebdavBackups => 'WebDAV 上没有找到备份文件';
+
+  @override
+  String get chooseRestoreBackup => '选择要恢复的备份';
+
+  @override
+  String get restoreFromThisTitle => '从此备份恢复？';
+
+  @override
+  String restoreFromThisMessage(String name) {
+    return '将用「$name」替换当前本地数据，建议先备份当前数据。';
+  }
+
+  @override
+  String get restoreLabel => '恢复';
+
+  @override
+  String get restoredFromWebdav => '已从 WebDAV 恢复数据';
+
+  @override
+  String get restoreFailedFormat => '恢复失败：备份文件格式不正确';
+
+  @override
+  String restoreFailedError(String error) {
+    return '恢复失败：$error';
+  }
+
+  @override
+  String get clearWebdavTitle => '清除 WebDAV 配置？';
+
+  @override
+  String get clearWebdavMessage => '清除后将停止自动上传，服务器上已有的备份文件不会被删除。';
+
+  @override
+  String get csvTemplateSaved => '已保存 CSV 模板，位置：下载目录';
+
+  @override
+  String get csvTemplateSaveFailed => '保存模板失败，请稍后再试';
+
+  @override
+  String get importCsvTitle => '导入 CSV 交易？';
+
+  @override
+  String get importCsvMessage =>
+      '将按模板列（日期、类型、金额、分类、账户、转入账户、备注）把交易追加到当前账本；匹配不到的账户和分类会按名称自动新建。不会删除现有数据。';
+
+  @override
+  String get importOtherTitle => '从其他记账软件导入？';
+
+  @override
+  String get importOtherMessage =>
+      '支持钱迹、随手记等导出的 CSV（其他表格若含 日期/类型/金额/账户 列也可尝试）。会自动识别来源并把交易追加到当前账本，匹配不到的账户与分类按名称新建，不删除现有数据。';
+
+  @override
+  String get chooseFile => '选择文件';
+
+  @override
+  String recognizedAs(String source) {
+    return '（识别为$source）';
+  }
+
+  @override
+  String importedEntries(int count) {
+    return '已导入 $count 笔交易';
+  }
+
+  @override
+  String skippedRows(int count) {
+    return '，$count 行跳过';
+  }
+
+  @override
+  String importFailedWithMessage(String message) {
+    return '导入失败：$message';
+  }
+
+  @override
+  String get importFailedCheckFile => '导入失败，请检查文件后重试';
+
+  @override
+  String lineError(int line, String message) {
+    return '第 $line 行：$message';
+  }
+
+  @override
+  String moreLines(int count) {
+    return '\n… 其余 $count 行';
+  }
+
+  @override
+  String importDoneTitle(int count) {
+    return '导入完成（成功 $count 笔）';
+  }
+
+  @override
+  String get allImported => '全部导入成功。';
+
+  @override
+  String skippedFollowing(String lines) {
+    return '以下行被跳过：\n$lines';
+  }
+
+  @override
+  String get gotIt => '知道了';
+
+  @override
+  String get importLocalTitle => '导入本地备份？';
+
+  @override
+  String get importLocalMessage => '导入会替换当前本地交易、账户、账本、预算、个人信息和设置。建议先导出当前数据。';
+
+  @override
+  String get importedLocal => '已导入本地数据';
+
+  @override
+  String get importFailedFormat => '导入失败：备份文件格式不正确';
+
+  @override
+  String get resetAllTitle => '初始化所有数据？';
+
+  @override
+  String get resetAllMessage => '这会删除本地交易、账户、账本、预算、个人信息和主题偏好，操作无法恢复。';
+
+  @override
+  String get continueLabel => '继续';
+
+  @override
+  String get resetConfirmTitle => '再次确认初始化';
+
+  @override
+  String get resetConfirmMessage => '确认后会立即清空所有本地数据，并恢复默认状态。此操作不能撤销。';
+
+  @override
+  String get resetConfirmAction => '确认初始化';
+
+  @override
+  String get currentVersion => '当前版本';
+
+  @override
+  String get latestVersion => '最新版本';
+
+  @override
+  String get checkingLabel => '检查中...';
+
+  @override
+  String get queryingGithub => '正在查询 GitHub Release...';
+
+  @override
+  String get updateCheckFailed => '检查更新失败，请稍后再试。';
+
+  @override
+  String downloadingPercent(int percent) {
+    return '下载中 $percent%';
+  }
+
+  @override
+  String get downloadingLabel => '正在下载...';
+
+  @override
+  String get closeLabel => '关闭';
+
+  @override
+  String get retryLabel => '重试';
+
+  @override
+  String get downloadingShort => '下载中';
+
+  @override
+  String get downloadNewVersion => '下载新版本';
+
+  @override
+  String get backupFreqManual => '仅手动';
+
+  @override
+  String get backupFreqOnOpen => '每次打开应用';
+
+  @override
+  String get backupFreqOnEntry => '每次记账后';
+
+  @override
+  String get backupFreqEveryN => '每隔一段时间';
 }

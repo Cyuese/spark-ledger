@@ -56,10 +56,10 @@ class ProfilePage extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 8, 14, 82),
         children: <Widget>[
           PageHeader(
-            title: '我的',
-            subtitle: '个人中心',
+            title: AppLocalizations.of(context).tabProfile,
+            subtitle: AppLocalizations.of(context).profileCenterSubtitle,
             trailing: IconButton(
-              tooltip: '设置',
+              tooltip: AppLocalizations.of(context).settingsTooltip,
               onPressed: () {
                 Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
@@ -134,13 +134,13 @@ class ProfilePage extends StatelessWidget {
                       ),
                       Expanded(
                         child: ProfileStat(
-                          label: '交易笔数',
+                          label: AppLocalizations.of(context).entryCountStat,
                           value: '${controller.entries.length}',
                         ),
                       ),
                       Expanded(
                         child: ProfileStat(
-                          label: '净资产',
+                          label: AppLocalizations.of(context).netAssets,
                           value: formatAmount(netAssets),
                         ),
                       ),
@@ -152,12 +152,12 @@ class ProfilePage extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _FeatureGridCard(
-            title: '记账管理',
+            title: AppLocalizations.of(context).bookkeepingMgmt,
             tiles: <_FeatureTileData>[
               _FeatureTileData(
                 icon: Icons.book_outlined,
                 color: veriRoyal,
-                label: '账本',
+                label: AppLocalizations.of(context).ledgerLabel,
                 subtitle: controller.activeBook.name,
                 onTap: () => Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
@@ -168,8 +168,10 @@ class ProfilePage extends StatelessWidget {
               _FeatureTileData(
                 icon: Icons.category_outlined,
                 color: veriBlue,
-                label: '分类管理',
-                subtitle: '${controller.categories.length} 个',
+                label: AppLocalizations.of(context).categoryMgmt,
+                subtitle: AppLocalizations.of(
+                  context,
+                ).countItems(controller.categories.length),
                 onTap: () => Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
                     builder: (context) => const CategoryManagementPage(),
@@ -179,8 +181,10 @@ class ProfilePage extends StatelessWidget {
               _FeatureTileData(
                 icon: Icons.label_outline,
                 color: veriCyan,
-                label: '标签管理',
-                subtitle: '${controller.tags.length} 个',
+                label: AppLocalizations.of(context).tagMgmt,
+                subtitle: AppLocalizations.of(
+                  context,
+                ).countItems(controller.tags.length),
                 onTap: () => Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
                     builder: (context) => const TagManagementPage(),
@@ -190,8 +194,10 @@ class ProfilePage extends StatelessWidget {
               _FeatureTileData(
                 icon: Icons.repeat,
                 color: veriMint,
-                label: '周期记账',
-                subtitle: '${controller.recurringRules.length} 条',
+                label: AppLocalizations.of(context).recurringTitle,
+                subtitle: AppLocalizations.of(
+                  context,
+                ).countRules(controller.recurringRules.length),
                 onTap: () => Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
                     builder: (context) => const RecurringRulesPage(),
@@ -202,13 +208,13 @@ class ProfilePage extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _FeatureGridCard(
-            title: '数据与工具',
+            title: AppLocalizations.of(context).dataAndTools,
             tiles: <_FeatureTileData>[
               _FeatureTileData(
                 icon: Icons.insights_outlined,
                 color: veriRoyal,
-                label: '统计分析',
-                subtitle: '报表',
+                label: AppLocalizations.of(context).statAnalysisTitle,
+                subtitle: AppLocalizations.of(context).reportShort,
                 onTap: () => Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
                     builder: (context) => const ReportAnalysisPage(),
@@ -218,10 +224,10 @@ class ProfilePage extends StatelessWidget {
               _FeatureTileData(
                 icon: Icons.notifications_active_outlined,
                 color: veriWarning,
-                label: '记账提醒',
+                label: AppLocalizations.of(context).reminderTitle,
                 subtitle: controller.reminderSettings.enabled
                     ? controller.reminderSettings.timeLabel
-                    : '未开启',
+                    : AppLocalizations.of(context).notEnabled,
                 onTap: () => Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
                     builder: (context) => const ReminderSettingsPage(),
@@ -231,8 +237,8 @@ class ProfilePage extends StatelessWidget {
               _FeatureTileData(
                 icon: Icons.storage_outlined,
                 color: veriBlue,
-                label: '数据管理',
-                subtitle: '备份 / 恢复',
+                label: AppLocalizations.of(context).dataManagement,
+                subtitle: AppLocalizations.of(context).backupRestoreShort,
                 onTap: () => Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
                     builder: (context) => const DataManagementPage(),
@@ -398,13 +404,15 @@ class LedgerBooksPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               VeriHeader(
-                title: '账本',
-                subtitle: '当前：${controller.activeBook.name}',
+                title: AppLocalizations.of(context).ledgerLabel,
+                subtitle: AppLocalizations.of(
+                  context,
+                ).currentBookLabel(controller.activeBook.name),
                 showBack: true,
                 actions: <Widget>[
                   HeaderAction(
                     icon: Icons.add,
-                    tooltip: '新增账本',
+                    tooltip: AppLocalizations.of(context).bookAdd,
                     onPressed: () => _createBook(context),
                   ),
                 ],
@@ -430,8 +438,8 @@ class LedgerBooksPage extends StatelessWidget {
   Future<void> _createBook(BuildContext context) async {
     final name = await showTextInputDialog(
       context: context,
-      title: '新增账本',
-      label: '账本名称',
+      title: AppLocalizations.of(context).bookAdd,
+      label: AppLocalizations.of(context).bookNameLabel,
     );
     if (!context.mounted || name == null) {
       return;
@@ -479,7 +487,8 @@ class _LedgerBookRow extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${book.isDefault ? '默认账本 · ' : ''}$entryCount 笔交易',
+                      '${book.isDefault ? '${AppLocalizations.of(context).defaultBookLabel} · ' : ''}'
+                      '${AppLocalizations.of(context).entriesCountFull(entryCount)}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(
                           context,
@@ -493,7 +502,7 @@ class _LedgerBookRow extends StatelessWidget {
               if (selected)
                 const Icon(Icons.check_circle, color: veriRoyal, size: 18),
               PopupMenuButton<String>(
-                tooltip: '账本操作',
+                tooltip: AppLocalizations.of(context).bookActions,
                 onSelected: (value) {
                   if (value == 'rename') {
                     _renameBook(context);
@@ -503,14 +512,18 @@ class _LedgerBookRow extends StatelessWidget {
                   }
                 },
                 itemBuilder: (context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'rename',
-                    child: Text('重命名'),
+                    child: Text(AppLocalizations.of(context).commonRename),
                   ),
                   PopupMenuItem<String>(
                     value: 'delete',
                     enabled: !book.isDefault,
-                    child: Text(book.isDefault ? '默认账本不可删除' : '删除'),
+                    child: Text(
+                      book.isDefault
+                          ? AppLocalizations.of(context).defaultBookUndeletable
+                          : AppLocalizations.of(context).commonDelete,
+                    ),
                   ),
                 ],
               ),
@@ -524,8 +537,8 @@ class _LedgerBookRow extends StatelessWidget {
   Future<void> _renameBook(BuildContext context) async {
     final name = await showTextInputDialog(
       context: context,
-      title: '重命名账本',
-      label: '账本名称',
+      title: AppLocalizations.of(context).bookRenameTitle,
+      label: AppLocalizations.of(context).bookNameLabel,
       initialValue: book.name,
     );
     if (!context.mounted || name == null) {
@@ -538,16 +551,18 @@ class _LedgerBookRow extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('删除账本？'),
-        content: Text('账本「${book.name}」及其中交易会被删除，此操作无法恢复。'),
+        title: Text(AppLocalizations.of(context).bookDeleteTitle),
+        content: Text(
+          AppLocalizations.of(context).bookDeleteMessage(book.name),
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('删除'),
+            child: Text(AppLocalizations.of(context).commonDelete),
           ),
         ],
       ),
@@ -584,13 +599,13 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               VeriHeader(
-                title: '分类管理',
-                subtitle: '支持多级分类，用于记账和统计',
+                title: AppLocalizations.of(context).categoryMgmt,
+                subtitle: AppLocalizations.of(context).categoryMgmtSubtitle,
                 showBack: true,
                 actions: <Widget>[
                   HeaderAction(
                     icon: Icons.add,
-                    tooltip: '新增顶级分类',
+                    tooltip: AppLocalizations.of(context).addTopCategory,
                     onPressed: () => _createCategory(),
                   ),
                 ],
@@ -673,11 +688,15 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   }
 
   Future<void> _createCategory({Category? parent}) async {
-    final typeLabel = (parent?.type ?? _type).label;
+    final typeLabel = (parent?.type ?? _type).label(
+      AppLocalizations.of(context),
+    );
     final label = await showTextInputDialog(
       context: context,
-      title: parent == null ? '新增$typeLabel分类' : '在「${parent.label}」下新增子分类',
-      label: '分类名称',
+      title: parent == null
+          ? AppLocalizations.of(context).addCategoryTitle(typeLabel)
+          : AppLocalizations.of(context).addSubCategoryTitle(parent.label),
+      label: AppLocalizations.of(context).categoryNameLabel,
     );
     if (!mounted || label == null) {
       return;
@@ -713,11 +732,11 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       selected: 'rename',
       showSelectedMarker: false,
       labelOf: (value) => switch (value) {
-        'rename' => '重命名',
-        'icon' => '更换图标',
-        'add_sub' => '新增子分类',
-        'move' => '移动到…',
-        'delete' => '删除分类',
+        'rename' => AppLocalizations.of(context).commonRename,
+        'icon' => AppLocalizations.of(context).changeIcon,
+        'add_sub' => AppLocalizations.of(context).addSubCategory,
+        'move' => AppLocalizations.of(context).moveTo,
+        'delete' => AppLocalizations.of(context).deleteCategory,
         _ => value,
       },
     );
@@ -756,19 +775,19 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       ...candidates.map((c) => c.id),
     ];
     if (values.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('没有可移动到的目标')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).noMoveTarget)),
+      );
       return;
     }
     final selected = await showOptionSheet<String>(
       context: context,
-      title: '移动「${category.label}」到',
+      title: AppLocalizations.of(context).moveCategoryTitle(category.label),
       values: values,
       selected: values.first,
       showSelectedMarker: false,
       labelOf: (value) => value == _moveToRootValue
-          ? '顶级分类'
+          ? AppLocalizations.of(context).topCategory
           : controller.categoryPathLabel(value),
     );
     if (!mounted || selected == null) {
@@ -779,17 +798,17 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       selected == _moveToRootValue ? null : selected,
     );
     if (!moved && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('该分类无法移动到此处')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).cannotMoveHere)),
+      );
     }
   }
 
   Future<void> _renameCategory(Category category) async {
     final label = await showTextInputDialog(
       context: context,
-      title: '重命名分类',
-      label: '分类名称',
+      title: AppLocalizations.of(context).renameCategoryTitle,
+      label: AppLocalizations.of(context).categoryNameLabel,
       initialValue: category.label,
     );
     if (!mounted || label == null) {
@@ -809,7 +828,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   Future<String?> _pickCategoryIcon({required String selected}) {
     return showOptionSheet<String>(
       context: context,
-      title: '选择图标',
+      title: AppLocalizations.of(context).pickIconTitle,
       values: categoryIconCodes,
       selected: selected,
       labelOf: (code) => iconLabelForCode(AppLocalizations.of(context), code),
@@ -819,44 +838,50 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   Future<void> _deleteCategory(Category category) async {
     final controller = VeriFinScope.of(context);
     if (_isProtectedCategory(category.id)) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('系统分类不能删除')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).systemCategoryUndeletable),
+        ),
+      );
       return;
     }
     final usageCount = controller.categoryUsageCount(category.id);
     if (usageCount > 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('已有 $usageCount 笔交易使用该分类，不能删除')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).categoryInUse(usageCount)),
+        ),
+      );
       return;
     }
     if (controller.childCategories(category.id).isNotEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请先移动或删除其子分类')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).moveSubFirst)),
+      );
       return;
     }
     if (controller.categoriesForType(category.type).length <= 1) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('至少需要保留一个分类')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).keepOneCategory)),
+      );
       return;
     }
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('删除分类？'),
-        content: Text('分类「${category.label}」删除后无法恢复。'),
+        title: Text(AppLocalizations.of(context).deleteCategoryTitle),
+        content: Text(
+          AppLocalizations.of(context).deleteCategoryMessage(category.label),
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('删除'),
+            child: Text(AppLocalizations.of(context).commonDelete),
           ),
         ],
       ),
@@ -866,9 +891,11 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
     }
     final deleted = controller.deleteCategory(category.id);
     if (!deleted && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('该分类暂时不能删除')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).categoryUndeletable),
+        ),
+      );
     }
   }
 }
@@ -908,8 +935,10 @@ class _CategoryManageRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final typeLabel = category.type.label(AppLocalizations.of(context));
     final subtitle = childCount > 0
-        ? '$typeLabel · $childCount 个子分类 · $usageCount 笔'
-        : '$typeLabel · $usageCount 笔交易';
+        ? AppLocalizations.of(
+            context,
+          ).catSubChildren(typeLabel, childCount, usageCount)
+        : AppLocalizations.of(context).catSubPlain(typeLabel, usageCount);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -1012,13 +1041,13 @@ class _TagManagementPageState extends State<TagManagementPage> {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               VeriHeader(
-                title: '标签管理',
-                subtitle: '记账时可给交易打多个标签',
+                title: AppLocalizations.of(context).tagMgmt,
+                subtitle: AppLocalizations.of(context).tagMgmtSubtitle,
                 showBack: true,
                 actions: <Widget>[
                   HeaderAction(
                     icon: Icons.add,
-                    tooltip: '新增标签',
+                    tooltip: AppLocalizations.of(context).tagAdd,
                     onPressed: _createTag,
                   ),
                 ],
@@ -1030,7 +1059,7 @@ class _TagManagementPageState extends State<TagManagementPage> {
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Center(
                       child: Text(
-                        '还没有标签，点击右上角新增',
+                        AppLocalizations.of(context).tagsEmpty,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(
                             context,
@@ -1073,8 +1102,8 @@ class _TagManagementPageState extends State<TagManagementPage> {
   Future<void> _createTag() async {
     final label = await showTextInputDialog(
       context: context,
-      title: '新增标签',
-      label: '标签名称',
+      title: AppLocalizations.of(context).tagAdd,
+      label: AppLocalizations.of(context).tagNameLabel,
     );
     if (!mounted || label == null) {
       return;
@@ -1090,8 +1119,8 @@ class _TagManagementPageState extends State<TagManagementPage> {
       selected: 'rename',
       showSelectedMarker: false,
       labelOf: (value) => switch (value) {
-        'rename' => '重命名',
-        'delete' => '删除标签',
+        'rename' => AppLocalizations.of(context).commonRename,
+        'delete' => AppLocalizations.of(context).deleteTag,
         _ => value,
       },
     );
@@ -1109,8 +1138,8 @@ class _TagManagementPageState extends State<TagManagementPage> {
   Future<void> _renameTag(Tag tag) async {
     final label = await showTextInputDialog(
       context: context,
-      title: '重命名标签',
-      label: '标签名称',
+      title: AppLocalizations.of(context).tagRenameTitle,
+      label: AppLocalizations.of(context).tagNameLabel,
       initialValue: tag.label,
     );
     if (!mounted || label == null) {
@@ -1125,20 +1154,20 @@ class _TagManagementPageState extends State<TagManagementPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('删除标签？'),
+        title: Text(AppLocalizations.of(context).tagDeleteTitle),
         content: Text(
           usage > 0
-              ? '标签「${tag.label}」正被 $usage 笔交易使用，删除后会从这些交易上移除。'
-              : '标签「${tag.label}」删除后无法恢复。',
+              ? AppLocalizations.of(context).tagDeleteInUse(tag.label, usage)
+              : AppLocalizations.of(context).tagDeleteMessage(tag.label),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('删除'),
+            child: Text(AppLocalizations.of(context).commonDelete),
           ),
         ],
       ),
@@ -1193,7 +1222,7 @@ class _TagManageRow extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '$usageCount 笔交易',
+                      AppLocalizations.of(context).entriesCountFull(usageCount),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(
                           context,
@@ -1279,12 +1308,12 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               VeriHeader(
-                title: '个人信息',
+                title: AppLocalizations.of(context).personalInfo,
                 showBack: true,
                 actions: <Widget>[
                   HeaderAction(
                     icon: Icons.check,
-                    tooltip: '保存',
+                    tooltip: AppLocalizations.of(context).commonSave,
                     onPressed: _save,
                   ),
                 ],
@@ -1305,25 +1334,31 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               const SizedBox(height: 14),
               TextField(
                 controller: _nicknameController,
-                decoration: const InputDecoration(labelText: '昵称'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).nicknameLabel,
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: _bioController,
                 maxLines: 3,
-                decoration: const InputDecoration(labelText: '简介'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).bioLabel,
+                ),
               ),
               const SizedBox(height: 10),
               SelectField(
-                label: '性别',
+                label: AppLocalizations.of(context).genderLabel,
                 value: _gender.label(AppLocalizations.of(context)),
                 icon: Icons.person_outline,
                 onTap: _pickGender,
               ),
               const SizedBox(height: 10),
               SelectField(
-                label: '生日',
-                value: _birthday.isEmpty ? '不设置' : _birthday,
+                label: AppLocalizations.of(context).birthdayLabel,
+                value: _birthday.isEmpty
+                    ? AppLocalizations.of(context).clearOption
+                    : _birthday,
                 icon: Icons.cake_outlined,
                 onTap: _pickBirthday,
               ),
@@ -1331,13 +1366,17 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               TextField(
                 controller: _cityController,
                 maxLines: 1,
-                decoration: const InputDecoration(labelText: '城市'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).cityLabel,
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: _occupationController,
                 maxLines: 1,
-                decoration: const InputDecoration(labelText: '职业'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).occupationLabel,
+                ),
               ),
             ],
           ),
@@ -1349,7 +1388,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   Future<void> _pickGender() async {
     final selected = await showOptionSheet<ProfileGender>(
       context: context,
-      title: '选择性别',
+      title: AppLocalizations.of(context).pickGenderTitle,
       values: ProfileGender.values,
       selected: _gender,
       labelOf: (value) => value.label(AppLocalizations.of(context)),
@@ -1383,7 +1422,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     final crop = await showImageCropper(
       context: context,
       imageDataUrl: rawImage,
-      title: '裁剪头像',
+      title: AppLocalizations.of(context).cropAvatarTitle,
       aspectRatio: 1,
       circlePreview: true,
     );
@@ -1392,7 +1431,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     }
     final avatar = await runWithLoadingDialog<String?>(
       context: context,
-      message: '正在生成头像…',
+      message: AppLocalizations.of(context).avatarGenerating,
       task: () => cropImageDataUrl(
         sourceDataUrl: rawImage,
         targetWidth: 512,
@@ -1414,7 +1453,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             ? 'Veri Fin'
             : _nicknameController.text.trim(),
         bio: _bioController.text.trim().isEmpty
-            ? '完全免费 · 数据自主'
+            ? AppLocalizations.of(context).profileDefaultBio
             : _bioController.text.trim(),
         avatarDataUrl: _avatarDataUrl,
         gender: _gender,
@@ -1440,14 +1479,17 @@ class SettingsPage extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
-              const VeriHeader(title: '设置', showBack: true),
+              VeriHeader(
+                title: AppLocalizations.of(context).settingsTitle,
+                showBack: true,
+              ),
               const SizedBox(height: 10),
               VeriCard(
                 child: Column(
                   children: <Widget>[
                     SettingsRow(
                       icon: Icons.dark_mode_outlined,
-                      title: '主题模式',
+                      title: AppLocalizations.of(context).themeMode,
                       trailing: controller.themePreference.label(
                         AppLocalizations.of(context),
                       ),
@@ -1467,15 +1509,17 @@ class SettingsPage extends StatelessWidget {
                     const Divider(height: 1),
                     CompactSwitchRow(
                       icon: Icons.touch_app_outlined,
-                      title: const Text('触感反馈'),
+                      title: Text(AppLocalizations.of(context).hapticsLabel),
                       value: controller.hapticsEnabled,
                       onChanged: controller.setHapticsEnabled,
                     ),
                     const Divider(height: 1),
                     SettingsRow(
                       icon: Icons.lock_outline,
-                      title: '应用锁',
-                      trailing: controller.appLockEnabled ? '已开启' : '未开启',
+                      title: AppLocalizations.of(context).appLockLabel,
+                      trailing: controller.appLockEnabled
+                          ? AppLocalizations.of(context).enabledLabel
+                          : AppLocalizations.of(context).notEnabled,
                       trailingIcon: Icons.chevron_right,
                       onTap: () {
                         Navigator.of(context).push<void>(
@@ -1488,10 +1532,12 @@ class SettingsPage extends StatelessWidget {
                     const Divider(height: 1),
                     SettingsRow(
                       icon: Icons.notifications_active_outlined,
-                      title: '记账提醒',
+                      title: AppLocalizations.of(context).reminderTitle,
                       trailing: controller.reminderSettings.enabled
-                          ? '每日 ${controller.reminderSettings.timeLabel}'
-                          : '未开启',
+                          ? AppLocalizations.of(context).reminderDailyAt(
+                              controller.reminderSettings.timeLabel,
+                            )
+                          : AppLocalizations.of(context).notEnabled,
                       trailingIcon: Icons.chevron_right,
                       onTap: () {
                         Navigator.of(context).push<void>(
@@ -1508,7 +1554,7 @@ class SettingsPage extends StatelessWidget {
               VeriCard(
                 child: SettingsRow(
                   icon: Icons.system_update_alt_outlined,
-                  title: '检查更新',
+                  title: AppLocalizations.of(context).checkUpdate,
                   trailing: 'GitHub Release',
                   trailingIcon: Icons.chevron_right,
                   onTap: () => _checkForUpdate(context),
@@ -1525,8 +1571,8 @@ class SettingsPage extends StatelessWidget {
                         icon: entry.$2 == LegalDocument.privacyPolicy
                             ? Icons.privacy_tip_outlined
                             : Icons.description_outlined,
-                        title: entry.$2.title,
-                        trailing: '查看',
+                        title: entry.$2.title(AppLocalizations.of(context)),
+                        trailing: AppLocalizations.of(context).viewLabel,
                         trailingIcon: Icons.chevron_right,
                         onTap: () {
                           Navigator.of(context).push<void>(
@@ -1565,7 +1611,7 @@ class SettingsPage extends StatelessWidget {
   ) async {
     final selected = await showOptionSheet<ThemePreference>(
       context: context,
-      title: '选择主题模式',
+      title: AppLocalizations.of(context).themePickerTitle,
       values: ThemePreference.values,
       selected: controller.themePreference,
       labelOf: (value) => value.label(AppLocalizations.of(context)),
@@ -1613,9 +1659,9 @@ class DataManagementPage extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
-              const VeriHeader(
-                title: '数据管理',
-                subtitle: '备份与恢复本地数据',
+              VeriHeader(
+                title: AppLocalizations.of(context).dataManagement,
+                subtitle: AppLocalizations.of(context).dataMgmtSubtitle,
                 showBack: true,
               ),
               const SizedBox(height: 10),
@@ -1624,16 +1670,16 @@ class DataManagementPage extends StatelessWidget {
                   children: <Widget>[
                     SettingsRow(
                       icon: Icons.download_outlined,
-                      title: '导出数据',
-                      trailing: 'JSON 备份',
+                      title: AppLocalizations.of(context).exportData,
+                      trailing: AppLocalizations.of(context).jsonBackup,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _exportData(context, controller),
                     ),
                     const Divider(),
                     SettingsRow(
                       icon: Icons.upload_file_outlined,
-                      title: '导入数据',
-                      trailing: '从文件恢复',
+                      title: AppLocalizations.of(context).importData,
+                      trailing: AppLocalizations.of(context).restoreFromFile,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _confirmImport(context, controller),
                     ),
@@ -1641,30 +1687,33 @@ class DataManagementPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              _sectionLabel(context, '从表格导入交易'),
+              _sectionLabel(
+                context,
+                AppLocalizations.of(context).importFromSheets,
+              ),
               VeriCard(
                 child: Column(
                   children: <Widget>[
                     SettingsRow(
                       icon: Icons.table_chart_outlined,
-                      title: '导入 CSV 交易',
-                      trailing: '按模板',
+                      title: AppLocalizations.of(context).importCsv,
+                      trailing: AppLocalizations.of(context).byTemplate,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _importCsv(context, controller),
                     ),
                     const Divider(),
                     SettingsRow(
                       icon: Icons.swap_horiz_outlined,
-                      title: '从其他记账软件导入',
-                      trailing: '钱迹 / 随手记',
+                      title: AppLocalizations.of(context).importFromOtherApps,
+                      trailing: AppLocalizations.of(context).otherAppsHint,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _importFromOtherApp(context, controller),
                     ),
                     const Divider(),
                     SettingsRow(
                       icon: Icons.file_download_outlined,
-                      title: '下载 CSV 模板',
-                      trailing: 'Excel 可另存为 CSV',
+                      title: AppLocalizations.of(context).downloadCsvTemplate,
+                      trailing: AppLocalizations.of(context).excelHint,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _downloadCsvTemplate(context),
                     ),
@@ -1672,24 +1721,30 @@ class DataManagementPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              _sectionLabel(context, '备份到本地目录'),
+              _sectionLabel(
+                context,
+                AppLocalizations.of(context).backupToLocalDir,
+              ),
               VeriCard(
                 child: Column(
                   children: <Widget>[
                     SettingsRow(
                       icon: Icons.folder_outlined,
-                      title: '备份目录',
+                      title: AppLocalizations.of(context).backupDirLabel,
                       trailing: controller.backupSettings.hasDirectory
                           ? controller.backupSettings.directoryLabel
-                          : '未选择',
+                          : AppLocalizations.of(context).notChosen,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _chooseBackupDirectory(context, controller),
                     ),
                     const Divider(),
                     SettingsRow(
                       icon: Icons.backup_outlined,
-                      title: '立即备份',
-                      trailing: _lastBackupLabel(controller.backupSettings),
+                      title: AppLocalizations.of(context).backupNow,
+                      trailing: _lastBackupLabel(
+                        AppLocalizations.of(context),
+                        controller.backupSettings,
+                      ),
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _backupNow(context, controller),
                     ),
@@ -1697,8 +1752,8 @@ class DataManagementPage extends StatelessWidget {
                       const Divider(),
                       SettingsRow(
                         icon: Icons.link_off,
-                        title: '清除备份目录',
-                        trailing: '停止本地备份',
+                        title: AppLocalizations.of(context).clearBackupDir,
+                        trailing: AppLocalizations.of(context).stopLocalBackup,
                         trailingIcon: Icons.chevron_right,
                         contentColor: veriExpense,
                         onTap: () => controller.clearBackupDirectory(),
@@ -1709,13 +1764,15 @@ class DataManagementPage extends StatelessWidget {
               ),
               if (controller.backupSettings.hasDirectory) ...<Widget>[
                 const SizedBox(height: 10),
-                _sectionLabel(context, '自动备份'),
+                _sectionLabel(context, AppLocalizations.of(context).autoBackup),
                 VeriCard(
                   child: Column(
                     children: <Widget>[
                       SettingsRow(
                         icon: Icons.schedule_outlined,
-                        title: '备份频率',
+                        title: AppLocalizations.of(
+                          context,
+                        ).backupFrequencyLabel,
                         trailing: controller.backupSettings.frequency.label,
                         trailingIcon: Icons.chevron_right,
                         onTap: () => _pickBackupFrequency(context, controller),
@@ -1725,9 +1782,13 @@ class DataManagementPage extends StatelessWidget {
                         const Divider(),
                         SettingsRow(
                           icon: Icons.hourglass_bottom_outlined,
-                          title: '备份间隔',
-                          trailing:
-                              '每 ${controller.backupSettings.intervalHours} 小时',
+                          title: AppLocalizations.of(
+                            context,
+                          ).backupIntervalLabel,
+                          trailing: AppLocalizations.of(context)
+                              .everyNHoursLabel(
+                                controller.backupSettings.intervalHours,
+                              ),
                           trailingIcon: Icons.chevron_right,
                           onTap: () => _pickBackupInterval(context, controller),
                         ),
@@ -1735,8 +1796,10 @@ class DataManagementPage extends StatelessWidget {
                       const Divider(),
                       SettingsRow(
                         icon: Icons.inventory_2_outlined,
-                        title: '保留份数',
-                        trailing: '最近 ${controller.backupSettings.retention} 份',
+                        title: AppLocalizations.of(context).retentionLabel,
+                        trailing: AppLocalizations.of(
+                          context,
+                        ).latestNCopies(controller.backupSettings.retention),
                         trailingIcon: Icons.chevron_right,
                         onTap: () => _pickBackupRetention(context, controller),
                       ),
@@ -1745,16 +1808,19 @@ class DataManagementPage extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 10),
-              _sectionLabel(context, '备份加密'),
+              _sectionLabel(
+                context,
+                AppLocalizations.of(context).backupEncryption,
+              ),
               VeriCard(
                 child: Column(
                   children: <Widget>[
                     SettingsRow(
                       icon: Icons.enhanced_encryption_outlined,
-                      title: '加密密钥',
+                      title: AppLocalizations.of(context).encryptionKey,
                       trailing: controller.backupEncryptionEnabled
-                          ? '已开启'
-                          : '未设置',
+                          ? AppLocalizations.of(context).enabledLabel
+                          : AppLocalizations.of(context).notSet,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _editBackupPassphrase(context, controller),
                     ),
@@ -1762,8 +1828,8 @@ class DataManagementPage extends StatelessWidget {
                       const Divider(),
                       SettingsRow(
                         icon: Icons.no_encryption_outlined,
-                        title: '清除加密密钥',
-                        trailing: '后续备份不加密',
+                        title: AppLocalizations.of(context).clearEncryptionKey,
+                        trailing: AppLocalizations.of(context).noEncryptHint,
                         trailingIcon: Icons.chevron_right,
                         contentColor: veriExpense,
                         onTap: () =>
@@ -1774,16 +1840,19 @@ class DataManagementPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              _sectionLabel(context, 'WebDAV 云备份'),
+              _sectionLabel(
+                context,
+                AppLocalizations.of(context).webdavSection,
+              ),
               VeriCard(
                 child: Column(
                   children: <Widget>[
                     SettingsRow(
                       icon: Icons.cloud_outlined,
-                      title: 'WebDAV 服务器',
+                      title: AppLocalizations.of(context).webdavServer,
                       trailing: controller.webdavConfig.isConfigured
-                          ? '已配置'
-                          : '未配置',
+                          ? AppLocalizations.of(context).configuredLabel
+                          : AppLocalizations.of(context).notConfigured,
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _editWebdav(context, controller),
                     ),
@@ -1791,31 +1860,33 @@ class DataManagementPage extends StatelessWidget {
                       const Divider(),
                       SettingsRow(
                         icon: Icons.cloud_upload_outlined,
-                        title: '上传到 WebDAV',
-                        trailing: '立即上传',
+                        title: AppLocalizations.of(context).uploadToWebdav,
+                        trailing: AppLocalizations.of(context).uploadNow,
                         trailingIcon: Icons.chevron_right,
                         onTap: () => _uploadToWebdav(context, controller),
                       ),
                       const Divider(),
                       SettingsRow(
                         icon: Icons.cloud_download_outlined,
-                        title: '从 WebDAV 恢复',
-                        trailing: '选择备份',
+                        title: AppLocalizations.of(context).restoreFromWebdav,
+                        trailing: AppLocalizations.of(context).chooseBackup,
                         trailingIcon: Icons.chevron_right,
                         onTap: () => _restoreFromWebdav(context, controller),
                       ),
                       const Divider(),
                       CompactSwitchRow(
                         icon: Icons.sync_outlined,
-                        title: const Text('自动上传到 WebDAV'),
+                        title: Text(
+                          AppLocalizations.of(context).autoUploadWebdav,
+                        ),
                         value: controller.webdavConfig.autoUpload,
                         onChanged: controller.setWebdavAutoUpload,
                       ),
                       const Divider(),
                       SettingsRow(
                         icon: Icons.cloud_off_outlined,
-                        title: '清除 WebDAV 配置',
-                        trailing: '断开连接',
+                        title: AppLocalizations.of(context).clearWebdav,
+                        trailing: AppLocalizations.of(context).disconnectLabel,
                         trailingIcon: Icons.chevron_right,
                         contentColor: veriExpense,
                         onTap: () => _confirmClearWebdav(context, controller),
@@ -1828,8 +1899,8 @@ class DataManagementPage extends StatelessWidget {
               VeriCard(
                 child: SettingsRow(
                   icon: Icons.restart_alt,
-                  title: '初始化数据',
-                  trailing: '删除所有本地数据',
+                  title: AppLocalizations.of(context).resetData,
+                  trailing: AppLocalizations.of(context).deleteAllLocal,
                   trailingIcon: Icons.chevron_right,
                   contentColor: veriExpense,
                   onTap: () => _confirmReset(context, controller),
@@ -1855,14 +1926,19 @@ class DataManagementPage extends StatelessWidget {
     );
   }
 
-  static String _lastBackupLabel(BackupSettings settings) {
+  static String _lastBackupLabel(
+    AppLocalizations l10n,
+    BackupSettings settings,
+  ) {
     final last = settings.lastBackupAt;
     if (last == null) {
-      return '尚未备份';
+      return l10n.neverBackedUp;
     }
     String two(int v) => v.toString().padLeft(2, '0');
-    return '上次 ${last.year}-${two(last.month)}-${two(last.day)} '
-        '${two(last.hour)}:${two(last.minute)}';
+    return l10n.lastBackupAt(
+      '${last.year}-${two(last.month)}-${two(last.day)} '
+      '${two(last.hour)}:${two(last.minute)}',
+    );
   }
 
   Future<void> _chooseBackupDirectory(
@@ -1875,14 +1951,22 @@ class DataManagementPage extends StatelessWidget {
         return;
       }
       controller.setBackupDirectory(picked.uri, picked.label);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('已选择备份目录：${picked.label}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).chosenBackupDir(picked.label),
+          ),
+        ),
+      );
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_backupErrorText(error))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _backupErrorText(AppLocalizations.of(context), error),
+            ),
+          ),
+        );
       }
     }
   }
@@ -1907,24 +1991,32 @@ class DataManagementPage extends StatelessWidget {
       );
       controller.recordBackupTime(now);
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('已备份：${result.filename}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).backedUpFile(result.filename),
+            ),
+          ),
+        );
       }
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_backupErrorText(error))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _backupErrorText(AppLocalizations.of(context), error),
+            ),
+          ),
+        );
       }
     }
   }
 
-  static String _backupErrorText(Object error) {
+  static String _backupErrorText(AppLocalizations l10n, Object error) {
     final message = error is Exception
         ? error.toString().replaceFirst('Exception: ', '')
-        : '备份操作失败，请稍后再试';
-    return message.isEmpty ? '备份操作失败，请稍后再试' : message;
+        : l10n.backupFailedRetry;
+    return message.isEmpty ? l10n.backupFailedRetry : message;
   }
 
   Future<void> _pickBackupFrequency(
@@ -1933,7 +2025,7 @@ class DataManagementPage extends StatelessWidget {
   ) async {
     final selected = await showOptionSheet<BackupFrequency>(
       context: context,
-      title: '选择自动备份频率',
+      title: AppLocalizations.of(context).pickBackupFrequency,
       values: BackupFrequency.values,
       selected: controller.backupSettings.frequency,
       labelOf: (value) => value.label,
@@ -1950,12 +2042,12 @@ class DataManagementPage extends StatelessWidget {
     const options = <int>[1, 3, 6, 12, 24, 48, 72];
     final selected = await showOptionSheet<int>(
       context: context,
-      title: '每隔多久备份一次',
+      title: AppLocalizations.of(context).backupIntervalTitle,
       values: options,
       selected: options.contains(controller.backupSettings.intervalHours)
           ? controller.backupSettings.intervalHours
           : 24,
-      labelOf: (value) => '每 $value 小时',
+      labelOf: (value) => AppLocalizations.of(context).everyNHoursLabel(value),
     );
     if (selected != null) {
       controller.setBackupIntervalHours(selected);
@@ -1969,12 +2061,12 @@ class DataManagementPage extends StatelessWidget {
     const options = <int>[3, 5, 10, 20, 50];
     final selected = await showOptionSheet<int>(
       context: context,
-      title: '保留最近几份备份',
+      title: AppLocalizations.of(context).retentionTitle,
       values: options,
       selected: options.contains(controller.backupSettings.retention)
           ? controller.backupSettings.retention
           : 10,
-      labelOf: (value) => '最近 $value 份',
+      labelOf: (value) => AppLocalizations.of(context).latestNCopies(value),
     );
     if (selected != null) {
       controller.setBackupRetention(selected);
@@ -2001,16 +2093,20 @@ class DataManagementPage extends StatelessWidget {
             : 'application/zip',
       );
       if (saved && context.mounted) {
-        final hint = controller.backupEncryptionEnabled ? '（已加密）' : '';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('已导出本地数据备份$hint，位置：下载目录')));
+        final hint = controller.backupEncryptionEnabled
+            ? AppLocalizations.of(context).encryptedSuffix
+            : '';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).exportedTo(hint)),
+          ),
+        );
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('导出失败，请稍后再试')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).exportFailed)),
+        );
       }
     }
   }
@@ -2070,8 +2166,8 @@ class DataManagementPage extends StatelessWidget {
       }
       final passphrase = await _promptPassphrase(
         context,
-        title: '输入备份密钥',
-        message: '该备份已加密，请输入导出时设置的密钥。',
+        title: AppLocalizations.of(context).enterBackupKeyTitle,
+        message: AppLocalizations.of(context).enterBackupKeyMessage,
         errorText: errorText,
       );
       if (passphrase == null) {
@@ -2107,7 +2203,7 @@ class DataManagementPage extends StatelessWidget {
               autofocus: true,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: '备份密钥',
+                labelText: AppLocalizations.of(context).backupKeyLabel,
                 errorText: errorText.isEmpty ? null : errorText,
               ),
             ),
@@ -2116,11 +2212,11 @@ class DataManagementPage extends StatelessWidget {
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('确定'),
+            child: Text(AppLocalizations.of(context).okLabel),
           ),
         ],
       ),
@@ -2140,25 +2236,31 @@ class DataManagementPage extends StatelessWidget {
         String? errorText;
         return StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            title: Text(isChange ? '修改加密密钥' : '设置加密密钥'),
+            title: Text(
+              isChange
+                  ? AppLocalizations.of(context).changeKeyTitle
+                  : AppLocalizations.of(context).setKeyTitle,
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text('设置后，导出与备份文件会用该密钥加密；导入时需要输入相同密钥。密钥仅存于本机，忘记只能清除后重设。'),
+                Text(AppLocalizations.of(context).setKeyMessage),
                 const SizedBox(height: 12),
                 TextField(
                   controller: keyController,
                   autofocus: true,
                   obscureText: true,
-                  decoration: const InputDecoration(labelText: '密钥（至少 4 位）'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).keyMinLabel,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: confirmController,
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: '再次输入密钥',
+                    labelText: AppLocalizations.of(context).keyRepeatLabel,
                     errorText: errorText,
                   ),
                 ),
@@ -2167,22 +2269,28 @@ class DataManagementPage extends StatelessWidget {
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('取消'),
+                child: Text(AppLocalizations.of(context).commonCancel),
               ),
               FilledButton(
                 onPressed: () {
                   final key = keyController.text;
                   if (key.length < 4) {
-                    setState(() => errorText = '密钥至少 4 位');
+                    setState(
+                      () =>
+                          errorText = AppLocalizations.of(context).keyTooShort,
+                    );
                     return;
                   }
                   if (key != confirmController.text) {
-                    setState(() => errorText = '两次输入不一致');
+                    setState(
+                      () =>
+                          errorText = AppLocalizations.of(context).keyMismatch,
+                    );
                     return;
                   }
                   Navigator.of(context).pop(key);
                 },
-                child: const Text('保存'),
+                child: Text(AppLocalizations.of(context).commonSave),
               ),
             ],
           ),
@@ -2192,9 +2300,9 @@ class DataManagementPage extends StatelessWidget {
     if (result != null && result.isNotEmpty) {
       controller.setBackupPassphrase(result);
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('已设置备份加密密钥')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).keySet)),
+        );
       }
     }
   }
@@ -2206,17 +2314,17 @@ class DataManagementPage extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('清除加密密钥？'),
-        content: const Text('清除后新的导出与备份将不再加密。已经用旧密钥加密的备份文件，导入时仍需输入当时的密钥。'),
+        title: Text(AppLocalizations.of(context).clearKeyTitle),
+        content: Text(AppLocalizations.of(context).clearKeyMessage),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: veriExpense),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('清除'),
+            child: Text(AppLocalizations.of(context).clearLabel),
           ),
         ],
       ),
@@ -2248,7 +2356,7 @@ class DataManagementPage extends StatelessWidget {
         var testing = false;
         return StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            title: const Text('WebDAV 服务器'),
+            title: Text(AppLocalizations.of(context).webdavServer),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -2258,21 +2366,25 @@ class DataManagementPage extends StatelessWidget {
                     controller: urlController,
                     autofocus: true,
                     keyboardType: TextInputType.url,
-                    decoration: const InputDecoration(
-                      labelText: '服务器目录地址',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).webdavUrlLabel,
                       hintText: 'https://dav.example.com/verifin/',
                     ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: userController,
-                    decoration: const InputDecoration(labelText: '账号'),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).webdavUserLabel,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: passController,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: '密码'),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).webdavPassLabel,
+                    ),
                   ),
                   if (statusText != null) ...<Widget>[
                     const SizedBox(height: 10),
@@ -2287,7 +2399,7 @@ class DataManagementPage extends StatelessWidget {
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('取消'),
+                child: Text(AppLocalizations.of(context).commonCancel),
               ),
               TextButton(
                 onPressed: testing || urlController.text.trim().isEmpty
@@ -2295,28 +2407,42 @@ class DataManagementPage extends StatelessWidget {
                     : () async {
                         setState(() {
                           testing = true;
-                          statusText = '正在测试连接...';
+                          statusText = AppLocalizations.of(
+                            context,
+                          ).testingConnection;
                         });
                         try {
                           await webdavTestConnection(current());
-                          setState(() => statusText = '连接成功');
+                          setState(
+                            () => statusText = AppLocalizations.of(
+                              context,
+                            ).connectionOk,
+                          );
                         } catch (error) {
-                          setState(() => statusText = '连接失败：$error');
+                          setState(
+                            () => statusText = AppLocalizations.of(
+                              context,
+                            ).connectionFailed('$error'),
+                          );
                         } finally {
                           setState(() => testing = false);
                         }
                       },
-                child: const Text('测试连接'),
+                child: Text(AppLocalizations.of(context).testConnection),
               ),
               FilledButton(
                 onPressed: () {
                   if (urlController.text.trim().isEmpty) {
-                    setState(() => statusText = '请填写服务器地址');
+                    setState(
+                      () => statusText = AppLocalizations.of(
+                        context,
+                      ).fillServerUrl,
+                    );
                     return;
                   }
                   Navigator.of(context).pop(current());
                 },
-                child: const Text('保存'),
+                child: Text(AppLocalizations.of(context).commonSave),
               ),
             ],
           ),
@@ -2326,9 +2452,9 @@ class DataManagementPage extends StatelessWidget {
     if (saved != null && saved.isConfigured) {
       controller.setWebdavConfig(saved);
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('已保存 WebDAV 配置')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).webdavSaved)),
+        );
       }
     }
   }
@@ -2338,7 +2464,10 @@ class DataManagementPage extends StatelessWidget {
     VeriFinController controller,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(const SnackBar(content: Text('正在上传到 WebDAV...')));
+    final l10n = AppLocalizations.of(context);
+    messenger.showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).uploadingWebdav)),
+    );
     try {
       final now = DateTime.now();
       final prepared = await BackupService.prepare(
@@ -2354,10 +2483,12 @@ class DataManagementPage extends StatelessWidget {
       );
       controller.recordBackupTime(now);
       messenger.showSnackBar(
-        SnackBar(content: Text('已上传：${prepared.filename}')),
+        SnackBar(content: Text(l10n.uploadedFile(prepared.filename))),
       );
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text('上传失败：$error')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.uploadFailed('$error'))),
+      );
     }
   }
 
@@ -2366,18 +2497,23 @@ class DataManagementPage extends StatelessWidget {
     VeriFinController controller,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
     List<WebdavRemoteFile> files;
     try {
       files = await webdavList(controller.webdavConfig);
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text('读取失败：$error')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.readFailed('$error'))),
+      );
       return;
     }
     if (!context.mounted) {
       return;
     }
     if (files.isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('WebDAV 上没有找到备份文件')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).noWebdavBackups)),
+      );
       return;
     }
     files.sort((a, b) {
@@ -2399,7 +2535,7 @@ class DataManagementPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                '选择要恢复的备份',
+                AppLocalizations.of(context).chooseRestoreBackup,
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -2424,16 +2560,18 @@ class DataManagementPage extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('从此备份恢复？'),
-        content: Text('将用「${chosen.name}」替换当前本地数据，建议先备份当前数据。'),
+        title: Text(AppLocalizations.of(context).restoreFromThisTitle),
+        content: Text(
+          AppLocalizations.of(context).restoreFromThisMessage(chosen.name),
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('恢复'),
+            child: Text(AppLocalizations.of(context).restoreLabel),
           ),
         ],
       ),
@@ -2448,14 +2586,18 @@ class DataManagementPage extends StatelessWidget {
       }
       final imported = await _importBackupBytes(context, controller, bytes);
       if (imported && context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('已从 WebDAV 恢复数据')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).restoredFromWebdav),
+          ),
+        );
       }
     } on FormatException {
-      messenger.showSnackBar(const SnackBar(content: Text('恢复失败：备份文件格式不正确')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.restoreFailedFormat)));
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text('恢复失败：$error')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.restoreFailedError('$error'))),
+      );
     }
   }
 
@@ -2466,17 +2608,17 @@ class DataManagementPage extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('清除 WebDAV 配置？'),
-        content: const Text('清除后将停止自动上传，服务器上已有的备份文件不会被删除。'),
+        title: Text(AppLocalizations.of(context).clearWebdavTitle),
+        content: Text(AppLocalizations.of(context).clearWebdavMessage),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: veriExpense),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('清除'),
+            child: Text(AppLocalizations.of(context).clearLabel),
           ),
         ],
       ),
@@ -2494,15 +2636,19 @@ class DataManagementPage extends StatelessWidget {
         mimeType: 'text/csv',
       );
       if (saved && context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('已保存 CSV 模板，位置：下载目录')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).csvTemplateSaved),
+          ),
+        );
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('保存模板失败，请稍后再试')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).csvTemplateSaveFailed),
+          ),
+        );
       }
     }
   }
@@ -2511,10 +2657,8 @@ class DataManagementPage extends StatelessWidget {
     return _runCsvImport(
       context,
       controller,
-      title: '导入 CSV 交易？',
-      message:
-          '将按模板列（日期、类型、金额、分类、账户、转入账户、备注）把交易追加到当前账本；'
-          '匹配不到的账户和分类会按名称自动新建。不会删除现有数据。',
+      title: AppLocalizations.of(context).importCsvTitle,
+      message: AppLocalizations.of(context).importCsvMessage,
     );
   }
 
@@ -2525,10 +2669,8 @@ class DataManagementPage extends StatelessWidget {
     return _runCsvImport(
       context,
       controller,
-      title: '从其他记账软件导入？',
-      message:
-          '支持钱迹、随手记等导出的 CSV（其他表格若含 日期/类型/金额/账户 列也可尝试）。'
-          '会自动识别来源并把交易追加到当前账本，匹配不到的账户与分类按名称新建，不删除现有数据。',
+      title: AppLocalizations.of(context).importOtherTitle,
+      message: AppLocalizations.of(context).importOtherMessage,
     );
   }
 
@@ -2546,11 +2688,11 @@ class DataManagementPage extends StatelessWidget {
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('选择文件'),
+            child: Text(AppLocalizations.of(context).chooseFile),
           ),
         ],
       ),
@@ -2576,12 +2718,16 @@ class DataManagementPage extends StatelessWidget {
       }
       final sourceHint =
           plan.source != null && plan.source != ImportSource.veriFin
-          ? '（识别为${plan.source!.label}）'
+          ? AppLocalizations.of(context).recognizedAs(plan.source!.label)
           : '';
-      final suffix = plan.errorCount > 0 ? '，${plan.errorCount} 行跳过' : '';
+      final suffix = plan.errorCount > 0
+          ? AppLocalizations.of(context).skippedRows(plan.errorCount)
+          : '';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('已导入 ${plan.importedCount} 笔交易$sourceHint$suffix'),
+          content: Text(
+            '${AppLocalizations.of(context).importedEntries(plan.importedCount)}$sourceHint$suffix',
+          ),
         ),
       );
       if (plan.errorCount > 0) {
@@ -2589,15 +2735,23 @@ class DataManagementPage extends StatelessWidget {
       }
     } on FormatException catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('导入失败：${error.message}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                context,
+              ).importFailedWithMessage(error.message),
+            ),
+          ),
+        );
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('导入失败，请检查文件后重试')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).importFailedCheckFile),
+          ),
+        );
       }
     }
   }
@@ -2605,22 +2759,28 @@ class DataManagementPage extends StatelessWidget {
   Future<void> _showImportResult(BuildContext context, ImportPlan plan) {
     final lines = plan.errors
         .take(10)
-        .map((e) => '第 ${e.line} 行：${e.message}')
+        .map((e) => AppLocalizations.of(context).lineError(e.line, e.message))
         .join('\n');
-    final more = plan.errorCount > 10 ? '\n… 其余 ${plan.errorCount - 10} 行' : '';
+    final more = plan.errorCount > 10
+        ? AppLocalizations.of(context).moreLines(plan.errorCount - 10)
+        : '';
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('导入完成（成功 ${plan.importedCount} 笔）'),
+        title: Text(
+          AppLocalizations.of(context).importDoneTitle(plan.importedCount),
+        ),
         content: SingleChildScrollView(
           child: Text(
-            plan.errorCount == 0 ? '全部导入成功。' : '以下行被跳过：\n$lines$more',
+            plan.errorCount == 0
+                ? AppLocalizations.of(context).allImported
+                : AppLocalizations.of(context).skippedFollowing('$lines$more'),
           ),
         ),
         actions: <Widget>[
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('知道了'),
+            child: Text(AppLocalizations.of(context).gotIt),
           ),
         ],
       ),
@@ -2634,16 +2794,16 @@ class DataManagementPage extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('导入本地备份？'),
-        content: const Text('导入会替换当前本地交易、账户、账本、预算、个人信息和设置。建议先导出当前数据。'),
+        title: Text(AppLocalizations.of(context).importLocalTitle),
+        content: Text(AppLocalizations.of(context).importLocalMessage),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('选择文件'),
+            child: Text(AppLocalizations.of(context).chooseFile),
           ),
         ],
       ),
@@ -2662,21 +2822,25 @@ class DataManagementPage extends StatelessWidget {
       }
       final imported = await _importBackupBytes(context, controller, bytes);
       if (imported && context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('已导入本地数据')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).importedLocal)),
+        );
       }
     } on FormatException {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('导入失败：备份文件格式不正确')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).importFailedFormat),
+          ),
+        );
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('导入失败，请检查文件后重试')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).importFailedCheckFile),
+          ),
+        );
       }
     }
   }
@@ -2688,17 +2852,17 @@ class DataManagementPage extends StatelessWidget {
     final firstConfirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('初始化所有数据？'),
-        content: const Text('这会删除本地交易、账户、账本、预算、个人信息和主题偏好，操作无法恢复。'),
+        title: Text(AppLocalizations.of(context).resetAllTitle),
+        content: Text(AppLocalizations.of(context).resetAllMessage),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: veriExpense),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('继续'),
+            child: Text(AppLocalizations.of(context).continueLabel),
           ),
         ],
       ),
@@ -2710,17 +2874,17 @@ class DataManagementPage extends StatelessWidget {
     final secondConfirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('再次确认初始化'),
-        content: const Text('确认后会立即清空所有本地数据，并恢复默认状态。此操作不能撤销。'),
+        title: Text(AppLocalizations.of(context).resetConfirmTitle),
+        content: Text(AppLocalizations.of(context).resetConfirmMessage),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: veriExpense),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('确认初始化'),
+            child: Text(AppLocalizations.of(context).resetConfirmAction),
           ),
         ],
       ),
@@ -2785,35 +2949,41 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
     final hasUpdate = result?.status == UpdateCheckStatus.available;
 
     return AlertDialog(
-      title: const Text('检查更新'),
+      title: Text(AppLocalizations.of(context).checkUpdate),
       content: SizedBox(
         width: 360,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            _VersionInfoRow(label: '当前版本', value: appVersionLabel),
+            _VersionInfoRow(
+              label: AppLocalizations.of(context).currentVersion,
+              value: appVersionLabel,
+            ),
             const SizedBox(height: 8),
             _VersionInfoRow(
-              label: '最新版本',
-              value: _checking ? '检查中...' : _displayVersion(result),
+              label: AppLocalizations.of(context).latestVersion,
+              value: _checking
+                  ? AppLocalizations.of(context).checkingLabel
+                  : _displayVersion(result),
             ),
             const SizedBox(height: 14),
             if (_checking)
-              const Row(
+              Row(
                 children: <Widget>[
-                  SizedBox(
+                  const SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  SizedBox(width: 10),
-                  Text('正在查询 GitHub Release...'),
+                  const SizedBox(width: 10),
+                  Text(AppLocalizations.of(context).queryingGithub),
                 ],
               )
             else
               Text(
-                result?.message ?? '检查更新失败，请稍后再试。',
+                result?.message ??
+                    AppLocalizations.of(context).updateCheckFailed,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(
                     context,
@@ -2834,7 +3004,11 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        knownSize ? '下载中 ${progress.percent}%' : '正在下载...',
+                        knownSize
+                            ? AppLocalizations.of(
+                                context,
+                              ).downloadingPercent(progress.percent)
+                            : AppLocalizations.of(context).downloadingLabel,
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
@@ -2849,17 +3023,21 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
       actions: <Widget>[
         TextButton(
           onPressed: _downloading ? null : () => Navigator.of(context).pop(),
-          child: const Text('关闭'),
+          child: Text(AppLocalizations.of(context).closeLabel),
         ),
         if (!_checking && result?.status == UpdateCheckStatus.error)
           TextButton(
             onPressed: _downloading ? null : _check,
-            child: const Text('重试'),
+            child: Text(AppLocalizations.of(context).retryLabel),
           ),
         if (hasUpdate)
           FilledButton(
             onPressed: _downloading ? null : _download,
-            child: Text(_downloading ? '下载中' : '下载新版本'),
+            child: Text(
+              _downloading
+                  ? AppLocalizations.of(context).downloadingShort
+                  : AppLocalizations.of(context).downloadNewVersion,
+            ),
           ),
       ],
     );

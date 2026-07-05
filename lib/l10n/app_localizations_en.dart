@@ -1444,4 +1444,833 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bookkeepingYears => 'Years tracked';
+
+  @override
+  String get reminderPickTime => 'Choose reminder time';
+
+  @override
+  String get reminderTitle => 'Daily reminder';
+
+  @override
+  String get reminderDaily => 'Daily reminder';
+
+  @override
+  String get reminderTimeLabel => 'Reminder time';
+
+  @override
+  String get reminderDescSupported =>
+      'When enabled, a local notification arrives daily at the set time to remind you to record the day\'s spending. If it stops appearing, check that notifications are allowed in system settings.';
+
+  @override
+  String get reminderDescUnsupported =>
+      'Local notifications aren\'t supported on this platform; this setting only works on Android / iOS phones.';
+
+  @override
+  String reminderDailyAt(String time) {
+    return 'Daily $time';
+  }
+
+  @override
+  String get recurringTitle => 'Recurring';
+
+  @override
+  String get recurringSubtitle =>
+      'Due entries are recorded automatically when the app opens';
+
+  @override
+  String get recurringAddTooltip => 'New rule';
+
+  @override
+  String get recurringEmpty =>
+      'No recurring rules yet. Tap + at top right to add one,\ne.g. monthly rent or salary.';
+
+  @override
+  String nextRun(String date) {
+    return 'Next $date';
+  }
+
+  @override
+  String get recurringNewTitle => 'New recurring rule';
+
+  @override
+  String get recurringEditTitle => 'Edit recurring rule';
+
+  @override
+  String get recurringDeleteTooltip => 'Delete rule';
+
+  @override
+  String get tapToFill => 'Tap to set';
+
+  @override
+  String get addAccountFirst => 'Add an account first';
+
+  @override
+  String get frequencyLabel => 'Frequency';
+
+  @override
+  String get startDateLabel => 'Start date';
+
+  @override
+  String get pickFrequencyTitle => 'Choose frequency';
+
+  @override
+  String get skipLabel => 'Skip';
+
+  @override
+  String get startBookkeeping => 'Start';
+
+  @override
+  String get nextStep => 'Next';
+
+  @override
+  String get onboardWelcomeTitle => 'Welcome to Veri Fin';
+
+  @override
+  String get onboardWelcomeDesc =>
+      'A completely free, local-first budgeting app where your data stays yours.\n\nYour records live only on this device and are never uploaded; you can export a JSON backup anytime or encrypt and upload it to your own WebDAV.\n\nA few quick steps will get you started.';
+
+  @override
+  String get onboardAccountTitle => 'Create your first account';
+
+  @override
+  String get onboardAccountDesc =>
+      'Accounts are the basis of bookkeeping, e.g. \"Cash\" or \"Salary card\". Just enter a name and current balance — you can also add accounts later on the Assets page.';
+
+  @override
+  String get onboardAccountNameLabel => 'Account name (optional)';
+
+  @override
+  String get onboardAccountNameHint => 'e.g. Cash / Salary card';
+
+  @override
+  String get onboardBalanceLabel => 'Current balance (optional)';
+
+  @override
+  String get onboardBudgetDesc =>
+      'With a monthly budget set, Home and Reports show budget progress to help control spending. Leave blank to skip; you can change it anytime from the budget card on Home.';
+
+  @override
+  String get onboardBudgetLabel => 'This month\'s budget (optional)';
+
+  @override
+  String get onboardBudgetHint => 'e.g. 3000';
+
+  @override
+  String get onboardDoneTitle => 'All set';
+
+  @override
+  String get onboardDoneDesc =>
+      'Tap the + button at the bottom right of Home to record an entry.\n\nOn the Me page you can manage ledgers, categories, tags and recurring entries, view analytics, and set reminders and backups.\n\nHappy budgeting!';
+
+  @override
+  String legalUpdated(String date) {
+    return 'Updated: $date';
+  }
+
+  @override
+  String get privacyAndTerms => 'Privacy Policy & Terms';
+
+  @override
+  String get agreeContinue => 'Agree and continue';
+
+  @override
+  String get disagreeExit => 'Disagree and exit';
+
+  @override
+  String get legalPrivacyPolicy => 'Privacy Policy';
+
+  @override
+  String get legalUserAgreement => 'Terms of Service';
+
+  @override
+  String get profileCenterSubtitle => 'Profile';
+
+  @override
+  String get settingsTooltip => 'Settings';
+
+  @override
+  String get entryCountStat => 'Transactions';
+
+  @override
+  String get bookkeepingMgmt => 'Bookkeeping';
+
+  @override
+  String get ledgerLabel => 'Ledgers';
+
+  @override
+  String get categoryMgmt => 'Categories';
+
+  @override
+  String get tagMgmt => 'Tags';
+
+  @override
+  String countRules(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String get dataAndTools => 'Data & tools';
+
+  @override
+  String get reportShort => 'Reports';
+
+  @override
+  String get notEnabled => 'Off';
+
+  @override
+  String get dataManagement => 'Data management';
+
+  @override
+  String get backupRestoreShort => 'Backup / restore';
+
+  @override
+  String currentBookLabel(String name) {
+    return 'Current: $name';
+  }
+
+  @override
+  String get bookAdd => 'New ledger';
+
+  @override
+  String get bookNameLabel => 'Ledger name';
+
+  @override
+  String get defaultBookLabel => 'Default ledger';
+
+  @override
+  String get bookActions => 'Ledger actions';
+
+  @override
+  String get defaultBookUndeletable => 'Default ledger can\'t be deleted';
+
+  @override
+  String get bookRenameTitle => 'Rename ledger';
+
+  @override
+  String get bookDeleteTitle => 'Delete ledger?';
+
+  @override
+  String bookDeleteMessage(String name) {
+    return 'Ledger \"$name\" and its transactions will be deleted. This cannot be undone.';
+  }
+
+  @override
+  String get categoryMgmtSubtitle =>
+      'Multi-level categories for entries and statistics';
+
+  @override
+  String get addTopCategory => 'New top-level category';
+
+  @override
+  String addCategoryTitle(String type) {
+    return 'New $type category';
+  }
+
+  @override
+  String addSubCategoryTitle(String parent) {
+    return 'New subcategory under \"$parent\"';
+  }
+
+  @override
+  String get categoryNameLabel => 'Category name';
+
+  @override
+  String get changeIcon => 'Change icon';
+
+  @override
+  String get addSubCategory => 'New subcategory';
+
+  @override
+  String get moveTo => 'Move to…';
+
+  @override
+  String get deleteCategory => 'Delete category';
+
+  @override
+  String get noMoveTarget => 'No available destination';
+
+  @override
+  String moveCategoryTitle(String name) {
+    return 'Move \"$name\" to';
+  }
+
+  @override
+  String get topCategory => 'Top level';
+
+  @override
+  String get cannotMoveHere => 'Can\'t move the category here';
+
+  @override
+  String get renameCategoryTitle => 'Rename category';
+
+  @override
+  String get pickIconTitle => 'Choose icon';
+
+  @override
+  String get systemCategoryUndeletable => 'System categories can\'t be deleted';
+
+  @override
+  String categoryInUse(int count) {
+    return '$count transactions use this category; it can\'t be deleted';
+  }
+
+  @override
+  String get moveSubFirst => 'Move or delete its subcategories first';
+
+  @override
+  String get keepOneCategory => 'Keep at least one category';
+
+  @override
+  String get deleteCategoryTitle => 'Delete category?';
+
+  @override
+  String deleteCategoryMessage(String name) {
+    return 'Category \"$name\" cannot be restored once deleted.';
+  }
+
+  @override
+  String get categoryUndeletable => 'This category can\'t be deleted right now';
+
+  @override
+  String catSubChildren(String type, int children, int count) {
+    return '$type · $children subcategories · $count entries';
+  }
+
+  @override
+  String catSubPlain(String type, int count) {
+    return '$type · $count transactions';
+  }
+
+  @override
+  String get tagMgmtSubtitle => 'Add multiple tags to entries';
+
+  @override
+  String get tagAdd => 'New tag';
+
+  @override
+  String get tagsEmpty => 'No tags yet; tap + at top right';
+
+  @override
+  String get deleteTag => 'Delete tag';
+
+  @override
+  String get tagRenameTitle => 'Rename tag';
+
+  @override
+  String get tagDeleteTitle => 'Delete tag?';
+
+  @override
+  String tagDeleteInUse(String name, int count) {
+    return 'Tag \"$name\" is used by $count transactions; deleting removes it from them.';
+  }
+
+  @override
+  String tagDeleteMessage(String name) {
+    return 'Tag \"$name\" cannot be restored once deleted.';
+  }
+
+  @override
+  String get personalInfo => 'Personal info';
+
+  @override
+  String get nicknameLabel => 'Nickname';
+
+  @override
+  String get bioLabel => 'Bio';
+
+  @override
+  String get genderLabel => 'Gender';
+
+  @override
+  String get birthdayLabel => 'Birthday';
+
+  @override
+  String get cityLabel => 'City';
+
+  @override
+  String get occupationLabel => 'Occupation';
+
+  @override
+  String get pickGenderTitle => 'Choose gender';
+
+  @override
+  String get cropAvatarTitle => 'Crop avatar';
+
+  @override
+  String get avatarGenerating => 'Generating avatar…';
+
+  @override
+  String get profileDefaultBio => 'Completely free · Own your data';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get themeMode => 'Theme';
+
+  @override
+  String get hapticsLabel => 'Haptic feedback';
+
+  @override
+  String get appLockLabel => 'App lock';
+
+  @override
+  String get enabledLabel => 'On';
+
+  @override
+  String get checkUpdate => 'Check for updates';
+
+  @override
+  String get viewLabel => 'View';
+
+  @override
+  String get themePickerTitle => 'Choose theme';
+
+  @override
+  String get dataMgmtSubtitle => 'Back up and restore local data';
+
+  @override
+  String get exportData => 'Export data';
+
+  @override
+  String get jsonBackup => 'JSON backup';
+
+  @override
+  String get importData => 'Import data';
+
+  @override
+  String get restoreFromFile => 'Restore from file';
+
+  @override
+  String get importFromSheets => 'Import from spreadsheets';
+
+  @override
+  String get importCsv => 'Import CSV transactions';
+
+  @override
+  String get byTemplate => 'Template format';
+
+  @override
+  String get importFromOtherApps => 'Import from other apps';
+
+  @override
+  String get otherAppsHint => 'Qianji / Suishouji';
+
+  @override
+  String get downloadCsvTemplate => 'Download CSV template';
+
+  @override
+  String get excelHint => 'Excel can save as CSV';
+
+  @override
+  String get backupToLocalDir => 'Back up to local folder';
+
+  @override
+  String get backupDirLabel => 'Backup folder';
+
+  @override
+  String get notChosen => 'Not chosen';
+
+  @override
+  String get backupNow => 'Back up now';
+
+  @override
+  String get clearBackupDir => 'Clear backup folder';
+
+  @override
+  String get stopLocalBackup => 'Stops local backups';
+
+  @override
+  String get autoBackup => 'Auto backup';
+
+  @override
+  String get backupFrequencyLabel => 'Backup frequency';
+
+  @override
+  String get backupIntervalLabel => 'Backup interval';
+
+  @override
+  String everyNHoursLabel(int n) {
+    return 'Every $n hours';
+  }
+
+  @override
+  String get retentionLabel => 'Copies to keep';
+
+  @override
+  String latestNCopies(int n) {
+    return 'Latest $n';
+  }
+
+  @override
+  String get backupEncryption => 'Backup encryption';
+
+  @override
+  String get encryptionKey => 'Encryption key';
+
+  @override
+  String get clearEncryptionKey => 'Clear encryption key';
+
+  @override
+  String get noEncryptHint => 'Future backups unencrypted';
+
+  @override
+  String get webdavSection => 'WebDAV cloud backup';
+
+  @override
+  String get webdavServer => 'WebDAV server';
+
+  @override
+  String get configuredLabel => 'Configured';
+
+  @override
+  String get notConfigured => 'Not configured';
+
+  @override
+  String get uploadToWebdav => 'Upload to WebDAV';
+
+  @override
+  String get uploadNow => 'Upload now';
+
+  @override
+  String get restoreFromWebdav => 'Restore from WebDAV';
+
+  @override
+  String get chooseBackup => 'Choose backup';
+
+  @override
+  String get autoUploadWebdav => 'Auto-upload to WebDAV';
+
+  @override
+  String get clearWebdav => 'Clear WebDAV config';
+
+  @override
+  String get disconnectLabel => 'Disconnect';
+
+  @override
+  String get resetData => 'Reset data';
+
+  @override
+  String get deleteAllLocal => 'Deletes all local data';
+
+  @override
+  String get neverBackedUp => 'Never backed up';
+
+  @override
+  String lastBackupAt(String time) {
+    return 'Last $time';
+  }
+
+  @override
+  String chosenBackupDir(String label) {
+    return 'Backup folder selected: $label';
+  }
+
+  @override
+  String backedUpFile(String name) {
+    return 'Backed up: $name';
+  }
+
+  @override
+  String get backupFailedRetry => 'Backup failed; please try again later';
+
+  @override
+  String get pickBackupFrequency => 'Choose auto-backup frequency';
+
+  @override
+  String get backupIntervalTitle => 'How often to back up';
+
+  @override
+  String get retentionTitle => 'How many backups to keep';
+
+  @override
+  String get encryptedSuffix => ' (encrypted)';
+
+  @override
+  String exportedTo(String hint) {
+    return 'Exported local backup$hint to the Downloads folder';
+  }
+
+  @override
+  String get exportFailed => 'Export failed; please try again later';
+
+  @override
+  String get enterBackupKeyTitle => 'Enter backup key';
+
+  @override
+  String get enterBackupKeyMessage =>
+      'This backup is encrypted; enter the key set when it was exported.';
+
+  @override
+  String get backupKeyLabel => 'Backup key';
+
+  @override
+  String get changeKeyTitle => 'Change encryption key';
+
+  @override
+  String get setKeyTitle => 'Set encryption key';
+
+  @override
+  String get setKeyMessage =>
+      'Exports and backups will be encrypted with this key; the same key is required to import. The key is stored only on this device — if forgotten, it can only be cleared and reset.';
+
+  @override
+  String get keyMinLabel => 'Key (at least 4 characters)';
+
+  @override
+  String get keyRepeatLabel => 'Repeat key';
+
+  @override
+  String get keyTooShort => 'Key must be at least 4 characters';
+
+  @override
+  String get keyMismatch => 'Keys don\'t match';
+
+  @override
+  String get keySet => 'Backup encryption key set';
+
+  @override
+  String get clearKeyTitle => 'Clear encryption key?';
+
+  @override
+  String get clearKeyMessage =>
+      'New exports and backups will no longer be encrypted. Backups already encrypted with the old key still require it when importing.';
+
+  @override
+  String get clearLabel => 'Clear';
+
+  @override
+  String get webdavUrlLabel => 'Server folder URL';
+
+  @override
+  String get webdavUserLabel => 'Username';
+
+  @override
+  String get webdavPassLabel => 'Password';
+
+  @override
+  String get testingConnection => 'Testing connection…';
+
+  @override
+  String get connectionOk => 'Connection OK';
+
+  @override
+  String connectionFailed(String error) {
+    return 'Connection failed: $error';
+  }
+
+  @override
+  String get testConnection => 'Test connection';
+
+  @override
+  String get fillServerUrl => 'Enter the server URL';
+
+  @override
+  String get webdavSaved => 'WebDAV config saved';
+
+  @override
+  String get uploadingWebdav => 'Uploading to WebDAV…';
+
+  @override
+  String uploadedFile(String name) {
+    return 'Uploaded: $name';
+  }
+
+  @override
+  String uploadFailed(String error) {
+    return 'Upload failed: $error';
+  }
+
+  @override
+  String readFailed(String error) {
+    return 'Read failed: $error';
+  }
+
+  @override
+  String get noWebdavBackups => 'No backups found on WebDAV';
+
+  @override
+  String get chooseRestoreBackup => 'Choose a backup to restore';
+
+  @override
+  String get restoreFromThisTitle => 'Restore from this backup?';
+
+  @override
+  String restoreFromThisMessage(String name) {
+    return '\"$name\" will replace the current local data. Consider backing up first.';
+  }
+
+  @override
+  String get restoreLabel => 'Restore';
+
+  @override
+  String get restoredFromWebdav => 'Data restored from WebDAV';
+
+  @override
+  String get restoreFailedFormat => 'Restore failed: invalid backup format';
+
+  @override
+  String restoreFailedError(String error) {
+    return 'Restore failed: $error';
+  }
+
+  @override
+  String get clearWebdavTitle => 'Clear WebDAV config?';
+
+  @override
+  String get clearWebdavMessage =>
+      'Auto-upload will stop; backups already on the server are not deleted.';
+
+  @override
+  String get csvTemplateSaved => 'CSV template saved to the Downloads folder';
+
+  @override
+  String get csvTemplateSaveFailed =>
+      'Failed to save the template; try again later';
+
+  @override
+  String get importCsvTitle => 'Import CSV transactions?';
+
+  @override
+  String get importCsvMessage =>
+      'Transactions are appended to the current ledger using the template columns (date, type, amount, category, account, to-account, note); unmatched accounts and categories are created by name. Existing data is not deleted.';
+
+  @override
+  String get importOtherTitle => 'Import from another app?';
+
+  @override
+  String get importOtherMessage =>
+      'Supports CSV exports from Qianji, Suishouji and similar apps (other sheets with date/type/amount/account columns may also work). The source is detected automatically and transactions are appended to the current ledger; unmatched accounts and categories are created by name. Existing data is not deleted.';
+
+  @override
+  String get chooseFile => 'Choose file';
+
+  @override
+  String recognizedAs(String source) {
+    return ' (detected: $source)';
+  }
+
+  @override
+  String importedEntries(int count) {
+    return 'Imported $count transactions';
+  }
+
+  @override
+  String skippedRows(int count) {
+    return ', $count rows skipped';
+  }
+
+  @override
+  String importFailedWithMessage(String message) {
+    return 'Import failed: $message';
+  }
+
+  @override
+  String get importFailedCheckFile => 'Import failed; check the file and retry';
+
+  @override
+  String lineError(int line, String message) {
+    return 'Line $line: $message';
+  }
+
+  @override
+  String moreLines(int count) {
+    return '\n… $count more rows';
+  }
+
+  @override
+  String importDoneTitle(int count) {
+    return 'Import finished ($count succeeded)';
+  }
+
+  @override
+  String get allImported => 'All rows imported.';
+
+  @override
+  String skippedFollowing(String lines) {
+    return 'These rows were skipped:\n$lines';
+  }
+
+  @override
+  String get gotIt => 'Got it';
+
+  @override
+  String get importLocalTitle => 'Import local backup?';
+
+  @override
+  String get importLocalMessage =>
+      'Importing replaces current local transactions, accounts, ledgers, budgets, profile and settings. Consider exporting current data first.';
+
+  @override
+  String get importedLocal => 'Local data imported';
+
+  @override
+  String get importFailedFormat => 'Import failed: invalid backup format';
+
+  @override
+  String get resetAllTitle => 'Reset all data?';
+
+  @override
+  String get resetAllMessage =>
+      'This deletes local transactions, accounts, ledgers, budgets, profile and theme preference. It cannot be undone.';
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get resetConfirmTitle => 'Confirm reset';
+
+  @override
+  String get resetConfirmMessage =>
+      'Confirming immediately clears all local data and restores defaults. This cannot be undone.';
+
+  @override
+  String get resetConfirmAction => 'Confirm reset';
+
+  @override
+  String get currentVersion => 'Current version';
+
+  @override
+  String get latestVersion => 'Latest version';
+
+  @override
+  String get checkingLabel => 'Checking…';
+
+  @override
+  String get queryingGithub => 'Querying GitHub Releases…';
+
+  @override
+  String get updateCheckFailed => 'Update check failed; try again later.';
+
+  @override
+  String downloadingPercent(int percent) {
+    return 'Downloading $percent%';
+  }
+
+  @override
+  String get downloadingLabel => 'Downloading…';
+
+  @override
+  String get closeLabel => 'Close';
+
+  @override
+  String get retryLabel => 'Retry';
+
+  @override
+  String get downloadingShort => 'Downloading';
+
+  @override
+  String get downloadNewVersion => 'Download update';
+
+  @override
+  String get backupFreqManual => 'Manual only';
+
+  @override
+  String get backupFreqOnOpen => 'On app open';
+
+  @override
+  String get backupFreqOnEntry => 'After each entry';
+
+  @override
+  String get backupFreqEveryN => 'At intervals';
 }

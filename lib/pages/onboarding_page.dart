@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/app_theme.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 
 /// 新用户引导：首启动（同意隐私政策后）出现，分步介绍并可快速建首个账户、设本月预算。
 /// 完成或跳过后写入 `verifin.onboarding.v1`，只出现一次。（阶段 4.5）
@@ -89,7 +90,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: TextButton(
                   key: const Key('onboarding_skip'),
                   onPressed: _finish,
-                  child: const Text('跳过'),
+                  child: Text(AppLocalizations.of(context).skipLabel),
                 ),
               ),
             ),
@@ -117,7 +118,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: FilledButton(
                   key: const Key('onboarding_next'),
                   onPressed: _next,
-                  child: Text(isLast ? '开始记账' : '下一步'),
+                  child: Text(
+                    isLast
+                        ? AppLocalizations.of(context).startBookkeeping
+                        : AppLocalizations.of(context).nextStep,
+                  ),
                 ),
               ),
             ),
@@ -187,13 +192,10 @@ class _WelcomeStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _OnboardingScaffold(
+    return _OnboardingScaffold(
       icon: Icons.savings_outlined,
-      title: '欢迎使用 Veri Fin',
-      description:
-          '一款完全免费、数据自主、本地优先的记账应用。\n\n'
-          '你的账目只保存在本机，不上传服务器；可随时导出 JSON 备份或加密上传到自己的 WebDAV。\n\n'
-          '下面用几步帮你快速开始。',
+      title: AppLocalizations.of(context).onboardWelcomeTitle,
+      description: AppLocalizations.of(context).onboardWelcomeDesc,
     );
   }
 }
@@ -211,16 +213,16 @@ class _AccountStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return _OnboardingScaffold(
       icon: Icons.account_balance_wallet_outlined,
-      title: '创建第一个账户',
-      description: '账户是记账的基础，比如「现金」「工资卡」。填写名称与当前余额即可，也可以稍后在「资产」页添加。',
+      title: AppLocalizations.of(context).onboardAccountTitle,
+      description: AppLocalizations.of(context).onboardAccountDesc,
       child: Column(
         children: <Widget>[
           TextField(
             key: const Key('onboarding_account_name'),
             controller: nameController,
-            decoration: const InputDecoration(
-              labelText: '账户名称（可选）',
-              hintText: '如：现金 / 工资卡',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).onboardAccountNameLabel,
+              hintText: AppLocalizations.of(context).onboardAccountNameHint,
             ),
           ),
           const SizedBox(height: 14),
@@ -228,8 +230,8 @@ class _AccountStep extends StatelessWidget {
             key: const Key('onboarding_account_balance'),
             controller: balanceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: '当前余额（可选）',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).onboardBalanceLabel,
               hintText: '0',
             ),
           ),
@@ -248,15 +250,15 @@ class _BudgetStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return _OnboardingScaffold(
       icon: Icons.pie_chart_outline,
-      title: '设置本月预算',
-      description: '设定每月预算后，首页与看板会展示预算执行进度，帮你控制支出。留空则暂不设预算，之后可在首页预算卡随时修改。',
+      title: AppLocalizations.of(context).setMonthBudgetTitle,
+      description: AppLocalizations.of(context).onboardBudgetDesc,
       child: TextField(
         key: const Key('onboarding_budget'),
         controller: budgetController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: const InputDecoration(
-          labelText: '本月预算（可选）',
-          hintText: '如：3000',
+        decoration: InputDecoration(
+          labelText: AppLocalizations.of(context).onboardBudgetLabel,
+          hintText: AppLocalizations.of(context).onboardBudgetHint,
         ),
       ),
     );
@@ -268,13 +270,10 @@ class _DoneStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _OnboardingScaffold(
+    return _OnboardingScaffold(
       icon: Icons.check_circle_outline,
-      title: '一切就绪',
-      description:
-          '点击首页右下角的「+」即可快速记一笔。\n\n'
-          '在「我的」页可以管理账本、分类、标签、周期记账，查看统计分析，设置记账提醒与数据备份。\n\n'
-          '祝你记账愉快！',
+      title: AppLocalizations.of(context).onboardDoneTitle,
+      description: AppLocalizations.of(context).onboardDoneDesc,
     );
   }
 }

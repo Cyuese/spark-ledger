@@ -5,6 +5,7 @@ import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
 import '../app/legal_content.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 
 /// 展示单份法律文档（隐私政策 / 用户协议）。可再次查看，也用于首启动同意弹窗的详情。
 class LegalDocumentPage extends StatelessWidget {
@@ -21,8 +22,10 @@ class LegalDocumentPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               VeriHeader(
-                title: document.title,
-                subtitle: '更新日期：$legalUpdatedAt',
+                title: document.title(AppLocalizations.of(context)),
+                subtitle: AppLocalizations.of(
+                  context,
+                ).legalUpdated(legalUpdatedAt),
                 showBack: true,
               ),
               const SizedBox(height: 10),
@@ -102,7 +105,7 @@ class PrivacyConsentPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  '隐私政策与用户协议',
+                  AppLocalizations.of(context).privacyAndTerms,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -141,7 +144,9 @@ class PrivacyConsentPage extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                child: Text('《${document.title}》'),
+                                child: Text(
+                                  '《${document.title(AppLocalizations.of(context))}》',
+                                ),
                               ),
                           ],
                         ),
@@ -160,7 +165,7 @@ class PrivacyConsentPage extends StatelessWidget {
                     ),
                     onPressed: () =>
                         VeriFinScope.of(context).acceptPrivacyConsent(),
-                    child: const Text('同意并继续'),
+                    child: Text(AppLocalizations.of(context).agreeContinue),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -169,7 +174,7 @@ class PrivacyConsentPage extends StatelessWidget {
                   child: TextButton(
                     onPressed: () => SystemNavigator.pop(),
                     child: Text(
-                      '不同意并退出',
+                      AppLocalizations.of(context).disagreeExit,
                       style: TextStyle(color: theme.colorScheme.onSurface),
                     ),
                   ),

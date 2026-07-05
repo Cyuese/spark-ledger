@@ -5,20 +5,30 @@
 /// ARB。若正文实质变更，同步更新 [privacyPolicyUpdatedAt] 与文档。
 library;
 
+import '../l10n/app_localizations.dart';
+
 /// 政策生效/更新日期，展示在文档头部。
 const String legalUpdatedAt = '2026-07-04';
 
 /// 法律文档类型：隐私政策 / 用户协议。
 enum LegalDocument {
-  privacyPolicy('隐私政策', privacyPolicyBody),
-  userAgreement('用户协议', userAgreementBody);
+  privacyPolicy(privacyPolicyBody),
+  userAgreement(userAgreementBody);
 
-  const LegalDocument(this.title, this.body);
+  const LegalDocument(this.body);
 
-  /// 文档标题（用于页面标题与入口行）。
-  final String title;
+  /// 文档标题（用于页面标题与入口行），按当前语言解析。
+  String title(AppLocalizations l10n) {
+    switch (this) {
+      case LegalDocument.privacyPolicy:
+        return l10n.legalPrivacyPolicy;
+      case LegalDocument.userAgreement:
+        return l10n.legalUserAgreement;
+    }
+  }
 
   /// 文档正文（Markdown 风格的纯文本，按段落渲染）。
+  /// 法律文本以中文为准，暂不随语言切换。
   final String body;
 }
 

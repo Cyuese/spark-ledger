@@ -1775,7 +1775,7 @@ abstract class AppLocalizations {
   /// No description provided for @entriesCountFull.
   ///
   /// In zh, this message translates to:
-  /// **'{count}笔交易'**
+  /// **'{count} 笔交易'**
   String entriesCountFull(int count);
 
   /// No description provided for @netLabel.
@@ -2629,6 +2629,1482 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'记账年数'**
   String get bookkeepingYears;
+
+  /// No description provided for @reminderPickTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择提醒时间'**
+  String get reminderPickTime;
+
+  /// No description provided for @reminderTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账提醒'**
+  String get reminderTitle;
+
+  /// No description provided for @reminderDaily.
+  ///
+  /// In zh, this message translates to:
+  /// **'每日提醒'**
+  String get reminderDaily;
+
+  /// No description provided for @reminderTimeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'提醒时间'**
+  String get reminderTimeLabel;
+
+  /// No description provided for @reminderDescSupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后每天到点会收到一条本地通知，提醒你记录当天收支。若长时间未收到，请在系统设置中确认已允许通知。'**
+  String get reminderDescSupported;
+
+  /// No description provided for @reminderDescUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前平台不支持本地通知，此设置仅在 Android / iOS 手机上生效。'**
+  String get reminderDescUnsupported;
+
+  /// No description provided for @reminderDailyAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'每日 {time}'**
+  String reminderDailyAt(String time);
+
+  /// No description provided for @recurringTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'周期记账'**
+  String get recurringTitle;
+
+  /// No description provided for @recurringSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开应用时自动补记到期交易'**
+  String get recurringSubtitle;
+
+  /// No description provided for @recurringAddTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增规则'**
+  String get recurringAddTooltip;
+
+  /// No description provided for @recurringEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有周期规则，点击右上角新增\n例如每月房租、每月工资'**
+  String get recurringEmpty;
+
+  /// No description provided for @nextRun.
+  ///
+  /// In zh, this message translates to:
+  /// **'下次 {date}'**
+  String nextRun(String date);
+
+  /// No description provided for @recurringNewTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增周期规则'**
+  String get recurringNewTitle;
+
+  /// No description provided for @recurringEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑周期规则'**
+  String get recurringEditTitle;
+
+  /// No description provided for @recurringDeleteTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除规则'**
+  String get recurringDeleteTooltip;
+
+  /// No description provided for @tapToFill.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击填写'**
+  String get tapToFill;
+
+  /// No description provided for @addAccountFirst.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先添加账户'**
+  String get addAccountFirst;
+
+  /// No description provided for @frequencyLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'频率'**
+  String get frequencyLabel;
+
+  /// No description provided for @startDateLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始日期'**
+  String get startDateLabel;
+
+  /// No description provided for @pickFrequencyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择频率'**
+  String get pickFrequencyTitle;
+
+  /// No description provided for @skipLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过'**
+  String get skipLabel;
+
+  /// No description provided for @startBookkeeping.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始记账'**
+  String get startBookkeeping;
+
+  /// No description provided for @nextStep.
+  ///
+  /// In zh, this message translates to:
+  /// **'下一步'**
+  String get nextStep;
+
+  /// No description provided for @onboardWelcomeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'欢迎使用 Veri Fin'**
+  String get onboardWelcomeTitle;
+
+  /// No description provided for @onboardWelcomeDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'一款完全免费、数据自主、本地优先的记账应用。\n\n你的账目只保存在本机，不上传服务器；可随时导出 JSON 备份或加密上传到自己的 WebDAV。\n\n下面用几步帮你快速开始。'**
+  String get onboardWelcomeDesc;
+
+  /// No description provided for @onboardAccountTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'创建第一个账户'**
+  String get onboardAccountTitle;
+
+  /// No description provided for @onboardAccountDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户是记账的基础，比如「现金」「工资卡」。填写名称与当前余额即可，也可以稍后在「资产」页添加。'**
+  String get onboardAccountDesc;
+
+  /// No description provided for @onboardAccountNameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户名称（可选）'**
+  String get onboardAccountNameLabel;
+
+  /// No description provided for @onboardAccountNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'如：现金 / 工资卡'**
+  String get onboardAccountNameHint;
+
+  /// No description provided for @onboardBalanceLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前余额（可选）'**
+  String get onboardBalanceLabel;
+
+  /// No description provided for @onboardBudgetDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'设定每月预算后，首页与看板会展示预算执行进度，帮你控制支出。留空则暂不设预算，之后可在首页预算卡随时修改。'**
+  String get onboardBudgetDesc;
+
+  /// No description provided for @onboardBudgetLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月预算（可选）'**
+  String get onboardBudgetLabel;
+
+  /// No description provided for @onboardBudgetHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'如：3000'**
+  String get onboardBudgetHint;
+
+  /// No description provided for @onboardDoneTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'一切就绪'**
+  String get onboardDoneTitle;
+
+  /// No description provided for @onboardDoneDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击首页右下角的「+」即可快速记一笔。\n\n在「我的」页可以管理账本、分类、标签、周期记账，查看统计分析，设置记账提醒与数据备份。\n\n祝你记账愉快！'**
+  String get onboardDoneDesc;
+
+  /// No description provided for @legalUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新日期：{date}'**
+  String legalUpdated(String date);
+
+  /// No description provided for @privacyAndTerms.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐私政策与用户协议'**
+  String get privacyAndTerms;
+
+  /// No description provided for @agreeContinue.
+  ///
+  /// In zh, this message translates to:
+  /// **'同意并继续'**
+  String get agreeContinue;
+
+  /// No description provided for @disagreeExit.
+  ///
+  /// In zh, this message translates to:
+  /// **'不同意并退出'**
+  String get disagreeExit;
+
+  /// No description provided for @legalPrivacyPolicy.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐私政策'**
+  String get legalPrivacyPolicy;
+
+  /// No description provided for @legalUserAgreement.
+  ///
+  /// In zh, this message translates to:
+  /// **'用户协议'**
+  String get legalUserAgreement;
+
+  /// No description provided for @profileCenterSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'个人中心'**
+  String get profileCenterSubtitle;
+
+  /// No description provided for @settingsTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置'**
+  String get settingsTooltip;
+
+  /// No description provided for @entryCountStat.
+  ///
+  /// In zh, this message translates to:
+  /// **'交易笔数'**
+  String get entryCountStat;
+
+  /// No description provided for @bookkeepingMgmt.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账管理'**
+  String get bookkeepingMgmt;
+
+  /// No description provided for @ledgerLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账本'**
+  String get ledgerLabel;
+
+  /// No description provided for @categoryMgmt.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类管理'**
+  String get categoryMgmt;
+
+  /// No description provided for @tagMgmt.
+  ///
+  /// In zh, this message translates to:
+  /// **'标签管理'**
+  String get tagMgmt;
+
+  /// No description provided for @countRules.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条'**
+  String countRules(int count);
+
+  /// No description provided for @dataAndTools.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据与工具'**
+  String get dataAndTools;
+
+  /// No description provided for @reportShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'报表'**
+  String get reportShort;
+
+  /// No description provided for @notEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'未开启'**
+  String get notEnabled;
+
+  /// No description provided for @dataManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据管理'**
+  String get dataManagement;
+
+  /// No description provided for @backupRestoreShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份 / 恢复'**
+  String get backupRestoreShort;
+
+  /// No description provided for @currentBookLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前：{name}'**
+  String currentBookLabel(String name);
+
+  /// No description provided for @bookAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增账本'**
+  String get bookAdd;
+
+  /// No description provided for @bookNameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账本名称'**
+  String get bookNameLabel;
+
+  /// No description provided for @defaultBookLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认账本'**
+  String get defaultBookLabel;
+
+  /// No description provided for @bookActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'账本操作'**
+  String get bookActions;
+
+  /// No description provided for @defaultBookUndeletable.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认账本不可删除'**
+  String get defaultBookUndeletable;
+
+  /// No description provided for @bookRenameTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名账本'**
+  String get bookRenameTitle;
+
+  /// No description provided for @bookDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除账本？'**
+  String get bookDeleteTitle;
+
+  /// No description provided for @bookDeleteMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'账本「{name}」及其中交易会被删除，此操作无法恢复。'**
+  String bookDeleteMessage(String name);
+
+  /// No description provided for @categoryMgmtSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持多级分类，用于记账和统计'**
+  String get categoryMgmtSubtitle;
+
+  /// No description provided for @addTopCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增顶级分类'**
+  String get addTopCategory;
+
+  /// No description provided for @addCategoryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增{type}分类'**
+  String addCategoryTitle(String type);
+
+  /// No description provided for @addSubCategoryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'在「{parent}」下新增子分类'**
+  String addSubCategoryTitle(String parent);
+
+  /// No description provided for @categoryNameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类名称'**
+  String get categoryNameLabel;
+
+  /// No description provided for @changeIcon.
+  ///
+  /// In zh, this message translates to:
+  /// **'更换图标'**
+  String get changeIcon;
+
+  /// No description provided for @addSubCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增子分类'**
+  String get addSubCategory;
+
+  /// No description provided for @moveTo.
+  ///
+  /// In zh, this message translates to:
+  /// **'移动到…'**
+  String get moveTo;
+
+  /// No description provided for @deleteCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除分类'**
+  String get deleteCategory;
+
+  /// No description provided for @noMoveTarget.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可移动到的目标'**
+  String get noMoveTarget;
+
+  /// No description provided for @moveCategoryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'移动「{name}」到'**
+  String moveCategoryTitle(String name);
+
+  /// No description provided for @topCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'顶级分类'**
+  String get topCategory;
+
+  /// No description provided for @cannotMoveHere.
+  ///
+  /// In zh, this message translates to:
+  /// **'该分类无法移动到此处'**
+  String get cannotMoveHere;
+
+  /// No description provided for @renameCategoryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名分类'**
+  String get renameCategoryTitle;
+
+  /// No description provided for @pickIconTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择图标'**
+  String get pickIconTitle;
+
+  /// No description provided for @systemCategoryUndeletable.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统分类不能删除'**
+  String get systemCategoryUndeletable;
+
+  /// No description provided for @categoryInUse.
+  ///
+  /// In zh, this message translates to:
+  /// **'已有 {count} 笔交易使用该分类，不能删除'**
+  String categoryInUse(int count);
+
+  /// No description provided for @moveSubFirst.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先移动或删除其子分类'**
+  String get moveSubFirst;
+
+  /// No description provided for @keepOneCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'至少需要保留一个分类'**
+  String get keepOneCategory;
+
+  /// No description provided for @deleteCategoryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除分类？'**
+  String get deleteCategoryTitle;
+
+  /// No description provided for @deleteCategoryMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类「{name}」删除后无法恢复。'**
+  String deleteCategoryMessage(String name);
+
+  /// No description provided for @categoryUndeletable.
+  ///
+  /// In zh, this message translates to:
+  /// **'该分类暂时不能删除'**
+  String get categoryUndeletable;
+
+  /// No description provided for @catSubChildren.
+  ///
+  /// In zh, this message translates to:
+  /// **'{type} · {children} 个子分类 · {count} 笔'**
+  String catSubChildren(String type, int children, int count);
+
+  /// No description provided for @catSubPlain.
+  ///
+  /// In zh, this message translates to:
+  /// **'{type} · {count} 笔交易'**
+  String catSubPlain(String type, int count);
+
+  /// No description provided for @tagMgmtSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账时可给交易打多个标签'**
+  String get tagMgmtSubtitle;
+
+  /// No description provided for @tagAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增标签'**
+  String get tagAdd;
+
+  /// No description provided for @tagsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有标签，点击右上角新增'**
+  String get tagsEmpty;
+
+  /// No description provided for @deleteTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除标签'**
+  String get deleteTag;
+
+  /// No description provided for @tagRenameTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名标签'**
+  String get tagRenameTitle;
+
+  /// No description provided for @tagDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除标签？'**
+  String get tagDeleteTitle;
+
+  /// No description provided for @tagDeleteInUse.
+  ///
+  /// In zh, this message translates to:
+  /// **'标签「{name}」正被 {count} 笔交易使用，删除后会从这些交易上移除。'**
+  String tagDeleteInUse(String name, int count);
+
+  /// No description provided for @tagDeleteMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'标签「{name}」删除后无法恢复。'**
+  String tagDeleteMessage(String name);
+
+  /// No description provided for @personalInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'个人信息'**
+  String get personalInfo;
+
+  /// No description provided for @nicknameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'昵称'**
+  String get nicknameLabel;
+
+  /// No description provided for @bioLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'简介'**
+  String get bioLabel;
+
+  /// No description provided for @genderLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'性别'**
+  String get genderLabel;
+
+  /// No description provided for @birthdayLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'生日'**
+  String get birthdayLabel;
+
+  /// No description provided for @cityLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'城市'**
+  String get cityLabel;
+
+  /// No description provided for @occupationLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'职业'**
+  String get occupationLabel;
+
+  /// No description provided for @pickGenderTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择性别'**
+  String get pickGenderTitle;
+
+  /// No description provided for @cropAvatarTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'裁剪头像'**
+  String get cropAvatarTitle;
+
+  /// No description provided for @avatarGenerating.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在生成头像…'**
+  String get avatarGenerating;
+
+  /// No description provided for @profileDefaultBio.
+  ///
+  /// In zh, this message translates to:
+  /// **'完全免费 · 数据自主'**
+  String get profileDefaultBio;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置'**
+  String get settingsTitle;
+
+  /// No description provided for @themeMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'主题模式'**
+  String get themeMode;
+
+  /// No description provided for @hapticsLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'触感反馈'**
+  String get hapticsLabel;
+
+  /// No description provided for @appLockLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用锁'**
+  String get appLockLabel;
+
+  /// No description provided for @enabledLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'已开启'**
+  String get enabledLabel;
+
+  /// No description provided for @checkUpdate.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查更新'**
+  String get checkUpdate;
+
+  /// No description provided for @viewLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看'**
+  String get viewLabel;
+
+  /// No description provided for @themePickerTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择主题模式'**
+  String get themePickerTitle;
+
+  /// No description provided for @dataMgmtSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份与恢复本地数据'**
+  String get dataMgmtSubtitle;
+
+  /// No description provided for @exportData.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出数据'**
+  String get exportData;
+
+  /// No description provided for @jsonBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'JSON 备份'**
+  String get jsonBackup;
+
+  /// No description provided for @importData.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入数据'**
+  String get importData;
+
+  /// No description provided for @restoreFromFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'从文件恢复'**
+  String get restoreFromFile;
+
+  /// No description provided for @importFromSheets.
+  ///
+  /// In zh, this message translates to:
+  /// **'从表格导入交易'**
+  String get importFromSheets;
+
+  /// No description provided for @importCsv.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入 CSV 交易'**
+  String get importCsv;
+
+  /// No description provided for @byTemplate.
+  ///
+  /// In zh, this message translates to:
+  /// **'按模板'**
+  String get byTemplate;
+
+  /// No description provided for @importFromOtherApps.
+  ///
+  /// In zh, this message translates to:
+  /// **'从其他记账软件导入'**
+  String get importFromOtherApps;
+
+  /// No description provided for @otherAppsHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'钱迹 / 随手记'**
+  String get otherAppsHint;
+
+  /// No description provided for @downloadCsvTemplate.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载 CSV 模板'**
+  String get downloadCsvTemplate;
+
+  /// No description provided for @excelHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'Excel 可另存为 CSV'**
+  String get excelHint;
+
+  /// No description provided for @backupToLocalDir.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份到本地目录'**
+  String get backupToLocalDir;
+
+  /// No description provided for @backupDirLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份目录'**
+  String get backupDirLabel;
+
+  /// No description provided for @notChosen.
+  ///
+  /// In zh, this message translates to:
+  /// **'未选择'**
+  String get notChosen;
+
+  /// No description provided for @backupNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即备份'**
+  String get backupNow;
+
+  /// No description provided for @clearBackupDir.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除备份目录'**
+  String get clearBackupDir;
+
+  /// No description provided for @stopLocalBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止本地备份'**
+  String get stopLocalBackup;
+
+  /// No description provided for @autoBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动备份'**
+  String get autoBackup;
+
+  /// No description provided for @backupFrequencyLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份频率'**
+  String get backupFrequencyLabel;
+
+  /// No description provided for @backupIntervalLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份间隔'**
+  String get backupIntervalLabel;
+
+  /// No description provided for @everyNHoursLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'每 {n} 小时'**
+  String everyNHoursLabel(int n);
+
+  /// No description provided for @retentionLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'保留份数'**
+  String get retentionLabel;
+
+  /// No description provided for @latestNCopies.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近 {n} 份'**
+  String latestNCopies(int n);
+
+  /// No description provided for @backupEncryption.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份加密'**
+  String get backupEncryption;
+
+  /// No description provided for @encryptionKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'加密密钥'**
+  String get encryptionKey;
+
+  /// No description provided for @clearEncryptionKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除加密密钥'**
+  String get clearEncryptionKey;
+
+  /// No description provided for @noEncryptHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'后续备份不加密'**
+  String get noEncryptHint;
+
+  /// No description provided for @webdavSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'WebDAV 云备份'**
+  String get webdavSection;
+
+  /// No description provided for @webdavServer.
+  ///
+  /// In zh, this message translates to:
+  /// **'WebDAV 服务器'**
+  String get webdavServer;
+
+  /// No description provided for @configuredLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'已配置'**
+  String get configuredLabel;
+
+  /// No description provided for @notConfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'未配置'**
+  String get notConfigured;
+
+  /// No description provided for @uploadToWebdav.
+  ///
+  /// In zh, this message translates to:
+  /// **'上传到 WebDAV'**
+  String get uploadToWebdav;
+
+  /// No description provided for @uploadNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即上传'**
+  String get uploadNow;
+
+  /// No description provided for @restoreFromWebdav.
+  ///
+  /// In zh, this message translates to:
+  /// **'从 WebDAV 恢复'**
+  String get restoreFromWebdav;
+
+  /// No description provided for @chooseBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择备份'**
+  String get chooseBackup;
+
+  /// No description provided for @autoUploadWebdav.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动上传到 WebDAV'**
+  String get autoUploadWebdav;
+
+  /// No description provided for @clearWebdav.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除 WebDAV 配置'**
+  String get clearWebdav;
+
+  /// No description provided for @disconnectLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'断开连接'**
+  String get disconnectLabel;
+
+  /// No description provided for @resetData.
+  ///
+  /// In zh, this message translates to:
+  /// **'初始化数据'**
+  String get resetData;
+
+  /// No description provided for @deleteAllLocal.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除所有本地数据'**
+  String get deleteAllLocal;
+
+  /// No description provided for @neverBackedUp.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未备份'**
+  String get neverBackedUp;
+
+  /// No description provided for @lastBackupAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'上次 {time}'**
+  String lastBackupAt(String time);
+
+  /// No description provided for @chosenBackupDir.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选择备份目录：{label}'**
+  String chosenBackupDir(String label);
+
+  /// No description provided for @backedUpFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'已备份：{name}'**
+  String backedUpFile(String name);
+
+  /// No description provided for @backupFailedRetry.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份操作失败，请稍后再试'**
+  String get backupFailedRetry;
+
+  /// No description provided for @pickBackupFrequency.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择自动备份频率'**
+  String get pickBackupFrequency;
+
+  /// No description provided for @backupIntervalTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'每隔多久备份一次'**
+  String get backupIntervalTitle;
+
+  /// No description provided for @retentionTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'保留最近几份备份'**
+  String get retentionTitle;
+
+  /// No description provided for @encryptedSuffix.
+  ///
+  /// In zh, this message translates to:
+  /// **'（已加密）'**
+  String get encryptedSuffix;
+
+  /// No description provided for @exportedTo.
+  ///
+  /// In zh, this message translates to:
+  /// **'已导出本地数据备份{hint}，位置：下载目录'**
+  String exportedTo(String hint);
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出失败，请稍后再试'**
+  String get exportFailed;
+
+  /// No description provided for @enterBackupKeyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入备份密钥'**
+  String get enterBackupKeyTitle;
+
+  /// No description provided for @enterBackupKeyMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'该备份已加密，请输入导出时设置的密钥。'**
+  String get enterBackupKeyMessage;
+
+  /// No description provided for @backupKeyLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份密钥'**
+  String get backupKeyLabel;
+
+  /// No description provided for @changeKeyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改加密密钥'**
+  String get changeKeyTitle;
+
+  /// No description provided for @setKeyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置加密密钥'**
+  String get setKeyTitle;
+
+  /// No description provided for @setKeyMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置后，导出与备份文件会用该密钥加密；导入时需要输入相同密钥。密钥仅存于本机，忘记只能清除后重设。'**
+  String get setKeyMessage;
+
+  /// No description provided for @keyMinLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥（至少 4 位）'**
+  String get keyMinLabel;
+
+  /// No description provided for @keyRepeatLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'再次输入密钥'**
+  String get keyRepeatLabel;
+
+  /// No description provided for @keyTooShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥至少 4 位'**
+  String get keyTooShort;
+
+  /// No description provided for @keyMismatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'两次输入不一致'**
+  String get keyMismatch;
+
+  /// No description provided for @keySet.
+  ///
+  /// In zh, this message translates to:
+  /// **'已设置备份加密密钥'**
+  String get keySet;
+
+  /// No description provided for @clearKeyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除加密密钥？'**
+  String get clearKeyTitle;
+
+  /// No description provided for @clearKeyMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除后新的导出与备份将不再加密。已经用旧密钥加密的备份文件，导入时仍需输入当时的密钥。'**
+  String get clearKeyMessage;
+
+  /// No description provided for @clearLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除'**
+  String get clearLabel;
+
+  /// No description provided for @webdavUrlLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器目录地址'**
+  String get webdavUrlLabel;
+
+  /// No description provided for @webdavUserLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'账号'**
+  String get webdavUserLabel;
+
+  /// No description provided for @webdavPassLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'密码'**
+  String get webdavPassLabel;
+
+  /// No description provided for @testingConnection.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在测试连接...'**
+  String get testingConnection;
+
+  /// No description provided for @connectionOk.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接成功'**
+  String get connectionOk;
+
+  /// No description provided for @connectionFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接失败：{error}'**
+  String connectionFailed(String error);
+
+  /// No description provided for @testConnection.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试连接'**
+  String get testConnection;
+
+  /// No description provided for @fillServerUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'请填写服务器地址'**
+  String get fillServerUrl;
+
+  /// No description provided for @webdavSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存 WebDAV 配置'**
+  String get webdavSaved;
+
+  /// No description provided for @uploadingWebdav.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在上传到 WebDAV...'**
+  String get uploadingWebdav;
+
+  /// No description provided for @uploadedFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'已上传：{name}'**
+  String uploadedFile(String name);
+
+  /// No description provided for @uploadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'上传失败：{error}'**
+  String uploadFailed(String error);
+
+  /// No description provided for @readFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读取失败：{error}'**
+  String readFailed(String error);
+
+  /// No description provided for @noWebdavBackups.
+  ///
+  /// In zh, this message translates to:
+  /// **'WebDAV 上没有找到备份文件'**
+  String get noWebdavBackups;
+
+  /// No description provided for @chooseRestoreBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择要恢复的备份'**
+  String get chooseRestoreBackup;
+
+  /// No description provided for @restoreFromThisTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'从此备份恢复？'**
+  String get restoreFromThisTitle;
+
+  /// No description provided for @restoreFromThisMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将用「{name}」替换当前本地数据，建议先备份当前数据。'**
+  String restoreFromThisMessage(String name);
+
+  /// No description provided for @restoreLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复'**
+  String get restoreLabel;
+
+  /// No description provided for @restoredFromWebdav.
+  ///
+  /// In zh, this message translates to:
+  /// **'已从 WebDAV 恢复数据'**
+  String get restoredFromWebdav;
+
+  /// No description provided for @restoreFailedFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复失败：备份文件格式不正确'**
+  String get restoreFailedFormat;
+
+  /// No description provided for @restoreFailedError.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复失败：{error}'**
+  String restoreFailedError(String error);
+
+  /// No description provided for @clearWebdavTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除 WebDAV 配置？'**
+  String get clearWebdavTitle;
+
+  /// No description provided for @clearWebdavMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除后将停止自动上传，服务器上已有的备份文件不会被删除。'**
+  String get clearWebdavMessage;
+
+  /// No description provided for @csvTemplateSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存 CSV 模板，位置：下载目录'**
+  String get csvTemplateSaved;
+
+  /// No description provided for @csvTemplateSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存模板失败，请稍后再试'**
+  String get csvTemplateSaveFailed;
+
+  /// No description provided for @importCsvTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入 CSV 交易？'**
+  String get importCsvTitle;
+
+  /// No description provided for @importCsvMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将按模板列（日期、类型、金额、分类、账户、转入账户、备注）把交易追加到当前账本；匹配不到的账户和分类会按名称自动新建。不会删除现有数据。'**
+  String get importCsvMessage;
+
+  /// No description provided for @importOtherTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'从其他记账软件导入？'**
+  String get importOtherTitle;
+
+  /// No description provided for @importOtherMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持钱迹、随手记等导出的 CSV（其他表格若含 日期/类型/金额/账户 列也可尝试）。会自动识别来源并把交易追加到当前账本，匹配不到的账户与分类按名称新建，不删除现有数据。'**
+  String get importOtherMessage;
+
+  /// No description provided for @chooseFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择文件'**
+  String get chooseFile;
+
+  /// No description provided for @recognizedAs.
+  ///
+  /// In zh, this message translates to:
+  /// **'（识别为{source}）'**
+  String recognizedAs(String source);
+
+  /// No description provided for @importedEntries.
+  ///
+  /// In zh, this message translates to:
+  /// **'已导入 {count} 笔交易'**
+  String importedEntries(int count);
+
+  /// No description provided for @skippedRows.
+  ///
+  /// In zh, this message translates to:
+  /// **'，{count} 行跳过'**
+  String skippedRows(int count);
+
+  /// No description provided for @importFailedWithMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入失败：{message}'**
+  String importFailedWithMessage(String message);
+
+  /// No description provided for @importFailedCheckFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入失败，请检查文件后重试'**
+  String get importFailedCheckFile;
+
+  /// No description provided for @lineError.
+  ///
+  /// In zh, this message translates to:
+  /// **'第 {line} 行：{message}'**
+  String lineError(int line, String message);
+
+  /// No description provided for @moreLines.
+  ///
+  /// In zh, this message translates to:
+  /// **'\n… 其余 {count} 行'**
+  String moreLines(int count);
+
+  /// No description provided for @importDoneTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入完成（成功 {count} 笔）'**
+  String importDoneTitle(int count);
+
+  /// No description provided for @allImported.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部导入成功。'**
+  String get allImported;
+
+  /// No description provided for @skippedFollowing.
+  ///
+  /// In zh, this message translates to:
+  /// **'以下行被跳过：\n{lines}'**
+  String skippedFollowing(String lines);
+
+  /// No description provided for @gotIt.
+  ///
+  /// In zh, this message translates to:
+  /// **'知道了'**
+  String get gotIt;
+
+  /// No description provided for @importLocalTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入本地备份？'**
+  String get importLocalTitle;
+
+  /// No description provided for @importLocalMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入会替换当前本地交易、账户、账本、预算、个人信息和设置。建议先导出当前数据。'**
+  String get importLocalMessage;
+
+  /// No description provided for @importedLocal.
+  ///
+  /// In zh, this message translates to:
+  /// **'已导入本地数据'**
+  String get importedLocal;
+
+  /// No description provided for @importFailedFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入失败：备份文件格式不正确'**
+  String get importFailedFormat;
+
+  /// No description provided for @resetAllTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'初始化所有数据？'**
+  String get resetAllTitle;
+
+  /// No description provided for @resetAllMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'这会删除本地交易、账户、账本、预算、个人信息和主题偏好，操作无法恢复。'**
+  String get resetAllMessage;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续'**
+  String get continueLabel;
+
+  /// No description provided for @resetConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'再次确认初始化'**
+  String get resetConfirmTitle;
+
+  /// No description provided for @resetConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认后会立即清空所有本地数据，并恢复默认状态。此操作不能撤销。'**
+  String get resetConfirmMessage;
+
+  /// No description provided for @resetConfirmAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认初始化'**
+  String get resetConfirmAction;
+
+  /// No description provided for @currentVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前版本'**
+  String get currentVersion;
+
+  /// No description provided for @latestVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'最新版本'**
+  String get latestVersion;
+
+  /// No description provided for @checkingLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查中...'**
+  String get checkingLabel;
+
+  /// No description provided for @queryingGithub.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在查询 GitHub Release...'**
+  String get queryingGithub;
+
+  /// No description provided for @updateCheckFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查更新失败，请稍后再试。'**
+  String get updateCheckFailed;
+
+  /// No description provided for @downloadingPercent.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载中 {percent}%'**
+  String downloadingPercent(int percent);
+
+  /// No description provided for @downloadingLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在下载...'**
+  String get downloadingLabel;
+
+  /// No description provided for @closeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭'**
+  String get closeLabel;
+
+  /// No description provided for @retryLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试'**
+  String get retryLabel;
+
+  /// No description provided for @downloadingShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载中'**
+  String get downloadingShort;
+
+  /// No description provided for @downloadNewVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载新版本'**
+  String get downloadNewVersion;
+
+  /// No description provided for @backupFreqManual.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅手动'**
+  String get backupFreqManual;
+
+  /// No description provided for @backupFreqOnOpen.
+  ///
+  /// In zh, this message translates to:
+  /// **'每次打开应用'**
+  String get backupFreqOnOpen;
+
+  /// No description provided for @backupFreqOnEntry.
+  ///
+  /// In zh, this message translates to:
+  /// **'每次记账后'**
+  String get backupFreqOnEntry;
+
+  /// No description provided for @backupFreqEveryN.
+  ///
+  /// In zh, this message translates to:
+  /// **'每隔一段时间'**
+  String get backupFreqEveryN;
 }
 
 class _AppLocalizationsDelegate

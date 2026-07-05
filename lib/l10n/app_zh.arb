@@ -553,7 +553,7 @@
   "entriesListTitle": "交易明细",
   "exitMultiSelect": "退出多选",
   "multiSelect": "多选",
-  "entriesCountFull": "{count}笔交易",
+  "entriesCountFull": "{count} 笔交易",
   "@entriesCountFull": {
     "placeholders": {
       "count": {
@@ -1005,5 +1005,518 @@
     }
   },
   "bookkeepingDays": "记账天数",
-  "bookkeepingYears": "记账年数"
+  "bookkeepingYears": "记账年数",
+  "reminderPickTime": "选择提醒时间",
+  "reminderTitle": "记账提醒",
+  "reminderDaily": "每日提醒",
+  "reminderTimeLabel": "提醒时间",
+  "reminderDescSupported": "开启后每天到点会收到一条本地通知，提醒你记录当天收支。若长时间未收到，请在系统设置中确认已允许通知。",
+  "reminderDescUnsupported": "当前平台不支持本地通知，此设置仅在 Android / iOS 手机上生效。",
+  "reminderDailyAt": "每日 {time}",
+  "@reminderDailyAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringTitle": "周期记账",
+  "recurringSubtitle": "打开应用时自动补记到期交易",
+  "recurringAddTooltip": "新增规则",
+  "recurringEmpty": "还没有周期规则，点击右上角新增\n例如每月房租、每月工资",
+  "nextRun": "下次 {date}",
+  "@nextRun": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringNewTitle": "新增周期规则",
+  "recurringEditTitle": "编辑周期规则",
+  "recurringDeleteTooltip": "删除规则",
+  "tapToFill": "点击填写",
+  "addAccountFirst": "请先添加账户",
+  "frequencyLabel": "频率",
+  "startDateLabel": "开始日期",
+  "pickFrequencyTitle": "选择频率",
+  "skipLabel": "跳过",
+  "startBookkeeping": "开始记账",
+  "nextStep": "下一步",
+  "onboardWelcomeTitle": "欢迎使用 Veri Fin",
+  "onboardWelcomeDesc": "一款完全免费、数据自主、本地优先的记账应用。\n\n你的账目只保存在本机，不上传服务器；可随时导出 JSON 备份或加密上传到自己的 WebDAV。\n\n下面用几步帮你快速开始。",
+  "onboardAccountTitle": "创建第一个账户",
+  "onboardAccountDesc": "账户是记账的基础，比如「现金」「工资卡」。填写名称与当前余额即可，也可以稍后在「资产」页添加。",
+  "onboardAccountNameLabel": "账户名称（可选）",
+  "onboardAccountNameHint": "如：现金 / 工资卡",
+  "onboardBalanceLabel": "当前余额（可选）",
+  "onboardBudgetDesc": "设定每月预算后，首页与看板会展示预算执行进度，帮你控制支出。留空则暂不设预算，之后可在首页预算卡随时修改。",
+  "onboardBudgetLabel": "本月预算（可选）",
+  "onboardBudgetHint": "如：3000",
+  "onboardDoneTitle": "一切就绪",
+  "onboardDoneDesc": "点击首页右下角的「+」即可快速记一笔。\n\n在「我的」页可以管理账本、分类、标签、周期记账，查看统计分析，设置记账提醒与数据备份。\n\n祝你记账愉快！",
+  "legalUpdated": "更新日期：{date}",
+  "@legalUpdated": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyAndTerms": "隐私政策与用户协议",
+  "agreeContinue": "同意并继续",
+  "disagreeExit": "不同意并退出",
+  "legalPrivacyPolicy": "隐私政策",
+  "legalUserAgreement": "用户协议",
+  "profileCenterSubtitle": "个人中心",
+  "settingsTooltip": "设置",
+  "entryCountStat": "交易笔数",
+  "bookkeepingMgmt": "记账管理",
+  "ledgerLabel": "账本",
+  "categoryMgmt": "分类管理",
+  "tagMgmt": "标签管理",
+  "countRules": "{count} 条",
+  "@countRules": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dataAndTools": "数据与工具",
+  "reportShort": "报表",
+  "notEnabled": "未开启",
+  "dataManagement": "数据管理",
+  "backupRestoreShort": "备份 / 恢复",
+  "currentBookLabel": "当前：{name}",
+  "@currentBookLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bookAdd": "新增账本",
+  "bookNameLabel": "账本名称",
+  "defaultBookLabel": "默认账本",
+  "bookActions": "账本操作",
+  "defaultBookUndeletable": "默认账本不可删除",
+  "bookRenameTitle": "重命名账本",
+  "bookDeleteTitle": "删除账本？",
+  "bookDeleteMessage": "账本「{name}」及其中交易会被删除，此操作无法恢复。",
+  "@bookDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryMgmtSubtitle": "支持多级分类，用于记账和统计",
+  "addTopCategory": "新增顶级分类",
+  "addCategoryTitle": "新增{type}分类",
+  "@addCategoryTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "addSubCategoryTitle": "在「{parent}」下新增子分类",
+  "@addSubCategoryTitle": {
+    "placeholders": {
+      "parent": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryNameLabel": "分类名称",
+  "changeIcon": "更换图标",
+  "addSubCategory": "新增子分类",
+  "moveTo": "移动到…",
+  "deleteCategory": "删除分类",
+  "noMoveTarget": "没有可移动到的目标",
+  "moveCategoryTitle": "移动「{name}」到",
+  "@moveCategoryTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "topCategory": "顶级分类",
+  "cannotMoveHere": "该分类无法移动到此处",
+  "renameCategoryTitle": "重命名分类",
+  "pickIconTitle": "选择图标",
+  "systemCategoryUndeletable": "系统分类不能删除",
+  "categoryInUse": "已有 {count} 笔交易使用该分类，不能删除",
+  "@categoryInUse": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveSubFirst": "请先移动或删除其子分类",
+  "keepOneCategory": "至少需要保留一个分类",
+  "deleteCategoryTitle": "删除分类？",
+  "deleteCategoryMessage": "分类「{name}」删除后无法恢复。",
+  "@deleteCategoryMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryUndeletable": "该分类暂时不能删除",
+  "catSubChildren": "{type} · {children} 个子分类 · {count} 笔",
+  "@catSubChildren": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "children": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "catSubPlain": "{type} · {count} 笔交易",
+  "@catSubPlain": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagMgmtSubtitle": "记账时可给交易打多个标签",
+  "tagAdd": "新增标签",
+  "tagsEmpty": "还没有标签，点击右上角新增",
+  "deleteTag": "删除标签",
+  "tagRenameTitle": "重命名标签",
+  "tagDeleteTitle": "删除标签？",
+  "tagDeleteInUse": "标签「{name}」正被 {count} 笔交易使用，删除后会从这些交易上移除。",
+  "@tagDeleteInUse": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagDeleteMessage": "标签「{name}」删除后无法恢复。",
+  "@tagDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfo": "个人信息",
+  "nicknameLabel": "昵称",
+  "bioLabel": "简介",
+  "genderLabel": "性别",
+  "birthdayLabel": "生日",
+  "cityLabel": "城市",
+  "occupationLabel": "职业",
+  "pickGenderTitle": "选择性别",
+  "cropAvatarTitle": "裁剪头像",
+  "avatarGenerating": "正在生成头像…",
+  "profileDefaultBio": "完全免费 · 数据自主",
+  "settingsTitle": "设置",
+  "themeMode": "主题模式",
+  "hapticsLabel": "触感反馈",
+  "appLockLabel": "应用锁",
+  "enabledLabel": "已开启",
+  "checkUpdate": "检查更新",
+  "viewLabel": "查看",
+  "themePickerTitle": "选择主题模式",
+  "dataMgmtSubtitle": "备份与恢复本地数据",
+  "exportData": "导出数据",
+  "jsonBackup": "JSON 备份",
+  "importData": "导入数据",
+  "restoreFromFile": "从文件恢复",
+  "importFromSheets": "从表格导入交易",
+  "importCsv": "导入 CSV 交易",
+  "byTemplate": "按模板",
+  "importFromOtherApps": "从其他记账软件导入",
+  "otherAppsHint": "钱迹 / 随手记",
+  "downloadCsvTemplate": "下载 CSV 模板",
+  "excelHint": "Excel 可另存为 CSV",
+  "backupToLocalDir": "备份到本地目录",
+  "backupDirLabel": "备份目录",
+  "notChosen": "未选择",
+  "backupNow": "立即备份",
+  "clearBackupDir": "清除备份目录",
+  "stopLocalBackup": "停止本地备份",
+  "autoBackup": "自动备份",
+  "backupFrequencyLabel": "备份频率",
+  "backupIntervalLabel": "备份间隔",
+  "everyNHoursLabel": "每 {n} 小时",
+  "@everyNHoursLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "retentionLabel": "保留份数",
+  "latestNCopies": "最近 {n} 份",
+  "@latestNCopies": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupEncryption": "备份加密",
+  "encryptionKey": "加密密钥",
+  "clearEncryptionKey": "清除加密密钥",
+  "noEncryptHint": "后续备份不加密",
+  "webdavSection": "WebDAV 云备份",
+  "webdavServer": "WebDAV 服务器",
+  "configuredLabel": "已配置",
+  "notConfigured": "未配置",
+  "uploadToWebdav": "上传到 WebDAV",
+  "uploadNow": "立即上传",
+  "restoreFromWebdav": "从 WebDAV 恢复",
+  "chooseBackup": "选择备份",
+  "autoUploadWebdav": "自动上传到 WebDAV",
+  "clearWebdav": "清除 WebDAV 配置",
+  "disconnectLabel": "断开连接",
+  "resetData": "初始化数据",
+  "deleteAllLocal": "删除所有本地数据",
+  "neverBackedUp": "尚未备份",
+  "lastBackupAt": "上次 {time}",
+  "@lastBackupAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "chosenBackupDir": "已选择备份目录：{label}",
+  "@chosenBackupDir": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "backedUpFile": "已备份：{name}",
+  "@backedUpFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailedRetry": "备份操作失败，请稍后再试",
+  "pickBackupFrequency": "选择自动备份频率",
+  "backupIntervalTitle": "每隔多久备份一次",
+  "retentionTitle": "保留最近几份备份",
+  "encryptedSuffix": "（已加密）",
+  "exportedTo": "已导出本地数据备份{hint}，位置：下载目录",
+  "@exportedTo": {
+    "placeholders": {
+      "hint": {
+        "type": "String"
+      }
+    }
+  },
+  "exportFailed": "导出失败，请稍后再试",
+  "enterBackupKeyTitle": "输入备份密钥",
+  "enterBackupKeyMessage": "该备份已加密，请输入导出时设置的密钥。",
+  "backupKeyLabel": "备份密钥",
+  "changeKeyTitle": "修改加密密钥",
+  "setKeyTitle": "设置加密密钥",
+  "setKeyMessage": "设置后，导出与备份文件会用该密钥加密；导入时需要输入相同密钥。密钥仅存于本机，忘记只能清除后重设。",
+  "keyMinLabel": "密钥（至少 4 位）",
+  "keyRepeatLabel": "再次输入密钥",
+  "keyTooShort": "密钥至少 4 位",
+  "keyMismatch": "两次输入不一致",
+  "keySet": "已设置备份加密密钥",
+  "clearKeyTitle": "清除加密密钥？",
+  "clearKeyMessage": "清除后新的导出与备份将不再加密。已经用旧密钥加密的备份文件，导入时仍需输入当时的密钥。",
+  "clearLabel": "清除",
+  "webdavUrlLabel": "服务器目录地址",
+  "webdavUserLabel": "账号",
+  "webdavPassLabel": "密码",
+  "testingConnection": "正在测试连接...",
+  "connectionOk": "连接成功",
+  "connectionFailed": "连接失败：{error}",
+  "@connectionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "testConnection": "测试连接",
+  "fillServerUrl": "请填写服务器地址",
+  "webdavSaved": "已保存 WebDAV 配置",
+  "uploadingWebdav": "正在上传到 WebDAV...",
+  "uploadedFile": "已上传：{name}",
+  "@uploadedFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadFailed": "上传失败：{error}",
+  "@uploadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "readFailed": "读取失败：{error}",
+  "@readFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noWebdavBackups": "WebDAV 上没有找到备份文件",
+  "chooseRestoreBackup": "选择要恢复的备份",
+  "restoreFromThisTitle": "从此备份恢复？",
+  "restoreFromThisMessage": "将用「{name}」替换当前本地数据，建议先备份当前数据。",
+  "@restoreFromThisMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreLabel": "恢复",
+  "restoredFromWebdav": "已从 WebDAV 恢复数据",
+  "restoreFailedFormat": "恢复失败：备份文件格式不正确",
+  "restoreFailedError": "恢复失败：{error}",
+  "@restoreFailedError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "clearWebdavTitle": "清除 WebDAV 配置？",
+  "clearWebdavMessage": "清除后将停止自动上传，服务器上已有的备份文件不会被删除。",
+  "csvTemplateSaved": "已保存 CSV 模板，位置：下载目录",
+  "csvTemplateSaveFailed": "保存模板失败，请稍后再试",
+  "importCsvTitle": "导入 CSV 交易？",
+  "importCsvMessage": "将按模板列（日期、类型、金额、分类、账户、转入账户、备注）把交易追加到当前账本；匹配不到的账户和分类会按名称自动新建。不会删除现有数据。",
+  "importOtherTitle": "从其他记账软件导入？",
+  "importOtherMessage": "支持钱迹、随手记等导出的 CSV（其他表格若含 日期/类型/金额/账户 列也可尝试）。会自动识别来源并把交易追加到当前账本，匹配不到的账户与分类按名称新建，不删除现有数据。",
+  "chooseFile": "选择文件",
+  "recognizedAs": "（识别为{source}）",
+  "@recognizedAs": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "importedEntries": "已导入 {count} 笔交易",
+  "@importedEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "skippedRows": "，{count} 行跳过",
+  "@skippedRows": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importFailedWithMessage": "导入失败：{message}",
+  "@importFailedWithMessage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "importFailedCheckFile": "导入失败，请检查文件后重试",
+  "lineError": "第 {line} 行：{message}",
+  "@lineError": {
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "moreLines": "\n… 其余 {count} 行",
+  "@moreLines": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importDoneTitle": "导入完成（成功 {count} 笔）",
+  "@importDoneTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "allImported": "全部导入成功。",
+  "skippedFollowing": "以下行被跳过：\n{lines}",
+  "@skippedFollowing": {
+    "placeholders": {
+      "lines": {
+        "type": "String"
+      }
+    }
+  },
+  "gotIt": "知道了",
+  "importLocalTitle": "导入本地备份？",
+  "importLocalMessage": "导入会替换当前本地交易、账户、账本、预算、个人信息和设置。建议先导出当前数据。",
+  "importedLocal": "已导入本地数据",
+  "importFailedFormat": "导入失败：备份文件格式不正确",
+  "resetAllTitle": "初始化所有数据？",
+  "resetAllMessage": "这会删除本地交易、账户、账本、预算、个人信息和主题偏好，操作无法恢复。",
+  "continueLabel": "继续",
+  "resetConfirmTitle": "再次确认初始化",
+  "resetConfirmMessage": "确认后会立即清空所有本地数据，并恢复默认状态。此操作不能撤销。",
+  "resetConfirmAction": "确认初始化",
+  "currentVersion": "当前版本",
+  "latestVersion": "最新版本",
+  "checkingLabel": "检查中...",
+  "queryingGithub": "正在查询 GitHub Release...",
+  "updateCheckFailed": "检查更新失败，请稍后再试。",
+  "downloadingPercent": "下载中 {percent}%",
+  "@downloadingPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadingLabel": "正在下载...",
+  "closeLabel": "关闭",
+  "retryLabel": "重试",
+  "downloadingShort": "下载中",
+  "downloadNewVersion": "下载新版本",
+  "backupFreqManual": "仅手动",
+  "backupFreqOnOpen": "每次打开应用",
+  "backupFreqOnEntry": "每次记账后",
+  "backupFreqEveryN": "每隔一段时间"
 }

@@ -25,13 +25,13 @@ class RecurringRulesPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               VeriHeader(
-                title: '周期记账',
-                subtitle: '打开应用时自动补记到期交易',
+                title: AppLocalizations.of(context).recurringTitle,
+                subtitle: AppLocalizations.of(context).recurringSubtitle,
                 showBack: true,
                 actions: <Widget>[
                   HeaderAction(
                     icon: Icons.add,
-                    tooltip: '新增规则',
+                    tooltip: AppLocalizations.of(context).recurringAddTooltip,
                     onPressed: () => _openEditor(context, null),
                   ),
                 ],
@@ -43,7 +43,7 @@ class RecurringRulesPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Center(
                       child: Text(
-                        '还没有周期规则，点击右上角新增\n例如每月房租、每月工资',
+                        AppLocalizations.of(context).recurringEmpty,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(
@@ -131,7 +131,7 @@ class _RecurringRow extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     '${rule.frequency.label(AppLocalizations.of(context))} · $sign${formatAmount(rule.amount)}'
-                    ' · 下次 ${formatDate(rule.nextRunDate)}',
+                    ' · ${AppLocalizations.of(context).nextRun(formatDate(rule.nextRunDate))}',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(
                         context,
@@ -222,13 +222,17 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               VeriHeader(
-                title: widget.rule == null ? '新增周期规则' : '编辑周期规则',
+                title: widget.rule == null
+                    ? AppLocalizations.of(context).recurringNewTitle
+                    : AppLocalizations.of(context).recurringEditTitle,
                 showBack: true,
                 actions: <Widget>[
                   if (widget.rule != null)
                     HeaderAction(
                       icon: Icons.delete_outline,
-                      tooltip: '删除规则',
+                      tooltip: AppLocalizations.of(
+                        context,
+                      ).recurringDeleteTooltip,
                       destructive: true,
                       onPressed: _delete,
                     ),
@@ -257,19 +261,25 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
                 child: Column(
                   children: <Widget>[
                     DetailInfoRow(
-                      label: '金额',
-                      value: _amount > 0 ? formatAmount(_amount) : '点击填写',
+                      label: AppLocalizations.of(context).amountLabel,
+                      value: _amount > 0
+                          ? formatAmount(_amount)
+                          : AppLocalizations.of(context).tapToFill,
                       placeholder: _amount <= 0,
                       onTap: _editAmount,
                     ),
                     DetailInfoRow(
-                      label: '分类',
+                      label: AppLocalizations.of(context).commonCategory,
                       value: category.label,
                       onTap: _pickCategory,
                     ),
                     DetailInfoRow(
-                      label: _type == EntryType.transfer ? '转出账户' : '账户',
-                      value: account?.name ?? '请先添加账户',
+                      label: _type == EntryType.transfer
+                          ? AppLocalizations.of(context).transferOutAccount
+                          : AppLocalizations.of(context).accountLabel,
+                      value:
+                          account?.name ??
+                          AppLocalizations.of(context).addAccountFirst,
                       placeholder: account == null,
                       onTap: accounts.isEmpty
                           ? null
@@ -277,32 +287,32 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
                     ),
                     if (_type == EntryType.transfer)
                       DetailInfoRow(
-                        label: '转入账户',
+                        label: AppLocalizations.of(context).transferInAccount,
                         value:
                             accounts
                                 .where((a) => a.id == _toAccountId)
                                 .firstOrNull
                                 ?.name ??
-                            '请选择',
+                            AppLocalizations.of(context).pleaseSelect,
                         placeholder: _toAccountId == null,
                         onTap: accounts.length < 2
                             ? null
                             : () => _pickAccount(true),
                       ),
                     DetailInfoRow(
-                      label: '频率',
+                      label: AppLocalizations.of(context).frequencyLabel,
                       value: _frequency.label(AppLocalizations.of(context)),
                       onTap: _pickFrequency,
                     ),
                     DetailInfoRow(
-                      label: '开始日期',
+                      label: AppLocalizations.of(context).startDateLabel,
                       value: formatDate(_startDate),
                       onTap: _pickStartDate,
                     ),
                     DetailInfoRow(
-                      label: '备注',
+                      label: AppLocalizations.of(context).commonNote,
                       value: _noteController.text.trim().isEmpty
-                          ? '点击添加备注'
+                          ? AppLocalizations.of(context).noteHint
                           : _noteController.text.trim(),
                       placeholder: _noteController.text.trim().isEmpty,
                       onTap: _editNote,
@@ -315,7 +325,7 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
                 height: 48,
                 child: FilledButton(
                   onPressed: _canSave(accounts) ? _save : null,
-                  child: const Text('保存'),
+                  child: Text(AppLocalizations.of(context).commonSave),
                 ),
               ),
             ],
@@ -342,7 +352,7 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => NumberPadSheet(
-        title: '金额',
+        title: AppLocalizations.of(context).amountLabel,
         initialAmount: _amount > 0 ? _amount : null,
         hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
       ),
@@ -372,7 +382,9 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
     final controller = VeriFinScope.of(context);
     final selected = await showOptionSheet<String>(
       context: context,
-      title: toAccount ? '选择转入账户' : '选择账户',
+      title: toAccount
+          ? AppLocalizations.of(context).pickTransferInAccount
+          : AppLocalizations.of(context).pickAccountTitle,
       values: controller.accounts.map((a) => a.id).toList(),
       selected:
           (toAccount ? _toAccountId : _accountId) ??
@@ -394,7 +406,7 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
   Future<void> _pickFrequency() async {
     final selected = await showOptionSheet<RecurringFrequency>(
       context: context,
-      title: '选择频率',
+      title: AppLocalizations.of(context).pickFrequencyTitle,
       values: RecurringFrequency.values,
       selected: _frequency,
       labelOf: (value) => value.label(AppLocalizations.of(context)),
@@ -419,8 +431,8 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
   Future<void> _editNote() async {
     final note = await showTextInputDialog(
       context: context,
-      title: '备注',
-      label: '备注',
+      title: AppLocalizations.of(context).commonNote,
+      label: AppLocalizations.of(context).commonNote,
       initialValue: _noteController.text,
       allowEmpty: true,
     );
