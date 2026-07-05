@@ -1,131 +1,158 @@
+<div align="center">
+
+<img src="assets/brand/verifin_icon_1024.png" width="112" alt="Veri Fin" />
+
 # Veri Fin
 
-Veri Fin 是一个完全免费、数据自主、本地优先的 Flutter Android 记账应用，核心目标是打通“快速输入金额 → 完善记账详情 → 保存后回到首页展示记录”的基础流程。
+**完全免费 · 数据自主 · 本地优先的 Android 记账应用**
 
-## 当前能力
+你的每一笔账都只保存在你自己的手机里——没有服务器、没有账号、没有广告、不收集任何数据。
 
-- 中英双语：设置页「语言」可选跟随系统 / 简体中文 / English，即时生效；默认数据（账本、分类）按首启动语言创建。
-- 4 个底部 Tab：首页、资产、看板、我的。
-- 首页右下角 FAB 快速记账，底部数字键盘输入金额。
-- 记账详情页支持支出、收入、转账类型，支持分类、账户、转入账户、单行备注、日期和时间；顶部金额颜色跟随类型（支出红、收入青绿、转账蓝），账户选择框图标跟随所选账户，选择账户弹窗与资产列表一致地展示账户图标和余额。
-- 首页交易卡默认展示最近 5 条记录，并可进入全部交易列表。
-- 首页支出趋势卡按 7 天周期展示，并可进入收支统计页；交易列表支持时间周期切换、关键词搜索、账户/分类筛选和排序方式选择。
-- 首页预算卡可进入月份预算页，查看支出进度、近 6 月趋势、历史对比、历史汇总、剩余额度、剩余日均，并在分类预算临近或超支时展示提醒；本月预算通过顶部“本月可用预算”旁的编辑图标弹窗设置。
-- 日历视图按日期展示支出/收入，并可点击具体日期查看当天交易；当天交易页仍可切换到全部时间、本月等筛选视图。
-- 交易详情页支持查看、编辑和删除交易，删除前会二次确认。
-- 资产页默认按账户类型展示，支持添加账户、管理分组、分类/类型视图切换、分区展开折叠、账户手动排序、分区排序模式（有两个及以上分区时点击“排序”进入，所有分区折叠后拖动手柄调整顺序，点击“完成”退出）、账户详情、账户报告和账户交易筛选，净资产卡片可点击图片图标更换背景；无背景图时使用普通卡片样式。
-- 新用户和初始化后的账本默认没有资产账户；账户、账户分组、月份预算和分类预算都按当前账本隔离（旧版本的全局预算数据会自动归入默认账本）。
-- 账户详情支持编辑类型、名称、图标、单行备注、分组、计入资产、隐藏状态，余额调整前会弹出确认框，可选择是否计入收支：计入时生成一笔余额调整交易（默认），不计入时直接修改账户初始余额；信用卡和储蓄卡支持卡号后四位，账户名称可自动匹配银行或支付平台图标。
-- 转账记录会同时影响转出和转入账户余额，但不计入收入或支出统计。
-- 隐藏账户会集中显示在资产页底部入口中，可进入独立列表查看。
-- 头像和资产背景支持选择本地图片后进入统一裁剪页，裁剪预览与实际显示比例保持一致。
-- 删除有交易的账户时可选择隐藏账户，或删除账户并同步删除所有相关交易；转账记录会按转出和转入任一账户关联删除。
-- 数据看板会聚合本月预算执行与分类排行、当前 7 天周期的日趋势和带纵轴的月度收支。
-- 看板右上角「统计分析」进入报表页：可切换本月 / 本年 / 自定义时间范围与支出 / 收入两个维度，展示区间内的收支概览（收入、支出、结余）、趋势曲线（短范围按天、整年或跨多月按月）和分类排行；金额均按净额（扣除退款/报销回款）统计。选择「本月」范围时还会展示「同比 · 环比」卡，收入 / 支出 / 结余分别对上月（环比）与去年同月（同比）计算变化率。
-- 首页和看板底部提供“n个面板”入口，可在面板管理页开关各模块并拖动排序，每页至少保留一个开启的面板，并可确认后恢复默认配置。
-- 全部自绘图表支持交互：曲线图和柱状图可点击或横向滑动查看单点数据气泡（首页支出走势、收支统计、看板日趋势与月度收支、预算近 6 月趋势、资产净值趋势、账户余额趋势和账户报告），看板分类环形图点击分段后在中心展示该分类金额与占比；首页支出走势卡的图表区域点击展示数据，卡片其余区域进入统计页。
-- 个人页支持修改头像、昵称、简介、性别、生日、城市和职业，主题设置位于设置页。
-- 我的页采用宫格布局：「记账管理」组含账本、分类管理、标签管理、周期记账，「数据与工具」组含统计分析、记账提醒、数据管理，右上角齿轮进入设置；每个磁贴显示图标、名称与状态副标题（如分类数量、提醒时间）。分类支持多级树形结构：可新增顶级/子分类、重命名、换图标、移动到其他父级、按同级拖动排序，父分类可展开/收起查看子分类；已有交易使用的分类、以及仍有子分类的父分类会阻止删除。记账时的分类选择弹窗按层级缩进展示并可展开父分类，看板分类统计与分类预算按层级把子分类金额上滚到父分类。
-- 标签系统：记账时可给交易打多个标签（多对多），标签管理页可新增、重命名、删除和拖动排序，删除标签会自动从相关交易上移除；记账表单里可多选标签并即时新建；交易列表提供标签筛选（与账户/分类/搜索/时间组合，关键词也能命中标签名）；看板「标签统计」面板按标签汇总本月支出金额与占比。
-- 图片附件：记账时（新增或编辑交易）可拍照或从相册选择图片作为票据附件，缩略图展示、点击全屏浏览、可删除；图片压缩后存入应用私有数据库（独立于交易表），随本地备份一并导出导入（未加密备份为 zip、附件单独打包，见下），删除交易会连同附件清理。
-- 转账手续费：转账记账时可填写手续费，由转出账户承担——转出账户余额扣除「转账金额 + 手续费」，转入账户只增加转账金额；转账不计入收支统计，手续费体现在账户余额与净资产。
-- 报销 / 退款：支出可标记「待报销」（交易行显示徽标，交易列表支持按「待报销」筛选）；收到退款或报销回款时在交易编辑页填写冲抵金额，金额回到原账户，支出按「原金额 − 已冲抵」的净额计入余额、收支、分类、标签、预算和趋势统计。
-- 周期记账：我的页「周期记账」入口可创建每天/每周/每月/每年的定期规则（如房租、工资），支持启停、编辑、删除；打开应用或回到前台时自动补记从上次到今天到期的交易，不会重复补记。
-- 信用卡账期：信用卡账户可在账户详情页设置账单日和还款日（可选，花呗类用户可不设置），设置还款日后账户详情顶部展示还款提醒（下一个还款日与剩余天数，临近还款时高亮）。
-- 批量操作：交易列表点击右上角「多选」或长按任意交易进入多选模式，可全选，底部操作栏支持批量删除（连同附件）、批量改分类（仅改同类型交易）、批量改账户。
-- 数据管理页（我的页进入）支持导出/导入本地备份和双重确认初始化所有本地数据，Android 端默认导出到系统下载目录。未加密备份为 **zip 压缩包**（内含 `backup.json` 与 `attachments/` 图片目录，把附件从 JSON 里剥离以免体积随图片膨胀）；导入按文件类型自动识别，旧版纯 JSON 备份仍可导入。
-- 数据管理页可选择一个备份目录（Android 走系统文档树 SAF 授权，桌面走目录选择），点「立即备份」把当前数据写入该目录（未加密文件名 `verifin-backup-<时间>.zip`、加密为 `.json`，与自动备份 `verifin-auto-` 前缀区分），并展示上次备份时间；可随时清除目录授权。
-- 选择备份目录后可开启自动备份：频率支持「每次打开应用 / 每次记账后 / 每隔 N 小时」，并设置保留最近 N 份（超出的旧自动备份自动清理，手动备份不参与清理）。自动备份在应用打开、回到前台或记账后按配置触发，失败静默不打扰。
-- 可选设置备份加密密钥：开启后导出与备份文件用 AES-GCM 加密（PBKDF2 派生密钥，加密备份为 `.json` 文本信封而非 zip），导入加密备份时需输入相同密钥（已保存密钥自动尝试，失败可手动输入）；密钥仅存本机，忘记只能清除后重设，清除只影响后续备份、旧加密文件仍需原密钥。
-- 数据管理页支持从 CSV 表格导入交易：可下载模板（列为 日期/类型/金额/分类/账户/转入账户/备注，Excel 可另存为 CSV 后导入），导入把交易追加到当前账本、匹配不到的账户与分类按名称自动新建，不删除现有数据；无法识别的行会被跳过并列出行号原因。
-- 「从其他记账软件导入」自动识别钱迹、随手记等导出的 CSV 表头（兼容 `一级分类`、`账户1/账户2`、负数金额等），映射到相同的导入流程；识别到的来源会在结果中提示。
-- WebDAV 云备份：配置服务器目录地址与账号密码（可测试连接），支持手动「上传到 WebDAV」、从 WebDAV 列出并选择备份恢复，以及开启「自动上传」在自动备份触发时同步上传（上传内容遵循备份加密设置）；配置仅存本机。
-- 设置页支持触感反馈开关、检查 GitHub Release 更新，更新检查使用弹窗展示当前版本、最新版本和下载进度。
-- 设置页「记账提醒」可开启每日提醒并选择提醒时刻：开启时向系统申请通知权限，每天到点收到一条本地通知（Android 生效）；配置为设备本地偏好，不进 JSON 备份。
-- Android 桌面小组件（长按桌面添加「VeriFin」）展示今日支出并提供「记一笔」快速记账入口，点击主体打开应用；数据在打开应用、回前台、记账后自动刷新。
-- 首次启动会弹出《隐私政策》与《用户协议》同意弹窗，不同意则退出应用；同意状态持久化后不再询问（初始化数据不会清除该同意），设置页可随时再次查看两份文档。
-- 同意后新用户会看到一次引导（欢迎 → 创建首个账户 → 设置本月预算 → 完成），账户与预算都可选可跳过；完成或跳过后不再出现（`verifin.onboarding.v1`，初始化数据不清除）。
-- 设置页「应用锁」支持 6 位数字密码或 3×3 图案：开启时可选择锁定方式，支持修改（含切换方式）和关闭；应用冷启动和从后台回到前台时都会要求解锁。密钥仅以加盐 SHA-256 保存在本机（不存明文、不上传、无法找回），忘记时只能初始化数据后重设；初始化数据不会清除已设置的应用锁。
-- 设置了应用锁后，设备支持时可再开启「生物解锁」作为快捷解锁：调用系统生物识别（指纹 / 人脸，以设备为准），本应用不保存任何生物特征数据，系统生物信息变化后需重新验证；锁屏出现时会自动发起一次验证，也可手动点击生物解锁按钮。
-- Android 端支持下拉快捷开关“快速记账”，点击后进入应用并打开快速记账数字键盘。
-- 账目类核心数据（交易记录、账户、分组、账本、分类、月份预算、分类预算）只存本地 SQLite（`sqflite` 原生，测试走 ffi）；全新数据库首次启动会播种默认账本与分类。个人信息、主题偏好、资产视图偏好、资产分区折叠状态、账户排序、分区排序、首页与看板的面板配置、资产卡片背景、隐私政策同意标记、应用锁配置（加盐哈希）和记账提醒配置等偏好类小数据仍存 `SharedPreferences`。进程被划掉后所有数据仍应保留。
-- 支持跟随系统、浅色、深色三种主题模式。
-- 日期和时间选择器使用中文本地化。
-- 主交互色以 `#346edb` 蓝色为核心，`#3498db` 作为辅助蓝，青绿色仅用于收入和正向状态。
-- 当前 UI 已收敛为紧凑型移动端工具风格：图标式底部导航、蓝色胶囊选中态、小圆角卡片、较低字号和更高信息密度。
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
+[![Platform](https://img.shields.io/badge/平台-Android-3DDC84?logo=android&logoColor=white)](#)
+[![Release](https://img.shields.io/github/v/release/LumiDesk/verifin?label=版本&color=346edb)](https://github.com/LumiDesk/verifin/releases)
+[![License](https://img.shields.io/badge/许可证-GPL--3.0--or--later-blue)](LICENSE)
 
-## 项目结构
+[功能亮点](#-功能亮点) · [界面预览](#-界面预览) · [技术栈](#-技术栈) · [快速开始](#-快速开始) · [文档](#-文档)
 
-- `lib/main.dart`：应用入口与根组件。
-- `lib/pages/`：按功能拆分的页面模块（首页、预算、交易、资产、看板、我的、记账详情、底部导航壳和共享弹窗）。
-- `lib/app/`：模型、状态控制、主题、示例数据、工具函数、图表序列计算、底部弹窗和通用组件；`app_version.dart` 保存版本号文案（由发布脚本更新）。
-- `lib/l10n/`：国际化 ARB 文案（`app_zh.arb` 为模板 + `app_en.arb`）与 gen-l10n 生成的 `AppLocalizations`；全部用户可见文案均走 ARB。
-- `lib/data/`：SQLite 数据层——`app_database.dart` 建表与版本迁移，`ledger_repository.dart` 账目类整表读写，`database_factory*.dart` 数据库工厂（io 原生 `sqflite` / stub 兜底，测试注入 ffi）。
-- `lib/local_storage/`：偏好类小数据的键值存储适配（Android `SharedPreferences`、测试内存 stub）。
-- `docs/product.md`：产品定位、一期范围和数据策略。
-- `docs/ui-guidelines.md`：Header、选择器、弹窗、设置行和金额展示规范。
-- `docs/dev/verifin-sample-backup.json`：可从数据管理页导入的测试备份数据，用于验证资产、预算、看板和交易列表。
-- `docs/dev/i18n-verification.md`：多语言真机验证清单。
-- `docs/acceptance-checklist.md`：当前功能验收清单和后续优先级。
+</div>
 
-## 本地开发
+---
 
-安装依赖：
+## 📱 界面预览
 
-```bash
-flutter pub get
-```
+<div align="center">
 
-在 Android 模拟器或真机上预览和调试：
+| 首页 | 资产 | 数据看板 |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/home.png" width="240" alt="首页" /> | <img src="docs/screenshots/assets.png" width="240" alt="资产" /> | <img src="docs/screenshots/reports.png" width="240" alt="数据看板" /> |
 
-```bash
-flutter run -d <android-device-id>
-```
+</div>
 
-静态检查和测试：
+<!-- 截图放入 docs/screenshots/：home.png（首页）、assets.png（资产）、reports.png（数据看板） -->
 
-```bash
-flutter analyze
-flutter test
-```
+## ✨ 功能亮点
 
-本地验收在 Android 模拟器或真机上进行，重点检查首页、资产、看板、我的、交易列表和交易详情的渲染与交互。Android 安装包不在本机打包，正式验收使用 GitHub CI 构建的 release APK（下载到手机安装测试）。
+### 📒 记账
 
-Android 包名为 `top.talyra42.verifin`。
+- 首页 FAB 数字键盘**快速记账**，支持支出 / 收入 / 转账三种类型；
+- **多级分类**（任意层级树形结构）+ **多标签**（多对多，可筛选、可统计）；
+- 交易可附**图片票据**（拍照或相册，压缩后本地存储，随备份导出）；
+- **周期记账**（每天 / 周 / 月 / 年自动补记，如房租、工资）、**批量操作**（多选删除、改分类、改账户）；
+- **报销 / 退款冲抵**：支出标记待报销，回款按净额计入所有统计；转账支持**手续费**。
 
-## GitHub CI 与发布
+### 💰 资产
 
-仓库包含 `.github/workflows/flutter.yml`：
+- 账户按类型或自定义分组展示，净资产卡片带趋势图、可换背景；
+- 账户详情：余额趋势（日 / 月）、余额调整（可选是否计入收支）、账户报告；
+- **信用卡账期**：账单日 / 还款日设置与还款倒计时提醒；
+- 银行 / 支付平台**品牌图标**自动匹配，支持隐藏账户与多账本隔离。
 
-- 只有推送形如 `v1.0.0` 的标签时才会触发 GitHub Actions。
-- CI 会执行 `flutter analyze`、`flutter test` 和 `flutter build apk --release`。
-- 标签构建会创建 GitHub Release，并把 release APK 附加到发布页；APK 文件名使用 `verifin-v1.0.0-短提交号.apk` 形式。
-- Release APK 使用项目内稳定 keystore 签名，后续版本可覆盖安装；从旧的临时 debug 签名版本迁移时，手机可能需要最后卸载一次。
+### 📊 报表
 
-本机仍不进行 Android 交付打包；需要发版时使用 GitHub Actions 产物。
+- 数据看板：预算执行、分类环形图、分类明细、标签统计、日趋势、月度收支，面板可开关排序；
+- **统计分析**：本月 / 本年 / 自定义范围 × 支出 / 收入维度，趋势曲线 + 分类排行 + **同比 · 环比**；
+- 全部图表**自绘且可交互**：点击 / 滑动查看数据气泡，环形图点选分段。
 
-发布新版本时使用脚本：
+### 🔐 数据与安全
+
+- 账目数据只存本地 **SQLite**，进程被杀数据不丢；
+- 备份体系：手动 / 自动备份到本地目录（SAF）、**AES-GCM 加密**、**WebDAV 云备份**、zip 打包附件；
+- **CSV 导入**：模板导入 + 自动识别钱迹 / 随手记导出格式；
+- **应用锁**：6 位 PIN / 3×3 图案 + 生物解锁（密钥仅加盐哈希存本机，不保存任何生物特征数据）；
+- 无账号、无服务器、无第三方 SDK；隐私政策与用户协议应用内可查。
+
+### 🌍 体验
+
+- **中英双语**：跟随系统 / 简体中文 / English，即时切换；
+- 浅色 / 深色 / 跟随系统主题，紧凑型移动端工具风格；
+- Android **桌面小组件**（今日支出 + 记一笔）、下拉快捷开关「快速记账」、每日**记账提醒**通知；
+- 新用户引导：建首个账户、设本月预算，几步上手。
+
+> 完整功能断言清单见 [`docs/acceptance-checklist.md`](docs/acceptance-checklist.md)。
+
+## 🛠 技术栈
+
+| 领域 | 方案 |
+| --- | --- |
+| 框架 | Flutter 3 / Dart 3（仅 Android 交付） |
+| 状态管理 | 单一 `ChangeNotifier` Controller + `InheritedNotifier` 注入，无第三方状态库 |
+| 数据存储 | `sqflite`（账目类，含版本迁移）+ `SharedPreferences`（偏好类） |
+| 国际化 | Flutter 官方 gen-l10n（ARB，中文模板 + 英文） |
+| 备份加密 | `cryptography`（纯 Dart AES-GCM + PBKDF2-SHA256） |
+| 云备份 | `dart:io HttpClient` 手写 WebDAV 客户端（PUT / GET / PROPFIND / MKCOL） |
+| 图表 | 全部 `CustomPainter` 自绘（趋势 / 柱状 / 环形，带命中测试与数据气泡） |
+| 平台能力 | `local_auth`（生物解锁）、`flutter_local_notifications`（提醒）、`image_picker`（附件）、原生 `AppWidgetProvider`（桌面小组件）、MethodChannel 桥（SAF / 磁贴 / 更新检查） |
+| 测试 | 219 例 widget / 单元测试（内存仓储）+ ffi 真实 SQLite 数据层测试 |
+| CI / 发布 | GitHub Actions：推 `vX.Y.Z` 标签 → analyze + test + release APK + GitHub Release |
+
+## 🚀 快速开始
+
+**普通用户**：直接到 [Releases](https://github.com/LumiDesk/verifin/releases) 下载最新 APK 安装（Android 手机）。
+
+**开发者**：
 
 ```bash
-scripts/publish.sh patch
+git clone git@github.com:LumiDesk/verifin.git
+cd verifin
+flutter pub get                      # 安装依赖（自动生成 l10n）
+flutter run -d <android-device-id>   # Android 模拟器或真机预览
+flutter analyze && flutter test      # 静态检查 + 全部测试
 ```
 
-也可传入 `minor`、`major` 或显式版本号，例如 `scripts/publish.sh 1.1.0`。脚本会更新版本号、提交、创建 `vX.Y.Z` 标签并推送。
+Android 包名 `top.talyra42.verifin`。本地不构建交付 APK——正式安装包由 GitHub CI 生成。
 
-## 文档
+## 📦 构建与发布
 
-- 产品说明：`docs/product.md`
-- UI 规范：`docs/ui-guidelines.md`
-- 验收清单：`docs/acceptance-checklist.md`
-- 多语言验证：`docs/dev/i18n-verification.md`
-- 贡献和 Agent 规范：`AGENTS.md`
+- CI（`.github/workflows/flutter.yml`）只在推送 `vX.Y.Z` 标签时触发：analyze → test → `flutter build apk --release` → 创建 GitHub Release（APK 命名 `verifin-vX.Y.Z-短提交号.apk`）。
+- 发版一条命令：
 
-## 许可证
+  ```bash
+  scripts/publish.sh patch   # 也支持 minor / major / 显式版本号
+  ```
 
-Veri Fin 是自由软件，基于 **GNU 通用公共许可证 v3.0 或更高版本（GPL-3.0-or-later）** 发布，完整条款见仓库根目录的 [`LICENSE`](LICENSE)。
+  脚本会更新版本号、提交、打标签并推送。
+- Release APK 使用项目内稳定 keystore（`android/app/verifin-release.jks`）签名，版本间可覆盖安装。
+
+## 📁 项目结构
+
+```text
+lib/
+├── main.dart            # 应用入口与根组件
+├── pages/               # 页面模块（首页 / 资产 / 看板 / 我的 / 交易 / 预算…）
+├── app/                 # 模型、Controller、主题、图表、备份子系统、通用组件
+├── l10n/                # ARB 文案（zh 模板 + en）与生成的 AppLocalizations
+├── data/                # SQLite 数据层（建表迁移 + 仓储接口/实现）
+└── local_storage/       # 偏好类 KV 存储适配（SharedPreferences / 测试 stub）
+```
+
+## 📚 文档
+
+| 文档 | 内容 |
+| --- | --- |
+| [`docs/product.md`](docs/product.md) | 产品定位与数据策略 |
+| [`docs/ui-guidelines.md`](docs/ui-guidelines.md) | UI 规范（Header、弹窗、金额展示、图表交互） |
+| [`docs/acceptance-checklist.md`](docs/acceptance-checklist.md) | 功能验收清单 |
+| [`docs/dev/i18n-verification.md`](docs/dev/i18n-verification.md) | 多语言真机验证清单 |
+| [`docs/dev/verifin-sample-backup.json`](docs/dev/verifin-sample-backup.json) | 可导入的测试备份数据 |
+| [`AGENTS.md`](AGENTS.md) | 贡献与 Agent 开发规范 |
+| [`TODO.md`](TODO.md) | 路线图、Backlog 与技术决策 |
+
+## 📄 许可证
+
+Veri Fin 是自由软件，基于 **GNU 通用公共许可证 v3.0 或更高版本（GPL-3.0-or-later）** 发布，完整条款见 [`LICENSE`](LICENSE)。
 
 > Copyright (C) 2026 Talyra42
 >
 > This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 >
 > This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+---
+
+<div align="center">
+
+如果这个项目对你有帮助，欢迎点一颗 ⭐
+
+</div>
