@@ -98,7 +98,8 @@
 - [x] 6.9 我的页与设置（profile_pages / legal_pages / recurring_page / reminder_settings_page / onboarding_page）：我的页宫格/账本-分类-标签管理/个人信息/设置页/数据管理全流程（导出导入、本地目录备份、加密、WebDAV、CSV 导入、初始化、检查更新）/周期记账页/提醒设置页/新用户引导/法律页 UI 文案全部迁 ARB。隐私政策与用户协议**正文**按既有约定保持中文（内容而非界面，文件头注释已注明），标题/按钮走 ARB
 - [x] 6.10 应用锁与隐私同意（app_lock_page / app_lock_gate / privacy_consent_gate / biometric）：锁屏/设置/验证页与生物解锁全部迁 ARB；`AppLockKind.label` 改 l10n 方法；生物识别系统弹窗文案（AndroidAuthMessages）按当前语言组装，`authenticate` 接收 l10n
 - [x] 6.11 备份子系统与无 context 场景（backup_settings / data_file_port / image_cropper / home_widget_service / notification_scheduler / ledger_math）：`BackupFrequency.label` 改 l10n 方法；图片裁剪器、文件选择器标签迁 ARB；桌面小组件「今日支出」与提醒通知文案经 `l10nForPreference`（无 BuildContext 场景按语言偏好解析，回落中文）随语言切换；`formatDate` 调用点改 `dateMonthDay` 键，紧凑金额中文用「万」、英文用 k
-- [ ] 6.12 全量核查无残留硬编码中文，analyze + test 全绿，真机验证清单见 `docs/dev/i18n-verification.md`
+- [x] 6.12 全量核查完成：UI 层无残留硬编码中文（zh/en 各 716 键完全对齐），analyze + test（219 例）全绿；真机验证清单见 `docs/dev/i18n-verification.md`。**有意保留中文**：法律文档正文、银行/品牌图标名与图标联想别名表、CSV 模板表头与逐行导入错误（导入格式兼容）、中文种子数据表（英文表已配对）、数据层损坏回退文案、stub/断言等内部错误
+- [ ] 6.13 错误消息本地化（可选收尾）：WebDAV 连接/恢复失败、平台桥接（检查更新下载、SAF 读写）与备份加解密的异常消息目前为中文（无 BuildContext 场景），如需彻底英文化可改为错误码 + UI 侧 l10n 映射
 
 ## Backlog（暂不排期）
 

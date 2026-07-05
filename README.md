@@ -4,6 +4,7 @@ Veri Fin 是一个完全免费、数据自主、本地优先的 Flutter Android 
 
 ## 当前能力
 
+- 中英双语：设置页「语言」可选跟随系统 / 简体中文 / English，即时生效；默认数据（账本、分类）按首启动语言创建。
 - 4 个底部 Tab：首页、资产、看板、我的。
 - 首页右下角 FAB 快速记账，底部数字键盘输入金额。
 - 记账详情页支持支出、收入、转账类型，支持分类、账户、转入账户、单行备注、日期和时间；顶部金额颜色跟随类型（支出红、收入青绿、转账蓝），账户选择框图标跟随所选账户，选择账户弹窗与资产列表一致地展示账户图标和余额。
@@ -58,7 +59,7 @@ Veri Fin 是一个完全免费、数据自主、本地优先的 Flutter Android 
 - `lib/main.dart`：应用入口与根组件。
 - `lib/pages/`：按功能拆分的页面模块（首页、预算、交易、资产、看板、我的、记账详情、底部导航壳和共享弹窗）。
 - `lib/app/`：模型、状态控制、主题、示例数据、工具函数、图表序列计算、底部弹窗和通用组件；`app_version.dart` 保存版本号文案（由发布脚本更新）。
-- `lib/l10n/`：国际化 ARB 文案（`app_zh.arb` 为模板）与 gen-l10n 生成的 `AppLocalizations`。
+- `lib/l10n/`：国际化 ARB 文案（`app_zh.arb` 为模板 + `app_en.arb`）与 gen-l10n 生成的 `AppLocalizations`；全部用户可见文案均走 ARB。
 - `lib/data/`：SQLite 数据层——`app_database.dart` 建表与版本迁移，`ledger_repository.dart` 账目类整表读写，`database_factory*.dart` 数据库工厂（io 原生 `sqflite` / stub 兜底，测试注入 ffi）。
 - `lib/local_storage/`：偏好类小数据的键值存储适配（Android `SharedPreferences`、测试内存 stub）。
 - `docs/product.md`：产品定位、一期范围和数据策略。
