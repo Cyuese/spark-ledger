@@ -106,5 +106,88 @@
     }
   },
   "tagCreateTitle": "新建标签",
-  "tagNameLabel": "标签名称"
+  "tagNameLabel": "标签名称",
+  "entryTypeExpense": "支出",
+  "entryTypeIncome": "收入",
+  "entryTypeTransfer": "转账",
+  "themeSystem": "跟随系统",
+  "themeLight": "浅色",
+  "themeDark": "深色",
+  "accountTypeOnlinePayment": "网络支付",
+  "accountTypeCreditCard": "信用卡",
+  "accountTypeDebitCard": "储蓄卡",
+  "accountTypeInvestment": "投资账户",
+  "accountTypeCash": "现金",
+  "assetViewGroup": "分类视图",
+  "assetViewType": "类型视图",
+  "assetViewToggleToType": "切换为类型视图",
+  "assetViewToggleToGroup": "切换为分类视图",
+  "recurringDaily": "每天",
+  "recurringWeekly": "每周",
+  "recurringMonthly": "每月",
+  "recurringYearly": "每年",
+  "genderUnset": "不设置",
+  "genderMale": "男",
+  "genderFemale": "女",
+  "panelTrendLabel": "支出走势",
+  "panelTrendDesc": "按 7 天周期展示支出趋势与结余",
+  "panelRecentLabel": "最近交易",
+  "panelRecentDesc": "展示最近 5 条交易记录",
+  "panelBudgetLabel": "月度预算",
+  "panelBudgetDesc": "本月预算进度与分类超支提醒",
+  "panelCalendarDesc": "按日历查看每天的收支情况",
+  "panelBudgetExecutionLabel": "预算执行",
+  "panelBudgetExecutionDesc": "本月预算、支出与分类预算执行情况",
+  "panelCategoryRingLabel": "分类统计",
+  "panelCategoryRingDesc": "本月支出分类占比环形图",
+  "panelCategoryRankLabel": "分类明细",
+  "panelCategoryRankDesc": "本月支出分类排行与占比",
+  "panelTagStatsLabel": "标签统计",
+  "panelTagStatsDesc": "本月各标签的支出金额与占比",
+  "panelDailyTrendLabel": "日趋势",
+  "panelDailyTrendDesc": "近 7 天每日支出趋势",
+  "panelMonthlyStructureLabel": "月度收支",
+  "panelMonthlyStructureDesc": "今年每月支出结构柱状图",
+  "panelCountLabel": "{count}个{page}面板",
+  "@panelCountLabel": {
+    "description": "面板管理入口:开启数量",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "String"
+      }
+    }
+  },
+  "panelPageTitle": "{page}面板",
+  "@panelPageTitle": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      }
+    }
+  },
+  "panelSortHint": "拖动手柄调整顺序",
+  "panelToggleHint": "开关与排序",
+  "panelSortDone": "完成排序",
+  "panelSortStart": "排序面板",
+  "panelResetTitle": "恢复默认{page}面板？",
+  "@panelResetTitle": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      }
+    }
+  },
+  "panelResetMessage": "将恢复默认顺序并开启全部面板。",
+  "panelResetConfirm": "恢复默认",
+  "panelKeepOneMessage": "至少保留一个开启的{page}面板",
+  "@panelKeepOneMessage": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -9,6 +9,7 @@ import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 import 'budget_pages.dart';
 import 'panel_settings_page.dart';
 import 'sheets.dart';
@@ -662,7 +663,10 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                     }),
                   ),
                   const Spacer(),
-                  FilterPill(label: _type.label, onTap: _pickEntryType),
+                  FilterPill(
+                    label: _type.label(AppLocalizations.of(context)),
+                    onTap: _pickEntryType,
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -671,7 +675,7 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      '${window.label} ${_type.label}',
+                      '${window.label} ${_type.label(AppLocalizations.of(context))}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -709,7 +713,8 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                             title: '${day.month}月${day.day}日',
                             lines: <ChartTooltipLine>[
                               ChartTooltipLine(
-                                text: '${_type.label} $valueText',
+                                text:
+                                    '${_type.label(AppLocalizations.of(context))} $valueText',
                               ),
                             ],
                           );
@@ -750,7 +755,7 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
       title: '统计类型',
       values: EntryType.values,
       selected: _type,
-      labelOf: (value) => value.label,
+      labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected != null) {
       setState(() => _type = selected);

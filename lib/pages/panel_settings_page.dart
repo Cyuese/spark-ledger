@@ -5,6 +5,7 @@ import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 
 /// 首页/看板底部的面板管理入口:展示开启数量,点击进入管理页。
 class PanelSettingsEntry extends StatelessWidget {
@@ -39,7 +40,10 @@ class PanelSettingsEntry extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Text(
-                  '$count个${kind.label}面板',
+                  AppLocalizations.of(context).panelCountLabel(
+                    count,
+                    kind.label(AppLocalizations.of(context)),
+                  ),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: mutedColor,
                     fontWeight: FontWeight.w700,
@@ -72,6 +76,7 @@ class _PanelSettingsPageState extends State<PanelSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
     final kind = widget.kind;
     final panels = controller.panelSettings(kind);
     final specById = <String, PagePanelSpec>{
@@ -86,21 +91,25 @@ class _PanelSettingsPageState extends State<PanelSettingsPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
                 child: VeriHeader(
-                  title: '${kind.label}面板',
-                  subtitle: _sorting ? '拖动手柄调整顺序' : '开关与排序',
+                  title: l10n.panelPageTitle(kind.label(l10n)),
+                  subtitle: _sorting
+                      ? l10n.panelSortHint
+                      : l10n.panelToggleHint,
                   showBack: true,
                   actions: <Widget>[
                     if (!_sorting)
                       HeaderAction(
                         key: const Key('panel_reset'),
                         icon: Icons.restart_alt,
-                        tooltip: '恢复默认',
+                        tooltip: l10n.panelResetConfirm,
                         onPressed: () => _confirmReset(context),
                       ),
                     HeaderAction(
                       key: const Key('panel_sort_toggle'),
                       icon: _sorting ? Icons.check : Icons.swap_vert,
-                      tooltip: _sorting ? '完成排序' : '排序面板',
+                      tooltip: _sorting
+                          ? l10n.panelSortDone
+                          : l10n.panelSortStart,
                       onPressed: () => setState(() => _sorting = !_sorting),
                     ),
                   ],
@@ -140,13 +149,7 @@ class _PanelSettingsPageState extends State<PanelSettingsPage> {
                       key: ValueKey<String>('panel_${kind.name}_${panel.id}'),
                       padding: const EdgeInsets.only(bottom: 8),
                       child: _PanelRow(
-                        spec:
-                            spec ??
-                            PagePanelSpec(
-                              id: panel.id,
-                              label: panel.id,
-                              description: '',
-                            ),
+                        spec: spec ?? PagePanelSpec(id: panel.id),
                         enabled: panel.enabled,
                         sorting: _sorting,
                         index: index,
@@ -164,19 +167,20 @@ class _PanelSettingsPageState extends State<PanelSettingsPage> {
   }
 
   Future<void> _confirmReset(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('恢复默认${widget.kind.label}面板？'),
-        content: const Text('将恢复默认顺序并开启全部面板。'),
+        title: Text(l10n.panelResetTitle(widget.kind.label(l10n))),
+        content: Text(l10n.panelResetMessage),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('恢复默认'),
+            child: Text(l10n.panelResetConfirm),
           ),
         ],
       ),
@@ -189,8 +193,11 @@ class _PanelSettingsPageState extends State<PanelSettingsPage> {
   void _togglePanel(String panelId, bool enabled) {
     final controller = VeriFinScope.of(context);
     if (!controller.setPanelEnabled(widget.kind, panelId, enabled)) {
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('至少保留一个开启的${widget.kind.label}面板')),
+        SnackBar(
+          content: Text(l10n.panelKeepOneMessage(widget.kind.label(l10n))),
+        ),
       );
     }
   }
@@ -219,9 +226,11 @@ class _PanelRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final mutedColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.48);
+    final description = spec.description(l10n);
 
     return VeriCard(
       child: Row(
@@ -231,15 +240,15 @@ class _PanelRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  spec.label,
+                  spec.label(l10n),
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
-                if (spec.description.isNotEmpty) ...<Widget>[
+                if (description.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 3),
                   Text(
-                    spec.description,
+                    description,
                     style: Theme.of(
                       context,
                     ).textTheme.labelSmall?.copyWith(color: mutedColor),

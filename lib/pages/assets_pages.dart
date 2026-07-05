@@ -16,6 +16,7 @@ import '../app/models.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 import 'entry_detail_page.dart';
 import 'sheets.dart';
 import 'transactions_pages.dart';
@@ -129,7 +130,7 @@ class _AssetsPageState extends State<AssetsPage> {
                 .map(
                   (type) => _AssetAccountSection(
                     id: type.name,
-                    title: type.label,
+                    title: type.label(AppLocalizations.of(context)),
                     accounts: controller.sortedAccountsForAssetSection(
                       mode: viewMode,
                       sectionId: type.name,
@@ -565,7 +566,9 @@ class _AssetsPageState extends State<AssetsPage> {
         return switch (value) {
           'add_account' => '添加账户',
           'manage_groups' => '管理分组',
-          'switch_view' => controller.assetAccountViewMode.toggleLabel,
+          'switch_view' => controller.assetAccountViewMode.toggleLabel(
+            AppLocalizations.of(context),
+          ),
           'sort_sections' => '排序分组',
           _ => value,
         };
@@ -1094,7 +1097,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                 const SizedBox(height: 10),
                 SelectField(
                   label: '账户类型',
-                  value: _type.label,
+                  value: _type.label(AppLocalizations.of(context)),
                   icon: Icons.category_outlined,
                   onTap: _pickAccountType,
                 ),
@@ -1176,7 +1179,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
       title: '选择账户类型',
       values: AccountType.values,
       selected: _type,
-      labelOf: (value) => value.label,
+      labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected != null) {
       setState(() {
@@ -1327,7 +1330,9 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
             children: <Widget>[
               VeriHeader(
                 title: currentAccount.name,
-                subtitle: currentAccount.type.label,
+                subtitle: currentAccount.type.label(
+                  AppLocalizations.of(context),
+                ),
                 showBack: true,
                 actions: <Widget>[
                   HeaderAction(
@@ -1522,7 +1527,9 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     SettingsRow(
                       icon: Icons.category_outlined,
                       title: '类型',
-                      trailing: currentAccount.type.label,
+                      trailing: currentAccount.type.label(
+                        AppLocalizations.of(context),
+                      ),
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _pickAccountType(currentAccount),
                     ),
@@ -1718,7 +1725,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       title: '选择账户类型',
       values: AccountType.values,
       selected: account.type,
-      labelOf: (value) => value.label,
+      labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected != null && mounted) {
       VeriFinScope.of(context).updateAccount(

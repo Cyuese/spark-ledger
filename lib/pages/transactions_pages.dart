@@ -10,6 +10,7 @@ import '../app/models.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 import 'attachments_editor.dart';
 import 'sheets.dart';
 
@@ -401,7 +402,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       account.name,
       if (entry.toAccountId != null)
         accountById(controller.accounts, entry.toAccountId!).name,
-      entry.type.label,
+      entry.type.label(AppLocalizations.of(context)),
       formatAmount(entry.amount),
       formatSignedAmount(signedAmount(entry)),
       for (final id in entry.tagIds)
@@ -1113,7 +1114,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 26),
               children: <Widget>[
                 VeriHeader(
-                  title: _type.label,
+                  title: _type.label(AppLocalizations.of(context)),
                   showBack: true,
                   actions: <Widget>[
                     HeaderAction(
@@ -1177,7 +1178,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                     children: <Widget>[
                       DetailInfoRow(
                         label: '类型',
-                        value: _type.label,
+                        value: _type.label(AppLocalizations.of(context)),
                         onTap: _pickType,
                       ),
                       DetailInfoRow(
@@ -1359,7 +1360,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       title: '选择类型',
       values: EntryType.values,
       selected: _type,
-      labelOf: (value) => value.label,
+      labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected == null || !mounted) {
       return;

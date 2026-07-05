@@ -40,7 +40,10 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
     final profile = controller.profile;
-    final profileTags = _profileSummaryTags(profile);
+    final profileTags = _profileSummaryTags(
+      profile,
+      AppLocalizations.of(context),
+    );
     final netAssets = controller.accounts
         .where((account) => account.includeInAssets && !account.hidden)
         .fold<double>(
@@ -336,10 +339,10 @@ class _FeatureTile extends StatelessWidget {
   }
 }
 
-List<String> _profileSummaryTags(UserProfile profile) {
+List<String> _profileSummaryTags(UserProfile profile, AppLocalizations l10n) {
   final tags = <String>[];
   if (profile.gender != ProfileGender.unset) {
-    tags.add(profile.gender.label);
+    tags.add(profile.gender.label(l10n));
   }
   if (profile.birthday.isNotEmpty) {
     tags.add(profile.birthday);
@@ -597,7 +600,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                     .map(
                       (type) => ButtonSegment<EntryType>(
                         value: type,
-                        label: Text(type.label),
+                        label: Text(type.label(AppLocalizations.of(context))),
                       ),
                     )
                     .toList(),
@@ -902,9 +905,10 @@ class _CategoryManageRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final typeLabel = category.type.label(AppLocalizations.of(context));
     final subtitle = childCount > 0
-        ? '${category.type.label} · $childCount 个子分类 · $usageCount 笔'
-        : '${category.type.label} · $usageCount 笔交易';
+        ? '$typeLabel · $childCount 个子分类 · $usageCount 笔'
+        : '$typeLabel · $usageCount 笔交易';
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -1311,7 +1315,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               const SizedBox(height: 10),
               SelectField(
                 label: '性别',
-                value: _gender.label,
+                value: _gender.label(AppLocalizations.of(context)),
                 icon: Icons.person_outline,
                 onTap: _pickGender,
               ),
@@ -1347,7 +1351,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       title: '选择性别',
       values: ProfileGender.values,
       selected: _gender,
-      labelOf: (value) => value.label,
+      labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected != null && mounted) {
       setState(() => _gender = selected);
@@ -1443,7 +1447,9 @@ class SettingsPage extends StatelessWidget {
                     SettingsRow(
                       icon: Icons.dark_mode_outlined,
                       title: '主题模式',
-                      trailing: controller.themePreference.label,
+                      trailing: controller.themePreference.label(
+                        AppLocalizations.of(context),
+                      ),
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _pickThemePreference(context, controller),
                     ),
@@ -1561,7 +1567,7 @@ class SettingsPage extends StatelessWidget {
       title: '选择主题模式',
       values: ThemePreference.values,
       selected: controller.themePreference,
-      labelOf: (value) => value.label,
+      labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected != null) {
       controller.setThemePreference(selected);

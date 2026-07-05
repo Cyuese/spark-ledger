@@ -6,6 +6,7 @@ import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 import 'sheets.dart';
 
 /// 周期记账规则列表：新增 / 编辑 / 启停 / 删除。
@@ -129,7 +130,7 @@ class _RecurringRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${rule.frequency.label} · $sign${formatAmount(rule.amount)}'
+                    '${rule.frequency.label(AppLocalizations.of(context))} · $sign${formatAmount(rule.amount)}'
                     ' · 下次 ${formatDate(rule.nextRunDate)}',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(
@@ -239,7 +240,7 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
                     .map(
                       (type) => ButtonSegment<EntryType>(
                         value: type,
-                        label: Text(type.label),
+                        label: Text(type.label(AppLocalizations.of(context))),
                       ),
                     )
                     .toList(),
@@ -290,7 +291,7 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
                       ),
                     DetailInfoRow(
                       label: '频率',
-                      value: _frequency.label,
+                      value: _frequency.label(AppLocalizations.of(context)),
                       onTap: _pickFrequency,
                     ),
                     DetailInfoRow(
@@ -396,7 +397,7 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
       title: '选择频率',
       values: RecurringFrequency.values,
       selected: _frequency,
-      labelOf: (value) => value.label,
+      labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected != null && mounted) {
       setState(() => _frequency = selected);

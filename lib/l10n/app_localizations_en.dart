@@ -125,4 +125,173 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagNameLabel => 'Tag name';
+
+  @override
+  String get entryTypeExpense => 'Expense';
+
+  @override
+  String get entryTypeIncome => 'Income';
+
+  @override
+  String get entryTypeTransfer => 'Transfer';
+
+  @override
+  String get themeSystem => 'Follow system';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get accountTypeOnlinePayment => 'Online payment';
+
+  @override
+  String get accountTypeCreditCard => 'Credit card';
+
+  @override
+  String get accountTypeDebitCard => 'Debit card';
+
+  @override
+  String get accountTypeInvestment => 'Investment';
+
+  @override
+  String get accountTypeCash => 'Cash';
+
+  @override
+  String get assetViewGroup => 'Group view';
+
+  @override
+  String get assetViewType => 'Type view';
+
+  @override
+  String get assetViewToggleToType => 'Switch to type view';
+
+  @override
+  String get assetViewToggleToGroup => 'Switch to group view';
+
+  @override
+  String get recurringDaily => 'Daily';
+
+  @override
+  String get recurringWeekly => 'Weekly';
+
+  @override
+  String get recurringMonthly => 'Monthly';
+
+  @override
+  String get recurringYearly => 'Yearly';
+
+  @override
+  String get genderUnset => 'Not set';
+
+  @override
+  String get genderMale => 'Male';
+
+  @override
+  String get genderFemale => 'Female';
+
+  @override
+  String get panelTrendLabel => 'Spending trend';
+
+  @override
+  String get panelTrendDesc => 'Spending trend and balance in 7-day periods';
+
+  @override
+  String get panelRecentLabel => 'Recent transactions';
+
+  @override
+  String get panelRecentDesc => 'Shows the 5 most recent transactions';
+
+  @override
+  String get panelBudgetLabel => 'Monthly budget';
+
+  @override
+  String get panelBudgetDesc =>
+      'This month\'s budget progress and category overspend alerts';
+
+  @override
+  String get panelCalendarDesc =>
+      'View daily income and spending on a calendar';
+
+  @override
+  String get panelBudgetExecutionLabel => 'Budget execution';
+
+  @override
+  String get panelBudgetExecutionDesc =>
+      'This month\'s budget, spending and category budget execution';
+
+  @override
+  String get panelCategoryRingLabel => 'Category breakdown';
+
+  @override
+  String get panelCategoryRingDesc =>
+      'Donut chart of this month\'s spending by category';
+
+  @override
+  String get panelCategoryRankLabel => 'Category details';
+
+  @override
+  String get panelCategoryRankDesc =>
+      'This month\'s category ranking and share';
+
+  @override
+  String get panelTagStatsLabel => 'Tag stats';
+
+  @override
+  String get panelTagStatsDesc =>
+      'Spending amount and share per tag this month';
+
+  @override
+  String get panelDailyTrendLabel => 'Daily trend';
+
+  @override
+  String get panelDailyTrendDesc => 'Daily spending trend for the last 7 days';
+
+  @override
+  String get panelMonthlyStructureLabel => 'Monthly overview';
+
+  @override
+  String get panelMonthlyStructureDesc =>
+      'Bar chart of monthly spending this year';
+
+  @override
+  String panelCountLabel(int count, String page) {
+    return '$count $page panels';
+  }
+
+  @override
+  String panelPageTitle(String page) {
+    return '$page panels';
+  }
+
+  @override
+  String get panelSortHint => 'Drag the handles to reorder';
+
+  @override
+  String get panelToggleHint => 'Toggle and reorder';
+
+  @override
+  String get panelSortDone => 'Done sorting';
+
+  @override
+  String get panelSortStart => 'Reorder panels';
+
+  @override
+  String panelResetTitle(String page) {
+    return 'Restore default $page panels?';
+  }
+
+  @override
+  String get panelResetMessage =>
+      'Restores the default order and enables all panels.';
+
+  @override
+  String get panelResetConfirm => 'Restore defaults';
+
+  @override
+  String panelKeepOneMessage(String page) {
+    return 'Keep at least one $page panel enabled';
+  }
 }

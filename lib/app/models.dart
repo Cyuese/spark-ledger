@@ -7,14 +7,14 @@ enum EntryType {
   income,
   transfer;
 
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case EntryType.expense:
-        return '支出';
+        return l10n.entryTypeExpense;
       case EntryType.income:
-        return '收入';
+        return l10n.entryTypeIncome;
       case EntryType.transfer:
-        return '转账';
+        return l10n.entryTypeTransfer;
     }
   }
 
@@ -42,14 +42,14 @@ enum ThemePreference {
   light,
   dark;
 
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case ThemePreference.system:
-        return '跟随系统';
+        return l10n.themeSystem;
       case ThemePreference.light:
-        return '浅色';
+        return l10n.themeLight;
       case ThemePreference.dark:
-        return '深色';
+        return l10n.themeDark;
     }
   }
 
@@ -118,18 +118,18 @@ enum AccountType {
   investment,
   cash;
 
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case AccountType.onlinePayment:
-        return '网络支付';
+        return l10n.accountTypeOnlinePayment;
       case AccountType.creditCard:
-        return '信用卡';
+        return l10n.accountTypeCreditCard;
       case AccountType.debitCard:
-        return '储蓄卡';
+        return l10n.accountTypeDebitCard;
       case AccountType.investment:
-        return '投资账户';
+        return l10n.accountTypeInvestment;
       case AccountType.cash:
-        return '现金';
+        return l10n.accountTypeCash;
     }
   }
 
@@ -149,21 +149,21 @@ enum AssetAccountViewMode {
   group,
   type;
 
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case AssetAccountViewMode.group:
-        return '分类视图';
+        return l10n.assetViewGroup;
       case AssetAccountViewMode.type:
-        return '类型视图';
+        return l10n.assetViewType;
     }
   }
 
-  String get toggleLabel {
+  String toggleLabel(AppLocalizations l10n) {
     switch (this) {
       case AssetAccountViewMode.group:
-        return '切换为类型视图';
+        return l10n.assetViewToggleToType;
       case AssetAccountViewMode.type:
-        return '切换为分类视图';
+        return l10n.assetViewToggleToGroup;
     }
   }
 
@@ -302,15 +302,27 @@ List<String> _stringList(Object? value) {
 
 /// 周期记账频率。
 enum RecurringFrequency {
-  daily('daily', '每天'),
-  weekly('weekly', '每周'),
-  monthly('monthly', '每月'),
-  yearly('yearly', '每年');
+  daily('daily'),
+  weekly('weekly'),
+  monthly('monthly'),
+  yearly('yearly');
 
-  const RecurringFrequency(this.storageValue, this.label);
+  const RecurringFrequency(this.storageValue);
 
   final String storageValue;
-  final String label;
+
+  String label(AppLocalizations l10n) {
+    switch (this) {
+      case RecurringFrequency.daily:
+        return l10n.recurringDaily;
+      case RecurringFrequency.weekly:
+        return l10n.recurringWeekly;
+      case RecurringFrequency.monthly:
+        return l10n.recurringMonthly;
+      case RecurringFrequency.yearly:
+        return l10n.recurringYearly;
+    }
+  }
 
   static RecurringFrequency fromStorage(String? value) {
     return RecurringFrequency.values.firstWhere(
@@ -687,14 +699,14 @@ enum ProfileGender {
   male,
   female;
 
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case ProfileGender.unset:
-        return '不设置';
+        return l10n.genderUnset;
       case ProfileGender.male:
-        return '男';
+        return l10n.genderMale;
       case ProfileGender.female:
-        return '女';
+        return l10n.genderFemale;
     }
   }
 
@@ -775,12 +787,12 @@ enum PanelPageKind {
   home,
   reports;
 
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case PanelPageKind.home:
-        return '首页';
+        return l10n.tabHome;
       case PanelPageKind.reports:
-        return '看板';
+        return l10n.tabReports;
     }
   }
 
@@ -794,41 +806,79 @@ enum PanelPageKind {
   }
 }
 
-/// 面板目录项:id 是持久化标识,名称与描述用于面板管理页展示。
+/// 面板目录项:id 是持久化标识,名称与描述按 id 从 ARB 解析,用于面板管理页展示。
 class PagePanelSpec {
-  const PagePanelSpec({
-    required this.id,
-    required this.label,
-    required this.description,
-  });
+  const PagePanelSpec({required this.id});
 
   final String id;
-  final String label;
-  final String description;
+
+  String label(AppLocalizations l10n) {
+    switch (id) {
+      case 'trend':
+        return l10n.panelTrendLabel;
+      case 'recent':
+        return l10n.panelRecentLabel;
+      case 'budget':
+        return l10n.panelBudgetLabel;
+      case 'calendar':
+        return l10n.calendarTitle;
+      case 'budget_execution':
+        return l10n.panelBudgetExecutionLabel;
+      case 'category_ring':
+        return l10n.panelCategoryRingLabel;
+      case 'category_rank':
+        return l10n.panelCategoryRankLabel;
+      case 'tag_stats':
+        return l10n.panelTagStatsLabel;
+      case 'daily_trend':
+        return l10n.panelDailyTrendLabel;
+      case 'monthly_structure':
+        return l10n.panelMonthlyStructureLabel;
+    }
+    return id;
+  }
+
+  String description(AppLocalizations l10n) {
+    switch (id) {
+      case 'trend':
+        return l10n.panelTrendDesc;
+      case 'recent':
+        return l10n.panelRecentDesc;
+      case 'budget':
+        return l10n.panelBudgetDesc;
+      case 'calendar':
+        return l10n.panelCalendarDesc;
+      case 'budget_execution':
+        return l10n.panelBudgetExecutionDesc;
+      case 'category_ring':
+        return l10n.panelCategoryRingDesc;
+      case 'category_rank':
+        return l10n.panelCategoryRankDesc;
+      case 'tag_stats':
+        return l10n.panelTagStatsDesc;
+      case 'daily_trend':
+        return l10n.panelDailyTrendDesc;
+      case 'monthly_structure':
+        return l10n.panelMonthlyStructureDesc;
+    }
+    return '';
+  }
 }
 
 const List<PagePanelSpec> homePanelSpecs = <PagePanelSpec>[
-  PagePanelSpec(id: 'trend', label: '支出走势', description: '按 7 天周期展示支出趋势与结余'),
-  PagePanelSpec(id: 'recent', label: '最近交易', description: '展示最近 5 条交易记录'),
-  PagePanelSpec(id: 'budget', label: '月度预算', description: '本月预算进度与分类超支提醒'),
-  PagePanelSpec(id: 'calendar', label: '日历', description: '按日历查看每天的收支情况'),
+  PagePanelSpec(id: 'trend'),
+  PagePanelSpec(id: 'recent'),
+  PagePanelSpec(id: 'budget'),
+  PagePanelSpec(id: 'calendar'),
 ];
 
 const List<PagePanelSpec> reportPanelSpecs = <PagePanelSpec>[
-  PagePanelSpec(
-    id: 'budget_execution',
-    label: '预算执行',
-    description: '本月预算、支出与分类预算执行情况',
-  ),
-  PagePanelSpec(id: 'category_ring', label: '分类统计', description: '本月支出分类占比环形图'),
-  PagePanelSpec(id: 'category_rank', label: '分类明细', description: '本月支出分类排行与占比'),
-  PagePanelSpec(id: 'tag_stats', label: '标签统计', description: '本月各标签的支出金额与占比'),
-  PagePanelSpec(id: 'daily_trend', label: '日趋势', description: '近 7 天每日支出趋势'),
-  PagePanelSpec(
-    id: 'monthly_structure',
-    label: '月度收支',
-    description: '今年每月支出结构柱状图',
-  ),
+  PagePanelSpec(id: 'budget_execution'),
+  PagePanelSpec(id: 'category_ring'),
+  PagePanelSpec(id: 'category_rank'),
+  PagePanelSpec(id: 'tag_stats'),
+  PagePanelSpec(id: 'daily_trend'),
+  PagePanelSpec(id: 'monthly_structure'),
 ];
 
 /// 页面面板的开关状态,列表顺序即页面渲染顺序。

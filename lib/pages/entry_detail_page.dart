@@ -7,6 +7,7 @@ import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 import 'attachments_editor.dart';
 import 'sheets.dart';
 
@@ -85,7 +86,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                         .map(
                           (type) => ButtonSegment<EntryType>(
                             value: type,
-                            label: Text(type.label),
+                            label: Text(
+                              type.label(AppLocalizations.of(context)),
+                            ),
                           ),
                         )
                         .toList(),

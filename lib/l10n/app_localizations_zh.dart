@@ -125,4 +125,165 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tagNameLabel => '标签名称';
+
+  @override
+  String get entryTypeExpense => '支出';
+
+  @override
+  String get entryTypeIncome => '收入';
+
+  @override
+  String get entryTypeTransfer => '转账';
+
+  @override
+  String get themeSystem => '跟随系统';
+
+  @override
+  String get themeLight => '浅色';
+
+  @override
+  String get themeDark => '深色';
+
+  @override
+  String get accountTypeOnlinePayment => '网络支付';
+
+  @override
+  String get accountTypeCreditCard => '信用卡';
+
+  @override
+  String get accountTypeDebitCard => '储蓄卡';
+
+  @override
+  String get accountTypeInvestment => '投资账户';
+
+  @override
+  String get accountTypeCash => '现金';
+
+  @override
+  String get assetViewGroup => '分类视图';
+
+  @override
+  String get assetViewType => '类型视图';
+
+  @override
+  String get assetViewToggleToType => '切换为类型视图';
+
+  @override
+  String get assetViewToggleToGroup => '切换为分类视图';
+
+  @override
+  String get recurringDaily => '每天';
+
+  @override
+  String get recurringWeekly => '每周';
+
+  @override
+  String get recurringMonthly => '每月';
+
+  @override
+  String get recurringYearly => '每年';
+
+  @override
+  String get genderUnset => '不设置';
+
+  @override
+  String get genderMale => '男';
+
+  @override
+  String get genderFemale => '女';
+
+  @override
+  String get panelTrendLabel => '支出走势';
+
+  @override
+  String get panelTrendDesc => '按 7 天周期展示支出趋势与结余';
+
+  @override
+  String get panelRecentLabel => '最近交易';
+
+  @override
+  String get panelRecentDesc => '展示最近 5 条交易记录';
+
+  @override
+  String get panelBudgetLabel => '月度预算';
+
+  @override
+  String get panelBudgetDesc => '本月预算进度与分类超支提醒';
+
+  @override
+  String get panelCalendarDesc => '按日历查看每天的收支情况';
+
+  @override
+  String get panelBudgetExecutionLabel => '预算执行';
+
+  @override
+  String get panelBudgetExecutionDesc => '本月预算、支出与分类预算执行情况';
+
+  @override
+  String get panelCategoryRingLabel => '分类统计';
+
+  @override
+  String get panelCategoryRingDesc => '本月支出分类占比环形图';
+
+  @override
+  String get panelCategoryRankLabel => '分类明细';
+
+  @override
+  String get panelCategoryRankDesc => '本月支出分类排行与占比';
+
+  @override
+  String get panelTagStatsLabel => '标签统计';
+
+  @override
+  String get panelTagStatsDesc => '本月各标签的支出金额与占比';
+
+  @override
+  String get panelDailyTrendLabel => '日趋势';
+
+  @override
+  String get panelDailyTrendDesc => '近 7 天每日支出趋势';
+
+  @override
+  String get panelMonthlyStructureLabel => '月度收支';
+
+  @override
+  String get panelMonthlyStructureDesc => '今年每月支出结构柱状图';
+
+  @override
+  String panelCountLabel(int count, String page) {
+    return '$count个$page面板';
+  }
+
+  @override
+  String panelPageTitle(String page) {
+    return '$page面板';
+  }
+
+  @override
+  String get panelSortHint => '拖动手柄调整顺序';
+
+  @override
+  String get panelToggleHint => '开关与排序';
+
+  @override
+  String get panelSortDone => '完成排序';
+
+  @override
+  String get panelSortStart => '排序面板';
+
+  @override
+  String panelResetTitle(String page) {
+    return '恢复默认$page面板？';
+  }
+
+  @override
+  String get panelResetMessage => '将恢复默认顺序并开启全部面板。';
+
+  @override
+  String get panelResetConfirm => '恢复默认';
+
+  @override
+  String panelKeepOneMessage(String page) {
+    return '至少保留一个开启的$page面板';
+  }
 }

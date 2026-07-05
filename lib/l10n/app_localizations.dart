@@ -325,6 +325,312 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'标签名称'**
   String get tagNameLabel;
+
+  /// No description provided for @entryTypeExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'支出'**
+  String get entryTypeExpense;
+
+  /// No description provided for @entryTypeIncome.
+  ///
+  /// In zh, this message translates to:
+  /// **'收入'**
+  String get entryTypeIncome;
+
+  /// No description provided for @entryTypeTransfer.
+  ///
+  /// In zh, this message translates to:
+  /// **'转账'**
+  String get entryTypeTransfer;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In zh, this message translates to:
+  /// **'跟随系统'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In zh, this message translates to:
+  /// **'浅色'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In zh, this message translates to:
+  /// **'深色'**
+  String get themeDark;
+
+  /// No description provided for @accountTypeOnlinePayment.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络支付'**
+  String get accountTypeOnlinePayment;
+
+  /// No description provided for @accountTypeCreditCard.
+  ///
+  /// In zh, this message translates to:
+  /// **'信用卡'**
+  String get accountTypeCreditCard;
+
+  /// No description provided for @accountTypeDebitCard.
+  ///
+  /// In zh, this message translates to:
+  /// **'储蓄卡'**
+  String get accountTypeDebitCard;
+
+  /// No description provided for @accountTypeInvestment.
+  ///
+  /// In zh, this message translates to:
+  /// **'投资账户'**
+  String get accountTypeInvestment;
+
+  /// No description provided for @accountTypeCash.
+  ///
+  /// In zh, this message translates to:
+  /// **'现金'**
+  String get accountTypeCash;
+
+  /// No description provided for @assetViewGroup.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类视图'**
+  String get assetViewGroup;
+
+  /// No description provided for @assetViewType.
+  ///
+  /// In zh, this message translates to:
+  /// **'类型视图'**
+  String get assetViewType;
+
+  /// No description provided for @assetViewToggleToType.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换为类型视图'**
+  String get assetViewToggleToType;
+
+  /// No description provided for @assetViewToggleToGroup.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换为分类视图'**
+  String get assetViewToggleToGroup;
+
+  /// No description provided for @recurringDaily.
+  ///
+  /// In zh, this message translates to:
+  /// **'每天'**
+  String get recurringDaily;
+
+  /// No description provided for @recurringWeekly.
+  ///
+  /// In zh, this message translates to:
+  /// **'每周'**
+  String get recurringWeekly;
+
+  /// No description provided for @recurringMonthly.
+  ///
+  /// In zh, this message translates to:
+  /// **'每月'**
+  String get recurringMonthly;
+
+  /// No description provided for @recurringYearly.
+  ///
+  /// In zh, this message translates to:
+  /// **'每年'**
+  String get recurringYearly;
+
+  /// No description provided for @genderUnset.
+  ///
+  /// In zh, this message translates to:
+  /// **'不设置'**
+  String get genderUnset;
+
+  /// No description provided for @genderMale.
+  ///
+  /// In zh, this message translates to:
+  /// **'男'**
+  String get genderMale;
+
+  /// No description provided for @genderFemale.
+  ///
+  /// In zh, this message translates to:
+  /// **'女'**
+  String get genderFemale;
+
+  /// No description provided for @panelTrendLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'支出走势'**
+  String get panelTrendLabel;
+
+  /// No description provided for @panelTrendDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'按 7 天周期展示支出趋势与结余'**
+  String get panelTrendDesc;
+
+  /// No description provided for @panelRecentLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近交易'**
+  String get panelRecentLabel;
+
+  /// No description provided for @panelRecentDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'展示最近 5 条交易记录'**
+  String get panelRecentDesc;
+
+  /// No description provided for @panelBudgetLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'月度预算'**
+  String get panelBudgetLabel;
+
+  /// No description provided for @panelBudgetDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月预算进度与分类超支提醒'**
+  String get panelBudgetDesc;
+
+  /// No description provided for @panelCalendarDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'按日历查看每天的收支情况'**
+  String get panelCalendarDesc;
+
+  /// No description provided for @panelBudgetExecutionLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'预算执行'**
+  String get panelBudgetExecutionLabel;
+
+  /// No description provided for @panelBudgetExecutionDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月预算、支出与分类预算执行情况'**
+  String get panelBudgetExecutionDesc;
+
+  /// No description provided for @panelCategoryRingLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类统计'**
+  String get panelCategoryRingLabel;
+
+  /// No description provided for @panelCategoryRingDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月支出分类占比环形图'**
+  String get panelCategoryRingDesc;
+
+  /// No description provided for @panelCategoryRankLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类明细'**
+  String get panelCategoryRankLabel;
+
+  /// No description provided for @panelCategoryRankDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月支出分类排行与占比'**
+  String get panelCategoryRankDesc;
+
+  /// No description provided for @panelTagStatsLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'标签统计'**
+  String get panelTagStatsLabel;
+
+  /// No description provided for @panelTagStatsDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月各标签的支出金额与占比'**
+  String get panelTagStatsDesc;
+
+  /// No description provided for @panelDailyTrendLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'日趋势'**
+  String get panelDailyTrendLabel;
+
+  /// No description provided for @panelDailyTrendDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'近 7 天每日支出趋势'**
+  String get panelDailyTrendDesc;
+
+  /// No description provided for @panelMonthlyStructureLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'月度收支'**
+  String get panelMonthlyStructureLabel;
+
+  /// No description provided for @panelMonthlyStructureDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'今年每月支出结构柱状图'**
+  String get panelMonthlyStructureDesc;
+
+  /// 面板管理入口:开启数量
+  ///
+  /// In zh, this message translates to:
+  /// **'{count}个{page}面板'**
+  String panelCountLabel(int count, String page);
+
+  /// No description provided for @panelPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'{page}面板'**
+  String panelPageTitle(String page);
+
+  /// No description provided for @panelSortHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'拖动手柄调整顺序'**
+  String get panelSortHint;
+
+  /// No description provided for @panelToggleHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'开关与排序'**
+  String get panelToggleHint;
+
+  /// No description provided for @panelSortDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成排序'**
+  String get panelSortDone;
+
+  /// No description provided for @panelSortStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序面板'**
+  String get panelSortStart;
+
+  /// No description provided for @panelResetTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认{page}面板？'**
+  String panelResetTitle(String page);
+
+  /// No description provided for @panelResetMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将恢复默认顺序并开启全部面板。'**
+  String get panelResetMessage;
+
+  /// No description provided for @panelResetConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认'**
+  String get panelResetConfirm;
+
+  /// No description provided for @panelKeepOneMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'至少保留一个开启的{page}面板'**
+  String panelKeepOneMessage(String page);
 }
 
 class _AppLocalizationsDelegate
