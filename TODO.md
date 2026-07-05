@@ -30,7 +30,7 @@
   - **设置**：新增 `FabActionMode {manual, ai}` 偏好（`verifin.fab_action.v1`，默认手动），设置页可切换首页「记一笔」按钮行为；其下「AI 记账设置」子页（`AiSettingsPage`）配置请求地址/API Key/模型（`AiSettings`，存 `verifin.ai.v1`，明文本机、不进备份、初始化保留）并测试连通性。
   - **AI 模块** `lib/app/ai/`：`ai_settings.dart` 值类；`ai_client.dart`（facade/io/stub 条件导入，`dart:io HttpClient` POST `{baseUrl}/chat/completions` + `Authorization: Bearer`，带超时，与 WebDAV 同款约定）；`ai_entry_parser.dart` 纯函数——把当前账本分类（按类型）、账户、今天日期喂给模型，要求严格 JSON，解析后**校验所有 id**（未命中降级 + 提示码），产出 `AiEntryDraft`。
   - **确认落账**：FAB 为 AI 模式时弹自然语言输入框（`ai_entry_sheet.dart`，附隐私提示），解析成草稿后 push 到 `EntryDetailPage`（新增 `initialDraft` 预填 + 复核提示条）由用户确认/修改再保存，AI 不直接落账。类型/金额/分类/账户/备注/日期均可被识别。未配置时引导去设置。
-  - 已处理：解析容错（代码块/多余文字提取 JSON、金额为字符串/负数、相对日期）、落账前确认、隐私提示、i18n（zh+en）；Android 开启 `usesCleartextTraffic` 支持本地/自建 `http://` 端点（局域网 Ollama / LM Studio 等）。语音输入留待后续。
+  - 已处理：解析容错（代码块/多余文字提取 JSON、金额为字符串/负数、相对日期）、落账前确认、隐私提示、i18n（zh+en）；Android 开启 `usesCleartextTraffic` 支持本地/自建 `http://` 端点（局域网 Ollama / LM Studio 等）。**语音输入有意不做**：主流输入法自带听写（语音转文字），用户可直接对着 AI 输入框说话，无需引入麦克风权限与 STT 依赖。
 - [ ] **7.5 通知/屏幕自动识别记账（呼声最高，需仔细评估）**：读取支付通知或无障碍识别屏幕自动生成记录。**用户里想要的人最多，但风险也最高**：无障碍/通知监听权限敏感（Android 13+ 审核严）、依赖各 App 界面文案易失效、触碰微信/支付宝服务条款。先做可行性与合规评估，再决定是否/如何落地；短期可用 7.2 导入 + 7.4 AI 记账组合在合规前提下覆盖大部分「自动」体验。
 - [ ] **7.6 Obsidian / Markdown 联动（最不着急）**：把数据导出为 Markdown / 写入 vault，在 Obsidian 内查看记录。契合「数据自主」，但受众偏小众，优先级最低。
 
