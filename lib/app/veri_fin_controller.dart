@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' hide Category;
 
 import '../data/ledger_repository.dart';
 import '../local_storage/local_storage.dart';
+import 'ai/ai_settings.dart';
 import 'app_lock.dart';
 import 'backup/backup_archive.dart';
 import 'backup/backup_settings.dart';
@@ -32,6 +33,7 @@ const Set<String> _knownBackupDataKeys = <String>{
   'recurringRules',
   'monthlyBudgets',
   'categoryBudgets',
+  'dailyBudgets',
   'profile',
   'themePreference',
   'homePanels',
@@ -90,6 +92,8 @@ class VeriFinController extends ChangeNotifier {
   static const String _backupPassphraseKey = 'verifin.backup_passphrase.v1';
   static const String _webdavKey = 'verifin.webdav.v1';
   static const String _reminderKey = 'verifin.reminder.v1';
+  static const String _fabActionKey = 'verifin.fab_action.v1';
+  static const String _aiSettingsKey = 'verifin.ai.v1';
   static const String _onboardingKey = 'verifin.onboarding.v1';
 
   static String _panelsKeyFor(PanelPageKind page) {
@@ -138,6 +142,8 @@ class VeriFinController extends ChangeNotifier {
   final List<RecurringRule> _recurringRules = <RecurringRule>[];
   final Map<String, double> _monthlyBudgets = <String, double>{};
   final Map<String, double> _categoryBudgets = <String, double>{};
+  // 按日预算：每个账本一条「每日花销上限」，键为 bookId、值为金额（适用于每一天）。
+  final Map<String, double> _dailyBudgets = <String, double>{};
   final Set<String> _collapsedAssetSections = <String>{};
   final Map<String, List<String>> _assetAccountOrders =
       <String, List<String>>{};
@@ -168,6 +174,8 @@ class VeriFinController extends ChangeNotifier {
   String _backupPassphrase = '';
   WebdavConfig _webdavConfig = const WebdavConfig();
   ReminderSettings _reminderSettings = ReminderSettings.disabled;
+  FabActionMode _fabActionMode = FabActionMode.manual;
+  AiSettings _aiSettings = const AiSettings();
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
     _entries.where((entry) => entry.bookId == _activeBookId),
@@ -512,6 +520,21 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 当前账本的每日花销上限（0 表示未设置）。
+  double dailyBudget() {
+    return _dailyBudgets[_activeBookId] ?? 0;
+  }
+
+  void setDailyBudget(double amount) {
+    if (amount <= 0) {
+      _dailyBudgets.remove(_activeBookId);
+    } else {
+      _dailyBudgets[_activeBookId] = amount;
+    }
+    _persistDailyBudgets();
+    notifyListeners();
+  }
+
   void setThemePreference(ThemePreference preference) {
     _themePreference = preference;
     themePreferenceListenable.value = preference;
@@ -547,6 +570,36 @@ class VeriFinController extends ChangeNotifier {
   void setHapticsEnabled(bool enabled) {
     _hapticsEnabled = enabled;
     _store.write(_hapticsKey, enabled.toString());
+    notifyListeners();
+  }
+
+  /// 首页 FAB（记一笔）的行为：手动记账（默认）或 AI 对话记账。设备本地偏好，
+  /// 不进 JSON 备份、初始化保留。
+  FabActionMode get fabActionMode => _fabActionMode;
+
+  void setFabActionMode(FabActionMode mode) {
+    _fabActionMode = mode;
+    _store.write(_fabActionKey, mode.name);
+    notifyListeners();
+  }
+
+  /// AI 对话记账的连接配置（请求地址/API Key/模型）。设备本地偏好，不进 JSON
+  /// 备份、初始化保留（API Key 明文存本机）。
+  AiSettings get aiSettings => _aiSettings;
+
+  void setAiSettings(AiSettings settings) {
+    if (_aiSettings == settings) {
+      return;
+    }
+    _aiSettings = settings;
+    if (settings.isConfigured ||
+        settings.baseUrl.isNotEmpty ||
+        settings.apiKey.isNotEmpty ||
+        settings.model.isNotEmpty) {
+      _store.write(_aiSettingsKey, settings.encode());
+    } else {
+      _store.delete(_aiSettingsKey);
+    }
     notifyListeners();
   }
 
@@ -989,6 +1042,7 @@ class VeriFinController extends ChangeNotifier {
     _assetSectionOrders.removeWhere((key, _) => key.startsWith('$bookId:'));
     _monthlyBudgets.removeWhere((key, _) => key.startsWith('$bookId:'));
     _categoryBudgets.removeWhere((key, _) => key.startsWith('$bookId:'));
+    _dailyBudgets.remove(bookId);
     if (_activeBookId == bookId) {
       _activeBookId = defaultLedgerBookId;
       _store.write(_activeBookKey, _activeBookId);
@@ -1006,6 +1060,7 @@ class VeriFinController extends ChangeNotifier {
     _persistAssetSectionOrders();
     _persistBudgets();
     _persistCategoryBudgets();
+    _persistDailyBudgets();
     notifyListeners();
     return true;
   }
@@ -1527,6 +1582,7 @@ class VeriFinController extends ChangeNotifier {
     _recurringRules.clear();
     _monthlyBudgets.clear();
     _categoryBudgets.clear();
+    _dailyBudgets.clear();
     _profile = _seedProfile;
     _themePreference = ThemePreference.system;
     _activeBookId = defaultLedgerBookId;
@@ -1550,6 +1606,7 @@ class VeriFinController extends ChangeNotifier {
     _persistRecurringRules();
     _persistBudgets();
     _persistCategoryBudgets();
+    _persistDailyBudgets();
     themePreferenceListenable.value = _themePreference;
     notifyListeners();
   }
@@ -1571,6 +1628,7 @@ class VeriFinController extends ChangeNotifier {
         'recurringRules': _recurringRules.map((r) => r.toJson()).toList(),
         'monthlyBudgets': Map<String, double>.from(_monthlyBudgets),
         'categoryBudgets': Map<String, double>.from(_categoryBudgets),
+        'dailyBudgets': Map<String, double>.from(_dailyBudgets),
         'profile': _profile.toJson(),
         'themePreference': _themePreference.name,
         'assetCoverUrl': _assetCoverUrl,
@@ -1680,6 +1738,8 @@ class VeriFinController extends ChangeNotifier {
     final nextCategoryBudgets = _bookScopedBudgets(
       _decodeBudgets(data['categoryBudgets']),
     );
+    // 按日预算键是纯 bookId（无日期前缀），无需 _bookScopedBudgets 迁移。
+    final nextDailyBudgets = _decodeBudgets(data['dailyBudgets']);
 
     final profileValue = data['profile'];
     final nextProfile = profileValue is Map
@@ -1750,6 +1810,9 @@ class VeriFinController extends ChangeNotifier {
     _categoryBudgets
       ..clear()
       ..addAll(nextCategoryBudgets);
+    _dailyBudgets
+      ..clear()
+      ..addAll(nextDailyBudgets);
     _profile = nextProfile;
     _themePreference = nextThemePreference;
     _assetCoverUrl = nextAssetCoverUrl;
@@ -1778,6 +1841,7 @@ class VeriFinController extends ChangeNotifier {
     _persistRecurringRules();
     _persistBudgets();
     _persistCategoryBudgets();
+    _persistDailyBudgets();
     _store.write(_profileKey, jsonEncode(_profile.toJson()));
     _store.write(_themeKey, _themePreference.name);
     _store.write(_hapticsKey, _hapticsEnabled.toString());
@@ -1831,6 +1895,8 @@ class VeriFinController extends ChangeNotifier {
     _backupPassphrase = _store.read(_backupPassphraseKey) ?? '';
     _webdavConfig = WebdavConfig.decode(_store.read(_webdavKey));
     _reminderSettings = ReminderSettings.decode(_store.read(_reminderKey));
+    _fabActionMode = FabActionMode.fromStorage(_store.read(_fabActionKey));
+    _aiSettings = AiSettings.decode(_store.read(_aiSettingsKey));
   }
 
   /// 从 SQLite 载入账目类数据；全新数据库首启动写入默认账本/账户/分组/分类。
@@ -1897,6 +1963,9 @@ class VeriFinController extends ChangeNotifier {
     _categoryBudgets
       ..clear()
       ..addAll(_bookScopedBudgets(await _repository.loadCategoryBudgets()));
+    _dailyBudgets
+      ..clear()
+      ..addAll(await _repository.loadDailyBudgets());
     notifyListeners();
   }
 
@@ -2040,6 +2109,12 @@ class VeriFinController extends ChangeNotifier {
   void _persistCategoryBudgets() {
     _trackWrite(
       _repository.saveCategoryBudgets(Map<String, double>.of(_categoryBudgets)),
+    );
+  }
+
+  void _persistDailyBudgets() {
+    _trackWrite(
+      _repository.saveDailyBudgets(Map<String, double>.of(_dailyBudgets)),
     );
   }
 
