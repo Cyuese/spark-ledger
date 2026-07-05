@@ -2237,4 +2237,121 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupFreqEveryN => '每隔一段时间';
+
+  @override
+  String patternTooShort(int count) {
+    return '至少连接 $count 个点';
+  }
+
+  @override
+  String get bioUnlockReason => '验证生物识别以解锁 Veri Fin';
+
+  @override
+  String get verifyFailedRetry => '验证失败，请重试';
+
+  @override
+  String get enterPassword => '输入密码';
+
+  @override
+  String get drawPatternUnlock => '请绘制图案解锁';
+
+  @override
+  String get enterPinUnlock => '请输入 6 位数字密码解锁';
+
+  @override
+  String get bioUnlock => '生物解锁';
+
+  @override
+  String get patternMismatch => '两次图案不一致，请重新绘制';
+
+  @override
+  String get pinMismatch => '两次输入不一致，请重新设置';
+
+  @override
+  String get drawAgainConfirm => '再次绘制以确认';
+
+  @override
+  String get drawPatternHint => '绘制解锁图案（至少 4 个点）';
+
+  @override
+  String get enterAgainConfirm => '再次输入以确认';
+
+  @override
+  String get setPinHint => '设置 6 位数字密码';
+
+  @override
+  String get setPatternTitle => '设置图案';
+
+  @override
+  String get setPinTitle => '设置密码';
+
+  @override
+  String get verifyPasswordTitle => '验证密码';
+
+  @override
+  String get drawCurrentPattern => '请绘制当前解锁图案';
+
+  @override
+  String get enterCurrentPin => '请输入当前 6 位数字密码';
+
+  @override
+  String get appLockSubtitle => '启动和回到前台时校验';
+
+  @override
+  String get lockMethodAndPassword => '锁定方式与密码';
+
+  @override
+  String get appLockHelp =>
+      '支持 6 位数字密码或 3×3 图案。密钥仅以加盐哈希保存在本机，不会上传，也无法找回；忘记时可在设置页初始化数据后重新设置。生物解锁调用系统生物识别（指纹 / 人脸，以设备支持为准），本应用不保存任何生物特征数据；系统生物信息变化后需重新验证。';
+
+  @override
+  String get bioEnableReason => '验证生物识别以开启生物解锁';
+
+  @override
+  String get bioNotPassed => '生物识别未通过，未开启';
+
+  @override
+  String get closeAppLockTitle => '关闭应用锁';
+
+  @override
+  String get changeAppLockTitle => '修改应用锁';
+
+  @override
+  String get appLockUpdated => '应用锁已更新';
+
+  @override
+  String get pinSubtitle => '6 位数字';
+
+  @override
+  String get patternSubtitle => '3×3 连线图案';
+
+  @override
+  String get lockKindPin => '数字密码';
+
+  @override
+  String get lockKindPattern => '图案密码';
+
+  @override
+  String get bioSignInTitle => '生物解锁';
+
+  @override
+  String get bioHint => '验证身份';
+
+  @override
+  String get bioNotRecognized => '未能识别，请重试';
+
+  @override
+  String get bioRequiredTitle => '需要生物识别';
+
+  @override
+  String get bioSuccess => '验证成功';
+
+  @override
+  String get bioSetupDescription => '请在系统设置中录入生物识别';
+
+  @override
+  String get bioGoToSettings => '前往设置';
+
+  @override
+  String get bioGoToSettingsDesc => '尚未录入生物识别，请在系统设置中添加';
 }

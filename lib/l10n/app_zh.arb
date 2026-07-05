@@ -1518,5 +1518,50 @@
   "backupFreqManual": "仅手动",
   "backupFreqOnOpen": "每次打开应用",
   "backupFreqOnEntry": "每次记账后",
-  "backupFreqEveryN": "每隔一段时间"
+  "backupFreqEveryN": "每隔一段时间",
+  "patternTooShort": "至少连接 {count} 个点",
+  "@patternTooShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bioUnlockReason": "验证生物识别以解锁 Veri Fin",
+  "verifyFailedRetry": "验证失败，请重试",
+  "enterPassword": "输入密码",
+  "drawPatternUnlock": "请绘制图案解锁",
+  "enterPinUnlock": "请输入 6 位数字密码解锁",
+  "bioUnlock": "生物解锁",
+  "patternMismatch": "两次图案不一致，请重新绘制",
+  "pinMismatch": "两次输入不一致，请重新设置",
+  "drawAgainConfirm": "再次绘制以确认",
+  "drawPatternHint": "绘制解锁图案（至少 4 个点）",
+  "enterAgainConfirm": "再次输入以确认",
+  "setPinHint": "设置 6 位数字密码",
+  "setPatternTitle": "设置图案",
+  "setPinTitle": "设置密码",
+  "verifyPasswordTitle": "验证密码",
+  "drawCurrentPattern": "请绘制当前解锁图案",
+  "enterCurrentPin": "请输入当前 6 位数字密码",
+  "appLockSubtitle": "启动和回到前台时校验",
+  "lockMethodAndPassword": "锁定方式与密码",
+  "appLockHelp": "支持 6 位数字密码或 3×3 图案。密钥仅以加盐哈希保存在本机，不会上传，也无法找回；忘记时可在设置页初始化数据后重新设置。生物解锁调用系统生物识别（指纹 / 人脸，以设备支持为准），本应用不保存任何生物特征数据；系统生物信息变化后需重新验证。",
+  "bioEnableReason": "验证生物识别以开启生物解锁",
+  "bioNotPassed": "生物识别未通过，未开启",
+  "closeAppLockTitle": "关闭应用锁",
+  "changeAppLockTitle": "修改应用锁",
+  "appLockUpdated": "应用锁已更新",
+  "pinSubtitle": "6 位数字",
+  "patternSubtitle": "3×3 连线图案",
+  "lockKindPin": "数字密码",
+  "lockKindPattern": "图案密码",
+  "bioSignInTitle": "生物解锁",
+  "bioHint": "验证身份",
+  "bioNotRecognized": "未能识别，请重试",
+  "bioRequiredTitle": "需要生物识别",
+  "bioSuccess": "验证成功",
+  "bioSetupDescription": "请在系统设置中录入生物识别",
+  "bioGoToSettings": "前往设置",
+  "bioGoToSettingsDesc": "尚未录入生物识别，请在系统设置中添加"
 }

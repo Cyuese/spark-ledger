@@ -2273,4 +2273,123 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupFreqEveryN => 'At intervals';
+
+  @override
+  String patternTooShort(int count) {
+    return 'Connect at least $count dots';
+  }
+
+  @override
+  String get bioUnlockReason => 'Verify biometrics to unlock Veri Fin';
+
+  @override
+  String get verifyFailedRetry => 'Verification failed; try again';
+
+  @override
+  String get enterPassword => 'Enter password';
+
+  @override
+  String get drawPatternUnlock => 'Draw your pattern to unlock';
+
+  @override
+  String get enterPinUnlock => 'Enter your 6-digit PIN to unlock';
+
+  @override
+  String get bioUnlock => 'Biometric unlock';
+
+  @override
+  String get patternMismatch => 'Patterns don\'t match; draw again';
+
+  @override
+  String get pinMismatch => 'PINs don\'t match; set again';
+
+  @override
+  String get drawAgainConfirm => 'Draw again to confirm';
+
+  @override
+  String get drawPatternHint => 'Draw an unlock pattern (at least 4 dots)';
+
+  @override
+  String get enterAgainConfirm => 'Enter again to confirm';
+
+  @override
+  String get setPinHint => 'Set a 6-digit PIN';
+
+  @override
+  String get setPatternTitle => 'Set pattern';
+
+  @override
+  String get setPinTitle => 'Set PIN';
+
+  @override
+  String get verifyPasswordTitle => 'Verify password';
+
+  @override
+  String get drawCurrentPattern => 'Draw your current unlock pattern';
+
+  @override
+  String get enterCurrentPin => 'Enter your current 6-digit PIN';
+
+  @override
+  String get appLockSubtitle =>
+      'Verified on launch and on return to foreground';
+
+  @override
+  String get lockMethodAndPassword => 'Lock method & password';
+
+  @override
+  String get appLockHelp =>
+      'Supports a 6-digit PIN or a 3×3 pattern. The secret is stored on this device only as a salted hash — never uploaded and unrecoverable; if forgotten, reset data in Settings and set it again. Biometric unlock uses the system biometrics (fingerprint / face, as supported by the device); this app stores no biometric data, and re-verification is required after system biometrics change.';
+
+  @override
+  String get bioEnableReason => 'Verify biometrics to enable biometric unlock';
+
+  @override
+  String get bioNotPassed => 'Biometric verification failed; not enabled';
+
+  @override
+  String get closeAppLockTitle => 'Turn off app lock';
+
+  @override
+  String get changeAppLockTitle => 'Change app lock';
+
+  @override
+  String get appLockUpdated => 'App lock updated';
+
+  @override
+  String get pinSubtitle => '6-digit PIN';
+
+  @override
+  String get patternSubtitle => '3×3 pattern';
+
+  @override
+  String get lockKindPin => 'PIN';
+
+  @override
+  String get lockKindPattern => 'Pattern';
+
+  @override
+  String get bioSignInTitle => 'Biometric unlock';
+
+  @override
+  String get bioHint => 'Verify identity';
+
+  @override
+  String get bioNotRecognized => 'Not recognized; try again';
+
+  @override
+  String get bioRequiredTitle => 'Biometrics required';
+
+  @override
+  String get bioSuccess => 'Verified';
+
+  @override
+  String get bioSetupDescription => 'Enroll biometrics in system settings';
+
+  @override
+  String get bioGoToSettings => 'Go to settings';
+
+  @override
+  String get bioGoToSettingsDesc =>
+      'No biometrics enrolled; add them in system settings';
 }

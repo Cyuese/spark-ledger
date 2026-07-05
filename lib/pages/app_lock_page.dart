@@ -8,6 +8,7 @@ import '../app/biometric_auth.dart';
 import '../app/common_widgets.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 
 /// 6 位 PIN 输入视图：圆点指示 + 数字键盘。输满 [kAppLockPinLength] 位自动回调
 /// [onCompleted] 并清空输入，由上层判定成功/失败并通过 [errorText] 反馈。
@@ -153,7 +154,7 @@ class _Keypad extends StatelessWidget {
           // 不用 IconButton 的 tooltip：锁屏覆盖在根 Navigator 之上，
           // Tooltip 找不到 Overlay 祖先会报错。
           Semantics(
-            label: '删除',
+            label: AppLocalizations.of(context).commonDelete,
             button: true,
             child: IconButton(
               key: const Key('pin_backspace'),
@@ -268,7 +269,9 @@ class _PatternInputViewState extends State<PatternInputView> {
       setState(() {
         _selected.clear();
         _pointer = null;
-        _tooShort = '至少连接 $kAppLockPatternMinPoints 个点';
+        _tooShort = AppLocalizations.of(
+          context,
+        ).patternTooShort(kAppLockPatternMinPoints);
       });
       return;
     }
@@ -479,7 +482,11 @@ class _AppLockScreenState extends State<AppLockScreen> {
       return;
     }
     setState(() => _authInProgress = true);
-    final ok = await _biometric.authenticate(reason: '验证生物识别以解锁 Veri Fin');
+    final l10n = AppLocalizations.of(context);
+    final ok = await _biometric.authenticate(
+      reason: l10n.bioUnlockReason,
+      l10n: l10n,
+    );
     if (!mounted) {
       return;
     }
@@ -495,7 +502,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
       widget.onUnlocked();
       return;
     }
-    setState(() => _error = '验证失败，请重试');
+    setState(() => _error = AppLocalizations.of(context).verifyFailedRetry);
   }
 
   @override
@@ -512,7 +519,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                 const Icon(Icons.lock_outline, size: 40, color: veriRoyal),
                 const SizedBox(height: 12),
                 Text(
-                  '输入密码',
+                  AppLocalizations.of(context).enterPassword,
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -520,8 +527,8 @@ class _AppLockScreenState extends State<AppLockScreen> {
                 const SizedBox(height: 6),
                 Text(
                   controller.appLockKind == AppLockKind.pattern
-                      ? '请绘制图案解锁'
-                      : '请输入 6 位数字密码解锁',
+                      ? AppLocalizations.of(context).drawPatternUnlock
+                      : AppLocalizations.of(context).enterPinUnlock,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -540,7 +547,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                   TextButton.icon(
                     onPressed: _authInProgress ? null : _runBiometric,
                     icon: const Icon(Icons.fingerprint),
-                    label: const Text('生物解锁'),
+                    label: Text(AppLocalizations.of(context).bioUnlock),
                   ),
                 ],
               ],
@@ -580,7 +587,9 @@ class _AppLockSetupPageState extends State<AppLockSetupPage> {
     if (secret != first) {
       setState(() {
         _first = null;
-        _error = _isPattern ? '两次图案不一致，请重新绘制' : '两次输入不一致，请重新设置';
+        _error = _isPattern
+            ? AppLocalizations.of(context).patternMismatch
+            : AppLocalizations.of(context).pinMismatch;
       });
       return;
     }
@@ -594,9 +603,13 @@ class _AppLockSetupPageState extends State<AppLockSetupPage> {
     final confirming = _first != null;
     final String hint;
     if (_isPattern) {
-      hint = confirming ? '再次绘制以确认' : '绘制解锁图案（至少 4 个点）';
+      hint = confirming
+          ? AppLocalizations.of(context).drawAgainConfirm
+          : AppLocalizations.of(context).drawPatternHint;
     } else {
-      hint = confirming ? '再次输入以确认' : '设置 6 位数字密码';
+      hint = confirming
+          ? AppLocalizations.of(context).enterAgainConfirm
+          : AppLocalizations.of(context).setPinHint;
     }
     return Scaffold(
       body: SafeArea(
@@ -604,7 +617,12 @@ class _AppLockSetupPageState extends State<AppLockSetupPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
-              VeriHeader(title: _isPattern ? '设置图案' : '设置密码', showBack: true),
+              VeriHeader(
+                title: _isPattern
+                    ? AppLocalizations.of(context).setPatternTitle
+                    : AppLocalizations.of(context).setPinTitle,
+                showBack: true,
+              ),
               const SizedBox(height: 30),
               Text(
                 hint,
@@ -630,9 +648,10 @@ class _AppLockSetupPageState extends State<AppLockSetupPage> {
 
 /// 验证当前应用锁密钥。验证通过 pop(true)。用于关闭应用锁、修改密码前的校验。
 class AppLockVerifyPage extends StatefulWidget {
-  const AppLockVerifyPage({super.key, this.title = '验证密码'});
+  const AppLockVerifyPage({super.key, this.title});
 
-  final String title;
+  /// 页面标题；空时用「验证密码」默认文案。
+  final String? title;
 
   @override
   State<AppLockVerifyPage> createState() => _AppLockVerifyPageState();
@@ -646,7 +665,7 @@ class _AppLockVerifyPageState extends State<AppLockVerifyPage> {
       Navigator.of(context).pop(true);
       return;
     }
-    setState(() => _error = '验证失败，请重试');
+    setState(() => _error = AppLocalizations.of(context).verifyFailedRetry);
   }
 
   @override
@@ -659,10 +678,17 @@ class _AppLockVerifyPageState extends State<AppLockVerifyPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
-              VeriHeader(title: widget.title, showBack: true),
+              VeriHeader(
+                title:
+                    widget.title ??
+                    AppLocalizations.of(context).verifyPasswordTitle,
+                showBack: true,
+              ),
               const SizedBox(height: 30),
               Text(
-                isPattern ? '请绘制当前解锁图案' : '请输入当前 6 位数字密码',
+                isPattern
+                    ? AppLocalizations.of(context).drawCurrentPattern
+                    : AppLocalizations.of(context).enterCurrentPin,
                 textAlign: TextAlign.center,
                 style: Theme.of(
                   context,
@@ -719,9 +745,9 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
-              const VeriHeader(
-                title: '应用锁',
-                subtitle: '启动和回到前台时校验',
+              VeriHeader(
+                title: AppLocalizations.of(context).appLockLabel,
+                subtitle: AppLocalizations.of(context).appLockSubtitle,
                 showBack: true,
               ),
               const SizedBox(height: 10),
@@ -730,7 +756,7 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
                   children: <Widget>[
                     CompactSwitchRow(
                       icon: Icons.lock_outline,
-                      title: const Text('应用锁'),
+                      title: Text(AppLocalizations.of(context).appLockLabel),
                       value: enabled,
                       onChanged: (value) => _toggle(controller, value),
                     ),
@@ -738,8 +764,12 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
                       const Divider(height: 1),
                       SettingsRow(
                         icon: Icons.password_outlined,
-                        title: '锁定方式与密码',
-                        trailing: controller.appLockKind.label,
+                        title: AppLocalizations.of(
+                          context,
+                        ).lockMethodAndPassword,
+                        trailing: controller.appLockKind.label(
+                          AppLocalizations.of(context),
+                        ),
                         trailingIcon: Icons.chevron_right,
                         onTap: () => _change(controller),
                       ),
@@ -747,7 +777,7 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
                         const Divider(height: 1),
                         CompactSwitchRow(
                           icon: Icons.fingerprint,
-                          title: const Text('生物解锁'),
+                          title: Text(AppLocalizations.of(context).bioUnlock),
                           value: controller.biometricUnlockEnabled,
                           onChanged: (value) =>
                               _toggleBiometric(controller, value),
@@ -759,8 +789,7 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
               ),
               const SizedBox(height: 10),
               Text(
-                '支持 6 位数字密码或 3×3 图案。密钥仅以加盐哈希保存在本机，不会上传，也无法找回；忘记时可在设置页初始化数据后重新设置。'
-                '生物解锁调用系统生物识别（指纹 / 人脸，以设备支持为准），本应用不保存任何生物特征数据；系统生物信息变化后需重新验证。',
+                AppLocalizations.of(context).appLockHelp,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Theme.of(
                     context,
@@ -783,13 +812,17 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
       return;
     }
     // 开启前先验证一次生物识别，确认可用。
-    final ok = await _biometric.authenticate(reason: '验证生物识别以开启生物解锁');
+    final l10n = AppLocalizations.of(context);
+    final ok = await _biometric.authenticate(
+      reason: l10n.bioEnableReason,
+      l10n: l10n,
+    );
     if (ok) {
       controller.setBiometricUnlockEnabled(true);
     } else if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('生物识别未通过，未开启')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).bioNotPassed)),
+      );
     }
   }
 
@@ -808,7 +841,9 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
     }
     final verified = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (context) => const AppLockVerifyPage(title: '关闭应用锁'),
+        builder: (context) => AppLockVerifyPage(
+          title: AppLocalizations.of(context).closeAppLockTitle,
+        ),
       ),
     );
     if (verified == true) {
@@ -819,7 +854,9 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
   Future<void> _change(VeriFinController controller) async {
     final verified = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (context) => const AppLockVerifyPage(title: '修改应用锁'),
+        builder: (context) => AppLockVerifyPage(
+          title: AppLocalizations.of(context).changeAppLockTitle,
+        ),
       ),
     );
     if (verified != true || !mounted) {
@@ -835,9 +872,9 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
       ),
     );
     if (changed == true && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('应用锁已更新')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).appLockUpdated)),
+      );
     }
   }
 
@@ -853,15 +890,17 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
             ListTile(
               key: const Key('pick_lock_pin'),
               leading: const Icon(Icons.password_outlined),
-              title: Text(AppLockKind.pin.label),
-              subtitle: const Text('6 位数字'),
+              title: Text(AppLockKind.pin.label(AppLocalizations.of(context))),
+              subtitle: Text(AppLocalizations.of(context).pinSubtitle),
               onTap: () => Navigator.of(context).pop(AppLockKind.pin),
             ),
             ListTile(
               key: const Key('pick_lock_pattern'),
               leading: const Icon(Icons.pattern),
-              title: Text(AppLockKind.pattern.label),
-              subtitle: const Text('3×3 连线图案'),
+              title: Text(
+                AppLockKind.pattern.label(AppLocalizations.of(context)),
+              ),
+              subtitle: Text(AppLocalizations.of(context).patternSubtitle),
               onTap: () => Navigator.of(context).pop(AppLockKind.pattern),
             ),
           ],

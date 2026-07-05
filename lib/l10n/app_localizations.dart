@@ -4105,6 +4105,234 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'每隔一段时间'**
   String get backupFreqEveryN;
+
+  /// No description provided for @patternTooShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'至少连接 {count} 个点'**
+  String patternTooShort(int count);
+
+  /// No description provided for @bioUnlockReason.
+  ///
+  /// In zh, this message translates to:
+  /// **'验证生物识别以解锁 Veri Fin'**
+  String get bioUnlockReason;
+
+  /// No description provided for @verifyFailedRetry.
+  ///
+  /// In zh, this message translates to:
+  /// **'验证失败，请重试'**
+  String get verifyFailedRetry;
+
+  /// No description provided for @enterPassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入密码'**
+  String get enterPassword;
+
+  /// No description provided for @drawPatternUnlock.
+  ///
+  /// In zh, this message translates to:
+  /// **'请绘制图案解锁'**
+  String get drawPatternUnlock;
+
+  /// No description provided for @enterPinUnlock.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 6 位数字密码解锁'**
+  String get enterPinUnlock;
+
+  /// No description provided for @bioUnlock.
+  ///
+  /// In zh, this message translates to:
+  /// **'生物解锁'**
+  String get bioUnlock;
+
+  /// No description provided for @patternMismatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'两次图案不一致，请重新绘制'**
+  String get patternMismatch;
+
+  /// No description provided for @pinMismatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'两次输入不一致，请重新设置'**
+  String get pinMismatch;
+
+  /// No description provided for @drawAgainConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'再次绘制以确认'**
+  String get drawAgainConfirm;
+
+  /// No description provided for @drawPatternHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'绘制解锁图案（至少 4 个点）'**
+  String get drawPatternHint;
+
+  /// No description provided for @enterAgainConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'再次输入以确认'**
+  String get enterAgainConfirm;
+
+  /// No description provided for @setPinHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置 6 位数字密码'**
+  String get setPinHint;
+
+  /// No description provided for @setPatternTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置图案'**
+  String get setPatternTitle;
+
+  /// No description provided for @setPinTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置密码'**
+  String get setPinTitle;
+
+  /// No description provided for @verifyPasswordTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'验证密码'**
+  String get verifyPasswordTitle;
+
+  /// No description provided for @drawCurrentPattern.
+  ///
+  /// In zh, this message translates to:
+  /// **'请绘制当前解锁图案'**
+  String get drawCurrentPattern;
+
+  /// No description provided for @enterCurrentPin.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入当前 6 位数字密码'**
+  String get enterCurrentPin;
+
+  /// No description provided for @appLockSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动和回到前台时校验'**
+  String get appLockSubtitle;
+
+  /// No description provided for @lockMethodAndPassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'锁定方式与密码'**
+  String get lockMethodAndPassword;
+
+  /// No description provided for @appLockHelp.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持 6 位数字密码或 3×3 图案。密钥仅以加盐哈希保存在本机，不会上传，也无法找回；忘记时可在设置页初始化数据后重新设置。生物解锁调用系统生物识别（指纹 / 人脸，以设备支持为准），本应用不保存任何生物特征数据；系统生物信息变化后需重新验证。'**
+  String get appLockHelp;
+
+  /// No description provided for @bioEnableReason.
+  ///
+  /// In zh, this message translates to:
+  /// **'验证生物识别以开启生物解锁'**
+  String get bioEnableReason;
+
+  /// No description provided for @bioNotPassed.
+  ///
+  /// In zh, this message translates to:
+  /// **'生物识别未通过，未开启'**
+  String get bioNotPassed;
+
+  /// No description provided for @closeAppLockTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭应用锁'**
+  String get closeAppLockTitle;
+
+  /// No description provided for @changeAppLockTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改应用锁'**
+  String get changeAppLockTitle;
+
+  /// No description provided for @appLockUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用锁已更新'**
+  String get appLockUpdated;
+
+  /// No description provided for @pinSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'6 位数字'**
+  String get pinSubtitle;
+
+  /// No description provided for @patternSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'3×3 连线图案'**
+  String get patternSubtitle;
+
+  /// No description provided for @lockKindPin.
+  ///
+  /// In zh, this message translates to:
+  /// **'数字密码'**
+  String get lockKindPin;
+
+  /// No description provided for @lockKindPattern.
+  ///
+  /// In zh, this message translates to:
+  /// **'图案密码'**
+  String get lockKindPattern;
+
+  /// No description provided for @bioSignInTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'生物解锁'**
+  String get bioSignInTitle;
+
+  /// No description provided for @bioHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'验证身份'**
+  String get bioHint;
+
+  /// No description provided for @bioNotRecognized.
+  ///
+  /// In zh, this message translates to:
+  /// **'未能识别，请重试'**
+  String get bioNotRecognized;
+
+  /// No description provided for @bioRequiredTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'需要生物识别'**
+  String get bioRequiredTitle;
+
+  /// No description provided for @bioSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'验证成功'**
+  String get bioSuccess;
+
+  /// No description provided for @bioSetupDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'请在系统设置中录入生物识别'**
+  String get bioSetupDescription;
+
+  /// No description provided for @bioGoToSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'前往设置'**
+  String get bioGoToSettings;
+
+  /// No description provided for @bioGoToSettingsDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未录入生物识别，请在系统设置中添加'**
+  String get bioGoToSettingsDesc;
 }
 
 class _AppLocalizationsDelegate

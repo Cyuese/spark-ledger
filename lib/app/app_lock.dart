@@ -2,17 +2,25 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import '../l10n/app_localizations.dart';
 
 /// 应用锁的锁类型。生物识别不是独立锁，只是 PIN/图案之上的快捷解锁，因此不在此枚举。
 enum AppLockKind {
-  none('无'),
-  pin('数字密码'),
-  pattern('图案密码');
-
-  const AppLockKind(this.label);
+  none,
+  pin,
+  pattern;
 
   /// 用户可见的锁类型名称。
-  final String label;
+  String label(AppLocalizations l10n) {
+    switch (this) {
+      case AppLockKind.none:
+        return l10n.commonNoneShort;
+      case AppLockKind.pin:
+        return l10n.lockKindPin;
+      case AppLockKind.pattern:
+        return l10n.lockKindPattern;
+    }
+  }
 
   static AppLockKind fromName(String? name) {
     return AppLockKind.values.firstWhere(
