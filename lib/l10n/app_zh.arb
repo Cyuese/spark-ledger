@@ -39,5 +39,72 @@
   "localeFollowSystem": "跟随系统",
   "@localeFollowSystem": {
     "description": "语言选项:跟随系统语言"
-  }
+  },
+  "commonCancel": "取消",
+  "commonConfirm": "确认",
+  "commonDelete": "删除",
+  "commonBack": "返回",
+  "@commonBack": {
+    "description": "页头返回按钮 tooltip"
+  },
+  "commonProcessing": "正在处理…",
+  "@commonProcessing": {
+    "description": "耗时任务加载对话框默认文案"
+  },
+  "badgeRefunded": "已退",
+  "@badgeRefunded": {
+    "description": "交易行徽标:已被退款/报销冲抵"
+  },
+  "badgeReimbursable": "待报销",
+  "@badgeReimbursable": {
+    "description": "交易行徽标:标记待报销"
+  },
+  "calendarTitle": "日历",
+  "calendarPrevMonth": "上个月",
+  "calendarNextMonth": "下个月",
+  "weekdayMon": "一",
+  "@weekdayMon": {
+    "description": "日历星期表头(短)"
+  },
+  "weekdayTue": "二",
+  "weekdayWed": "三",
+  "weekdayThu": "四",
+  "weekdayFri": "五",
+  "weekdaySat": "六",
+  "weekdaySun": "日",
+  "entryAddTags": "添加标签",
+  "@entryAddTags": {
+    "description": "记账表单标签行为空时的占位提示"
+  },
+  "iconGroupGeneric": "通用图标",
+  "@iconGroupGeneric": {
+    "description": "账户图标选择弹窗:内置图标分组名"
+  },
+  "accountIconPickerTitle": "选择账户图标",
+  "accountHandleTitle": "处理此账户？",
+  "accountHandleMessage": "账户「{name}」已有 {count} 笔相关交易。你可以隐藏账户，或删除账户并同步删除这些交易记录。",
+  "@accountHandleMessage": {
+    "description": "删除有交易的账户时的确认说明",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accountHide": "隐藏账户",
+  "accountDeleteWithEntries": "删除账户和交易",
+  "accountDeleteTitle": "删除此账户？",
+  "accountDeleteMessage": "账户「{name}」删除后无法恢复。",
+  "@accountDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tagCreateTitle": "新建标签",
+  "tagNameLabel": "标签名称"
 }

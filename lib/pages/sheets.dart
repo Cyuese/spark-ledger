@@ -8,6 +8,7 @@ import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
+import '../l10n/app_localizations.dart';
 
 Future<T?> showOptionSheet<T>({
   required BuildContext context,
@@ -230,12 +231,13 @@ Future<String?> showAccountIconSheet({
   required BuildContext context,
   required String selected,
 }) {
+  final l10n = AppLocalizations.of(context);
   final choices = <AccountIconChoice>[
     for (final code in accountIconCodes)
       AccountIconChoice(
         code: code,
         label: iconLabelForCode(code),
-        group: '通用图标',
+        group: l10n.iconGroupGeneric,
       ),
     for (final option in accountAssetIconOptions)
       AccountIconChoice(
@@ -264,7 +266,7 @@ Future<String?> showAccountIconSheet({
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  '选择账户图标',
+                  l10n.accountIconPickerTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -364,11 +366,11 @@ Future<String?> showTextInputDialog({
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(AppLocalizations.of(context).commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(controller.text),
-          child: const Text('确认'),
+          child: Text(AppLocalizations.of(context).commonConfirm),
         ),
       ],
     ),
@@ -387,29 +389,28 @@ Future<void> confirmDeleteAccount(
   List<LedgerEntry> entries,
 ) async {
   final controller = VeriFinScope.of(context);
+  final l10n = AppLocalizations.of(context);
   if (entries.isNotEmpty) {
     final action = await showDialog<AccountDeleteAction>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('处理此账户？'),
-        content: Text(
-          '账户「${account.name}」已有 ${entries.length} 笔相关交易。你可以隐藏账户，或删除账户并同步删除这些交易记录。',
-        ),
+        title: Text(l10n.accountHandleTitle),
+        content: Text(l10n.accountHandleMessage(account.name, entries.length)),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
+            child: Text(l10n.commonCancel),
           ),
           TextButton(
             onPressed: () =>
                 Navigator.of(context).pop(AccountDeleteAction.hide),
-            child: const Text('隐藏账户'),
+            child: Text(l10n.accountHide),
           ),
           FilledButton(
             onPressed: () =>
                 Navigator.of(context).pop(AccountDeleteAction.delete),
             style: FilledButton.styleFrom(backgroundColor: veriExpense),
-            child: const Text('删除账户和交易'),
+            child: Text(l10n.accountDeleteWithEntries),
           ),
         ],
       ),
@@ -430,16 +431,16 @@ Future<void> confirmDeleteAccount(
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('删除此账户？'),
-      content: Text('账户「${account.name}」删除后无法恢复。'),
+      title: Text(l10n.accountDeleteTitle),
+      content: Text(l10n.accountDeleteMessage(account.name)),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('取消'),
+          child: Text(l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('删除'),
+          child: Text(l10n.commonDelete),
         ),
       ],
     ),
@@ -477,10 +478,11 @@ Future<List<String>?> pickEntryTags({
           tags: controller.tags,
           selectedIds: selectedIds,
           onCreateTag: () async {
+            final l10n = AppLocalizations.of(sheetContext);
             final label = await showTextInputDialog(
               context: sheetContext,
-              title: '新建标签',
-              label: '标签名称',
+              title: l10n.tagCreateTitle,
+              label: l10n.tagNameLabel,
             );
             if (label == null) {
               return null;

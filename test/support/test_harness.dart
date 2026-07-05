@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/data/ledger_repository.dart';
+import 'package:verifin/l10n/app_localizations.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 import 'package:verifin/main.dart';
 
@@ -58,6 +59,18 @@ Future<VeriFinController> pumpApp(
   final controller = await makeController(store, acceptConsent);
   await tester.pumpWidget(VeriFinApp(controller: controller));
   return controller;
+}
+
+/// 不经 [VeriFinApp]、直接 pump 单页/单组件的测试用：固定中文并带上
+/// 本地化代理的 MaterialApp（页面里的 `AppLocalizations.of` 才能解析）。
+Widget zhMaterialApp({required Widget home, ThemeData? theme}) {
+  return MaterialApp(
+    locale: const Locale('zh'),
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    theme: theme,
+    home: home,
+  );
 }
 
 Future<void> tapBottomTab(WidgetTester tester, int index) async {

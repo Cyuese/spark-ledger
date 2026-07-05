@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../l10n/app_localizations.dart';
 import 'account_icon_assets.dart';
 import 'app_theme.dart';
 import 'demo_data.dart';
@@ -95,9 +96,17 @@ class TransactionTile extends StatelessWidget {
                           ),
                         ),
                         if (entry.refundedAmount > 0)
-                          const _EntryBadge(text: '已退', color: veriIncome)
+                          _EntryBadge(
+                            text: AppLocalizations.of(context).badgeRefunded,
+                            color: veriIncome,
+                          )
                         else if (entry.reimbursable)
-                          const _EntryBadge(text: '待报销', color: veriRoyal),
+                          _EntryBadge(
+                            text: AppLocalizations.of(
+                              context,
+                            ).badgeReimbursable,
+                            color: veriRoyal,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -672,7 +681,7 @@ class VeriHeader extends StatelessWidget {
         children: <Widget>[
           if (showBack) ...<Widget>[
             IconButton(
-              tooltip: '返回',
+              tooltip: AppLocalizations.of(context).commonBack,
               onPressed: onBack ?? () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
             ),
@@ -1194,14 +1203,14 @@ class _CalendarPreviewState extends State<CalendarPreview> {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  '日历',
+                  AppLocalizations.of(context).calendarTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
               IconButton(
-                tooltip: '上个月',
+                tooltip: AppLocalizations.of(context).calendarPrevMonth,
                 onPressed: () => setState(() {
                   _visibleMonth = DateTime(
                     _visibleMonth.year,
@@ -1233,7 +1242,7 @@ class _CalendarPreviewState extends State<CalendarPreview> {
                 ),
               ),
               IconButton(
-                tooltip: '下个月',
+                tooltip: AppLocalizations.of(context).calendarNextMonth,
                 onPressed: () => setState(() {
                   _visibleMonth = DateTime(
                     _visibleMonth.year,
@@ -1245,15 +1254,15 @@ class _CalendarPreviewState extends State<CalendarPreview> {
             ],
           ),
           const SizedBox(height: 10),
-          const Row(
+          Row(
             children: <Widget>[
-              _WeekdayLabel('一'),
-              _WeekdayLabel('二'),
-              _WeekdayLabel('三'),
-              _WeekdayLabel('四'),
-              _WeekdayLabel('五'),
-              _WeekdayLabel('六'),
-              _WeekdayLabel('日'),
+              _WeekdayLabel(AppLocalizations.of(context).weekdayMon),
+              _WeekdayLabel(AppLocalizations.of(context).weekdayTue),
+              _WeekdayLabel(AppLocalizations.of(context).weekdayWed),
+              _WeekdayLabel(AppLocalizations.of(context).weekdayThu),
+              _WeekdayLabel(AppLocalizations.of(context).weekdayFri),
+              _WeekdayLabel(AppLocalizations.of(context).weekdaySat),
+              _WeekdayLabel(AppLocalizations.of(context).weekdaySun),
             ],
           ),
           const SizedBox(height: 6),
@@ -1580,8 +1589,10 @@ class CompactSwitchRow extends StatelessWidget {
 Future<T> runWithLoadingDialog<T>({
   required BuildContext context,
   required Future<T> Function() task,
-  String message = '正在处理…',
+  String? message,
 }) async {
+  final resolvedMessage =
+      message ?? AppLocalizations.of(context).commonProcessing;
   final navigator = Navigator.of(context, rootNavigator: true);
   var dialogOpen = true;
   unawaited(
@@ -1600,7 +1611,7 @@ Future<T> runWithLoadingDialog<T>({
                 child: CircularProgressIndicator(strokeWidth: 2.6),
               ),
               const SizedBox(width: 14),
-              Expanded(child: Text(message)),
+              Expanded(child: Text(resolvedMessage)),
             ],
           ),
         ),
@@ -1658,7 +1669,7 @@ class EntryTagField extends StatelessWidget {
               Expanded(
                 child: labels.isEmpty
                     ? Text(
-                        '添加标签',
+                        AppLocalizations.of(context).entryAddTags,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(
                             context,

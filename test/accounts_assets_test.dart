@@ -128,7 +128,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
+      zhMaterialApp(
         theme: buildVeriFinTheme(Brightness.light),
         home: Scaffold(
           body: AccountGroupCard(
@@ -165,7 +165,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
+      zhMaterialApp(
         theme: buildVeriFinTheme(Brightness.light),
         home: Scaffold(
           body: AccountGroupCard(

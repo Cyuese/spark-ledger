@@ -10,7 +10,7 @@ Future<void> _pumpOnboarding(WidgetTester tester, dynamic controller) async {
   await tester.pumpWidget(
     VeriFinScope(
       controller: controller,
-      child: MaterialApp(
+      child: zhMaterialApp(
         home: Navigator(
           onGenerateRoute: (_) =>
               MaterialPageRoute<void>(builder: (_) => const OnboardingPage()),

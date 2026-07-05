@@ -157,6 +157,174 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'跟随系统'**
   String get localeFollowSystem;
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消'**
+  String get commonCancel;
+
+  /// No description provided for @commonConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认'**
+  String get commonConfirm;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get commonDelete;
+
+  /// 页头返回按钮 tooltip
+  ///
+  /// In zh, this message translates to:
+  /// **'返回'**
+  String get commonBack;
+
+  /// 耗时任务加载对话框默认文案
+  ///
+  /// In zh, this message translates to:
+  /// **'正在处理…'**
+  String get commonProcessing;
+
+  /// 交易行徽标:已被退款/报销冲抵
+  ///
+  /// In zh, this message translates to:
+  /// **'已退'**
+  String get badgeRefunded;
+
+  /// 交易行徽标:标记待报销
+  ///
+  /// In zh, this message translates to:
+  /// **'待报销'**
+  String get badgeReimbursable;
+
+  /// No description provided for @calendarTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'日历'**
+  String get calendarTitle;
+
+  /// No description provided for @calendarPrevMonth.
+  ///
+  /// In zh, this message translates to:
+  /// **'上个月'**
+  String get calendarPrevMonth;
+
+  /// No description provided for @calendarNextMonth.
+  ///
+  /// In zh, this message translates to:
+  /// **'下个月'**
+  String get calendarNextMonth;
+
+  /// 日历星期表头(短)
+  ///
+  /// In zh, this message translates to:
+  /// **'一'**
+  String get weekdayMon;
+
+  /// No description provided for @weekdayTue.
+  ///
+  /// In zh, this message translates to:
+  /// **'二'**
+  String get weekdayTue;
+
+  /// No description provided for @weekdayWed.
+  ///
+  /// In zh, this message translates to:
+  /// **'三'**
+  String get weekdayWed;
+
+  /// No description provided for @weekdayThu.
+  ///
+  /// In zh, this message translates to:
+  /// **'四'**
+  String get weekdayThu;
+
+  /// No description provided for @weekdayFri.
+  ///
+  /// In zh, this message translates to:
+  /// **'五'**
+  String get weekdayFri;
+
+  /// No description provided for @weekdaySat.
+  ///
+  /// In zh, this message translates to:
+  /// **'六'**
+  String get weekdaySat;
+
+  /// No description provided for @weekdaySun.
+  ///
+  /// In zh, this message translates to:
+  /// **'日'**
+  String get weekdaySun;
+
+  /// 记账表单标签行为空时的占位提示
+  ///
+  /// In zh, this message translates to:
+  /// **'添加标签'**
+  String get entryAddTags;
+
+  /// 账户图标选择弹窗:内置图标分组名
+  ///
+  /// In zh, this message translates to:
+  /// **'通用图标'**
+  String get iconGroupGeneric;
+
+  /// No description provided for @accountIconPickerTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择账户图标'**
+  String get accountIconPickerTitle;
+
+  /// No description provided for @accountHandleTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'处理此账户？'**
+  String get accountHandleTitle;
+
+  /// 删除有交易的账户时的确认说明
+  ///
+  /// In zh, this message translates to:
+  /// **'账户「{name}」已有 {count} 笔相关交易。你可以隐藏账户，或删除账户并同步删除这些交易记录。'**
+  String accountHandleMessage(String name, int count);
+
+  /// No description provided for @accountHide.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏账户'**
+  String get accountHide;
+
+  /// No description provided for @accountDeleteWithEntries.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除账户和交易'**
+  String get accountDeleteWithEntries;
+
+  /// No description provided for @accountDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除此账户？'**
+  String get accountDeleteTitle;
+
+  /// No description provided for @accountDeleteMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户「{name}」删除后无法恢复。'**
+  String accountDeleteMessage(String name);
+
+  /// No description provided for @tagCreateTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建标签'**
+  String get tagCreateTitle;
+
+  /// No description provided for @tagNameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'标签名称'**
+  String get tagNameLabel;
 }
 
 class _AppLocalizationsDelegate

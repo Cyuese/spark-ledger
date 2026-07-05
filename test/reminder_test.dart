@@ -53,7 +53,7 @@ void main() {
     await tester.pumpWidget(
       VeriFinScope(
         controller: controller,
-        child: const MaterialApp(home: ReminderSettingsPage()),
+        child: zhMaterialApp(home: const ReminderSettingsPage()),
       ),
     );
     await tester.pumpAndSettle();

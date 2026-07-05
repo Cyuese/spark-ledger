@@ -88,7 +88,7 @@
 存量硬编码中文全部迁入 ARB（zh + en），并提供应用内语言切换。分模块推进，每模块一个提交。
 
 - [x] 6.1 语言切换基础设施：`LocalePreference`（跟随系统 / 简体中文 / English）存 KV（`verifin.locale.v1`，设备本地、不进备份、初始化保留），设置页「语言」入口即时切换，`main.dart` 经 `localePreferenceListenable` 驱动 `MaterialApp.locale`（null=跟随系统，回落中文）；测试脚手架预置中文保住存量中文断言，语言切换本身有独立测试
-- [ ] 6.2 壳层与通用组件（shell / common_widgets / sheets）
+- [x] 6.2 壳层与通用组件（shell / common_widgets / sheets）：交易行徽标、页头返回、日历卡、加载对话框、标签行、账户图标/删除/隐藏弹窗、文本输入弹窗按钮；直接 pump 单页的测试改用 `zhMaterialApp`（脚手架新增，带中文本地化代理）
 - [ ] 6.3 模型显示名与控制器消息（models / veri_fin_controller / demo_data / account_icon_assets）
 - [ ] 6.4 首页与记账表单（home_page / entry_sheets）
 - [ ] 6.5 资产页（assets_pages）

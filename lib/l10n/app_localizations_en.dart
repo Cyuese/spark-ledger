@@ -37,4 +37,92 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get localeFollowSystem => 'Follow system';
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String get commonConfirm => 'Confirm';
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
+  String get commonBack => 'Back';
+
+  @override
+  String get commonProcessing => 'Processing…';
+
+  @override
+  String get badgeRefunded => 'Refunded';
+
+  @override
+  String get badgeReimbursable => 'Reimbursable';
+
+  @override
+  String get calendarTitle => 'Calendar';
+
+  @override
+  String get calendarPrevMonth => 'Previous month';
+
+  @override
+  String get calendarNextMonth => 'Next month';
+
+  @override
+  String get weekdayMon => 'Mon';
+
+  @override
+  String get weekdayTue => 'Tue';
+
+  @override
+  String get weekdayWed => 'Wed';
+
+  @override
+  String get weekdayThu => 'Thu';
+
+  @override
+  String get weekdayFri => 'Fri';
+
+  @override
+  String get weekdaySat => 'Sat';
+
+  @override
+  String get weekdaySun => 'Sun';
+
+  @override
+  String get entryAddTags => 'Add tags';
+
+  @override
+  String get iconGroupGeneric => 'General icons';
+
+  @override
+  String get accountIconPickerTitle => 'Choose account icon';
+
+  @override
+  String get accountHandleTitle => 'Manage this account?';
+
+  @override
+  String accountHandleMessage(String name, int count) {
+    return 'Account \"$name\" already has $count related transactions. You can hide the account, or delete it together with those transactions.';
+  }
+
+  @override
+  String get accountHide => 'Hide account';
+
+  @override
+  String get accountDeleteWithEntries => 'Delete account & transactions';
+
+  @override
+  String get accountDeleteTitle => 'Delete this account?';
+
+  @override
+  String accountDeleteMessage(String name) {
+    return 'Account \"$name\" cannot be restored once deleted.';
+  }
+
+  @override
+  String get tagCreateTitle => 'New tag';
+
+  @override
+  String get tagNameLabel => 'Tag name';
 }

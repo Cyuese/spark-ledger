@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/entry_sheets.dart';
 import 'package:verifin/app/models.dart';
 
+import 'support/test_harness.dart';
+
 void main() {
   final categories = <Category>[
     const Category(
@@ -29,7 +31,7 @@ void main() {
   Future<String?> openPicker(WidgetTester tester) async {
     String? result;
     await tester.pumpWidget(
-      MaterialApp(
+      zhMaterialApp(
         home: Scaffold(
           body: Builder(
             builder: (context) => Center(
@@ -74,7 +76,7 @@ void main() {
   testWidgets('点选子分类返回其 id', (tester) async {
     String? picked;
     await tester.pumpWidget(
-      MaterialApp(
+      zhMaterialApp(
         home: Scaffold(
           body: Builder(
             builder: (context) => Center(
