@@ -64,7 +64,7 @@
 
 按顺序推进，每项一个独立提交，完成一项勾一项。
 
-- [ ] 5.1 **移除 Web 端，只保留 Android**（一个提交）
+- [x] 5.1 **移除 Web 端，只保留 Android**（一个提交）
   - 删 `web/` 整个目录（含浏览器版 SQLite 的 `sqlite3.wasm`、`sqflite_sw.js`，Android 打包不用）
   - 删 6 个 `_web.dart`：`local_storage_web` / `data/database_factory_web` / `avatar_picker_web` / `data_file_port_web` / `backup/backup_storage_web` / `backup/webdav_client_web`
   - 改 7 个条件导出入口，各删 `if (dart.library.html) ...` 一行：`local_storage.dart` / `data/database_factory.dart` / `avatar_picker.dart` / `data_file_port.dart` / `backup/backup_storage.dart` / `backup/webdav_client.dart` / `attachment_picker.dart`；`_stub.dart` 保留不动
@@ -72,9 +72,9 @@
   - 改 CI `.github/workflows/flutter.yml`：删「构建 Web」「上传 Web 产物」两步、job 名去掉「Web Build」（`android` 的 `needs: checks` 保留）
   - `flutter analyze` + `flutter test` 全绿
   - 同步文档：README / AGENTS / CLAUDE / docs 里所有 `flutter run -d chrome`、`flutter build web`、「Web 端不支持 WebDAV/通知」「三端适配」等措辞改为只讲 Android；本地预览改真机/发版
-- [ ] 5.2 **确认 5.1 Web 清理干净**：全仓搜 `dart.library.html` / `_web.dart` / `sqflite_common_ffi_web` / `build web` 无残留
-- [ ] 5.3 **资产页【排序】按钮消失排查与改善**：当前逻辑是「有账户的分区 ≥2 才显示排序按钮」（`assets_pages.dart:145`）。先按真机反馈确认是「单分区（设计）」还是真 bug；无论如何改善可发现性（如单分区时给说明、或把排序入口移到资产操作菜单），避免按钮无声消失
-- [x] 5.4 **功能回归系统审查**：完成，报告见 `docs/dev/regression-audit.md`。六区域并行核查约 85 条断言，**未发现明确回归**；记录 3 处灰色地带待你定夺（①交易分类筛选是否下钻子分类 ②导入非本应用 JSON 是否静默覆盖 ③首页剩余额度夹 0 显示）
+- [x] 5.2 **确认 5.1 Web 清理干净**：全仓搜 `dart.library.html` / `_web.dart` / `sqflite_common_ffi_web` / `build web` 无残留（含源码注释）
+- [x] 5.3 **资产页【排序】按钮消失排查与改善**：确认原因是「分区 <2 时按钮按设计隐藏」（非 bug）；已把「排序分组」入口移入常驻的「资产操作」菜单，<2 分区点按提示原因，≥2 进入排序模式，避免按钮无声消失；附测试
+- [x] 5.4 **功能回归系统审查**：完成，报告见 `docs/dev/regression-audit.md`。六区域并行核查约 85 条断言，**未发现明确回归**。记录的 3 处灰色地带：①交易分类筛选下钻子分类 → **已做**（含缩进选择弹窗+测试）；②导入非本应用 JSON 静默覆盖 → **已做**（导入前校验+测试）；③首页剩余额度超支夹 0 显示 → 待定（是否改为显示负数与预算页统一）
 - [x] 5.5 **附件备份改压缩包格式**：
   - 核心：`backup_archive.dart` 纯函数（附件字节从 JSON 剥离、与 `backup.json` 打进 zip，解包拼回 `dataUrl`）；含往返/体积/兼容测试。
   - 管线：手动/自动备份、导出、WebDAV 上传的未加密路径默认产出 zip；加密备份沿用文本信封 `.json`。导入/本地恢复/WebDAV 恢复按字节读入、zip 魔数识别，完全兼容旧版纯 JSON/加密备份。`BackupService.prepare` 集中格式决策，`profile_pages` 共用 `_importBackupBytes`。
