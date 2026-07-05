@@ -84,5 +84,5 @@ Android/测试差异统一用条件导出模式（`stub` + `if (dart.library.io)
 - **Android 功能必须有真实实现**：涉及本地存储、图片、文件、安装包或系统入口的功能，必须确认 Android 端有真实实现，并检查权限（Manifest、分区存储、Android 13+）、持久化和进程重启后的行为。data URL 图片预览用内存图片渲染，不要用 `Image.network`。
 - **数据结构变更要同步**：新增本地数据项时，确认导出/导入、设置页初始化、进程重启读取都覆盖到，并更新样例备份 `docs/dev/verifin-sample-backup.json`（测试应能真实导入它）。
 - **文档同步**：变更影响开发命令、架构、交付流程、配置或用户可见行为时，须在同一次变更中更新 `README.md`、`AGENTS.md`、`docs/`。
-- UI 风格：紧凑型移动端工具风格；主色 `#346edb`，辅助蓝 `#3498db`，青绿色仅用于收入/正向状态。UI 规范见 `docs/ui-guidelines.md`，参考图在 `docs/targetImages/`。
+- UI 风格：紧凑型移动端工具风格；主色 `#346edb`，辅助蓝 `#3498db`，青绿色仅用于收入/正向状态。UI 规范见 `docs/ui-guidelines.md`。
 - 不要重写生成的平台工程文件（`android/`），除非任务明确要求；不要为简单需求引入额外工具链或依赖。

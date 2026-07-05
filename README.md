@@ -64,10 +64,9 @@ Veri Fin 是一个完全免费、数据自主、本地优先的 Flutter Android 
 - `lib/local_storage/`：偏好类小数据的键值存储适配（Android `SharedPreferences`、测试内存 stub）。
 - `docs/product.md`：产品定位、一期范围和数据策略。
 - `docs/ui-guidelines.md`：Header、选择器、弹窗、设置行和金额展示规范。
-- `docs/dev/development-habits.md`：开发预览、提交节奏和文档同步习惯。
 - `docs/dev/verifin-sample-backup.json`：可从数据管理页导入的测试备份数据，用于验证资产、预算、看板和交易列表。
+- `docs/dev/i18n-verification.md`：多语言真机验证清单。
 - `docs/acceptance-checklist.md`：当前功能验收清单和后续优先级。
-- `docs/targetImages/`：UI 参考图。
 
 ## 本地开发
 
@@ -117,9 +116,8 @@ scripts/publish.sh patch
 
 - 产品说明：`docs/product.md`
 - UI 规范：`docs/ui-guidelines.md`
-- 开发习惯：`docs/dev/development-habits.md`
 - 验收清单：`docs/acceptance-checklist.md`
-- UI 参考图：`docs/targetImages/`
+- 多语言验证：`docs/dev/i18n-verification.md`
 - 贡献和 Agent 规范：`AGENTS.md`
 
 ## 许可证
