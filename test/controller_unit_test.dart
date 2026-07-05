@@ -1,12 +1,32 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/ledger_math.dart';
 import 'package:verifin/app/models.dart';
+import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 
+import 'support/in_memory_ledger_repository.dart';
 import 'support/test_harness.dart';
 
 void main() {
   useTestDatabases();
+
+  test('seeds English defaults when system locale is not Chinese', () async {
+    // 不经 makeController（它预置中文），模拟英文系统的全新首启动。
+    final controller = await VeriFinController.create(
+      LocalKeyValueStore(),
+      repository: InMemoryLedgerRepository(),
+      systemIsEnglish: true,
+    );
+    expect(controller.activeBook.name, 'Daily Ledger');
+    expect(controller.categories.map((c) => c.label), contains('Dining'));
+    expect(controller.profile.bio, 'Completely free · Own your data');
+  });
+
+  test('seeds Chinese defaults when locale preference is zh', () async {
+    final controller = await makeController();
+    expect(controller.activeBook.name, '日常账本');
+    expect(controller.categories.map((c) => c.label), contains('餐饮'));
+  });
 
   test(
     'deleting account with related entries removes touched transfers too',

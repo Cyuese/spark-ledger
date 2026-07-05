@@ -811,7 +811,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       title: '选择图标',
       values: categoryIconCodes,
       selected: selected,
-      labelOf: iconLabelForCode,
+      labelOf: (code) => iconLabelForCode(AppLocalizations.of(context), code),
     );
   }
 

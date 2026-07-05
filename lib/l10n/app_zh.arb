@@ -189,5 +189,37 @@
         "type": "String"
       }
     }
+  },
+  "iconLabelCategory": "分类",
+  "iconLabelDining": "餐饮",
+  "iconLabelTransport": "交通",
+  "iconLabelShopping": "购物",
+  "iconLabelHousing": "居住",
+  "iconLabelEntertainment": "娱乐",
+  "iconLabelMedical": "医疗",
+  "iconLabelSalary": "收入",
+  "iconLabelInterest": "利息",
+  "iconLabelBonus": "奖励",
+  "iconLabelWork": "工作",
+  "iconLabelTransferOut": "转出",
+  "iconLabelTransferIn": "转入",
+  "iconLabelRepayment": "还款",
+  "iconLabelAdjust": "调整",
+  "iconLabelPay": "支付",
+  "iconLabelWechat": "微信",
+  "iconLabelCredit": "信用",
+  "iconLabelBank": "银行",
+  "iconLabelCash": "现金",
+  "iconLabelInvestment": "投资",
+  "iconLabelSavings": "储蓄",
+  "iconLabelCard": "卡片",
+  "iconLabelFolder": "分组",
+  "iconLabelWallet": "钱包",
+  "iconGroupCredit": "信用账户",
+  "iconGroupPayment": "支付平台",
+  "iconGroupBank": "银行",
+  "balanceAdjustNote": "余额调整",
+  "@balanceAdjustNote": {
+    "description": "调整余额时自动生成交易的备注"
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 
 import 'app/app_theme.dart';
@@ -23,6 +25,9 @@ Future<void> main() async {
   final controller = await VeriFinController.create(
     store,
     repository: SqliteLedgerRepository(database),
+    // 语言偏好为「跟随系统」时，首启动播种的默认数据（账本/分类/简介）按系统语言选文案。
+    systemIsEnglish:
+        PlatformDispatcher.instance.locale.languageCode.toLowerCase() != 'zh',
   );
   // 打开应用时补记到期的周期交易。
   controller.applyDueRecurring(DateTime.now());

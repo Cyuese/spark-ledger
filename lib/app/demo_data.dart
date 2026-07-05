@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import 'account_icon_assets.dart';
 import 'models.dart';
 
@@ -13,10 +14,29 @@ const UserProfile defaultUserProfile = UserProfile(
   avatarDataUrl: '',
 );
 
+/// 按语言取默认个人资料（首启动/初始化播种用；中文为兼容基准）。
+UserProfile defaultUserProfileFor({required bool english}) => english
+    ? const UserProfile(
+        nickname: 'Veri Fin',
+        bio: 'Completely free · Own your data',
+        avatarDataUrl: '',
+      )
+    : defaultUserProfile;
+
 final List<LedgerBook> defaultLedgerBooks = <LedgerBook>[
   LedgerBook(
     id: defaultLedgerBookId,
     name: '日常账本',
+    createdAt: DateTime(2026),
+    isDefault: true,
+  ),
+];
+
+/// 按语言取默认账本（账本名是数据，播种后随用户编辑）。
+List<LedgerBook> defaultLedgerBooksFor({required bool english}) => <LedgerBook>[
+  LedgerBook(
+    id: defaultLedgerBookId,
+    name: english ? 'Daily Ledger' : '日常账本',
     createdAt: DateTime(2026),
     isDefault: true,
   ),
@@ -110,64 +130,65 @@ IconData iconForCode(String code) {
   }
 }
 
-String iconLabelForCode(String code) {
+String iconLabelForCode(AppLocalizations l10n, String code) {
   final assetIcon = accountAssetIconByCode(code);
   if (assetIcon != null) {
+    // 品牌/银行图标名是专有名词，不随语言切换。
     return assetIcon.label;
   }
 
   switch (code) {
     case 'category':
-      return '分类';
+      return l10n.iconLabelCategory;
     case 'dining':
-      return '餐饮';
+      return l10n.iconLabelDining;
     case 'transport':
-      return '交通';
+      return l10n.iconLabelTransport;
     case 'shopping':
-      return '购物';
+      return l10n.iconLabelShopping;
     case 'housing':
-      return '居住';
+      return l10n.iconLabelHousing;
     case 'entertainment':
-      return '娱乐';
+      return l10n.iconLabelEntertainment;
     case 'medical':
-      return '医疗';
+      return l10n.iconLabelMedical;
     case 'salary':
-      return '收入';
+      return l10n.iconLabelSalary;
     case 'interest':
-      return '利息';
+      return l10n.iconLabelInterest;
     case 'bonus':
-      return '奖励';
+      return l10n.iconLabelBonus;
     case 'work':
-      return '工作';
+      return l10n.iconLabelWork;
     case 'transfer_out':
-      return '转出';
+      return l10n.iconLabelTransferOut;
     case 'transfer_in':
-      return '转入';
+      return l10n.iconLabelTransferIn;
     case 'repayment':
-      return '还款';
+      return l10n.iconLabelRepayment;
     case 'adjust':
-      return '调整';
+      return l10n.iconLabelAdjust;
     case 'alipay':
-      return '支付';
+      return l10n.iconLabelPay;
     case 'wechat':
-      return '微信';
+      return l10n.iconLabelWechat;
     case 'credit':
-      return '信用';
+      return l10n.iconLabelCredit;
     case 'bank':
-      return '银行';
+      return l10n.iconLabelBank;
     case 'cash':
-      return '现金';
+      return l10n.iconLabelCash;
     case 'investment':
-      return '投资';
+      return l10n.iconLabelInvestment;
     case 'savings':
-      return '储蓄';
+      return l10n.iconLabelSavings;
     case 'card':
-      return '卡片';
+      return l10n.iconLabelCard;
     case 'folder':
-      return '分组';
+      return l10n.iconLabelFolder;
     case 'wallet':
     default:
-      return '钱包';
+      return l10n.iconLabelWallet;
   }
 }
 
@@ -272,6 +293,116 @@ const List<Category> defaultCategories = <Category>[
 ];
 
 const List<Category> demoCategories = defaultCategories;
+
+/// 英文种子分类：id/图标与中文版一一对应，仅名称不同。
+const List<Category> _defaultCategoriesEn = <Category>[
+  Category(
+    id: 'dining',
+    label: 'Dining',
+    type: EntryType.expense,
+    iconCode: 'dining',
+  ),
+  Category(
+    id: 'transport',
+    label: 'Transport',
+    type: EntryType.expense,
+    iconCode: 'transport',
+  ),
+  Category(
+    id: 'shopping',
+    label: 'Shopping',
+    type: EntryType.expense,
+    iconCode: 'shopping',
+  ),
+  Category(
+    id: 'housing',
+    label: 'Housing',
+    type: EntryType.expense,
+    iconCode: 'housing',
+  ),
+  Category(
+    id: 'entertainment',
+    label: 'Entertainment',
+    type: EntryType.expense,
+    iconCode: 'entertainment',
+  ),
+  Category(
+    id: 'medical',
+    label: 'Medical',
+    type: EntryType.expense,
+    iconCode: 'medical',
+  ),
+  Category(
+    id: 'balance_adjust_expense',
+    label: 'Balance adjustment',
+    type: EntryType.expense,
+    iconCode: 'adjust',
+  ),
+  Category(
+    id: 'salary',
+    label: 'Salary',
+    type: EntryType.income,
+    iconCode: 'salary',
+  ),
+  Category(
+    id: 'living',
+    label: 'Allowance',
+    type: EntryType.income,
+    iconCode: 'savings',
+  ),
+  Category(
+    id: 'interest',
+    label: 'Interest',
+    type: EntryType.income,
+    iconCode: 'interest',
+  ),
+  Category(
+    id: 'investment',
+    label: 'Investment',
+    type: EntryType.income,
+    iconCode: 'investment',
+  ),
+  Category(
+    id: 'bonus',
+    label: 'Bonus',
+    type: EntryType.income,
+    iconCode: 'bonus',
+  ),
+  Category(
+    id: 'part_time',
+    label: 'Part-time',
+    type: EntryType.income,
+    iconCode: 'work',
+  ),
+  Category(
+    id: 'balance_adjust_income',
+    label: 'Balance adjustment',
+    type: EntryType.income,
+    iconCode: 'adjust',
+  ),
+  Category(
+    id: 'transfer_out',
+    label: 'Transfer out',
+    type: EntryType.transfer,
+    iconCode: 'transfer_out',
+  ),
+  Category(
+    id: 'transfer_in',
+    label: 'Transfer in',
+    type: EntryType.transfer,
+    iconCode: 'transfer_in',
+  ),
+  Category(
+    id: 'repayment',
+    label: 'Repayment',
+    type: EntryType.transfer,
+    iconCode: 'repayment',
+  ),
+];
+
+/// 按语言取默认分类（首启动/初始化播种用；分类名是数据，播种后随用户编辑）。
+List<Category> defaultCategoriesFor({required bool english}) =>
+    english ? _defaultCategoriesEn : defaultCategories;
 
 List<Category> categoriesFor(EntryType type, [List<Category>? categories]) {
   return (categories ?? defaultCategories)

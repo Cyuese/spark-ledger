@@ -236,14 +236,14 @@ Future<String?> showAccountIconSheet({
     for (final code in accountIconCodes)
       AccountIconChoice(
         code: code,
-        label: iconLabelForCode(code),
+        label: iconLabelForCode(l10n, code),
         group: l10n.iconGroupGeneric,
       ),
     for (final option in accountAssetIconOptions)
       AccountIconChoice(
         code: option.code,
         label: option.label,
-        group: option.group,
+        group: option.groupLabel(l10n),
       ),
   ];
 

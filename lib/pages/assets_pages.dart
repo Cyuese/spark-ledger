@@ -984,7 +984,7 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
       title: '选择分组图标',
       values: accountIconCodes,
       selected: current?.iconCode ?? 'folder',
-      labelOf: iconLabelForCode,
+      labelOf: (code) => iconLabelForCode(AppLocalizations.of(context), code),
     );
     if (iconCode != null) {
       controller.updateAccountGroupIcon(groupId, iconCode);
@@ -1027,7 +1027,7 @@ class _AccountIconSelectField extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  iconLabelForCode(iconCode),
+                  iconLabelForCode(AppLocalizations.of(context), iconCode),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(
@@ -1580,7 +1580,10 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                     SettingsRow(
                       icon: Icons.image_outlined,
                       title: '图标',
-                      trailing: iconLabelForCode(currentAccount.iconCode),
+                      trailing: iconLabelForCode(
+                        AppLocalizations.of(context),
+                        currentAccount.iconCode,
+                      ),
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _pickAccountIcon(currentAccount),
                     ),
@@ -1687,7 +1690,11 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
     }
     final controller = VeriFinScope.of(context);
     if (recordEntry) {
-      controller.adjustAccountBalance(account, amount);
+      controller.adjustAccountBalance(
+        account,
+        amount,
+        note: AppLocalizations.of(context).balanceAdjustNote,
+      );
     } else {
       controller.rebaseAccountBalance(account, amount);
     }

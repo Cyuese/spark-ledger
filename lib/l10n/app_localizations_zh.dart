@@ -286,4 +286,91 @@ class AppLocalizationsZh extends AppLocalizations {
   String panelKeepOneMessage(String page) {
     return '至少保留一个开启的$page面板';
   }
+
+  @override
+  String get iconLabelCategory => '分类';
+
+  @override
+  String get iconLabelDining => '餐饮';
+
+  @override
+  String get iconLabelTransport => '交通';
+
+  @override
+  String get iconLabelShopping => '购物';
+
+  @override
+  String get iconLabelHousing => '居住';
+
+  @override
+  String get iconLabelEntertainment => '娱乐';
+
+  @override
+  String get iconLabelMedical => '医疗';
+
+  @override
+  String get iconLabelSalary => '收入';
+
+  @override
+  String get iconLabelInterest => '利息';
+
+  @override
+  String get iconLabelBonus => '奖励';
+
+  @override
+  String get iconLabelWork => '工作';
+
+  @override
+  String get iconLabelTransferOut => '转出';
+
+  @override
+  String get iconLabelTransferIn => '转入';
+
+  @override
+  String get iconLabelRepayment => '还款';
+
+  @override
+  String get iconLabelAdjust => '调整';
+
+  @override
+  String get iconLabelPay => '支付';
+
+  @override
+  String get iconLabelWechat => '微信';
+
+  @override
+  String get iconLabelCredit => '信用';
+
+  @override
+  String get iconLabelBank => '银行';
+
+  @override
+  String get iconLabelCash => '现金';
+
+  @override
+  String get iconLabelInvestment => '投资';
+
+  @override
+  String get iconLabelSavings => '储蓄';
+
+  @override
+  String get iconLabelCard => '卡片';
+
+  @override
+  String get iconLabelFolder => '分组';
+
+  @override
+  String get iconLabelWallet => '钱包';
+
+  @override
+  String get iconGroupCredit => '信用账户';
+
+  @override
+  String get iconGroupPayment => '支付平台';
+
+  @override
+  String get iconGroupBank => '银行';
+
+  @override
+  String get balanceAdjustNote => '余额调整';
 }

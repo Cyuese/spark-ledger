@@ -294,4 +294,91 @@ class AppLocalizationsEn extends AppLocalizations {
   String panelKeepOneMessage(String page) {
     return 'Keep at least one $page panel enabled';
   }
+
+  @override
+  String get iconLabelCategory => 'Category';
+
+  @override
+  String get iconLabelDining => 'Dining';
+
+  @override
+  String get iconLabelTransport => 'Transport';
+
+  @override
+  String get iconLabelShopping => 'Shopping';
+
+  @override
+  String get iconLabelHousing => 'Housing';
+
+  @override
+  String get iconLabelEntertainment => 'Entertainment';
+
+  @override
+  String get iconLabelMedical => 'Medical';
+
+  @override
+  String get iconLabelSalary => 'Income';
+
+  @override
+  String get iconLabelInterest => 'Interest';
+
+  @override
+  String get iconLabelBonus => 'Bonus';
+
+  @override
+  String get iconLabelWork => 'Work';
+
+  @override
+  String get iconLabelTransferOut => 'Transfer out';
+
+  @override
+  String get iconLabelTransferIn => 'Transfer in';
+
+  @override
+  String get iconLabelRepayment => 'Repayment';
+
+  @override
+  String get iconLabelAdjust => 'Adjust';
+
+  @override
+  String get iconLabelPay => 'Payment';
+
+  @override
+  String get iconLabelWechat => 'WeChat';
+
+  @override
+  String get iconLabelCredit => 'Credit';
+
+  @override
+  String get iconLabelBank => 'Bank';
+
+  @override
+  String get iconLabelCash => 'Cash';
+
+  @override
+  String get iconLabelInvestment => 'Investment';
+
+  @override
+  String get iconLabelSavings => 'Savings';
+
+  @override
+  String get iconLabelCard => 'Card';
+
+  @override
+  String get iconLabelFolder => 'Group';
+
+  @override
+  String get iconLabelWallet => 'Wallet';
+
+  @override
+  String get iconGroupCredit => 'Credit accounts';
+
+  @override
+  String get iconGroupPayment => 'Payment platforms';
+
+  @override
+  String get iconGroupBank => 'Banks';
+
+  @override
+  String get balanceAdjustNote => 'Balance adjustment';
 }

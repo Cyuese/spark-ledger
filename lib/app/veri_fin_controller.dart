@@ -38,7 +38,12 @@ const Set<String> _knownBackupDataKeys = <String>{
 };
 
 class VeriFinController extends ChangeNotifier {
-  VeriFinController._(this._store, this._repository) {
+  VeriFinController._(
+    this._store,
+    this._repository, {
+    bool systemIsEnglish = false,
+    // ignore: prefer_initializing_formals
+  }) : _systemIsEnglish = systemIsEnglish {
     _loadPreferences();
     themePreferenceListenable = ValueNotifier<ThemePreference>(
       _themePreference,
@@ -53,8 +58,13 @@ class VeriFinController extends ChangeNotifier {
   static Future<VeriFinController> create(
     LocalKeyValueStore store, {
     required LedgerRepository repository,
+    bool systemIsEnglish = false,
   }) async {
-    final controller = VeriFinController._(store, repository);
+    final controller = VeriFinController._(
+      store,
+      repository,
+      systemIsEnglish: systemIsEnglish,
+    );
     await controller._loadFromRepository();
     return controller;
   }
@@ -91,6 +101,28 @@ class VeriFinController extends ChangeNotifier {
   }
 
   final LocalKeyValueStore _store;
+
+  /// 系统语言是否为英文（由 main.dart 传入）。语言偏好为「跟随系统」时，
+  /// 播种默认数据（账本名/分类/个人简介）依此选语言。
+  final bool _systemIsEnglish;
+
+  /// 播种/初始化默认数据时是否用英文（数据只在播种时定语言，之后随用户编辑）。
+  bool get _seedEnglish {
+    switch (_localePreference) {
+      case LocalePreference.zh:
+        return false;
+      case LocalePreference.en:
+        return true;
+      case LocalePreference.system:
+        return _systemIsEnglish;
+    }
+  }
+
+  List<LedgerBook> get _seedLedgerBooks =>
+      defaultLedgerBooksFor(english: _seedEnglish);
+  List<Category> get _seedCategories =>
+      defaultCategoriesFor(english: _seedEnglish);
+  UserProfile get _seedProfile => defaultUserProfileFor(english: _seedEnglish);
 
   /// SQLite 仓储，账目类数据的唯一存储。
   final LedgerRepository _repository;
@@ -141,7 +173,7 @@ class VeriFinController extends ChangeNotifier {
   );
 
   List<LedgerBook> get ledgerBooks => List<LedgerBook>.unmodifiable(
-    _ledgerBooks.isEmpty ? defaultLedgerBooks : _ledgerBooks,
+    _ledgerBooks.isEmpty ? _seedLedgerBooks : _ledgerBooks,
   );
 
   LedgerBook get activeBook => ledgerBooks.firstWhere(
@@ -161,7 +193,7 @@ class VeriFinController extends ChangeNotifier {
   }
 
   List<Category> get categories => List<Category>.unmodifiable(
-    _categories.isEmpty ? defaultCategories : _categories,
+    _categories.isEmpty ? _seedCategories : _categories,
   );
 
   /// 全部标签（按创建/排序顺序）。标签与账本无关，全局共享。
@@ -828,7 +860,7 @@ class VeriFinController extends ChangeNotifier {
     if (plan.newCategories.isNotEmpty) {
       // 首次导入前若仍是默认分类占位，先落地为真实列表再追加。
       if (_categories.isEmpty) {
-        _categories.addAll(defaultCategories);
+        _categories.addAll(_seedCategories);
       }
       _categories.addAll(plan.newCategories);
     }
@@ -1070,7 +1102,11 @@ class VeriFinController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void adjustAccountBalance(Account account, double targetBalance) {
+  void adjustAccountBalance(
+    Account account,
+    double targetBalance, {
+    String note = '余额调整',
+  }) {
     final currentBalance = accountBalance(account);
     final difference = targetBalance - currentBalance;
     if (difference.abs() < 0.005) {
@@ -1088,7 +1124,7 @@ class VeriFinController extends ChangeNotifier {
             ? 'balance_adjust_income'
             : 'balance_adjust_expense',
         accountId: account.id,
-        note: '余额调整',
+        note: note,
         occurredAt: now,
       ),
     );
@@ -1462,16 +1498,16 @@ class VeriFinController extends ChangeNotifier {
       ..addAll(defaultAccountGroups);
     _ledgerBooks
       ..clear()
-      ..addAll(defaultLedgerBooks);
+      ..addAll(_seedLedgerBooks);
     _categories
       ..clear()
-      ..addAll(defaultCategories);
+      ..addAll(_seedCategories);
     _tags.clear();
     _attachments.clear();
     _recurringRules.clear();
     _monthlyBudgets.clear();
     _categoryBudgets.clear();
-    _profile = defaultUserProfile;
+    _profile = _seedProfile;
     _themePreference = ThemePreference.system;
     _activeBookId = defaultLedgerBookId;
     _assetCoverUrl = '';
@@ -1577,10 +1613,10 @@ class VeriFinController extends ChangeNotifier {
       LedgerBook.fromJson,
     );
     final nextLedgerBooks = <LedgerBook>[
-      ...(importedBooks.isEmpty ? defaultLedgerBooks : importedBooks),
+      ...(importedBooks.isEmpty ? _seedLedgerBooks : importedBooks),
     ];
     if (!nextLedgerBooks.any((book) => book.id == defaultLedgerBookId)) {
-      nextLedgerBooks.insert(0, defaultLedgerBooks.first);
+      nextLedgerBooks.insert(0, _seedLedgerBooks.first);
     }
 
     final importedActiveBookId = data['activeBookId'] as String?;
@@ -1607,7 +1643,7 @@ class VeriFinController extends ChangeNotifier {
       Category.fromJson,
     );
     final nextCategories = <Category>[
-      ...(importedCategories.isEmpty ? defaultCategories : importedCategories),
+      ...(importedCategories.isEmpty ? _seedCategories : importedCategories),
     ];
     final nextTags = _decodeModelList<Tag>(data['tags'], Tag.fromJson);
     final nextAttachments = _decodeModelList<Attachment>(
@@ -1628,7 +1664,7 @@ class VeriFinController extends ChangeNotifier {
     final profileValue = data['profile'];
     final nextProfile = profileValue is Map
         ? UserProfile.fromJson(Map<String, Object?>.from(profileValue))
-        : defaultUserProfile;
+        : _seedProfile;
     final nextThemePreference = ThemePreference.fromStorage(
       data['themePreference'] as String?,
     );
@@ -1783,7 +1819,7 @@ class VeriFinController extends ChangeNotifier {
     if (books.isEmpty) {
       _ledgerBooks
         ..clear()
-        ..addAll(defaultLedgerBooks);
+        ..addAll(_seedLedgerBooks);
       _accounts
         ..clear()
         ..addAll(defaultAccounts);
@@ -1792,7 +1828,7 @@ class VeriFinController extends ChangeNotifier {
         ..addAll(defaultAccountGroups);
       _categories
         ..clear()
-        ..addAll(defaultCategories);
+        ..addAll(_seedCategories);
       _normalizeGroupOrder();
       await _repository.saveBooks(_ledgerBooks);
       await _repository.saveAccounts(_accounts);
@@ -1803,7 +1839,7 @@ class VeriFinController extends ChangeNotifier {
         ..clear()
         ..addAll(books);
       if (!_ledgerBooks.any((book) => book.id == defaultLedgerBookId)) {
-        _ledgerBooks.insert(0, defaultLedgerBooks.first);
+        _ledgerBooks.insert(0, _seedLedgerBooks.first);
       }
       _accounts
         ..clear()
@@ -1815,7 +1851,7 @@ class VeriFinController extends ChangeNotifier {
       final categories = await _repository.loadCategories();
       _categories
         ..clear()
-        ..addAll(categories.isEmpty ? defaultCategories : categories);
+        ..addAll(categories.isEmpty ? _seedCategories : categories);
     }
     if (!_ledgerBooks.any((book) => book.id == _activeBookId)) {
       _activeBookId = defaultLedgerBookId;
@@ -1853,7 +1889,7 @@ class VeriFinController extends ChangeNotifier {
   void _loadProfile() {
     final rawProfile = _store.read(_profileKey);
     if (rawProfile == null || rawProfile.isEmpty) {
-      _profile = defaultUserProfile;
+      _profile = _seedProfile;
       return;
     }
 
@@ -1865,7 +1901,7 @@ class VeriFinController extends ChangeNotifier {
       );
     } catch (_) {
       _store.delete(_profileKey);
-      _profile = defaultUserProfile;
+      _profile = _seedProfile;
     }
   }
 

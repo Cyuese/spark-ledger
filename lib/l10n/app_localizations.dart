@@ -631,6 +631,180 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'至少保留一个开启的{page}面板'**
   String panelKeepOneMessage(String page);
+
+  /// No description provided for @iconLabelCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类'**
+  String get iconLabelCategory;
+
+  /// No description provided for @iconLabelDining.
+  ///
+  /// In zh, this message translates to:
+  /// **'餐饮'**
+  String get iconLabelDining;
+
+  /// No description provided for @iconLabelTransport.
+  ///
+  /// In zh, this message translates to:
+  /// **'交通'**
+  String get iconLabelTransport;
+
+  /// No description provided for @iconLabelShopping.
+  ///
+  /// In zh, this message translates to:
+  /// **'购物'**
+  String get iconLabelShopping;
+
+  /// No description provided for @iconLabelHousing.
+  ///
+  /// In zh, this message translates to:
+  /// **'居住'**
+  String get iconLabelHousing;
+
+  /// No description provided for @iconLabelEntertainment.
+  ///
+  /// In zh, this message translates to:
+  /// **'娱乐'**
+  String get iconLabelEntertainment;
+
+  /// No description provided for @iconLabelMedical.
+  ///
+  /// In zh, this message translates to:
+  /// **'医疗'**
+  String get iconLabelMedical;
+
+  /// No description provided for @iconLabelSalary.
+  ///
+  /// In zh, this message translates to:
+  /// **'收入'**
+  String get iconLabelSalary;
+
+  /// No description provided for @iconLabelInterest.
+  ///
+  /// In zh, this message translates to:
+  /// **'利息'**
+  String get iconLabelInterest;
+
+  /// No description provided for @iconLabelBonus.
+  ///
+  /// In zh, this message translates to:
+  /// **'奖励'**
+  String get iconLabelBonus;
+
+  /// No description provided for @iconLabelWork.
+  ///
+  /// In zh, this message translates to:
+  /// **'工作'**
+  String get iconLabelWork;
+
+  /// No description provided for @iconLabelTransferOut.
+  ///
+  /// In zh, this message translates to:
+  /// **'转出'**
+  String get iconLabelTransferOut;
+
+  /// No description provided for @iconLabelTransferIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'转入'**
+  String get iconLabelTransferIn;
+
+  /// No description provided for @iconLabelRepayment.
+  ///
+  /// In zh, this message translates to:
+  /// **'还款'**
+  String get iconLabelRepayment;
+
+  /// No description provided for @iconLabelAdjust.
+  ///
+  /// In zh, this message translates to:
+  /// **'调整'**
+  String get iconLabelAdjust;
+
+  /// No description provided for @iconLabelPay.
+  ///
+  /// In zh, this message translates to:
+  /// **'支付'**
+  String get iconLabelPay;
+
+  /// No description provided for @iconLabelWechat.
+  ///
+  /// In zh, this message translates to:
+  /// **'微信'**
+  String get iconLabelWechat;
+
+  /// No description provided for @iconLabelCredit.
+  ///
+  /// In zh, this message translates to:
+  /// **'信用'**
+  String get iconLabelCredit;
+
+  /// No description provided for @iconLabelBank.
+  ///
+  /// In zh, this message translates to:
+  /// **'银行'**
+  String get iconLabelBank;
+
+  /// No description provided for @iconLabelCash.
+  ///
+  /// In zh, this message translates to:
+  /// **'现金'**
+  String get iconLabelCash;
+
+  /// No description provided for @iconLabelInvestment.
+  ///
+  /// In zh, this message translates to:
+  /// **'投资'**
+  String get iconLabelInvestment;
+
+  /// No description provided for @iconLabelSavings.
+  ///
+  /// In zh, this message translates to:
+  /// **'储蓄'**
+  String get iconLabelSavings;
+
+  /// No description provided for @iconLabelCard.
+  ///
+  /// In zh, this message translates to:
+  /// **'卡片'**
+  String get iconLabelCard;
+
+  /// No description provided for @iconLabelFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'分组'**
+  String get iconLabelFolder;
+
+  /// No description provided for @iconLabelWallet.
+  ///
+  /// In zh, this message translates to:
+  /// **'钱包'**
+  String get iconLabelWallet;
+
+  /// No description provided for @iconGroupCredit.
+  ///
+  /// In zh, this message translates to:
+  /// **'信用账户'**
+  String get iconGroupCredit;
+
+  /// No description provided for @iconGroupPayment.
+  ///
+  /// In zh, this message translates to:
+  /// **'支付平台'**
+  String get iconGroupPayment;
+
+  /// No description provided for @iconGroupBank.
+  ///
+  /// In zh, this message translates to:
+  /// **'银行'**
+  String get iconGroupBank;
+
+  /// 调整余额时自动生成交易的备注
+  ///
+  /// In zh, this message translates to:
+  /// **'余额调整'**
+  String get balanceAdjustNote;
 }
 
 class _AppLocalizationsDelegate

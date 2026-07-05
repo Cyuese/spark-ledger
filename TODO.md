@@ -89,7 +89,7 @@
 
 - [x] 6.1 语言切换基础设施：`LocalePreference`（跟随系统 / 简体中文 / English）存 KV（`verifin.locale.v1`，设备本地、不进备份、初始化保留），设置页「语言」入口即时切换，`main.dart` 经 `localePreferenceListenable` 驱动 `MaterialApp.locale`（null=跟随系统，回落中文）；测试脚手架预置中文保住存量中文断言，语言切换本身有独立测试
 - [x] 6.2 壳层与通用组件（shell / common_widgets / sheets）：交易行徽标、页头返回、日历卡、加载对话框、标签行、账户图标/删除/隐藏弹窗、文本输入弹窗按钮；直接 pump 单页的测试改用 `zhMaterialApp`（脚手架新增，带中文本地化代理）
-- [ ] 6.3 模型显示名与控制器消息（models / veri_fin_controller / demo_data / account_icon_assets）
+- [x] 6.3 模型显示名与控制器消息（models / veri_fin_controller / demo_data / account_icon_assets）：枚举 `label` 全部改为 `label(AppLocalizations)` 方法并修全部调用点；面板目录 `PagePanelSpec` 名称/描述按 id 从 ARB 解析；图标名 `iconLabelForCode` 接 l10n（品牌/银行图标名是专有名词不翻译，仅分组名本地化）；种子数据（默认账本名/分类/个人简介）按首启动语言播种（`systemIsEnglish` 由 main 传入，「跟随系统」时生效；播种后是用户数据不再切换）；余额调整备注由调用方传本地化文案
 - [ ] 6.4 首页与记账表单（home_page / entry_sheets）
 - [ ] 6.5 资产页（assets_pages）
 - [ ] 6.6 交易列表与详情（transactions_pages / entry_detail_page / attachments_editor）
