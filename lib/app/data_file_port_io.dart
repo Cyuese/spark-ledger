@@ -83,6 +83,20 @@ Future<Uint8List?> pickBackupBytes({String label = '备份文件'}) async {
   return file.readAsBytes();
 }
 
+/// 选择账单文件并读原始字节（编码/格式由调用方按平台判别）。[extensions] 过滤
+/// 可选文件类型（如支付宝/薄荷 csv、微信 xlsx）。用户取消返回 null。
+Future<Uint8List?> pickImportBytes({
+  required List<String> extensions,
+  String label = '账单文件',
+}) async {
+  final group = XTypeGroup(label: label, extensions: extensions);
+  final file = await openFile(acceptedTypeGroups: <XTypeGroup>[group]);
+  if (file == null) {
+    return null;
+  }
+  return file.readAsBytes();
+}
+
 Future<String?> pickCsvFile() async {
   const csvGroup = XTypeGroup(
     label: 'CSV',

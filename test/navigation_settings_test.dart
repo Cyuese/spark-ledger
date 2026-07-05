@@ -93,6 +93,8 @@ void main() {
     await tester.tap(find.text('数据管理'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('初始化数据'), 160);
+    await tester.ensureVisible(find.text('初始化数据'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('初始化数据'));
     await tester.pumpAndSettle();
 

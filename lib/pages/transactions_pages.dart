@@ -430,12 +430,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
     String query,
   ) {
     final category = controller.categoryById(entry.categoryId);
-    final account = accountById(controller.accounts, entry.accountId);
+    final noneLabel = AppLocalizations.of(context).noAccountLabel;
     final searchable = <String>[
       entry.note,
       category.label,
-      account.name,
-      if (entry.toAccountId != null)
+      accountDisplayName(controller.accounts, entry.accountId, noneLabel),
+      if (entry.toAccountId != null && entry.toAccountId!.isNotEmpty)
         accountById(controller.accounts, entry.toAccountId!).name,
       entry.type.label(AppLocalizations.of(context)),
       formatAmount(entry.amount),
@@ -1070,6 +1070,8 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   late double _amount;
   late String _categoryId;
   late String _accountId;
+  // 「无账户」：只记金额、不计入任何账户余额（仅收支有效）。
+  late bool _noAccount;
   late String? _toAccountId;
   late DateTime _occurredAt;
   late List<String> _tagIds;
@@ -1095,6 +1097,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     _amount = entry.amount;
     _categoryId = entry.categoryId;
     _accountId = entry.accountId;
+    _noAccount = entry.type != EntryType.transfer && entry.accountId.isEmpty;
     _toAccountId = entry.toAccountId;
     _occurredAt = entry.occurredAt;
     _tagIds = List<String>.of(entry.tagIds);
@@ -1140,13 +1143,21 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       );
       accounts.addAll(toAccount);
     }
+    // 转账必须落到具体账户，不允许「无账户」。
+    if (_type == EntryType.transfer) {
+      _noAccount = false;
+    }
     _normalizeTransferAccounts(accounts);
     final account = accountById(accounts, _accountId);
     final toAccount = _toAccountId == null
         ? null
         : accountById(accounts, _toAccountId!);
+    final noneLabel = AppLocalizations.of(context).noAccountLabel;
+    final accountFieldValue = _noAccount
+        ? noneLabel
+        : '${account.name} (${formatAmount(controller.accountBalance(account))})';
     final canSave =
-        accounts.isNotEmpty &&
+        (accounts.isNotEmpty || _noAccount) &&
         (_type != EntryType.transfer ||
             (_toAccountId != null && _toAccountId != _accountId));
     final amountColor = colorForType(_type);
@@ -1269,9 +1280,9 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                       ] else
                         DetailInfoRow(
                           label: AppLocalizations.of(context).accountLabel,
-                          value:
-                              '${account.name} (${formatAmount(controller.accountBalance(account))})',
-                          onTap: accounts.isEmpty
+                          value: accountFieldValue,
+                          placeholder: _noAccount,
+                          onTap: accounts.isEmpty && !_noAccount
                               ? null
                               : () => _pickAccount(accounts),
                         ),
@@ -1453,18 +1464,29 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   }
 
   Future<void> _pickAccount(List<Account> accounts) async {
+    final isTransfer = _type == EntryType.transfer;
     final selected = await showAccountPickerSheet(
       context: context,
-      title: _type == EntryType.transfer
+      title: isTransfer
           ? AppLocalizations.of(context).pickTransferOutAccount
           : AppLocalizations.of(context).pickAccountTitle,
       accounts: accounts,
-      selectedId: _accountId,
+      selectedId: _noAccount ? '' : _accountId,
       balanceOf: VeriFinScope.of(context).accountBalance,
+      // 转账两端都必须是具体账户，故转出账户不提供「无账户」。
+      noneLabel: isTransfer
+          ? null
+          : AppLocalizations.of(context).noAccountLabel,
+      noneHint: isTransfer ? null : AppLocalizations.of(context).noAccountHint,
     );
     if (selected != null && mounted) {
       setState(() {
-        _accountId = selected.id;
+        if (selected.id.isEmpty) {
+          _noAccount = true;
+        } else {
+          _noAccount = false;
+          _accountId = selected.id;
+        }
         _normalizeTransferAccounts(accounts);
       });
     }
@@ -1575,12 +1597,13 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       );
       return;
     }
+    final noAccount = _type != EntryType.transfer && _noAccount;
     VeriFinScope.of(context).updateEntry(
       entry.copyWith(
         type: _type,
         amount: _amount,
         categoryId: _categoryId,
-        accountId: _accountId,
+        accountId: noAccount ? '' : _accountId,
         toAccountId: _type == EntryType.transfer ? _toAccountId : null,
         clearToAccountId: _type != EntryType.transfer,
         note: _noteController.text.trim(),

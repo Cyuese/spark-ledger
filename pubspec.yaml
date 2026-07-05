@@ -53,6 +53,8 @@ dependencies:
   cryptography: ^2.7.0
   # 备份打包：把图片附件从 JSON 里剥离、与 data.json 一起打进 zip，控制备份体积。
   archive: ^4.0.9
+  # 支付平台账单导入的多编码解码（支付宝导出为 GBK、薄荷为 UTF-16），纯 Dart。
+  charset: ^2.0.1
   # 生物识别（仅指纹）快捷解锁，调用系统能力，不保存任何生物特征数据。
   local_auth: ^2.3.0
   # 生物识别系统弹窗的中文文案（AndroidAuthMessages），避免中英混杂。

@@ -831,6 +831,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountLabel => '账户';
 
   @override
+  String get noAccountLabel => '无账户';
+
+  @override
+  String get noAccountHint => '只记一笔金额，不计入任何账户余额';
+
+  @override
   String get noUsableAccountTitle => '没有可用账户';
 
   @override
@@ -1816,22 +1822,70 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importFromSheets => '从表格导入交易';
 
   @override
-  String get importCsv => '导入 CSV 交易';
-
-  @override
-  String get byTemplate => '按模板';
-
-  @override
-  String get importFromOtherApps => '从其他记账软件导入';
-
-  @override
-  String get otherAppsHint => '钱迹 / 随手记';
-
-  @override
   String get downloadCsvTemplate => '下载 CSV 模板';
 
   @override
   String get excelHint => 'Excel 可另存为 CSV';
+
+  @override
+  String get importBillFile => '导入账单文件';
+
+  @override
+  String get importBillFileHint => '支付宝 / 微信 / 薄荷';
+
+  @override
+  String get selectBillSource => '选择账单来源';
+
+  @override
+  String get selectBillSourceHint => '先选平台，再选对应导出的文件，避免格式识别出错';
+
+  @override
+  String get platformAlipay => '支付宝';
+
+  @override
+  String get platformAlipayHint => '交易明细 CSV';
+
+  @override
+  String get platformWechat => '微信';
+
+  @override
+  String get platformWechatHint => '支付账单 xlsx';
+
+  @override
+  String get platformMint => '薄荷记账';
+
+  @override
+  String get platformMintHint => '账单 CSV';
+
+  @override
+  String get platformGenericCsv => '其他 CSV';
+
+  @override
+  String get platformGenericCsvHint => '钱迹 / 随手记 / 模板';
+
+  @override
+  String billImportGuideTitle(String source) {
+    return '如何导出$source账单';
+  }
+
+  @override
+  String get alipayImportGuide =>
+      '支付宝 App →「我的」→「账单」→ 右上角「…」→「开具交易流水证明」→「用于个人对账」→ 选择时间范围，通过邮箱收到 CSV 文件，下载到手机后在此选择。\n\n还款、理财、转账等「不计收支」记录会自动跳过，避免重复记账。菜单以实际 App 版本为准。';
+
+  @override
+  String get wechatImportGuide =>
+      '微信 →「我」→「服务」→「钱包」→「账单」→ 右上「常见问题」→「下载账单」→「用于个人对账」→ 选择时间范围，通过邮箱收到 xlsx 文件，下载到手机后在此选择。\n\n提现、理财、还款等「中性交易」会自动跳过。菜单以实际 App 版本为准。';
+
+  @override
+  String get mintImportGuide =>
+      '薄荷记账 App →「我的」→ 账本/数据设置 → 导出账单（CSV），保存到本机后在此选择。菜单以实际 App 版本为准。';
+
+  @override
+  String get genericCsvImportGuide =>
+      '支持钱迹、随手记等导出的 CSV，或本页「下载 CSV 模板」填好后导入。文件需含 日期、类型、金额、账户 列。';
+
+  @override
+  String get billImportCommonNote => '交易会追加到当前账本，匹配不到的账户与分类按名称自动新建，不会删除现有数据。';
 
   @override
   String get backupToLocalDir => '备份到本地目录';
@@ -2096,26 +2150,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get csvTemplateSaveFailed => '保存模板失败，请稍后再试';
 
   @override
-  String get importCsvTitle => '导入 CSV 交易？';
-
-  @override
-  String get importCsvMessage =>
-      '将按模板列（日期、类型、金额、分类、账户、转入账户、备注）把交易追加到当前账本；匹配不到的账户和分类会按名称自动新建。不会删除现有数据。';
-
-  @override
-  String get importOtherTitle => '从其他记账软件导入？';
-
-  @override
-  String get importOtherMessage =>
-      '支持钱迹、随手记等导出的 CSV（其他表格若含 日期/类型/金额/账户 列也可尝试）。会自动识别来源并把交易追加到当前账本，匹配不到的账户与分类按名称新建，不删除现有数据。';
-
-  @override
   String get chooseFile => '选择文件';
-
-  @override
-  String recognizedAs(String source) {
-    return '（识别为$source）';
-  }
 
   @override
   String importedEntries(int count) {

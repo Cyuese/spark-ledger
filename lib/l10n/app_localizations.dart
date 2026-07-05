@@ -1622,6 +1622,18 @@ abstract class AppLocalizations {
   /// **'账户'**
   String get accountLabel;
 
+  /// No description provided for @noAccountLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'无账户'**
+  String get noAccountLabel;
+
+  /// No description provided for @noAccountHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'只记一笔金额，不计入任何账户余额'**
+  String get noAccountHint;
+
   /// No description provided for @noUsableAccountTitle.
   ///
   /// In zh, this message translates to:
@@ -3350,30 +3362,6 @@ abstract class AppLocalizations {
   /// **'从表格导入交易'**
   String get importFromSheets;
 
-  /// No description provided for @importCsv.
-  ///
-  /// In zh, this message translates to:
-  /// **'导入 CSV 交易'**
-  String get importCsv;
-
-  /// No description provided for @byTemplate.
-  ///
-  /// In zh, this message translates to:
-  /// **'按模板'**
-  String get byTemplate;
-
-  /// No description provided for @importFromOtherApps.
-  ///
-  /// In zh, this message translates to:
-  /// **'从其他记账软件导入'**
-  String get importFromOtherApps;
-
-  /// No description provided for @otherAppsHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'钱迹 / 随手记'**
-  String get otherAppsHint;
-
   /// No description provided for @downloadCsvTemplate.
   ///
   /// In zh, this message translates to:
@@ -3385,6 +3373,114 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'Excel 可另存为 CSV'**
   String get excelHint;
+
+  /// No description provided for @importBillFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入账单文件'**
+  String get importBillFile;
+
+  /// No description provided for @importBillFileHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'支付宝 / 微信 / 薄荷'**
+  String get importBillFileHint;
+
+  /// No description provided for @selectBillSource.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择账单来源'**
+  String get selectBillSource;
+
+  /// No description provided for @selectBillSourceHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'先选平台，再选对应导出的文件，避免格式识别出错'**
+  String get selectBillSourceHint;
+
+  /// No description provided for @platformAlipay.
+  ///
+  /// In zh, this message translates to:
+  /// **'支付宝'**
+  String get platformAlipay;
+
+  /// No description provided for @platformAlipayHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'交易明细 CSV'**
+  String get platformAlipayHint;
+
+  /// No description provided for @platformWechat.
+  ///
+  /// In zh, this message translates to:
+  /// **'微信'**
+  String get platformWechat;
+
+  /// No description provided for @platformWechatHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'支付账单 xlsx'**
+  String get platformWechatHint;
+
+  /// No description provided for @platformMint.
+  ///
+  /// In zh, this message translates to:
+  /// **'薄荷记账'**
+  String get platformMint;
+
+  /// No description provided for @platformMintHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'账单 CSV'**
+  String get platformMintHint;
+
+  /// No description provided for @platformGenericCsv.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他 CSV'**
+  String get platformGenericCsv;
+
+  /// No description provided for @platformGenericCsvHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'钱迹 / 随手记 / 模板'**
+  String get platformGenericCsvHint;
+
+  /// No description provided for @billImportGuideTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'如何导出{source}账单'**
+  String billImportGuideTitle(String source);
+
+  /// No description provided for @alipayImportGuide.
+  ///
+  /// In zh, this message translates to:
+  /// **'支付宝 App →「我的」→「账单」→ 右上角「…」→「开具交易流水证明」→「用于个人对账」→ 选择时间范围，通过邮箱收到 CSV 文件，下载到手机后在此选择。\n\n还款、理财、转账等「不计收支」记录会自动跳过，避免重复记账。菜单以实际 App 版本为准。'**
+  String get alipayImportGuide;
+
+  /// No description provided for @wechatImportGuide.
+  ///
+  /// In zh, this message translates to:
+  /// **'微信 →「我」→「服务」→「钱包」→「账单」→ 右上「常见问题」→「下载账单」→「用于个人对账」→ 选择时间范围，通过邮箱收到 xlsx 文件，下载到手机后在此选择。\n\n提现、理财、还款等「中性交易」会自动跳过。菜单以实际 App 版本为准。'**
+  String get wechatImportGuide;
+
+  /// No description provided for @mintImportGuide.
+  ///
+  /// In zh, this message translates to:
+  /// **'薄荷记账 App →「我的」→ 账本/数据设置 → 导出账单（CSV），保存到本机后在此选择。菜单以实际 App 版本为准。'**
+  String get mintImportGuide;
+
+  /// No description provided for @genericCsvImportGuide.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持钱迹、随手记等导出的 CSV，或本页「下载 CSV 模板」填好后导入。文件需含 日期、类型、金额、账户 列。'**
+  String get genericCsvImportGuide;
+
+  /// No description provided for @billImportCommonNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'交易会追加到当前账本，匹配不到的账户与分类按名称自动新建，不会删除现有数据。'**
+  String get billImportCommonNote;
 
   /// No description provided for @backupToLocalDir.
   ///
@@ -3860,41 +3956,11 @@ abstract class AppLocalizations {
   /// **'保存模板失败，请稍后再试'**
   String get csvTemplateSaveFailed;
 
-  /// No description provided for @importCsvTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'导入 CSV 交易？'**
-  String get importCsvTitle;
-
-  /// No description provided for @importCsvMessage.
-  ///
-  /// In zh, this message translates to:
-  /// **'将按模板列（日期、类型、金额、分类、账户、转入账户、备注）把交易追加到当前账本；匹配不到的账户和分类会按名称自动新建。不会删除现有数据。'**
-  String get importCsvMessage;
-
-  /// No description provided for @importOtherTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'从其他记账软件导入？'**
-  String get importOtherTitle;
-
-  /// No description provided for @importOtherMessage.
-  ///
-  /// In zh, this message translates to:
-  /// **'支持钱迹、随手记等导出的 CSV（其他表格若含 日期/类型/金额/账户 列也可尝试）。会自动识别来源并把交易追加到当前账本，匹配不到的账户与分类按名称新建，不删除现有数据。'**
-  String get importOtherMessage;
-
   /// No description provided for @chooseFile.
   ///
   /// In zh, this message translates to:
   /// **'选择文件'**
   String get chooseFile;
-
-  /// No description provided for @recognizedAs.
-  ///
-  /// In zh, this message translates to:
-  /// **'（识别为{source}）'**
-  String recognizedAs(String source);
 
   /// No description provided for @importedEntries.
   ///

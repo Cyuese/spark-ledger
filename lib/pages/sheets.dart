@@ -101,12 +101,17 @@ Future<T?> showOptionSheet<T>({
 }
 
 /// 账户选择弹窗:与资产页账户列表一致,展示账户图标、名称(含卡号后四位)和余额。
+/// 账户选择弹窗。返回所选账户；用户取消返回 null。
+/// 传入 [noneLabel] 时，列表顶部额外提供「无账户」选项，选它返回 id 为空串的
+/// 哨兵 [Account]（调用方用 `selected.id.isEmpty` 判别「只记金额、不计入账户」）。
 Future<Account?> showAccountPickerSheet({
   required BuildContext context,
   required String title,
   required List<Account> accounts,
   required String? selectedId,
   required double Function(Account account) balanceOf,
+  String? noneLabel,
+  String? noneHint,
 }) {
   return showModalBottomSheet<Account>(
     context: context,
@@ -137,6 +142,15 @@ Future<Account?> showAccountPickerSheet({
                   child: ListView(
                     shrinkWrap: true,
                     children: <Widget>[
+                      if (noneLabel != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: _NoneAccountRow(
+                            label: noneLabel,
+                            hint: noneHint,
+                            selected: (selectedId ?? '').isEmpty,
+                          ),
+                        ),
                       for (final account in accounts)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 6),
@@ -222,6 +236,73 @@ class _AccountPickerRow extends StatelessWidget {
           ],
         ),
         onTap: () => Navigator.of(context).pop(account),
+      ),
+    );
+  }
+}
+
+/// 「无账户」选项：选它记一笔纯金额、不计入任何账户余额。返回 id 为空的哨兵账户。
+class _NoneAccountRow extends StatelessWidget {
+  const _NoneAccountRow({
+    required this.label,
+    required this.hint,
+    required this.selected,
+  });
+
+  final String label;
+  final String? hint;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? veriRoyal.withValues(alpha: 0.12) : Colors.transparent,
+      borderRadius: BorderRadius.circular(veriRadiusSm),
+      child: ListTile(
+        minTileHeight: 48,
+        dense: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(veriRadiusSm),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+        leading: VeriIconBox(
+          icon: Icons.money_off_csred_outlined,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+          size: 32,
+        ),
+        title: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+        subtitle: hint == null
+            ? null
+            : Text(
+                hint!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+        trailing: selected
+            ? const Icon(Icons.check, color: veriRoyal, size: 18)
+            : null,
+        onTap: () => Navigator.of(context).pop(
+          const Account(
+            id: '',
+            bookId: '',
+            name: '',
+            type: AccountType.cash,
+            groupId: null,
+            initialBalance: 0,
+            iconCode: 'wallet',
+            note: '',
+            includeInAssets: false,
+            hidden: false,
+          ),
+        ),
       ),
     );
   }

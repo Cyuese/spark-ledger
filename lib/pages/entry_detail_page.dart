@@ -30,6 +30,8 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   EntryType _type = EntryType.expense;
   String _categoryId = 'dining';
   late String _accountId = widget.initialAccountId ?? '';
+  // 「无账户」：只记金额、不计入任何账户余额（仅收支有效，转账必须选账户）。
+  bool _noAccount = false;
   String? _toAccountId;
   DateTime _occurredAt = DateTime.now();
   double _fee = 0;
@@ -51,7 +53,13 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         .where((account) => !account.hidden)
         .toList();
     final hasAccounts = accounts.isNotEmpty;
-    if (hasAccounts && !accounts.any((account) => account.id == _accountId)) {
+    // 转账必须落到具体账户，不允许「无账户」。
+    if (_type == EntryType.transfer) {
+      _noAccount = false;
+    }
+    if (hasAccounts &&
+        !_noAccount &&
+        !accounts.any((account) => account.id == _accountId)) {
       _accountId = accounts.first.id;
     }
     _normalizeTransferAccounts(accounts);
@@ -202,12 +210,19 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     SelectField(
                       key: const Key('account_dropdown'),
                       label: AppLocalizations.of(context).accountLabel,
-                      value:
-                          '${accountById(accounts, _accountId).name} (${formatAmount(controller.accountBalance(accountById(accounts, _accountId)))})',
-                      leading: AccountIconBox(
-                        iconCode: accountById(accounts, _accountId).iconCode,
-                        size: 26,
-                      ),
+                      value: _noAccount
+                          ? AppLocalizations.of(context).noAccountLabel
+                          : '${accountById(accounts, _accountId).name} (${formatAmount(controller.accountBalance(accountById(accounts, _accountId)))})',
+                      icon: _noAccount ? Icons.money_off_csred_outlined : null,
+                      leading: _noAccount
+                          ? null
+                          : AccountIconBox(
+                              iconCode: accountById(
+                                accounts,
+                                _accountId,
+                              ).iconCode,
+                              size: 26,
+                            ),
                       onTap: () => _pickAccount(accounts),
                     )
                   else
@@ -340,20 +355,31 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   Future<void> _pickAccount(List<Account> accounts) async {
+    final isTransfer = _type == EntryType.transfer;
     final selected = await showAccountPickerSheet(
       context: context,
-      title: _type == EntryType.transfer
+      title: isTransfer
           ? AppLocalizations.of(context).pickTransferOutAccount
           : AppLocalizations.of(context).pickAccountTitle,
       accounts: accounts,
-      selectedId: _accountId,
+      selectedId: _noAccount ? '' : _accountId,
       balanceOf: VeriFinScope.of(context).accountBalance,
+      // 转账两端都必须是具体账户，故转出账户不提供「无账户」。
+      noneLabel: isTransfer
+          ? null
+          : AppLocalizations.of(context).noAccountLabel,
+      noneHint: isTransfer ? null : AppLocalizations.of(context).noAccountHint,
     );
     if (!mounted || selected == null) {
       return;
     }
     setState(() {
-      _accountId = selected.id;
+      if (selected.id.isEmpty) {
+        _noAccount = true;
+      } else {
+        _noAccount = false;
+        _accountId = selected.id;
+      }
       _normalizeTransferAccounts(accounts);
     });
   }
@@ -396,11 +422,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   bool _canSave(List<Account> accounts) {
+    if (_type != EntryType.transfer) {
+      // 无账户也可保存（只记金额）；否则需有可选账户。
+      return _noAccount || accounts.isNotEmpty;
+    }
     if (accounts.isEmpty) {
       return false;
-    }
-    if (_type != EntryType.transfer) {
-      return true;
     }
     return _toAccountId != null && _toAccountId != _accountId;
   }
@@ -459,9 +486,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
   void _save() {
     final controller = VeriFinScope.of(context);
-    if (!controller.accounts
-        .where((account) => !account.hidden)
-        .any((account) => account.id == _accountId)) {
+    final noAccount = _type != EntryType.transfer && _noAccount;
+    if (!noAccount &&
+        !controller.accounts
+            .where((account) => !account.hidden)
+            .any((account) => account.id == _accountId)) {
       return;
     }
     final entryId = DateTime.now().microsecondsSinceEpoch.toString();
@@ -472,7 +501,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         type: _type,
         amount: _amount,
         categoryId: _categoryId,
-        accountId: _accountId,
+        accountId: noAccount ? '' : _accountId,
         toAccountId: _type == EntryType.transfer ? _toAccountId : null,
         note: _noteController.text.trim(),
         occurredAt: _occurredAt,

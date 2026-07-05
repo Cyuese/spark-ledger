@@ -353,25 +353,23 @@ ImportPlan buildImportPlan({
       errors.add(ImportRowError(line: line, message: '日期格式无效（应为 2026-01-05）'));
       continue;
     }
+    // 账户可空：留空表示「无账户」（只记金额、不计入任何账户余额）。
     final accountName = cell(row, 'account');
-    if (accountName.isEmpty) {
-      errors.add(ImportRowError(line: line, message: '账户不能为空'));
-      continue;
-    }
     final note = cell(row, 'note');
 
     if (type == EntryType.transfer) {
       final toName = cell(row, 'toAccount');
-      if (toName.isEmpty) {
-        errors.add(ImportRowError(line: line, message: '转账缺少转入账户'));
+      if (accountName.isEmpty && toName.isEmpty) {
+        errors.add(ImportRowError(line: line, message: '转账缺少账户'));
         continue;
       }
-      if (toName == accountName) {
+      if (accountName.isNotEmpty && toName == accountName) {
         errors.add(ImportRowError(line: line, message: '转出与转入账户不能相同'));
         continue;
       }
-      final fromId = resolveAccount(accountName);
-      final toId = resolveAccount(toName);
+      // 单边为空（如源账本转入/转出到未跟踪账户）仍按转账记，空的一端不计余额。
+      final fromId = accountName.isEmpty ? '' : resolveAccount(accountName);
+      final toId = toName.isEmpty ? null : resolveAccount(toName);
       entries.add(
         LedgerEntry(
           id: nextId('entry'),
@@ -388,7 +386,7 @@ ImportPlan buildImportPlan({
       continue;
     }
 
-    final accountId = resolveAccount(accountName);
+    final accountId = accountName.isEmpty ? '' : resolveAccount(accountName);
     final categoryId = resolveCategory(cell(row, 'category'), type);
     entries.add(
       LedgerEntry(

@@ -87,18 +87,35 @@ void main() {
       expect(plan.entries.single.categoryId, plan.newCategories.single.id);
     });
 
-    test('转账需要转入账户且不同', () {
+    test('转账：双账户正常、单边允许、双空报错、相同报错', () {
       final ok = build('日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,转账,500,,现金,储蓄卡,取现');
       expect(ok.importedCount, 1);
       expect(ok.entries.single.toAccountId, isNotNull);
       expect(ok.newAccounts.single.name, '储蓄卡');
 
-      final missing = build('日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,转账,500,,现金,,x');
-      expect(missing.importedCount, 0);
-      expect(missing.errorCount, 1);
+      // 单边转账（仅转出，转入未跟踪）→ 仍按转账记，转入端为空。
+      final oneSided = build(
+        '日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,转账,500,,现金,,x',
+      );
+      expect(oneSided.importedCount, 1);
+      expect(oneSided.entries.single.toAccountId, isNull);
+      expect(oneSided.entries.single.accountId, isNotEmpty);
+
+      // 两端都空 → 无法表示为转账，报错。
+      final bothEmpty = build('日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,转账,500,,,,x');
+      expect(bothEmpty.importedCount, 0);
+      expect(bothEmpty.errorCount, 1);
 
       final same = build('日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,转账,500,,现金,现金,x');
       expect(same.errorCount, 1);
+    });
+
+    test('账户为空的收支导入为无账户交易（不再报错）', () {
+      final plan = build('日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,支出,23.5,餐饮,,,记一笔');
+      expect(plan.importedCount, 1);
+      expect(plan.errorCount, 0);
+      expect(plan.entries.single.accountId, isEmpty);
+      expect(plan.newAccounts, isEmpty);
     });
 
     test('非法行记录错误而不中断其余行', () {

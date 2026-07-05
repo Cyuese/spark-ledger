@@ -422,6 +422,12 @@ Category categoryByIdFrom(List<Category> categories, String id) {
   );
 }
 
+/// 交易账户显示名：空 id 表示「无账户」（只记金额、不计入任何账户余额）。
+/// 展示层用它替代直接 [accountById]——后者对空/未知 id 会回退到首个账户而误显示。
+String accountDisplayName(List<Account> accounts, String id, String noneLabel) {
+  return id.isEmpty ? noneLabel : accountById(accounts, id).name;
+}
+
 Account accountById(List<Account> accounts, String id) {
   return accounts.firstWhere(
     (account) => account.id == id,

@@ -845,6 +845,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountLabel => 'Account';
 
   @override
+  String get noAccountLabel => 'No account';
+
+  @override
+  String get noAccountHint =>
+      'Record just an amount; it won\'t affect any account balance';
+
+  @override
   String get noUsableAccountTitle => 'No available account';
 
   @override
@@ -1845,22 +1852,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importFromSheets => 'Import from spreadsheets';
 
   @override
-  String get importCsv => 'Import CSV transactions';
-
-  @override
-  String get byTemplate => 'Template format';
-
-  @override
-  String get importFromOtherApps => 'Import from other apps';
-
-  @override
-  String get otherAppsHint => 'Qianji / Suishouji';
-
-  @override
   String get downloadCsvTemplate => 'Download CSV template';
 
   @override
   String get excelHint => 'Excel can save as CSV';
+
+  @override
+  String get importBillFile => 'Import bill file';
+
+  @override
+  String get importBillFileHint => 'Alipay / WeChat / Mint';
+
+  @override
+  String get selectBillSource => 'Choose bill source';
+
+  @override
+  String get selectBillSourceHint =>
+      'Pick the platform first, then its exported file — avoids format mis-detection';
+
+  @override
+  String get platformAlipay => 'Alipay';
+
+  @override
+  String get platformAlipayHint => 'Transaction detail CSV';
+
+  @override
+  String get platformWechat => 'WeChat Pay';
+
+  @override
+  String get platformWechatHint => 'Payment bill xlsx';
+
+  @override
+  String get platformMint => 'Mint (Bohe)';
+
+  @override
+  String get platformMintHint => 'Bill CSV';
+
+  @override
+  String get platformGenericCsv => 'Other CSV';
+
+  @override
+  String get platformGenericCsvHint => 'Qianji / Suishouji / template';
+
+  @override
+  String billImportGuideTitle(String source) {
+    return 'How to export $source bills';
+  }
+
+  @override
+  String get alipayImportGuide =>
+      'In Alipay: Me → Bills → top-right \"…\" → Issue transaction statement → For personal reconciliation → pick a date range. The CSV arrives by email; download it to your phone, then choose it here.\n\nNon-income/expense rows (repayments, investments, transfers) are skipped automatically to avoid double counting. Menu paths may vary by app version.';
+
+  @override
+  String get wechatImportGuide =>
+      'In WeChat: Me → Services → Wallet → Bills → top-right FAQ → Download bill → For personal reconciliation → pick a date range. The xlsx arrives by email; download it to your phone, then choose it here.\n\nNeutral transactions (withdrawals, investments, repayments) are skipped automatically. Menu paths may vary by app version.';
+
+  @override
+  String get mintImportGuide =>
+      'In Mint (Bohe): Me → ledger/data settings → Export bill (CSV), save it to your phone, then choose it here. Menu paths may vary by app version.';
+
+  @override
+  String get genericCsvImportGuide =>
+      'Supports CSV exported from Qianji, Suishouji, etc., or the Veri Fin template downloaded on this page. The file must include Date, Type, Amount and Account columns.';
+
+  @override
+  String get billImportCommonNote =>
+      'Transactions are appended to the current ledger; unmatched accounts and categories are created by name. Nothing is deleted.';
 
   @override
   String get backupToLocalDir => 'Back up to local folder';
@@ -2129,26 +2186,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Failed to save the template; try again later';
 
   @override
-  String get importCsvTitle => 'Import CSV transactions?';
-
-  @override
-  String get importCsvMessage =>
-      'Transactions are appended to the current ledger using the template columns (date, type, amount, category, account, to-account, note); unmatched accounts and categories are created by name. Existing data is not deleted.';
-
-  @override
-  String get importOtherTitle => 'Import from another app?';
-
-  @override
-  String get importOtherMessage =>
-      'Supports CSV exports from Qianji, Suishouji and similar apps (other sheets with date/type/amount/account columns may also work). The source is detected automatically and transactions are appended to the current ledger; unmatched accounts and categories are created by name. Existing data is not deleted.';
-
-  @override
   String get chooseFile => 'Choose file';
-
-  @override
-  String recognizedAs(String source) {
-    return ' (detected: $source)';
-  }
 
   @override
   String importedEntries(int count) {

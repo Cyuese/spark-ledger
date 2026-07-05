@@ -36,17 +36,16 @@ class TransactionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final category = categoryById(entry.categoryId, categories);
-    final account = accountById(accounts, entry.accountId);
-    final toAccount = entry.toAccountId == null
-        ? null
-        : accountById(accounts, entry.toAccountId!);
+    final noneLabel = AppLocalizations.of(context).noAccountLabel;
     final amountColor = colorForType(entry.type);
     final amountText = entry.type == EntryType.transfer
         ? formatAmount(entry.amount)
         : formatSignedAmount(signedAmount(entry));
-    final accountLabel = entry.type == EntryType.transfer && toAccount != null
-        ? '${account.name} → ${toAccount.name}'
-        : account.name;
+    // 空 accountId / null toAccountId 表示「无账户」，不能用 accountById（会误回退首个账户）。
+    final fromName = accountDisplayName(accounts, entry.accountId, noneLabel);
+    final accountLabel = entry.type == EntryType.transfer
+        ? '$fromName → ${accountDisplayName(accounts, entry.toAccountId ?? '', noneLabel)}'
+        : fromName;
 
     return Material(
       color: selected ? veriRoyal.withValues(alpha: 0.08) : Colors.transparent,
@@ -112,7 +111,7 @@ class TransactionTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${formatTime(entry.occurredAt)} · '
-                      '${entry.note.isEmpty ? account.name : entry.note}',
+                      '${entry.note.isEmpty ? fromName : entry.note}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(

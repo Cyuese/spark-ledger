@@ -8,6 +8,7 @@ import '../local_storage/local_storage.dart';
 import 'app_lock.dart';
 import 'backup/backup_archive.dart';
 import 'backup/backup_settings.dart';
+import 'backup/payment_import.dart';
 import 'backup/transaction_import.dart';
 import 'backup/webdav_config.dart';
 import 'category_tree.dart';
@@ -843,6 +844,25 @@ class VeriFinController extends ChangeNotifier {
     final rows = parseCsv(content);
     final plan = buildImportPlan(
       rows: rows,
+      bookId: _activeBookId,
+      existingAccounts: accounts,
+      existingCategories: categories,
+      now: DateTime.now(),
+    );
+    _applyImportPlan(plan);
+    return plan;
+  }
+
+  /// 解析所选支付平台 / 记账软件导出的账单字节并导入当前账本。
+  /// 支付宝(GBK CSV)、微信(xlsx)、薄荷记账(UTF-16 CSV)各自适配，其他走通用 CSV。
+  /// 返回导入计划供 UI 反馈；解析失败抛 [FormatException]。
+  ImportPlan importTransactionsFromPlatform(
+    ImportPlatform platform,
+    Uint8List bytes,
+  ) {
+    final plan = buildPlatformImportPlan(
+      platform: platform,
+      bytes: bytes,
       bookId: _activeBookId,
       existingAccounts: accounts,
       existingCategories: categories,

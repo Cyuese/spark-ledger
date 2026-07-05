@@ -95,6 +95,38 @@ void main() {
     expect(find.byKey(const Key('save_entry_button')), findsOneWidget);
   });
 
+  testWidgets('records an expense with no account (无账户)', (
+    WidgetTester tester,
+  ) async {
+    await pumpApp(tester);
+    await addTestAccount(tester, '现金账户');
+    await tapBottomTab(tester, 0);
+
+    await createQuickEntry(tester);
+
+    // 打开账户选择弹窗，选「无账户」。
+    await tester.tap(find.byKey(const Key('account_dropdown')));
+    await tester.pumpAndSettle();
+    expect(find.text('无账户'), findsOneWidget);
+    await tester.tap(find.text('无账户'));
+    await tester.pumpAndSettle();
+
+    // 账户栏显示「无账户」。
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('account_dropdown')),
+        matching: find.text('无账户'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('save_entry_button')));
+    await tester.pumpAndSettle();
+
+    // 保存成功后交易列表里以「无账户」呈现（accountId 为空、不计入任何账户）。
+    expect(find.text('无账户'), findsAtLeastNWidgets(1));
+  });
+
   testWidgets('opens and deletes an entry from the transaction detail page', (
     WidgetTester tester,
   ) async {

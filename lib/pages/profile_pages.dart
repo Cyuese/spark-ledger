@@ -9,6 +9,7 @@ import '../app/backup/backup_archive.dart';
 import '../app/backup/backup_crypto.dart';
 import '../app/backup/backup_service.dart';
 import '../app/backup/backup_settings.dart';
+import '../app/backup/payment_import.dart';
 import '../app/backup/transaction_import.dart';
 import '../app/backup/webdav_client.dart';
 import '../app/backup/webdav_config.dart';
@@ -1695,19 +1696,11 @@ class DataManagementPage extends StatelessWidget {
                 child: Column(
                   children: <Widget>[
                     SettingsRow(
-                      icon: Icons.table_chart_outlined,
-                      title: AppLocalizations.of(context).importCsv,
-                      trailing: AppLocalizations.of(context).byTemplate,
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: AppLocalizations.of(context).importBillFile,
+                      trailing: AppLocalizations.of(context).importBillFileHint,
                       trailingIcon: Icons.chevron_right,
-                      onTap: () => _importCsv(context, controller),
-                    ),
-                    const Divider(),
-                    SettingsRow(
-                      icon: Icons.swap_horiz_outlined,
-                      title: AppLocalizations.of(context).importFromOtherApps,
-                      trailing: AppLocalizations.of(context).otherAppsHint,
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () => _importFromOtherApp(context, controller),
+                      onTap: () => _importFromPlatform(context, controller),
                     ),
                     const Divider(),
                     SettingsRow(
@@ -2655,62 +2648,162 @@ class DataManagementPage extends StatelessWidget {
     }
   }
 
-  Future<void> _importCsv(BuildContext context, VeriFinController controller) {
-    return _runCsvImport(
-      context,
-      controller,
-      title: AppLocalizations.of(context).importCsvTitle,
-      message: AppLocalizations.of(context).importCsvMessage,
-    );
-  }
-
-  Future<void> _importFromOtherApp(
+  /// 平台优先导入流程：先选账单来源，再看导出引导，最后选文件解析。
+  Future<void> _importFromPlatform(
     BuildContext context,
     VeriFinController controller,
-  ) {
-    return _runCsvImport(
-      context,
-      controller,
-      title: AppLocalizations.of(context).importOtherTitle,
-      message: AppLocalizations.of(context).importOtherMessage,
+  ) async {
+    final platform = await _pickImportPlatform(context);
+    if (platform == null || !context.mounted) {
+      return;
+    }
+    final proceed = await _showBillImportGuide(context, platform);
+    if (proceed != true || !context.mounted) {
+      return;
+    }
+    await _runPlatformImport(context, controller, platform);
+  }
+
+  Future<ImportPlatform?> _pickImportPlatform(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final items = <_PlatformOption>[
+      _PlatformOption(
+        ImportPlatform.alipay,
+        Icons.account_balance_wallet_outlined,
+        l10n.platformAlipay,
+        l10n.platformAlipayHint,
+      ),
+      _PlatformOption(
+        ImportPlatform.wechat,
+        Icons.chat_bubble_outline,
+        l10n.platformWechat,
+        l10n.platformWechatHint,
+      ),
+      _PlatformOption(
+        ImportPlatform.mint,
+        Icons.eco_outlined,
+        l10n.platformMint,
+        l10n.platformMintHint,
+      ),
+      _PlatformOption(
+        ImportPlatform.genericCsv,
+        Icons.table_chart_outlined,
+        l10n.platformGenericCsv,
+        l10n.platformGenericCsvHint,
+      ),
+    ];
+    return showModalBottomSheet<ImportPlatform>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 2),
+              child: Text(
+                l10n.selectBillSource,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text(
+                l10n.selectBillSourceHint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            for (final item in items)
+              ListTile(
+                leading: Icon(item.icon),
+                title: Text(item.title),
+                subtitle: Text(item.subtitle),
+                onTap: () => Navigator.of(context).pop(item.platform),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 
-  Future<void> _runCsvImport(
+  String _platformLabel(BuildContext context, ImportPlatform platform) {
+    final l10n = AppLocalizations.of(context);
+    return switch (platform) {
+      ImportPlatform.alipay => l10n.platformAlipay,
+      ImportPlatform.wechat => l10n.platformWechat,
+      ImportPlatform.mint => l10n.platformMint,
+      ImportPlatform.genericCsv => l10n.platformGenericCsv,
+    };
+  }
+
+  String _platformGuide(BuildContext context, ImportPlatform platform) {
+    final l10n = AppLocalizations.of(context);
+    return switch (platform) {
+      ImportPlatform.alipay => l10n.alipayImportGuide,
+      ImportPlatform.wechat => l10n.wechatImportGuide,
+      ImportPlatform.mint => l10n.mintImportGuide,
+      ImportPlatform.genericCsv => l10n.genericCsvImportGuide,
+    };
+  }
+
+  Future<bool?> _showBillImportGuide(
     BuildContext context,
-    VeriFinController controller, {
-    required String title,
-    required String message,
-  }) async {
-    final confirmed = await showDialog<bool>(
+    ImportPlatform platform,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
+        title: Text(
+          l10n.billImportGuideTitle(_platformLabel(context, platform)),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(_platformGuide(context, platform)),
+              const SizedBox(height: 12),
+              Text(
+                l10n.billImportCommonNote,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).chooseFile),
+            child: Text(l10n.chooseFile),
           ),
         ],
       ),
     );
-    if (confirmed != true) {
-      return;
-    }
+  }
+
+  Future<void> _runPlatformImport(
+    BuildContext context,
+    VeriFinController controller,
+    ImportPlatform platform,
+  ) async {
     try {
-      final content = await pickCsvFile();
-      if (content == null) {
+      final bytes = await pickImportBytes(
+        extensions: platform.fileExtensions,
+        label: _platformLabel(context, platform),
+      );
+      if (bytes == null) {
         return;
       }
-      if (content.trim().isEmpty) {
+      if (bytes.isEmpty) {
         throw const FormatException('空文件');
       }
-      final plan = controller.importTransactionsFromCsv(content);
+      final plan = controller.importTransactionsFromPlatform(platform, bytes);
       if (!context.mounted) {
         return;
       }
@@ -2718,17 +2811,13 @@ class DataManagementPage extends StatelessWidget {
         await _showImportResult(context, plan);
         return;
       }
-      final sourceHint =
-          plan.source != null && plan.source != ImportSource.veriFin
-          ? AppLocalizations.of(context).recognizedAs(plan.source!.label)
-          : '';
       final suffix = plan.errorCount > 0
           ? AppLocalizations.of(context).skippedRows(plan.errorCount)
           : '';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${AppLocalizations.of(context).importedEntries(plan.importedCount)}$sourceHint$suffix',
+            '${AppLocalizations.of(context).importedEntries(plan.importedCount)}$suffix',
           ),
         ),
       );
@@ -3137,4 +3226,14 @@ class ProfileStat extends StatelessWidget {
       ],
     );
   }
+}
+
+/// 账单来源选择项（图标 + 标题 + 副标题）。
+class _PlatformOption {
+  const _PlatformOption(this.platform, this.icon, this.title, this.subtitle);
+
+  final ImportPlatform platform;
+  final IconData icon;
+  final String title;
+  final String subtitle;
 }
