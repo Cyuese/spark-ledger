@@ -48,7 +48,7 @@ Android/测试差异统一用条件导出模式（`stub` + `if (dart.library.io)
 - [lib/local_storage/](lib/local_storage/)：`LocalKeyValueStore`（偏好类小数据）— io 用 `SharedPreferences`，测试用内存 stub。真实平台启动必须 `LocalKeyValueStore.create()`，**真实平台绝不能落到内存实现**。
 - [lib/data/database_factory.dart](lib/data/database_factory.dart)：SQLite `DatabaseFactory` 与路径解析 — io 用 `sqflite` 原生、stub 抛错（测试注入 `databaseFactoryFfi`）。
 - `lib/app/avatar_picker_*.dart`：本地图片选择。
-- `lib/app/data_file_port_*.dart`：JSON 备份导出/导入（Android 默认写系统 Downloads）。
+- `lib/app/data_file_port_*.dart`：备份导出/导入的文件读写（Android 默认写系统 Downloads）— io 支持文本写入（`downloadTextFile`，CSV 模板等）与字节写入（`downloadBytesFile`，zip 备份），导入用 `pickBackupBytes` 按字节读入（`.json`/`.zip` 均可）。
 - `lib/app/attachment_picker_*.dart`：交易图片附件的拍照/相册选择 — io 用 `image_picker` 拍照或选图并压缩为 JPEG data URL（`image` 包在后台 isolate 缩放），stub（测试宿主）不支持（`attachmentPickingSupported=false`）；UI 组件 `lib/pages/attachments_editor.dart`。
 - `lib/app/biometric_auth_*.dart`：应用锁的生物解锁 — io 用 `local_auth`（仅 Android/iOS 生效，不保存生物特征数据；`local_auth` 无法严格排除人脸，故用户文案统一为「生物解锁」），stub（测试宿主）一律不可用。Android 端依赖 `FlutterFragmentActivity`、`USE_BIOMETRIC` 权限与 `minSdk≥23`。
 - `lib/app/backup/backup_storage_*.dart`：备份目录选择与文件读写 — io 上 Android 走 SAF（经 `platform_bridge`）、桌面走 `file_selector`+`dart:io`，stub 不支持持久目录。
@@ -59,7 +59,7 @@ Android/测试差异统一用条件导出模式（`stub` + `if (dart.library.io)
 
 ### 数据管理与备份
 
-数据管理页（`DataManagementPage`，我的页进入）集中导出/导入/初始化，以及 `lib/app/backup/` 备份子系统：`backup_settings.dart`（目录/频率/保留/上次时间 + 纯保留清理逻辑）、`backup_crypto.dart`（AES-GCM+PBKDF2 加密，`cryptography` 包）、`backup_service.dart`（写文件+按需加密+清理）、`backup_coordinator.dart`（打开/回前台/记账后触发本地目录与 WebDAV 自动备份，`main.dart` 注入 `onEntryAdded` 与生命周期）、`transaction_import.dart`（CSV 解析+名称建账户/分类+钱迹/随手记表头识别）、`webdav_config.dart`/`webdav_client_*.dart`（WebDAV）。备份目录/加密口令/WebDAV 配置存 KV，均不随初始化数据清除，也不进 JSON 导出（设备本地）。
+数据管理页（`DataManagementPage`，我的页进入）集中导出/导入/初始化，以及 `lib/app/backup/` 备份子系统：`backup_settings.dart`（目录/频率/保留/上次时间 + 纯保留清理逻辑）、`backup_archive.dart`（zip 打包/解包纯函数：把图片附件字节从 JSON 剥离、单独存 `attachments/<id>`，与 `backup.json` 一起打进 zip，解包拼回 `dataUrl`；`looksLikeZipBytes` 按魔数识别）、`backup_crypto.dart`（AES-GCM+PBKDF2 加密，`cryptography` 包）、`backup_service.dart`（`prepare` 决定格式：未加密→zip 字节 `.zip`、加密→文本信封 `.json`；写文件+清理）、`backup_coordinator.dart`（打开/回前台/记账后触发本地目录与 WebDAV 自动备份，`main.dart` 注入 `onEntryAdded` 与生命周期）、`transaction_import.dart`（CSV 解析+名称建账户/分类+钱迹/随手记表头识别）、`webdav_config.dart`/`webdav_client_*.dart`（WebDAV）。备份目录/加密口令/WebDAV 配置存 KV，均不随初始化数据清除，也不进 JSON 导出（设备本地）。
 
 应用锁（PIN/图案/生物解锁）：加盐哈希（`lib/app/app_lock.dart`）存 KV，UI 与门卫在 `lib/pages/app_lock_page.dart` 与 `app_lock_gate.dart`（门卫放在 `MaterialApp.builder` 覆盖根 Navigator，冷启动与回前台锁定）。
 

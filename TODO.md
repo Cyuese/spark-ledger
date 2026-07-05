@@ -75,9 +75,10 @@
 - [ ] 5.2 **确认 5.1 Web 清理干净**：全仓搜 `dart.library.html` / `_web.dart` / `sqflite_common_ffi_web` / `build web` 无残留
 - [ ] 5.3 **资产页【排序】按钮消失排查与改善**：当前逻辑是「有账户的分区 ≥2 才显示排序按钮」（`assets_pages.dart:145`）。先按真机反馈确认是「单分区（设计）」还是真 bug；无论如何改善可发现性（如单分区时给说明、或把排序入口移到资产操作菜单），避免按钮无声消失
 - [x] 5.4 **功能回归系统审查**：完成，报告见 `docs/dev/regression-audit.md`。六区域并行核查约 85 条断言，**未发现明确回归**；记录 3 处灰色地带待你定夺（①交易分类筛选是否下钻子分类 ②导入非本应用 JSON 是否静默覆盖 ③首页剩余额度夹 0 显示）
-- [~] 5.5 **附件备份改压缩包格式（尽早做）**——分两步：
-  - [x] 核心与控制器：`backup_archive.dart` 纯函数（附件字节从 JSON 剥离、与 `backup.json` 打进 zip，解包拼回 `dataUrl`）+ `exportBackupArchiveBytes()`/`importBackupBytes()`（zip 自动识别、兼容旧版纯 JSON）；含往返/体积/兼容测试
-  - [ ] 管线与原生（**需真机验证恢复，留待有设备的会话**）：把备份写入管线（手动/自动备份的 SAF 写、导出到 Downloads、WebDAV、加密判定）从文本切到二进制字节，让未加密备份默认产出 zip；新增 Android 原生二进制 I/O（`writeBytesToUri`/`readBytesFromUri`/`saveBytesToDownloads`）、备份文件列表纳入 `.zip`。加密备份可暂保持文本信封路径不打包，复用现有加密逻辑。**原因：这是数据关键路径且原生写入无法离设备验证，不盲改。**
+- [x] 5.5 **附件备份改压缩包格式**：
+  - 核心：`backup_archive.dart` 纯函数（附件字节从 JSON 剥离、与 `backup.json` 打进 zip，解包拼回 `dataUrl`）；含往返/体积/兼容测试。
+  - 管线：手动/自动备份、导出、WebDAV 上传的未加密路径默认产出 zip；加密备份沿用文本信封 `.json`。导入/本地恢复/WebDAV 恢复按字节读入、zip 魔数识别，完全兼容旧版纯 JSON/加密备份。`BackupService.prepare` 集中格式决策，`profile_pages` 共用 `_importBackupBytes`。
+  - 原生：Android 新增 `writeBackupBytes`/`readBackupBytes`/`saveBytesToDownloads`（MethodChannel 传字节），备份列表纳入 `.zip`。桌面 dart:io 路径有端到端测试（写 zip→读回→导入，附件还原）；**Android 原生 SAF/下载读写与桌面同逻辑，恢复仍需真机验证一次**。
 - [x] 5.6 **深层结构审查**：评估完成，报告见 `docs/dev/structure-review.md`。结论：结构总体健康、目录划分清晰、无结构性隐患；重构候选（part 拆 controller、抽通用确认弹窗、拆 profile_pages）均属风格/大改动面，按「只改明确的」原则**留待你决定**后再逐项做
 
 > 已放弃项：数据库迁移「压平成基线」——迁移不影响性能（全新装不跑迁移、老设备每步只跑一次），不做。
@@ -96,7 +97,7 @@
 |------|------|------|
 | SQLite 方案 | `sqflite` + `sqflite_common_ffi`（测试）+ `sqflite_common_ffi_web`（Web） | 单一 API 覆盖三端，无需 build_runner 代码生成，符合仓库「不引入额外工具链」约定；drift 需常驻 codegen |
 | i18n 方案 | Flutter 内置 gen-l10n（ARB，zh 为模板语言） | 官方方案零额外依赖；`generate: true` 由 pub get 自动生成 |
-| 备份格式 | 对外交换格式保持 JSON（与现有导入导出兼容），存储引擎变更不影响备份格式 | 老备份永远可导入 |
+| 备份格式 | 未加密备份为 **zip**（`backup.json` + `attachments/<id>` 图片文件），加密备份沿用文本信封 `.json`；导入按 zip 魔数自动识别，旧版纯 JSON/加密备份仍可导入 | 附件以 base64 内嵌 JSON 会让备份随附件急剧膨胀（放大 33% 且每次整份重写），zip 把图片剥离外置；加密走文本信封复用既有加密逻辑、降低二进制加密复杂度；魔数识别保证老备份永远可导入 |
 | 偏好类数据 | 保留 KV（SharedPreferences），不迁 SQLite | 小而简单，迁移无收益 |
 | SQLite 切换方式 | 开发期直接切换，不做 KV→SQLite 迁移、不留 KV 回退双路径；`LedgerRepository` 抽为接口，`SqliteLedgerRepository` 为生产实现，全新库首启动播种默认数据 | 应用尚无用户，允许不兼容旧数据结构；一次切干净，避免长期维护双路径隐患（大数据量下迁移也更可靠） |
 | 测试仓储 | widget/控制器逻辑测试注入 `InMemoryLedgerRepository`（同步、无真实 I/O），数据层真实 SQLite 用 ffi 单独覆盖 | sqflite 的后台 isolate 与 `testWidgets` 的 fake-async 会死锁；内存实现规避且更快 |
@@ -107,7 +108,7 @@
 | 多级分类结构 | 邻接表：`Category.parentId`（可空，顶级为 null），非物化路径/嵌套集；同级顺序沿用列表位置（`sort_order`）；子分类类型强制继承父分类 | 记账分类量级小、层级浅，邻接表最简单；改动只加一列一次迁移；树运算集中在 `category_tree.dart` 纯函数（带环检测），便于测试 |
 | 分类层级聚合口径 | 看板分类统计（环形/明细）把每笔交易归总到其**顶级祖先**分类；分类预算的「已花」把子分类支出上滚到各级父分类 | 顶级归总符合用户对「大类占比」的预期；预算上滚让父分类预算能约束整棵子树，子分类仍可单独设预算 |
 | 标签存储 | 交易与标签多对多，用交易表 `tag_ids` 单列存 JSON 数组，不建关联表；标签全局共享不分账本 | 与现有「整表覆盖式读写」一致，避免引入关联表与联表查询；标签量小、跨账本复用更自然 |
-| 图片附件存储 | 压缩 JPEG（最长边 1600、q80）存 data URL，放**独立 `attachments` 表**（非 entries 表），复用现有 JSON 备份管线 | 放 entries 表会让「整表覆盖式」写入把所有图片 base64 反复重写（放大严重）；独立表只在增删图片时重写。data URL 落在应用私有 SQLite 内，备份天然覆盖，且移动端已有内存图片渲染能力，无需额外文件生命周期管理 |
+| 图片附件存储 | 压缩 JPEG（最长边 1600、q80）存 data URL，放**独立 `attachments` 表**（非 entries 表）；备份时由 `backup_archive` 把附件字节剥离进 zip 的 `attachments/<id>` | 放 entries 表会让「整表覆盖式」写入把所有图片 base64 反复重写（放大严重）；独立表只在增删图片时重写。data URL 落在应用私有 SQLite 内，移动端已有内存图片渲染能力，无需额外文件生命周期管理；备份用 zip 外置附件避免 base64 膨胀 |
 | 报销/退款模型 | 退款/报销回款统一记为原支出的 `refundedAmount`（回到原账户、冲抵原交易），不新建收入条目；「待报销」只是标记 | 单字段冲抵最简单，天然满足「回款不计收入」；退款回原账户是最常见场景。代价：跨账户报销（回款到另一账户）暂用近似（记在原账户），后续如需精确可再引入关联结算条目 |
 | 周期记账补记时机 | 打开应用与回前台时 `applyDueRecurring(now)` 一次性补齐所有到期交易，不用后台定时任务/通知 | 本地优先、无服务端；应用不常驻，开屏补记足够且省电；补记逻辑纯函数（`dueDatesFor`/`advanceRecurring`）便于测试；`nextRunDate` 幂等推进保证不重复补记 |
 | 记账提醒通知 | `flutter_local_notifications`+`timezone`+`flutter_timezone`；inexact 调度（`inexactAllowWhileIdle`）+`matchDateTimeComponents: time` 每日重复 | 本地通知属平台能力非简单需求，需成熟库；inexact 免 `SCHEDULE_EXACT_ALARM` 特殊权限，提醒场景对精确到分钟无强需求；`timezone` 保证 zonedSchedule 按本地时区触发。配置为设备本地偏好，存 KV、不进 JSON 备份 |
