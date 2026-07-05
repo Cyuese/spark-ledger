@@ -398,4 +398,56 @@ void main() {
     expect(find.text('拖动右侧手柄调整分组顺序'), findsOneWidget);
     expect(find.text('完成'), findsOneWidget);
   });
+
+  testWidgets('inline sort button is always visible above asset sections', (
+    WidgetTester tester,
+  ) async {
+    final controller = await makeController();
+    final bookId = controller.activeBook.id;
+    controller
+      ..addAccount(
+        Account(
+          id: 'a-online',
+          bookId: bookId,
+          name: '网络支付',
+          type: AccountType.onlinePayment,
+          groupId: null,
+          initialBalance: 10,
+          iconCode: 'wallet',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+        ),
+      )
+      ..addAccount(
+        Account(
+          id: 'a-credit',
+          bookId: bookId,
+          name: '信用卡',
+          type: AccountType.creditCard,
+          groupId: null,
+          initialBalance: 0,
+          iconCode: 'card',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+        ),
+      );
+    await tester.pumpWidget(VeriFinApp(controller: controller));
+    await tester.pumpAndSettle();
+
+    await tapBottomTab(tester, 1);
+
+    // 「排序」按钮常驻分组列表上方，不用打开菜单就能发现。
+    expect(find.text('排序'), findsOneWidget);
+    await tester.tap(find.text('排序'));
+    await tester.pumpAndSettle();
+
+    // 点击后进入排序模式，出现提示与「完成」按钮；完成后回到「排序」。
+    expect(find.text('拖动右侧手柄调整分组顺序'), findsOneWidget);
+    await tester.tap(find.text('完成'));
+    await tester.pumpAndSettle();
+    expect(find.text('排序'), findsOneWidget);
+    expect(find.text('拖动右侧手柄调整分组顺序'), findsNothing);
+  });
 }

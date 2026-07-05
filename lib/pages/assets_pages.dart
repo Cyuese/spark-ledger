@@ -293,31 +293,35 @@ class _AssetsPageState extends State<AssetsPage> {
             const SizedBox(height: 12),
           ],
           if (visibleAssetSections.isNotEmpty) ...<Widget>[
-            // 排序入口常驻「资产操作」菜单（不受分组数影响，可发现）；进入排序模式后
-            // 才在此显示提示与「完成」按钮退出。
-            if (sortingSections)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        '拖动右侧手柄调整分组顺序',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.52),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    _SectionSortButton(
-                      sorting: true,
-                      onTap: () => setState(() => _sortingSections = false),
-                    ),
-                  ],
-                ),
+            // 「排序」按钮常驻分组列表上方（就算只有 1 个分组也显示，保证可发现，
+            // 点击时不足 2 个分组会提示）；「资产操作」菜单里保留同一入口。
+            // 进入排序模式后变为提示 + 「完成」。
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: sortingSections
+                        ? Text(
+                            '拖动右侧手柄调整分组顺序',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.52),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  _SectionSortButton(
+                    sorting: sortingSections,
+                    onTap: sortingSections
+                        ? () => setState(() => _sortingSections = false)
+                        : () => _enterSectionSorting(context),
+                  ),
+                ],
               ),
+            ),
             ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -586,13 +590,17 @@ class _AssetsPageState extends State<AssetsPage> {
       controller.toggleAssetAccountViewMode();
     }
     if (selected == 'sort_sections') {
-      if (_visibleSectionCount >= 2) {
-        setState(() => _sortingSections = true);
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('至少有 2 个分组才能排序')));
-      }
+      _enterSectionSorting(context);
+    }
+  }
+
+  void _enterSectionSorting(BuildContext context) {
+    if (_visibleSectionCount >= 2) {
+      setState(() => _sortingSections = true);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('至少有 2 个分组才能排序')));
     }
   }
 }
