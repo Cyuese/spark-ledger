@@ -44,7 +44,7 @@
   - [x] 3.2.1 标签管理与记账时多选标签：我的页「标签管理」入口（增删改+拖动排序），记账表单标签行打开多选弹窗（`TagSelectorSheet`，FilterChip 多选 + 即时新建标签）
   - [x] 3.2.2 交易列表按标签筛选：标签筛选胶囊（有标签时才显示），与账户/分类/搜索/时间组合；关键词搜索也命中标签名
   - [x] 3.2.3 看板标签统计：新增 `tag_stats` 面板（`reportPanelSpecs`），按标签汇总本月支出金额与占比（多标签交易分别计入各标签，占比以本月总支出为分母）
-- [x] 3.3 图片附件：记账时拍照或从相册选择（`attachment_picker_*` 条件导入 image_picker，压缩为 JPEG data URL），交易新增/详情页均可加图、缩略图查看、全屏浏览、删除；存于独立 `attachments` 表（DB v4，按 `entry_id` 关联，落在应用私有 SQLite），删除交易/账户/账本级联清理附件；随 JSON 备份导出导入。注：Android 相机/相册需真机验证
+- [x] 3.3 图片附件：记账时拍照或从相册选择（`attachment_picker_*` 条件导入 image_picker，压缩为 JPEG data URL），交易新增/详情页均可加图、缩略图查看、全屏浏览、删除；存于独立 `attachments` 表（DB v4，按 `entry_id` 关联，落在应用私有 SQLite），删除交易/账户/账本级联清理附件；随 JSON 备份导出导入。Android 相机/相册已真机验证（2026-07）
 - [x] 3.4 转账手续费：`LedgerEntry.fee`（DB v5 加 `fee` 列），转账记账时可填手续费；由转出账户承担——转出余额扣除「金额+手续费」、转入只加金额（`accountDeltaForEntry`）；转账本就不计收支统计，手续费仅体现在余额/净资产
 - [x] 3.5 报销 / 退款：支出可「标记待报销」（`reimbursable`，交易行显示徽标、交易列表可按待报销筛选）；退款/报销回款以 `refundedAmount` 冲抵原交易——回到原账户、按「金额−已冲抵」的净额计入余额与所有统计（收支/分类/标签/预算/趋势，集中在 `LedgerEntry.netAmount` 与 `ledger_math`）；DB v6 加 `reimbursable`/`refunded_amount` 列。回款不产生独立收入条目，故天然「不计收支」为收入
 - [x] 3.6 周期记账：`RecurringRule`（每天/周/月/年，DB v7 新增 `recurring_rules` 表），我的页「周期记账」入口可增删改、启停；打开应用与回前台时 `applyDueRecurring` 按频率补齐从 `nextRunDate` 到今天的交易并推进（月/年推进遇短月收敛到月末，带循环保护）；规则随账本删除级联清理，随 JSON 备份导入导出
@@ -55,10 +55,10 @@
 
 - [x] 4.1 报表增强：看板右上角「统计分析」入口进入 `ReportAnalysisPage`；时间范围可选本月 / 本年 / 自定义（`showDateRangePicker`），维度可选支出 / 收入；展示收支概览、趋势曲线（短范围按天、整年/跨多月按月，`ReportTrend`）、分类排行（按顶级分类聚合净额）；纯函数在 `lib/app/report_analysis.dart`（`ReportRange`/`reportSummary`/`reportCategoryStats`/`reportTrend`）
 - [x] 4.2 同比 / 环比分析：统计分析页在「本月」范围下展示「同比 · 环比」卡，收入 / 支出 / 结余分别对上月（环比）与去年同月（同比）算变化率；纯函数 `reportMonthlyComparison`/`changeRatio`/`formatChangeRatio`（`report_analysis.dart`），基准为 0 时显示「—」，颜色按「上升是否为好」区分（收入/结余升为绿、支出升为红）
-- [x] 4.3 记账提醒：设置页「记账提醒」入口（`ReminderSettingsPage`）开关每日提醒并选提醒时刻；本地通知走 `flutter_local_notifications` + `timezone`（`lib/app/reminder/notification_scheduler_*.dart` 条件导入，io=真实、web/测试=stub），每日在设定时刻发一条通知（inexact 调度免精确闹钟权限，`matchDateTimeComponents: time` 每日重复）；配置存 KV（`verifin.reminder.v1`，`ReminderSettings`，设备本地不进 JSON 备份），`main.dart` 开屏与配置变化时 `apply` 重排；Android 加 `POST_NOTIFICATIONS`/`RECEIVE_BOOT_COMPLETED` 权限、插件接收器与 core library desugaring。注：真机验证待发版后进行
+- [x] 4.3 记账提醒：设置页「记账提醒」入口（`ReminderSettingsPage`）开关每日提醒并选提醒时刻；本地通知走 `flutter_local_notifications` + `timezone`（`lib/app/reminder/notification_scheduler_*.dart` 条件导入，io=真实、web/测试=stub），每日在设定时刻发一条通知（inexact 调度免精确闹钟权限，`matchDateTimeComponents: time` 每日重复）；配置存 KV（`verifin.reminder.v1`，`ReminderSettings`，设备本地不进 JSON 备份），`main.dart` 开屏与配置变化时 `apply` 重排；Android 加 `POST_NOTIFICATIONS`/`RECEIVE_BOOT_COMPLETED` 权限、插件接收器与 core library desugaring。已真机验证（2026-07）
 - [x] 4.4 我的页改版：功能入口由竖排列表改为宫格（`_FeatureGridCard`/`_FeatureTile`，4 列图标磁贴），分「记账管理」（账本/分类管理/标签管理/周期记账）与「数据与工具」（统计分析/记账提醒/数据管理）两组，磁贴带状态副标题；头部齿轮仍进设置，新增「统计分析」「记账提醒」入口
 - [x] 4.5 新用户引导：首启动（同意隐私政策后）弹出 `OnboardingPage`（4 步 PageView：欢迎 / 建首个账户 / 设本月预算 / 完成），账户与预算均可选可跳过，完成或跳过写入 `verifin.onboarding.v1`（只出现一次，初始化数据不清除）；`shell.dart` 在同意后 `_maybeShowOnboarding` 触发，测试脚手架默认预置该标记跳过。**后续新增重要功能需回顾 `_DoneStep` 引导文案是否同步**
-- [x] 4.6 Android 桌面小组件：`QuickEntryWidgetProvider`（`AppWidgetProvider`）展示「今日支出」并提供「记一笔」按钮（复用 `MainActivity.ACTION_QUICK_ENTRY` 快速记账，点主体打开应用）；数据由 Flutter 侧 `pushTodayExpenseToWidget`（`home_widget_service.dart`，纯函数 `dayExpenseTotal`）经 MethodChannel `updateTodayExpenseWidget` 写入原生 SharedPreferences 并刷新，在开屏/回前台/记账后触发；品牌蓝渐变背景（`res/layout/quick_entry_widget.xml` + drawable + `xml/quick_entry_widget_info.xml` + Manifest receiver）。注：真机添加与刷新需发版后验证
+- [x] 4.6 Android 桌面小组件：`QuickEntryWidgetProvider`（`AppWidgetProvider`）展示「今日支出」并提供「记一笔」按钮（复用 `MainActivity.ACTION_QUICK_ENTRY` 快速记账，点主体打开应用）；数据由 Flutter 侧 `pushTodayExpenseToWidget`（`home_widget_service.dart`，纯函数 `dayExpenseTotal`）经 MethodChannel `updateTodayExpenseWidget` 写入原生 SharedPreferences 并刷新，在开屏/回前台/记账后触发；品牌蓝渐变背景（`res/layout/quick_entry_widget.xml` + drawable + `xml/quick_entry_widget_info.xml` + Manifest receiver）。真机添加与刷新已验证（2026-07）
 
 ## 阶段 5：维护与清理（1.3 后）
 
@@ -78,10 +78,27 @@
 - [x] 5.5 **附件备份改压缩包格式**：
   - 核心：`backup_archive.dart` 纯函数（附件字节从 JSON 剥离、与 `backup.json` 打进 zip，解包拼回 `dataUrl`）；含往返/体积/兼容测试。
   - 管线：手动/自动备份、导出、WebDAV 上传的未加密路径默认产出 zip；加密备份沿用文本信封 `.json`。导入/本地恢复/WebDAV 恢复按字节读入、zip 魔数识别，完全兼容旧版纯 JSON/加密备份。`BackupService.prepare` 集中格式决策，`profile_pages` 共用 `_importBackupBytes`。
-  - 原生：Android 新增 `writeBackupBytes`/`readBackupBytes`/`saveBytesToDownloads`（MethodChannel 传字节），备份列表纳入 `.zip`。桌面 dart:io 路径有端到端测试（写 zip→读回→导入，附件还原）；**Android 原生 SAF/下载读写与桌面同逻辑，恢复仍需真机验证一次**。
+  - 原生：Android 新增 `writeBackupBytes`/`readBackupBytes`/`saveBytesToDownloads`（MethodChannel 传字节），备份列表纳入 `.zip`。桌面 dart:io 路径有端到端测试（写 zip→读回→导入，附件还原）；Android 原生 SAF/下载读写与恢复已真机验证（2026-07）。
 - [x] 5.6 **深层结构审查**：评估完成，报告见 `docs/dev/structure-review.md`。结论：结构总体健康、目录划分清晰、无结构性隐患；重构候选（part 拆 controller、抽通用确认弹窗、拆 profile_pages）均属风格/大改动面，按「只改明确的」原则**留待你决定**后再逐项做
 
 > 已放弃项：数据库迁移「压平成基线」——迁移不影响性能（全新装不跑迁移、老设备每步只跑一次），不做。
+
+## 阶段 6：多语言（进行中）
+
+存量硬编码中文全部迁入 ARB（zh + en），并提供应用内语言切换。分模块推进，每模块一个提交。
+
+- [ ] 6.1 语言切换基础设施：语言偏好存 KV（跟随系统 / 中文 / English），设置页「语言」入口，`main.dart` 按偏好设置 `locale`
+- [ ] 6.2 壳层与通用组件（shell / common_widgets / sheets）
+- [ ] 6.3 模型显示名与控制器消息（models / veri_fin_controller / demo_data / account_icon_assets）
+- [ ] 6.4 首页与记账表单（home_page / entry_sheets）
+- [ ] 6.5 资产页（assets_pages）
+- [ ] 6.6 交易列表与详情（transactions_pages / entry_detail_page / attachments_editor）
+- [ ] 6.7 预算页（budget_pages）
+- [ ] 6.8 看板与统计分析（reports_page / report_analysis* / chart_painters / series_math / panel_settings_page）
+- [ ] 6.9 我的页与设置（profile_pages / legal_pages / recurring_page / reminder_settings_page / onboarding_page）
+- [ ] 6.10 应用锁与隐私同意（app_lock_page / app_lock_gate / privacy_consent_gate / biometric）
+- [ ] 6.11 备份子系统用户可见消息（backup/* / data_file_port / transaction_import）
+- [ ] 6.12 全量核查无残留硬编码中文，analyze + test 全绿，真机验证清单见 `docs/dev/i18n-verification.md`
 
 ## Backlog（暂不排期）
 
@@ -89,7 +106,6 @@
 - 语音记账 / 小票 OCR
 - 自动记账（读取支付/短信通知，合规风险高）
 - iOS 构建与发布（暂无开发者账号）
-- 应用内语言切换（i18n 框架就绪后成本低）
 
 ## 技术决策
 
