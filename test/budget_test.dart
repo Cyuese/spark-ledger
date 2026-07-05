@@ -166,6 +166,39 @@ void main() {
     expect(find.text('1 个超支'), findsOneWidget);
   });
 
+  testWidgets('home budget card shows negative remaining when overspent', (
+    WidgetTester tester,
+  ) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    controller
+      ..addEntry(
+        LedgerEntry(
+          id: 'over-budget',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 150,
+          categoryId: 'dining',
+          accountId: 'cash-test',
+          note: '大额支出',
+          occurredAt: now,
+        ),
+      )
+      ..setMonthlyBudget(now, 100)
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await tester.scrollUntilVisible(
+      find.byType(BudgetPanel),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    // 支出 150、预算 100：剩余应显示 -50（负数），而不再夹到 0。
+    expect(find.text('-50'), findsOneWidget);
+  });
+
   test('category budget rolls up sub-category spending into parent', () async {
     final controller = await makeController();
     final month = DateTime(2026, 7);

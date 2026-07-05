@@ -442,7 +442,9 @@ class BudgetPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final remaining = (budget - expense).clamp(0, budget).toDouble();
+    // 未设预算（budget<=0）显示 0；设了预算则超支时显示负数（与预算页口径一致）。
+    final remaining = budget <= 0 ? 0.0 : budget - expense;
+    final overspent = remaining < 0;
     final daysInMonth = DateUtils.getDaysInMonth(
       DateTime.now().year,
       DateTime.now().month,
@@ -523,7 +525,10 @@ class BudgetPanel extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w800),
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: overspent ? veriExpense : null,
+                              ),
                         ),
                         Text(
                           '${(ratio * 100).toStringAsFixed(0)}%',
@@ -542,7 +547,10 @@ class BudgetPanel extends StatelessWidget {
               Expanded(
                 child: BudgetSideStat(
                   label: '剩余日均',
-                  value: formatAmount(remaining / remainingDays),
+                  // 超支时可分配日均为 0（负的日均无实际意义）。
+                  value: formatAmount(
+                    (remaining < 0 ? 0.0 : remaining) / remainingDays,
+                  ),
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
