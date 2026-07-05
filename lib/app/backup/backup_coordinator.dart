@@ -41,18 +41,20 @@ class BackupCoordinator {
     _running = true;
     var anySucceeded = false;
     try {
-      // 内容只准备一次（含按需加密），两个目的地共用。
-      final payload = await BackupService.prepareContent(
-        controller.exportDataJson(),
-        controller.backupPassphrase,
+      // 准备一次备份内容（未加密→zip、加密→文本信封），本地与 WebDAV 共用同一份。
+      final prepared = await BackupService.prepare(
+        json: controller.exportDataJson(),
+        passphrase: controller.backupPassphrase,
+        now: now,
+        auto: true,
       );
-      final filename = BackupService.autoBackupFilename(now);
       if (toLocal) {
         try {
           await BackupService.writeAutoBackup(
             settings: settings,
-            content: payload,
+            content: controller.exportDataJson(),
             now: now,
+            passphrase: controller.backupPassphrase,
           );
           anySucceeded = true;
         } catch (_) {
@@ -61,7 +63,7 @@ class BackupCoordinator {
       }
       if (toWebdav) {
         try {
-          await webdavUpload(webdav, filename, payload);
+          await webdavUpload(webdav, prepared.filename, prepared.bytes);
           anySucceeded = true;
         } catch (_) {
           // WebDAV 失败静默。

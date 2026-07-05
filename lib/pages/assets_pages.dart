@@ -589,9 +589,9 @@ class _AssetsPageState extends State<AssetsPage> {
       if (_visibleSectionCount >= 2) {
         setState(() => _sortingSections = true);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('至少有 2 个分组才能排序')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('至少有 2 个分组才能排序')));
       }
     }
   }

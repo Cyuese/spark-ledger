@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'webdav_config.dart';
 
 /// WebDAV 操作异常，面向用户可读。
@@ -17,7 +19,7 @@ Future<void> webdavTestConnection(WebdavConfig config) async {
 Future<void> webdavUpload(
   WebdavConfig config,
   String filename,
-  String content,
+  List<int> bytes,
 ) async {
   throw const WebdavException('当前平台不支持 WebDAV');
 }
@@ -26,6 +28,6 @@ Future<List<WebdavRemoteFile>> webdavList(WebdavConfig config) async {
   throw const WebdavException('当前平台不支持 WebDAV');
 }
 
-Future<String> webdavDownload(WebdavConfig config, String href) async {
+Future<Uint8List> webdavDownload(WebdavConfig config, String href) async {
   throw const WebdavException('当前平台不支持 WebDAV');
 }

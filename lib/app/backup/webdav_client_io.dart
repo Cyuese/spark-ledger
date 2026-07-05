@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'webdav_config.dart';
 
@@ -124,19 +125,14 @@ Future<void> webdavTestConnection(WebdavConfig config) async {
 Future<void> webdavUpload(
   WebdavConfig config,
   String filename,
-  String content,
+  List<int> bytes,
 ) async {
   final client = HttpClient();
   try {
     await _ensureCollection(client, config);
     final target = Uri.parse(joinWebdavUrl(config.url, filename));
     final request = await _open(client, 'PUT', target, config);
-    request.headers.contentType = ContentType(
-      'application',
-      'json',
-      charset: 'utf-8',
-    );
-    final bytes = utf8.encode(content);
+    request.headers.contentType = ContentType('application', 'octet-stream');
     request.headers.contentLength = bytes.length;
     request.add(bytes);
     final response = await request.close();
@@ -172,9 +168,11 @@ Future<List<WebdavRemoteFile>> webdavList(WebdavConfig config) async {
     if (response.statusCode >= 400) {
       throw WebdavException(_statusMessage(response.statusCode));
     }
-    return parsePropfindResponse(
-      body,
-    ).where((file) => file.name.endsWith('.json')).toList();
+    return parsePropfindResponse(body)
+        .where(
+          (file) => file.name.endsWith('.json') || file.name.endsWith('.zip'),
+        )
+        .toList();
   } catch (error) {
     _fail(error);
   } finally {
@@ -182,7 +180,7 @@ Future<List<WebdavRemoteFile>> webdavList(WebdavConfig config) async {
   }
 }
 
-Future<String> webdavDownload(WebdavConfig config, String href) async {
+Future<Uint8List> webdavDownload(WebdavConfig config, String href) async {
   final client = HttpClient();
   try {
     final request = await _open(
@@ -195,7 +193,11 @@ Future<String> webdavDownload(WebdavConfig config, String href) async {
     if (response.statusCode >= 400) {
       throw WebdavException(_statusMessage(response.statusCode));
     }
-    return response.transform(utf8.decoder).join();
+    final builder = BytesBuilder(copy: false);
+    await for (final chunk in response) {
+      builder.add(chunk);
+    }
+    return builder.toBytes();
   } catch (error) {
     _fail(error);
   } finally {

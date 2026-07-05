@@ -1,6 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:verifin/app/backup/backup_archive.dart';
 import 'package:verifin/app/backup/backup_service.dart';
 import 'package:verifin/app/backup/backup_settings.dart';
+import 'package:verifin/app/backup/backup_storage.dart';
+import 'package:verifin/app/models.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 
 import 'support/test_harness.dart';
@@ -82,14 +88,24 @@ void main() {
   });
 
   group('自动备份文件命名与保留', () {
-    test('手动与自动文件名前缀区分', () {
+    test('手动与自动文件名前缀区分（未加密 zip / 加密 json）', () {
       final now = DateTime(2026, 7, 4, 9, 8, 7);
+      // 默认未加密为 .zip。
       expect(
         BackupService.manualBackupFilename(now),
-        'verifin-backup-20260704-090807.json',
+        'verifin-backup-20260704-090807.zip',
       );
       expect(
         BackupService.autoBackupFilename(now),
+        'verifin-auto-20260704-090807.zip',
+      );
+      // 加密备份沿用文本信封 .json。
+      expect(
+        BackupService.manualBackupFilename(now, 'json'),
+        'verifin-backup-20260704-090807.json',
+      );
+      expect(
+        BackupService.autoBackupFilename(now, 'json'),
         'verifin-auto-20260704-090807.json',
       );
     });
@@ -154,6 +170,65 @@ void main() {
       controller.clearBackupDirectory();
       expect(controller.backupSettings.hasDirectory, isFalse);
       expect(controller.backupSettings.frequency, BackupFrequency.manual);
+    });
+  });
+
+  group('zip 备份写入目录并读回（桌面 dart:io 路径端到端）', () {
+    test('未加密写入为 .zip，读回是 zip，可导入且附件还原', () async {
+      final dir = await Directory.systemTemp.createTemp('verifin_backup');
+      try {
+        final source = await makeController();
+        final account = Account(
+          id: 'acc-e2e',
+          bookId: source.activeBook.id,
+          name: '现金账户',
+          type: AccountType.cash,
+          groupId: null,
+          initialBalance: 0,
+          iconCode: 'wallet',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+        );
+        source
+          ..addAccount(account)
+          ..addEntry(
+            LedgerEntry(
+              id: 'e-e2e',
+              bookId: source.activeBook.id,
+              type: EntryType.expense,
+              amount: 15,
+              categoryId: 'dining',
+              accountId: account.id,
+              note: '带票据',
+              occurredAt: DateTime(2026, 7, 4, 12),
+            ),
+          );
+        final dataUrl =
+            'data:image/jpeg;base64,${base64Encode(List<int>.generate(1024, (i) => i % 256))}';
+        source.addAttachment('e-e2e', dataUrl);
+
+        final result = await BackupService.writeManualBackup(
+          settings: BackupSettings(directoryUri: dir.path),
+          content: source.exportDataJson(),
+          now: DateTime(2026, 7, 4, 9, 8, 7),
+        );
+        expect(result.filename.endsWith('.zip'), isTrue);
+
+        final bytes = await readBackupBytesFile(result.fileUri!);
+        expect(bytes, isNotNull);
+        expect(looksLikeZipBytes(bytes!), isTrue);
+
+        final target = await makeController();
+        target.importBackupBytes(bytes);
+        expect(target.entries.single.note, '带票据');
+        expect(target.attachmentsForEntry('e-e2e').single.dataUrl, dataUrl);
+
+        source.dispose();
+        target.dispose();
+      } finally {
+        await dir.delete(recursive: true);
+      }
     });
   });
 }

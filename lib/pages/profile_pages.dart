@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
 import '../app/app_version.dart';
 import '../app/avatar_picker.dart';
+import '../app/backup/backup_archive.dart';
 import '../app/backup/backup_crypto.dart';
 import '../app/backup/backup_service.dart';
 import '../app/backup/backup_settings.dart';
@@ -1947,15 +1950,20 @@ class DataManagementPage extends StatelessWidget {
     BuildContext context,
     VeriFinController controller,
   ) async {
-    final date = DateTime.now().toIso8601String().substring(0, 10);
     try {
-      final content = await BackupService.prepareContent(
-        controller.exportDataJson(),
-        controller.backupPassphrase,
+      // 未加密→zip（附件不膨胀）、加密→文本信封，统一按字节写入下载目录。
+      final prepared = await BackupService.prepare(
+        json: controller.exportDataJson(),
+        passphrase: controller.backupPassphrase,
+        now: DateTime.now(),
+        auto: false,
       );
-      final saved = await downloadTextFile(
-        filename: 'verifin-backup-$date.json',
-        content: content,
+      final saved = await downloadBytesFile(
+        filename: prepared.filename,
+        bytes: prepared.bytes,
+        mimeType: controller.backupEncryptionEnabled
+            ? 'application/json'
+            : 'application/zip',
       );
       if (saved && context.mounted) {
         final hint = controller.backupEncryptionEnabled ? '（已加密）' : '';
@@ -1970,6 +1978,39 @@ class DataManagementPage extends StatelessWidget {
         ).showSnackBar(const SnackBar(content: Text('导出失败，请稍后再试')));
       }
     }
+  }
+
+  /// 从备份字节导入：zip（新版精简备份）直接解包导入；否则按文本处理，加密的先
+  /// 解密再导入。返回是否成功导入；用户取消解密返回 false。空/坏文件抛
+  /// FormatException 由调用方提示。
+  Future<bool> _importBackupBytes(
+    BuildContext context,
+    VeriFinController controller,
+    List<int> bytes,
+  ) async {
+    if (bytes.isEmpty) {
+      throw const FormatException('空备份文件');
+    }
+    if (looksLikeZipBytes(bytes)) {
+      controller.importBackupBytes(bytes);
+      return true;
+    }
+    var text = utf8.decode(bytes);
+    if (text.trim().isEmpty) {
+      throw const FormatException('空备份文件');
+    }
+    if (isEncryptedBackup(text)) {
+      if (!context.mounted) {
+        return false;
+      }
+      final decrypted = await _decryptForImport(context, controller, text);
+      if (decrypted == null) {
+        return false;
+      }
+      text = decrypted;
+    }
+    controller.importDataJson(text);
+    return true;
   }
 
   /// 处理加密备份的解密：先尝试已保存口令，失败或未设置则弹窗要求输入，
@@ -2265,14 +2306,21 @@ class DataManagementPage extends StatelessWidget {
     messenger.showSnackBar(const SnackBar(content: Text('正在上传到 WebDAV...')));
     try {
       final now = DateTime.now();
-      final filename = BackupService.manualBackupFilename(now);
-      final payload = await BackupService.prepareContent(
-        controller.exportDataJson(),
-        controller.backupPassphrase,
+      final prepared = await BackupService.prepare(
+        json: controller.exportDataJson(),
+        passphrase: controller.backupPassphrase,
+        now: now,
+        auto: false,
       );
-      await webdavUpload(controller.webdavConfig, filename, payload);
+      await webdavUpload(
+        controller.webdavConfig,
+        prepared.filename,
+        prepared.bytes,
+      );
       controller.recordBackupTime(now);
-      messenger.showSnackBar(SnackBar(content: Text('已上传：$filename')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('已上传：${prepared.filename}')),
+      );
     } catch (error) {
       messenger.showSnackBar(SnackBar(content: Text('上传失败：$error')));
     }
@@ -2359,22 +2407,12 @@ class DataManagementPage extends StatelessWidget {
       return;
     }
     try {
-      var content = await webdavDownload(controller.webdavConfig, chosen.href);
-      if (content.trim().isEmpty) {
-        throw const FormatException('空备份文件');
+      final bytes = await webdavDownload(controller.webdavConfig, chosen.href);
+      if (!context.mounted) {
+        return;
       }
-      if (isEncryptedBackup(content)) {
-        if (!context.mounted) {
-          return;
-        }
-        final decrypted = await _decryptForImport(context, controller, content);
-        if (decrypted == null) {
-          return;
-        }
-        content = decrypted;
-      }
-      controller.importDataJson(content);
-      if (context.mounted) {
+      final imported = await _importBackupBytes(context, controller, bytes);
+      if (imported && context.mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('已从 WebDAV 恢复数据')));
@@ -2580,26 +2618,15 @@ class DataManagementPage extends StatelessWidget {
     }
 
     try {
-      final content = await pickTextFile();
-      if (content == null) {
+      final bytes = await pickBackupBytes();
+      if (bytes == null) {
         return;
       }
-      if (content.trim().isEmpty) {
-        throw const FormatException('空备份文件');
+      if (!context.mounted) {
+        return;
       }
-      var plaintext = content;
-      if (isEncryptedBackup(content)) {
-        if (!context.mounted) {
-          return;
-        }
-        final decrypted = await _decryptForImport(context, controller, content);
-        if (decrypted == null) {
-          return;
-        }
-        plaintext = decrypted;
-      }
-      controller.importDataJson(plaintext);
-      if (context.mounted) {
+      final imported = await _importBackupBytes(context, controller, bytes);
+      if (imported && context.mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('已导入本地数据')));
