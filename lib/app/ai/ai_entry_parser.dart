@@ -274,9 +274,14 @@ $base
 补充说明（自动记账场景）：
 - 下面给你的不是用户主动描述，而是一条来自支付/银行 App 的通知原文，可能并不是一笔交易（如营销、活动、系统提示、验证码、聊天消息等）。
 - 先判断它是否是一笔真实的收支或转账。是则 "isTransaction" 为 true 并正常填写各字段；不是则 "isTransaction" 为 false，其余字段可留默认。
-- 银行「收款/入账」通常是收入或账户间转账，「支出/消费/付款」通常是支出——按文本判断，拿不准时按字面。
-- 输出 JSON 需额外包含 "isTransaction" 布尔字段，例如：
+- 收支方向按关键词判断：
+  - **收入（income）**：「收款」「到账」「入账」「转入」「退款」「返现」「工资」「红包到账」「收到」等——钱进账。
+  - **支出（expense）**：「付款」「支出」「消费」「已扣款」「扣费」「支付成功」「购买」等——钱出账。
+  - 拿不准时按字面；「到账/入账」默认按收入处理。
+- 金额只取交易本金：忽略「余额」「可用额度」「积分」等非交易金额；一条通知有多个数字时取表示本次交易的那个。
+- 输出 JSON 需额外包含 "isTransaction" 布尔字段。示例：
 {"isTransaction":true,"type":"expense","amount":12.5,"categoryId":"food","accountId":"","toAccountId":null,"note":"星巴克","date":"${_dateKey(context.today)}"}
+{"isTransaction":true,"type":"income","amount":200,"categoryId":"","accountId":"","toAccountId":null,"note":"银行卡到账","date":"${_dateKey(context.today)}"}
 ''';
 }
 

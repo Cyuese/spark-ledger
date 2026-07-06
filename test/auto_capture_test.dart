@@ -94,6 +94,13 @@ void main() {
       expect(prompt, contains('card'));
       expect(prompt, contains('2026-07-06'));
     });
+
+    test('guides income keywords like 到账/收款/入账', () {
+      final prompt = buildNotificationEntryPrompt(_context());
+      expect(prompt, contains('到账'));
+      expect(prompt, contains('收款'));
+      expect(prompt, contains('income'));
+    });
   });
 
   group('parseNotificationEntryDraft', () {

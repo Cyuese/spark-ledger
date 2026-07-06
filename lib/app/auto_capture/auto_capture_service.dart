@@ -34,19 +34,18 @@ class AutoCaptureService {
     );
   }
 
-  /// 取出原生队列，逐条 AI 解析并落账；结束后把常驻通知切到 done（有落账）或 idle。
-  /// 返回本次落账笔数。
-  Future<int> drainAndProcess() async {
+  /// 取出原生队列，逐条 AI 解析成交易草稿并**返回**（不落账）。落账交由调用方
+  /// （`main.dart`）弹确认页由用户确认——**不再静默自动入账**。结束后常驻通知回 idle。
+  Future<List<AiEntryDraft>> drainAndProcess() async {
     if (!_controller.autoCaptureSettings.notificationEnabled) {
-      return 0;
+      return const <AiEntryDraft>[];
     }
     final captures = await AppPlatformBridge.drainAutoCaptureQueue();
     if (captures.isEmpty) {
-      return 0;
+      return const <AiEntryDraft>[];
     }
 
-    var committed = 0;
-    double? lastAmount;
+    final drafts = <AiEntryDraft>[];
     final coordinator = AutoCaptureCoordinator(
       settingsOf: () => _controller.autoCaptureSettings,
       requestDraft: (notification) => requestNotificationEntryDraft(
@@ -54,12 +53,8 @@ class AutoCaptureService {
         notificationText: notification.text,
         context: _buildContext(),
       ),
-      commitDraft: (draft, _) {
-        if (_controller.addEntryFromAutoCapture(draft)) {
-          committed++;
-          lastAmount = draft.amount;
-        }
-      },
+      // 识别为交易的草稿只收集起来交给用户确认，不直接落账。
+      commitDraft: (draft, _) => drafts.add(draft),
     );
 
     for (final raw in captures) {
@@ -73,15 +68,9 @@ class AutoCaptureService {
       await coordinator.process(capture);
     }
 
-    if (committed > 0) {
-      await AppPlatformBridge.setAutoCaptureState(
-        'done',
-        amount: lastAmount?.toStringAsFixed(2),
-      );
-    } else {
-      await AppPlatformBridge.setAutoCaptureState('idle');
-    }
-    return committed;
+    // 落账要等用户确认，常驻通知回到等待态。
+    await AppPlatformBridge.setAutoCaptureState('idle');
+    return drafts;
   }
 
   AiEntryContext _buildContext() {

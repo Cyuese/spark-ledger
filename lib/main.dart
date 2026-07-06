@@ -18,6 +18,7 @@ import 'data/ledger_repository.dart';
 import 'l10n/app_localizations.dart';
 import 'local_storage/local_storage.dart';
 import 'pages/app_lock_gate.dart';
+import 'pages/entry_detail_page.dart';
 import 'pages/privacy_consent_gate.dart';
 import 'pages/shell.dart';
 
@@ -51,6 +52,8 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
   late final VeriFinController _controller = widget.controller;
   final NotificationScheduler _notifications = NotificationScheduler();
   late final AutoCaptureService _autoCapture = AutoCaptureService(_controller);
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  bool _confirmingAutoCapture = false;
 
   @override
   void initState() {
@@ -69,8 +72,12 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     BackupCoordinator.maybeBackupOnOpen(_controller);
     // 打开应用时刷新桌面小组件「今日支出」。
     pushTodayExpenseToWidget(_controller);
-    // 自动记账：推送配置并处理后台捕获的通知队列。
-    _syncAutoCapture();
+    // 自动记账：推送配置并处理后台捕获的通知队列。首帧后再跑，确保导航器就绪可弹确认页。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_syncAutoCapture());
+      }
+    });
   }
 
   void _handleAutoCaptureChanged() {
@@ -88,7 +95,34 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
 
   Future<void> _syncAutoCapture() async {
     await _pushAutoCaptureConfig();
-    await _autoCapture.drainAndProcess();
+    // 导航器未就绪（冷启动首帧前）或已在展示确认页时不 drain——避免清空队列却无法弹确认页丢草稿。
+    if (_confirmingAutoCapture || _navigatorKey.currentState == null) {
+      return;
+    }
+    final drafts = await _autoCapture.drainAndProcess();
+    if (drafts.isEmpty || !mounted) {
+      return;
+    }
+    _confirmingAutoCapture = true;
+    try {
+      for (final draft in drafts) {
+        final navigator = _navigatorKey.currentState;
+        if (navigator == null) {
+          break;
+        }
+        // 逐条弹出记账页（预填 AI 草稿）由用户确认/修改后保存——不静默落账。
+        await navigator.push<void>(
+          MaterialPageRoute<void>(
+            builder: (_) => EntryDetailPage(
+              initialAmount: draft.amount,
+              initialDraft: draft,
+            ),
+          ),
+        );
+      }
+    } finally {
+      _confirmingAutoCapture = false;
+    }
   }
 
   void _handleEntryAdded() {
@@ -141,6 +175,7 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
             valueListenable: _controller.localePreferenceListenable,
             builder: (context, localePreference, _) {
               return MaterialApp(
+                navigatorKey: _navigatorKey,
                 onGenerateTitle: (context) =>
                     AppLocalizations.of(context).appTitle,
                 debugShowCheckedModeBanner: false,
