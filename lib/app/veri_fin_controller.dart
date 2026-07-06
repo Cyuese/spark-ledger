@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart' hide Category;
 
 import '../data/ledger_repository.dart';
 import '../local_storage/local_storage.dart';
+import 'ai/ai_entry_parser.dart';
 import 'ai/ai_settings.dart';
 import 'app_lock.dart';
+import 'auto_capture/auto_capture_settings.dart';
 import 'backup/backup_archive.dart';
 import 'backup/backup_settings.dart';
 import 'backup/payment_import.dart';
@@ -94,6 +96,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _reminderKey = 'verifin.reminder.v1';
   static const String _fabActionKey = 'verifin.fab_action.v1';
   static const String _aiSettingsKey = 'verifin.ai.v1';
+  static const String _autoCaptureKey = 'verifin.auto_capture.v1';
   static const String _onboardingKey = 'verifin.onboarding.v1';
 
   static String _panelsKeyFor(PanelPageKind page) {
@@ -176,6 +179,7 @@ class VeriFinController extends ChangeNotifier {
   ReminderSettings _reminderSettings = ReminderSettings.disabled;
   FabActionMode _fabActionMode = FabActionMode.manual;
   AiSettings _aiSettings = const AiSettings();
+  AutoCaptureSettings _autoCaptureSettings = AutoCaptureSettings.disabled;
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
     _entries.where((entry) => entry.bookId == _activeBookId),
@@ -601,6 +605,44 @@ class VeriFinController extends ChangeNotifier {
       _store.delete(_aiSettingsKey);
     }
     notifyListeners();
+  }
+
+  /// 自动记账（通知监听）配置。**Alpha 功能，默认全关。**设备本地偏好，
+  /// 不进 JSON 备份、初始化保留。依赖 AI 解析，开启前需先配好 [aiSettings]（UI 把关）。
+  AutoCaptureSettings get autoCaptureSettings => _autoCaptureSettings;
+
+  void setAutoCaptureSettings(AutoCaptureSettings settings) {
+    if (_autoCaptureSettings == settings) {
+      return;
+    }
+    _autoCaptureSettings = settings;
+    _store.write(_autoCaptureKey, settings.encode());
+    notifyListeners();
+  }
+
+  /// 把 AI 从通知里解析出的交易草稿落账（自动记账通道）。构造与手动记账一致的
+  /// [LedgerEntry] 后走 [addEntry]，落在当前账本；非交易草稿（`isTransaction=false`
+  /// 或金额无效）直接忽略，返回是否落账。
+  bool addEntryFromAutoCapture(AiEntryDraft draft) {
+    if (!draft.isTransaction || draft.amount <= 0) {
+      return false;
+    }
+    final entryId = DateTime.now().microsecondsSinceEpoch.toString();
+    addEntry(
+      LedgerEntry(
+        id: entryId,
+        bookId: activeBook.id,
+        type: draft.type,
+        amount: draft.amount,
+        categoryId: draft.categoryId,
+        accountId: draft.accountId,
+        toAccountId: draft.type == EntryType.transfer ? draft.toAccountId : null,
+        note: draft.note,
+        occurredAt: draft.occurredAt,
+        fee: 0,
+      ),
+    );
+    return true;
   }
 
   /// 用户是否已同意隐私政策与用户协议（首启动前为 false）。
@@ -1897,6 +1939,9 @@ class VeriFinController extends ChangeNotifier {
     _reminderSettings = ReminderSettings.decode(_store.read(_reminderKey));
     _fabActionMode = FabActionMode.fromStorage(_store.read(_fabActionKey));
     _aiSettings = AiSettings.decode(_store.read(_aiSettingsKey));
+    _autoCaptureSettings = AutoCaptureSettings.decode(
+      _store.read(_autoCaptureKey),
+    );
   }
 
   /// 从 SQLite 载入账目类数据；全新数据库首启动写入默认账本/账户/分组/分类。
