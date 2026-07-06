@@ -1516,6 +1516,18 @@ class SettingsPage extends StatelessWidget {
                       onChanged: controller.setHapticsEnabled,
                     ),
                     const Divider(height: 1),
+                    CompactSwitchRow(
+                      icon: Icons.plus_one_outlined,
+                      title: Text(
+                        AppLocalizations.of(context).amountTwoDecimalsLabel,
+                      ),
+                      subtitle: Text(
+                        AppLocalizations.of(context).amountTwoDecimalsDesc,
+                      ),
+                      value: controller.amountForceTwoDecimals,
+                      onChanged: controller.setAmountForceTwoDecimals,
+                    ),
+                    const Divider(height: 1),
                     SettingsRow(
                       icon: Icons.lock_outline,
                       title: AppLocalizations.of(context).appLockLabel,

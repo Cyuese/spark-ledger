@@ -14,6 +14,7 @@ import 'backup/transaction_import.dart';
 import 'backup/webdav_config.dart';
 import 'category_tree.dart';
 import 'demo_data.dart';
+import 'amount_format.dart' as amount_format;
 import 'ledger_math.dart';
 import 'models.dart';
 import 'recurring.dart';
@@ -93,6 +94,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _webdavKey = 'verifin.webdav.v1';
   static const String _reminderKey = 'verifin.reminder.v1';
   static const String _fabActionKey = 'verifin.fab_action.v1';
+  static const String _amountFormatKey = 'verifin.amount_format.v1';
   static const String _aiSettingsKey = 'verifin.ai.v1';
   static const String _onboardingKey = 'verifin.onboarding.v1';
 
@@ -175,6 +177,7 @@ class VeriFinController extends ChangeNotifier {
   WebdavConfig _webdavConfig = const WebdavConfig();
   ReminderSettings _reminderSettings = ReminderSettings.disabled;
   FabActionMode _fabActionMode = FabActionMode.manual;
+  bool _amountForceTwoDecimals = false;
   AiSettings _aiSettings = const AiSettings();
 
   List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
@@ -580,6 +583,18 @@ class VeriFinController extends ChangeNotifier {
   void setFabActionMode(FabActionMode mode) {
     _fabActionMode = mode;
     _store.write(_fabActionKey, mode.name);
+    notifyListeners();
+  }
+
+  /// 是否强制所有金额展示两位小数（`12` → `12.00`）。设备本地偏好，不进 JSON 备份、
+  /// 初始化保留。经顶层量 [amountForceTwoDecimals] 让无 context 的金额格式化纯函数
+  /// （小组件、通知、`series_math` 等）同步生效。
+  bool get amountForceTwoDecimals => _amountForceTwoDecimals;
+
+  void setAmountForceTwoDecimals(bool value) {
+    _amountForceTwoDecimals = value;
+    amount_format.amountForceTwoDecimals = value;
+    _store.write(_amountFormatKey, value.toString());
     notifyListeners();
   }
 
@@ -1896,6 +1911,8 @@ class VeriFinController extends ChangeNotifier {
     _webdavConfig = WebdavConfig.decode(_store.read(_webdavKey));
     _reminderSettings = ReminderSettings.decode(_store.read(_reminderKey));
     _fabActionMode = FabActionMode.fromStorage(_store.read(_fabActionKey));
+    _amountForceTwoDecimals = _store.read(_amountFormatKey) == 'true';
+    amount_format.amountForceTwoDecimals = _amountForceTwoDecimals;
     _aiSettings = AiSettings.decode(_store.read(_aiSettingsKey));
   }
 

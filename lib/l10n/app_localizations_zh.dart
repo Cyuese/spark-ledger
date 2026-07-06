@@ -1815,6 +1815,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hapticsLabel => '触感反馈';
 
   @override
+  String get amountTwoDecimalsLabel => '金额保留两位小数';
+
+  @override
+  String get amountTwoDecimalsDesc => '开启后金额始终显示两位小数（如 12 显示为 12.00）';
+
+  @override
   String get appLockLabel => '应用锁';
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'amount_format.dart';
 import 'app_theme.dart';
 import 'models.dart';
 import '../l10n/app_localizations.dart';
@@ -169,9 +170,12 @@ List<double> monthlyExpenseValues(Iterable<LedgerEntry> entries) {
 
 String formatAmount(num value) {
   if (isZeroAmount(value)) {
-    return '0';
+    return amountForceTwoDecimals ? '0.00' : '0';
   }
   final text = value.toStringAsFixed(2);
+  if (amountForceTwoDecimals) {
+    return text;
+  }
   return text.endsWith('.00')
       ? text.substring(0, text.length - 3)
       : text.replaceFirst(RegExp(r'0$'), '');

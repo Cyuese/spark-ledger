@@ -3344,6 +3344,18 @@ abstract class AppLocalizations {
   /// **'触感反馈'**
   String get hapticsLabel;
 
+  /// Settings toggle: always show amounts with two decimal places
+  ///
+  /// In zh, this message translates to:
+  /// **'金额保留两位小数'**
+  String get amountTwoDecimalsLabel;
+
+  /// Subtitle explaining the two-decimals toggle
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后金额始终显示两位小数（如 12 显示为 12.00）'**
+  String get amountTwoDecimalsDesc;
+
   /// No description provided for @appLockLabel.
   ///
   /// In zh, this message translates to:

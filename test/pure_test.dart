@@ -3,7 +3,9 @@ import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/l10n/app_localizations_zh.dart';
+import 'package:verifin/app/amount_format.dart' as amount_format;
 import 'package:verifin/app/image_cropper.dart';
+import 'package:verifin/app/ledger_math.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/app/series_math.dart';
 
@@ -144,5 +146,27 @@ void main() {
       cropperPanShift(sourceSize: Size.zero, boxSize: box, zoom: 1),
       Offset.zero,
     );
+  });
+
+  test('formatAmount respects the global two-decimals preference', () {
+    addTearDown(() => amount_format.amountForceTwoDecimals = false);
+
+    // 默认：去掉多余尾随零。
+    amount_format.amountForceTwoDecimals = false;
+    expect(formatAmount(12), '12');
+    expect(formatAmount(12.5), '12.5');
+    expect(formatAmount(12.34), '12.34');
+    expect(formatAmount(0), '0');
+
+    // 强制两位小数。
+    amount_format.amountForceTwoDecimals = true;
+    expect(formatAmount(12), '12.00');
+    expect(formatAmount(12.5), '12.50');
+    expect(formatAmount(12.34), '12.34');
+    expect(formatAmount(0), '0.00');
+    // 派生格式化同步生效。
+    expect(formatExpenseAmount(12), '-12.00');
+    expect(formatIncomeAmount(12.5), '12.50');
+    expect(formatSignedAmount(12), '+12.00');
   });
 }

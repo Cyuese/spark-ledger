@@ -575,6 +575,14 @@
   "settingsTitle": "Settings",
   "themeMode": "Theme",
   "hapticsLabel": "Haptic feedback",
+  "amountTwoDecimalsLabel": "Two decimal places",
+  "@amountTwoDecimalsLabel": {
+    "description": "Settings toggle: always show amounts with two decimal places"
+  },
+  "amountTwoDecimalsDesc": "Always show amounts with two decimals (e.g. 12 becomes 12.00)",
+  "@amountTwoDecimalsDesc": {
+    "description": "Subtitle explaining the two-decimals toggle"
+  },
   "appLockLabel": "App lock",
   "enabledLabel": "On",
   "checkUpdate": "Check for updates",

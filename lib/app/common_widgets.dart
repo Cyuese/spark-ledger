@@ -1549,15 +1549,18 @@ class CompactSwitchRow extends StatelessWidget {
     required this.title,
     required this.value,
     required this.onChanged,
+    this.subtitle,
   });
 
   final IconData icon;
   final Widget title;
+  final Widget? subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -1565,13 +1568,28 @@ class CompactSwitchRow extends StatelessWidget {
           VeriIconBox(icon: icon, size: 28),
           const SizedBox(width: 10),
           Expanded(
-            child: DefaultTextStyle.merge(
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              child: title,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                DefaultTextStyle.merge(
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  child: title,
+                ),
+                if (subtitle != null) ...<Widget>[
+                  const SizedBox(height: 2),
+                  DefaultTextStyle.merge(
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    child: subtitle!,
+                  ),
+                ],
+              ],
             ),
           ),
+          const SizedBox(width: 8),
           Transform.scale(
             scale: 0.82,
             alignment: Alignment.centerRight,

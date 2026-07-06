@@ -1845,6 +1845,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hapticsLabel => 'Haptic feedback';
 
   @override
+  String get amountTwoDecimalsLabel => 'Two decimal places';
+
+  @override
+  String get amountTwoDecimalsDesc =>
+      'Always show amounts with two decimals (e.g. 12 becomes 12.00)';
+
+  @override
   String get appLockLabel => 'App lock';
 
   @override

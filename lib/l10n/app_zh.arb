@@ -1249,6 +1249,14 @@
   "settingsTitle": "设置",
   "themeMode": "主题模式",
   "hapticsLabel": "触感反馈",
+  "amountTwoDecimalsLabel": "金额保留两位小数",
+  "@amountTwoDecimalsLabel": {
+    "description": "Settings toggle: always show amounts with two decimal places"
+  },
+  "amountTwoDecimalsDesc": "开启后金额始终显示两位小数（如 12 显示为 12.00）",
+  "@amountTwoDecimalsDesc": {
+    "description": "Subtitle explaining the two-decimals toggle"
+  },
   "appLockLabel": "应用锁",
   "enabledLabel": "已开启",
   "checkUpdate": "检查更新",
