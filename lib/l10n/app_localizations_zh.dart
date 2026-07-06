@@ -2692,4 +2692,43 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reminderPermissionDenied => '通知权限被拒，提醒将不会显示。请在系统设置中允许通知后重试。';
+
+  @override
+  String get aiErrNotConfigured => 'AI 未配置：请先填写请求地址、API Key 与模型';
+
+  @override
+  String get aiErrNotSupported => '当前平台不支持 AI 请求';
+
+  @override
+  String get aiErrTimeout => '请求超时，请检查网络或稍后重试';
+
+  @override
+  String get aiErrNetwork => '无法连接到服务器';
+
+  @override
+  String get aiErrTls => 'TLS 握手失败，请检查请求地址是否为 https';
+
+  @override
+  String get aiErrBadUrl => '请求地址无效，请检查基础地址格式';
+
+  @override
+  String get aiErrAuthFailed => 'API Key 无效或无权访问，请检查密钥';
+
+  @override
+  String get aiErrNotFound => '接口不存在，请检查请求地址与模型名';
+
+  @override
+  String get aiErrRateLimited => '请求过于频繁或额度不足';
+
+  @override
+  String get aiErrServer => '服务器返回错误';
+
+  @override
+  String get aiErrBadResponse => '无法解析服务器响应';
+
+  @override
+  String get aiErrUpstream => '服务器返回错误';
+
+  @override
+  String get aiErrUnknown => '请求失败';
 }

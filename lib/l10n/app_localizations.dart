@@ -4987,6 +4987,84 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'通知权限被拒，提醒将不会显示。请在系统设置中允许通知后重试。'**
   String get reminderPermissionDenied;
+
+  /// No description provided for @aiErrNotConfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 未配置：请先填写请求地址、API Key 与模型'**
+  String get aiErrNotConfigured;
+
+  /// No description provided for @aiErrNotSupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前平台不支持 AI 请求'**
+  String get aiErrNotSupported;
+
+  /// No description provided for @aiErrTimeout.
+  ///
+  /// In zh, this message translates to:
+  /// **'请求超时，请检查网络或稍后重试'**
+  String get aiErrTimeout;
+
+  /// No description provided for @aiErrNetwork.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法连接到服务器'**
+  String get aiErrNetwork;
+
+  /// No description provided for @aiErrTls.
+  ///
+  /// In zh, this message translates to:
+  /// **'TLS 握手失败，请检查请求地址是否为 https'**
+  String get aiErrTls;
+
+  /// No description provided for @aiErrBadUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'请求地址无效，请检查基础地址格式'**
+  String get aiErrBadUrl;
+
+  /// No description provided for @aiErrAuthFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'API Key 无效或无权访问，请检查密钥'**
+  String get aiErrAuthFailed;
+
+  /// No description provided for @aiErrNotFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'接口不存在，请检查请求地址与模型名'**
+  String get aiErrNotFound;
+
+  /// No description provided for @aiErrRateLimited.
+  ///
+  /// In zh, this message translates to:
+  /// **'请求过于频繁或额度不足'**
+  String get aiErrRateLimited;
+
+  /// No description provided for @aiErrServer.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器返回错误'**
+  String get aiErrServer;
+
+  /// No description provided for @aiErrBadResponse.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法解析服务器响应'**
+  String get aiErrBadResponse;
+
+  /// No description provided for @aiErrUpstream.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器返回错误'**
+  String get aiErrUpstream;
+
+  /// No description provided for @aiErrUnknown.
+  ///
+  /// In zh, this message translates to:
+  /// **'请求失败'**
+  String get aiErrUnknown;
 }
 
 class _AppLocalizationsDelegate

@@ -111,7 +111,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       }
       setState(() {
         _statusIsError = true;
-        _statusText = l10n.connectionFailed(error.message);
+        _statusText = l10n.connectionFailed(aiErrorMessage(l10n, error));
       });
     } catch (error) {
       if (!mounted) {

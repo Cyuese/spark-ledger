@@ -1692,5 +1692,18 @@
   "cleartextWarnTitle": "明文传输风险",
   "cleartextWarnBody": "该地址使用未加密的 http，你的密钥/账号密码会以明文发送，可能被同一网络或链路上的第三方窃取。仅在你信任该网络（如本地/自建服务）时继续。",
   "cleartextWarnContinue": "仍要保存",
-  "reminderPermissionDenied": "通知权限被拒，提醒将不会显示。请在系统设置中允许通知后重试。"
+  "reminderPermissionDenied": "通知权限被拒，提醒将不会显示。请在系统设置中允许通知后重试。",
+  "aiErrNotConfigured": "AI 未配置：请先填写请求地址、API Key 与模型",
+  "aiErrNotSupported": "当前平台不支持 AI 请求",
+  "aiErrTimeout": "请求超时，请检查网络或稍后重试",
+  "aiErrNetwork": "无法连接到服务器",
+  "aiErrTls": "TLS 握手失败，请检查请求地址是否为 https",
+  "aiErrBadUrl": "请求地址无效，请检查基础地址格式",
+  "aiErrAuthFailed": "API Key 无效或无权访问，请检查密钥",
+  "aiErrNotFound": "接口不存在，请检查请求地址与模型名",
+  "aiErrRateLimited": "请求过于频繁或额度不足",
+  "aiErrServer": "服务器返回错误",
+  "aiErrBadResponse": "无法解析服务器响应",
+  "aiErrUpstream": "服务器返回错误",
+  "aiErrUnknown": "请求失败"
 }

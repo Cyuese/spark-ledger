@@ -2,17 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'ai_error.dart';
 import 'ai_settings.dart';
 
-/// AI 请求失败时抛出，`message` 为已本地化/可读的错误说明。
-class AiException implements Exception {
-  AiException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => message;
-}
+export 'ai_error.dart' show AiException, AiErrorCode, aiErrorMessage;
 
 /// 向 OpenAI 兼容的聊天补全接口发一次请求，返回助手消息的文本内容。
 ///
@@ -28,7 +21,7 @@ Future<String> aiChatComplete({
   Duration timeout = const Duration(seconds: 45),
 }) async {
   if (!settings.isConfigured) {
-    throw AiException('AI 未配置：请先填写请求地址、API Key 与模型。');
+    throw AiException(AiErrorCode.notConfigured);
   }
   final resolvedMessages =
       messages ??
@@ -66,21 +59,21 @@ Future<String> aiChatComplete({
         .join()
         .timeout(timeout);
     if (response.statusCode >= 400) {
-      throw AiException(_statusMessage(response.statusCode, responseText));
+      throw _statusException(response.statusCode, responseText);
     }
     return _extractContent(responseText);
   } on AiException {
     rethrow;
   } on TimeoutException {
-    throw AiException('请求超时，请检查网络或稍后重试。');
+    throw AiException(AiErrorCode.timeout);
   } on SocketException catch (error) {
-    throw AiException('无法连接到服务器：${error.message}');
+    throw AiException(AiErrorCode.network, detail: error.message);
   } on HandshakeException {
-    throw AiException('TLS 握手失败，请检查请求地址是否为 https。');
+    throw AiException(AiErrorCode.tls);
   } on FormatException {
-    throw AiException('请求地址无效，请检查基础地址格式。');
+    throw AiException(AiErrorCode.badUrl);
   } catch (error) {
-    throw AiException('请求失败：$error');
+    throw AiException(AiErrorCode.unknown, detail: '$error');
   } finally {
     client.close(force: true);
   }
@@ -91,10 +84,10 @@ String _extractContent(String responseText) {
   try {
     decoded = jsonDecode(responseText);
   } catch (_) {
-    throw AiException('无法解析服务器响应（非 JSON）。');
+    throw AiException(AiErrorCode.badResponse, detail: 'non-JSON');
   }
   if (decoded is! Map) {
-    throw AiException('服务器响应格式异常。');
+    throw AiException(AiErrorCode.badResponse);
   }
   final choices = decoded['choices'];
   if (choices is List && choices.isNotEmpty) {
@@ -117,37 +110,32 @@ String _extractContent(String responseText) {
   // 上游透传的错误对象。
   final error = decoded['error'];
   if (error is Map && error['message'] is String) {
-    throw AiException('服务器返回错误：${error['message']}');
+    throw AiException(AiErrorCode.upstream, detail: error['message'] as String);
   }
-  throw AiException('服务器未返回有效内容。');
+  throw AiException(AiErrorCode.badResponse, detail: 'empty content');
 }
 
-String _statusMessage(int statusCode, String responseText) {
-  // 优先透出上游的错误描述。
+/// 把 HTTP 错误状态映射为错误码；优先把上游 error.message 作为 detail 透出。
+AiException _statusException(int statusCode, String responseText) {
+  String? detail;
   try {
     final decoded = jsonDecode(responseText);
     if (decoded is Map) {
       final error = decoded['error'];
       if (error is Map && error['message'] is String) {
-        return '（$statusCode）${error['message']}';
-      }
-      if (decoded['message'] is String) {
-        return '（$statusCode）${decoded['message']}';
+        detail = error['message'] as String;
+      } else if (decoded['message'] is String) {
+        detail = decoded['message'] as String;
       }
     }
   } catch (_) {
-    // 忽略，回落到状态码文案。
+    // 忽略，仅按状态码分类。
   }
-  switch (statusCode) {
-    case 401:
-      return 'API Key 无效或未授权（401）。';
-    case 403:
-      return '无权访问（403），请检查 API Key 权限。';
-    case 404:
-      return '接口不存在（404），请检查请求地址与模型名。';
-    case 429:
-      return '请求过于频繁或额度不足（429）。';
-    default:
-      return '服务器返回错误（$statusCode）。';
-  }
+  final code = switch (statusCode) {
+    401 || 403 => AiErrorCode.authFailed,
+    404 => AiErrorCode.notFound,
+    429 => AiErrorCode.rateLimited,
+    _ => AiErrorCode.serverError,
+  };
+  return AiException(code, detail: detail ?? '$statusCode');
 }

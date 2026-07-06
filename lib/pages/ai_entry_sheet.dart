@@ -143,7 +143,7 @@ class _AiEntrySheetState extends State<_AiEntrySheet> {
       }
       setState(() {
         _parsing = false;
-        _errorText = error.message;
+        _errorText = aiErrorMessage(l10n, error);
       });
     } catch (error) {
       if (!mounted) {

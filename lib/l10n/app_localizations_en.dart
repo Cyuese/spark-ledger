@@ -2752,4 +2752,49 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reminderPermissionDenied =>
       'Notification permission denied; reminders won\'t show. Please allow notifications in system settings and try again.';
+
+  @override
+  String get aiErrNotConfigured =>
+      'AI not configured: please fill in the base URL, API key and model first';
+
+  @override
+  String get aiErrNotSupported =>
+      'AI requests are not supported on this platform';
+
+  @override
+  String get aiErrTimeout =>
+      'Request timed out; check your network or try again later';
+
+  @override
+  String get aiErrNetwork => 'Cannot connect to the server';
+
+  @override
+  String get aiErrTls =>
+      'TLS handshake failed; check whether the base URL uses https';
+
+  @override
+  String get aiErrBadUrl => 'Invalid request URL; check the base URL format';
+
+  @override
+  String get aiErrAuthFailed =>
+      'Invalid API key or unauthorized; check your key';
+
+  @override
+  String get aiErrNotFound =>
+      'Endpoint not found; check the base URL and model name';
+
+  @override
+  String get aiErrRateLimited => 'Too many requests or insufficient quota';
+
+  @override
+  String get aiErrServer => 'The server returned an error';
+
+  @override
+  String get aiErrBadResponse => 'Could not parse the server response';
+
+  @override
+  String get aiErrUpstream => 'The server returned an error';
+
+  @override
+  String get aiErrUnknown => 'Request failed';
 }

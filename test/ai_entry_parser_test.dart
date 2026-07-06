@@ -214,10 +214,15 @@ void main() {
   });
 
   group('AiException', () {
-    test('carries a readable message', () {
-      final ex = AiException('boom');
-      expect(ex.message, 'boom');
-      expect(ex.toString(), 'boom');
+    test('carries an error code and optional detail', () {
+      final ex = AiException(AiErrorCode.timeout);
+      expect(ex.code, AiErrorCode.timeout);
+      expect(ex.detail, isNull);
+
+      final withDetail = AiException(AiErrorCode.upstream, detail: 'boom');
+      expect(withDetail.code, AiErrorCode.upstream);
+      expect(withDetail.detail, 'boom');
+      expect(withDetail.toString(), contains('boom'));
     });
   });
 }
