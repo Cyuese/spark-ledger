@@ -2601,6 +2601,9 @@ class DataManagementPage extends StatelessWidget {
       },
     );
     if (saved != null && saved.isConfigured) {
+      if (!context.mounted) return;
+      // http 发往公网主机会明文暴露账号密码，保存前提醒确认。
+      if (!await confirmCleartextIfRisky(context, saved.url)) return;
       controller.setWebdavConfig(saved);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

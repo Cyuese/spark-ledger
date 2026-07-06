@@ -2738,4 +2738,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String appLogCount(int count) {
     return '$count records';
   }
+
+  @override
+  String get cleartextWarnTitle => 'Cleartext transmission risk';
+
+  @override
+  String get cleartextWarnBody =>
+      'This address uses unencrypted http; your key/username and password will be sent in cleartext and could be intercepted by a third party on the same network or link. Continue only if you trust this network (e.g. a local/self-hosted service).';
+
+  @override
+  String get cleartextWarnContinue => 'Save anyway';
 }

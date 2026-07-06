@@ -4963,6 +4963,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'共 {count} 条记录'**
   String appLogCount(int count);
+
+  /// No description provided for @cleartextWarnTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'明文传输风险'**
+  String get cleartextWarnTitle;
+
+  /// No description provided for @cleartextWarnBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'该地址使用未加密的 http，你的密钥/账号密码会以明文发送，可能被同一网络或链路上的第三方窃取。仅在你信任该网络（如本地/自建服务）时继续。'**
+  String get cleartextWarnBody;
+
+  /// No description provided for @cleartextWarnContinue.
+  ///
+  /// In zh, this message translates to:
+  /// **'仍要保存'**
+  String get cleartextWarnContinue;
 }
 
 class _AppLocalizationsDelegate

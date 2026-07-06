@@ -6,6 +6,7 @@ import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
+import 'sheets.dart';
 
 /// AI 记账设置页：配置 OpenAI 兼容服务的请求地址、API Key、模型，并测试连通性。
 /// 配置为设备本地偏好（存 KV），不进 JSON 备份、初始化保留。
@@ -52,7 +53,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     model: _modelController.text.trim(),
   );
 
-  void _save() {
+  Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     final settings = _current();
     if (!settings.isConfigured) {
@@ -62,6 +63,9 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       });
       return;
     }
+    // http 发往公网主机会明文暴露 API Key，保存前提醒确认。
+    if (!await confirmCleartextIfRisky(context, settings.baseUrl)) return;
+    if (!mounted) return;
     VeriFinScope.of(context).setAiSettings(settings);
     FocusScope.of(context).unfocus();
     ScaffoldMessenger.of(

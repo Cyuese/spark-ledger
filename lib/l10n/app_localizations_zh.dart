@@ -2679,4 +2679,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String appLogCount(int count) {
     return '共 $count 条记录';
   }
+
+  @override
+  String get cleartextWarnTitle => '明文传输风险';
+
+  @override
+  String get cleartextWarnBody =>
+      '该地址使用未加密的 http，你的密钥/账号密码会以明文发送，可能被同一网络或链路上的第三方窃取。仅在你信任该网络（如本地/自建服务）时继续。';
+
+  @override
+  String get cleartextWarnContinue => '仍要保存';
 }

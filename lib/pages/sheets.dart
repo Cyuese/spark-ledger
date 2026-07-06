@@ -7,8 +7,34 @@ import '../app/demo_data.dart';
 import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
+import '../app/net_security.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
+
+/// 若 [url] 会以明文 http 把凭证发往公网主机，弹确认对话框让用户知情后再继续；
+/// 非风险地址（https / 本机 / 内网）直接返回 true。用户取消返回 false。
+Future<bool> confirmCleartextIfRisky(BuildContext context, String url) async {
+  if (!isCleartextCredentialRisk(url)) return true;
+  final l10n = AppLocalizations.of(context);
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(l10n.cleartextWarnTitle),
+      content: Text(l10n.cleartextWarnBody),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(l10n.commonCancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(l10n.cleartextWarnContinue),
+        ),
+      ],
+    ),
+  );
+  return confirmed == true;
+}
 
 Future<T?> showOptionSheet<T>({
   required BuildContext context,
