@@ -453,10 +453,14 @@ class BudgetRingPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
+    // 用 GradientRotation 把渐变整体绕圆心转到「12 点起始」，而不是用 startAngle
+    // 偏移色标：SweepGradient 的角度环绕断点（首尾相接处）恒在 +x 轴（3 点方向），
+    // 仅靠 startAngle 挪动色标并不会挪动这个断点，于是断点两侧插值出的颜色不同，
+    // 在右侧形成明显的黄/蓝分界线。GradientRotation 会连同断点一起旋转，使首尾相接
+    // 处落在 12 点——那里首尾都是 progressColor，接缝因此不可见。
     final progressPaint = Paint()
       ..shader = SweepGradient(
-        startAngle: -math.pi / 2,
-        endAngle: math.pi * 1.5,
+        transform: const GradientRotation(-math.pi / 2),
         colors: <Color>[progressColor, veriRoyal, progressColor],
       ).createShader(rect)
       ..strokeWidth = strokeWidth
