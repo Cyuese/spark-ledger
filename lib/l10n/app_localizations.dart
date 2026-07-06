@@ -4981,6 +4981,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'仍要保存'**
   String get cleartextWarnContinue;
+
+  /// No description provided for @reminderPermissionDenied.
+  ///
+  /// In zh, this message translates to:
+  /// **'通知权限被拒，提醒将不会显示。请在系统设置中允许通知后重试。'**
+  String get reminderPermissionDenied;
 }
 
 class _AppLocalizationsDelegate

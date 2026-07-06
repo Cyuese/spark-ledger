@@ -18,13 +18,22 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> {
 
   Future<void> _toggle(bool enabled) async {
     final controller = VeriFinScope.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    var granted = true;
     if (enabled) {
       // 开启时先申请系统通知权限（Android 13+ / iOS）。
-      await _scheduler.requestPermission();
+      granted = await _scheduler.requestPermission();
     }
     controller.setReminderSettings(
       controller.reminderSettings.copyWith(enabled: enabled),
     );
+    // 权限被拒时明确提示：否则提醒会静默不显示，用户无从得知。
+    if (enabled && _scheduler.supported && !granted) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.reminderPermissionDenied)),
+      );
+    }
   }
 
   Future<void> _pickTime() async {

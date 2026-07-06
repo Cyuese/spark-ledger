@@ -2689,4 +2689,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cleartextWarnContinue => '仍要保存';
+
+  @override
+  String get reminderPermissionDenied => '通知权限被拒，提醒将不会显示。请在系统设置中允许通知后重试。';
 }

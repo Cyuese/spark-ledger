@@ -2748,4 +2748,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cleartextWarnContinue => 'Save anyway';
+
+  @override
+  String get reminderPermissionDenied =>
+      'Notification permission denied; reminders won\'t show. Please allow notifications in system settings and try again.';
 }
