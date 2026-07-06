@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/app_theme.dart';
 import '../app/auto_capture/auto_capture_settings.dart';
 import '../app/common_widgets.dart';
+import '../app/platform_bridge.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
@@ -71,6 +72,13 @@ class _AutoCaptureSettingsPageState extends State<AutoCaptureSettingsPage> {
             : current.sourcePackages,
       ),
     );
+    // 开启后若尚未授予「通知使用权」，引导去系统设置授权。
+    if (enabled) {
+      final granted = await AppPlatformBridge.isNotificationAccessGranted();
+      if (!granted) {
+        await AppPlatformBridge.openNotificationAccessSettings();
+      }
+    }
   }
 
   Future<void> _promptConfigureAi() async {

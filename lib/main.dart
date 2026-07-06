@@ -1,8 +1,10 @@
+import 'dart:async' show unawaited;
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 
 import 'app/app_theme.dart';
+import 'app/auto_capture/auto_capture_service.dart';
 import 'app/backup/backup_coordinator.dart';
 import 'app/home_widget_service.dart';
 import 'app/l10n_outside_context.dart';
@@ -48,6 +50,7 @@ class VeriFinApp extends StatefulWidget {
 class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
   late final VeriFinController _controller = widget.controller;
   final NotificationScheduler _notifications = NotificationScheduler();
+  late final AutoCaptureService _autoCapture = AutoCaptureService(_controller);
 
   @override
   void initState() {
@@ -57,6 +60,8 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     _controller.onEntryAdded = _handleEntryAdded;
     // 记账提醒：配置变化时重排本地通知，开屏按当前配置对齐一次。
     _controller.onReminderChanged = _handleReminderChanged;
+    // 自动记账：配置变化时把配置推送到原生 NLS。
+    _controller.onAutoCaptureChanged = _handleAutoCaptureChanged;
     _notifications.apply(
       _controller.reminderSettings,
       l10n: l10nForPreference(_controller.localePreference),
@@ -64,6 +69,26 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     BackupCoordinator.maybeBackupOnOpen(_controller);
     // 打开应用时刷新桌面小组件「今日支出」。
     pushTodayExpenseToWidget(_controller);
+    // 自动记账：推送配置并处理后台捕获的通知队列。
+    _syncAutoCapture();
+  }
+
+  void _handleAutoCaptureChanged() {
+    unawaited(_pushAutoCaptureConfig());
+  }
+
+  Future<void> _pushAutoCaptureConfig() {
+    final l10n = l10nForPreference(_controller.localePreference);
+    return _autoCapture.pushConfig(
+      idleDefault: l10n.autoCaptureNotifIdleDefault,
+      detectingDefault: l10n.autoCaptureNotifDetectingDefault,
+      doneDefault: l10n.autoCaptureNotifDoneDefault,
+    );
+  }
+
+  Future<void> _syncAutoCapture() async {
+    await _pushAutoCaptureConfig();
+    await _autoCapture.drainAndProcess();
   }
 
   void _handleEntryAdded() {
@@ -84,6 +109,8 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
       _controller.applyDueRecurring(DateTime.now());
       BackupCoordinator.maybeBackupOnOpen(_controller);
       pushTodayExpenseToWidget(_controller);
+      // 回前台：处理后台捕获的支付通知（AI 解析并落账）。
+      unawaited(_syncAutoCapture());
     }
   }
 
@@ -95,6 +122,9 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     }
     if (_controller.onReminderChanged == _handleReminderChanged) {
       _controller.onReminderChanged = null;
+    }
+    if (_controller.onAutoCaptureChanged == _handleAutoCaptureChanged) {
+      _controller.onAutoCaptureChanged = null;
     }
     _controller.dispose();
     super.dispose();

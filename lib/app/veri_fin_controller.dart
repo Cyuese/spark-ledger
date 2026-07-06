@@ -561,6 +561,9 @@ class VeriFinController extends ChangeNotifier {
   /// 记账提醒配置变化时的回调（由 `main.dart` 注入，用于重排本地通知）。
   ValueChanged<ReminderSettings>? onReminderChanged;
 
+  /// 自动记账配置变化时的回调（由 `main.dart` 注入，用于把配置推送到原生 NLS）。
+  VoidCallback? onAutoCaptureChanged;
+
   void setReminderSettings(ReminderSettings settings) {
     if (_reminderSettings == settings) {
       return;
@@ -618,6 +621,7 @@ class VeriFinController extends ChangeNotifier {
     _autoCaptureSettings = settings;
     _store.write(_autoCaptureKey, settings.encode());
     notifyListeners();
+    onAutoCaptureChanged?.call();
   }
 
   /// 把 AI 从通知里解析出的交易草稿落账（自动记账通道）。构造与手动记账一致的
@@ -636,7 +640,9 @@ class VeriFinController extends ChangeNotifier {
         amount: draft.amount,
         categoryId: draft.categoryId,
         accountId: draft.accountId,
-        toAccountId: draft.type == EntryType.transfer ? draft.toAccountId : null,
+        toAccountId: draft.type == EntryType.transfer
+            ? draft.toAccountId
+            : null,
         note: draft.note,
         occurredAt: draft.occurredAt,
         fee: 0,
