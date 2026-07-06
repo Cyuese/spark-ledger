@@ -2143,46 +2143,42 @@ class VeriFinController extends ChangeNotifier {
     }
   }
 
-  void _loadAssetSectionCollapsed() {
-    final rawCollapsed = _store.read(_assetSectionCollapsedKey);
-    if (rawCollapsed == null || rawCollapsed.isEmpty) {
+  /// 读取 KV 中的 JSON 并应用；空则跳过，解码失败则删掉坏值。用于「读→try decode→
+  /// catch 则 delete」这一重复骨架。
+  void _loadJson(String key, void Function(Object decoded) apply) {
+    final raw = _store.read(key);
+    if (raw == null || raw.isEmpty) {
       return;
     }
     try {
+      apply(jsonDecode(raw) as Object);
+    } catch (_) {
+      _store.delete(key);
+    }
+  }
+
+  void _loadAssetSectionCollapsed() {
+    _loadJson(_assetSectionCollapsedKey, (decoded) {
       _collapsedAssetSections
         ..clear()
-        ..addAll(_decodeStringSet(jsonDecode(rawCollapsed)));
-    } catch (_) {
-      _store.delete(_assetSectionCollapsedKey);
-    }
+        ..addAll(_decodeStringSet(decoded));
+    });
   }
 
   void _loadAssetAccountOrders() {
-    final rawOrders = _store.read(_assetAccountOrderKey);
-    if (rawOrders == null || rawOrders.isEmpty) {
-      return;
-    }
-    try {
+    _loadJson(_assetAccountOrderKey, (decoded) {
       _assetAccountOrders
         ..clear()
-        ..addAll(_decodeStringListMap(jsonDecode(rawOrders)));
-    } catch (_) {
-      _store.delete(_assetAccountOrderKey);
-    }
+        ..addAll(_decodeStringListMap(decoded));
+    });
   }
 
   void _loadAssetSectionOrders() {
-    final rawOrders = _store.read(_assetSectionOrderKey);
-    if (rawOrders == null || rawOrders.isEmpty) {
-      return;
-    }
-    try {
+    _loadJson(_assetSectionOrderKey, (decoded) {
       _assetSectionOrders
         ..clear()
-        ..addAll(_decodeStringListMap(jsonDecode(rawOrders)));
-    } catch (_) {
-      _store.delete(_assetSectionOrderKey);
-    }
+        ..addAll(_decodeStringListMap(decoded));
+    });
   }
 
   void _persistEntries() {
