@@ -137,7 +137,7 @@ lib/
 | [`docs/dev/i18n-verification.md`](docs/dev/i18n-verification.md) | 多语言真机验证清单 |
 | [`docs/dev/verifin-sample-backup.json`](docs/dev/verifin-sample-backup.json) | 可导入的测试备份数据 |
 | [`AGENTS.md`](AGENTS.md) | 贡献与 Agent 开发规范 |
-| [`TODO.md`](TODO.md) | 路线图、Backlog 与技术决策 |
+| [`docs/dev/tech-decisions.md`](docs/dev/tech-decisions.md) | 关键技术决策与选型理由 |
 
 ## 📄 许可证
 

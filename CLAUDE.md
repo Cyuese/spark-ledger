@@ -70,15 +70,15 @@ Android/测试差异统一用条件导出模式（`stub` + `if (dart.library.io)
 
 ### 国际化
 
-使用 Flutter 内置 gen-l10n：ARB 文件在 `lib/l10n/`（`app_zh.arb` 为模板 + `app_en.arb`），`flutter pub get` 时自动生成 `AppLocalizations`（生成文件同目录，已提交）。**新增用户可见文案必须写入 ARB（zh + en 同步）并通过 `AppLocalizations.of(context)` 引用，绝不硬编码中文**。存量文案已全部迁移完成（2026-07，TODO 阶段 6）：应用支持中英双语，设置页「语言」可选跟随系统/简体中文/English（`LocalePreference` 存 KV `verifin.locale.v1`，设备本地、不进备份、初始化保留），`main.dart` 经 `localePreferenceListenable` 驱动 `MaterialApp.locale`。枚举显示名统一为 `label(AppLocalizations)` 方法；无 BuildContext 场景（桌面小组件、本地通知、生物识别系统弹窗）经 `lib/app/l10n_outside_context.dart` 的 `l10nForPreference` 按偏好解析。种子数据（默认账本/分类/简介）按首启动语言播种（`VeriFinController.create` 的 `systemIsEnglish`），播种后属用户数据不再切换。有意保留中文：法律文档正文、银行/品牌图标名、CSV 模板表头与逐行导入错误、无 context 的网络/桥接错误消息（TODO 记为待办）。widget 测试脚手架预置中文（`makeController` 写 `verifin.locale.v1=zh`），直接 pump 单页的测试用 `zhMaterialApp`。真机验证清单见 `docs/dev/i18n-verification.md`。
+使用 Flutter 内置 gen-l10n：ARB 文件在 `lib/l10n/`（`app_zh.arb` 为模板 + `app_en.arb`），`flutter pub get` 时自动生成 `AppLocalizations`（生成文件同目录，已提交）。**新增用户可见文案必须写入 ARB（zh + en 同步）并通过 `AppLocalizations.of(context)` 引用，绝不硬编码中文**。存量文案已全部迁移完成（2026-07）：应用支持中英双语，设置页「语言」可选跟随系统/简体中文/English（`LocalePreference` 存 KV `verifin.locale.v1`，设备本地、不进备份、初始化保留），`main.dart` 经 `localePreferenceListenable` 驱动 `MaterialApp.locale`。枚举显示名统一为 `label(AppLocalizations)` 方法；无 BuildContext 场景（桌面小组件、本地通知、生物识别系统弹窗）经 `lib/app/l10n_outside_context.dart` 的 `l10nForPreference` 按偏好解析。种子数据（默认账本/分类/简介）按首启动语言播种（`VeriFinController.create` 的 `systemIsEnglish`），播种后属用户数据不再切换。有意保留中文：法律文档正文、银行/品牌图标名、CSV 模板表头与逐行导入错误、无 context 的网络/桥接错误消息（有意暂缓，未英文化）。widget 测试脚手架预置中文（`makeController` 写 `verifin.locale.v1=zh`），直接 pump 单页的测试用 `zhMaterialApp`。真机验证清单见 `docs/dev/i18n-verification.md`。
 
 ### 测试
 
 测试按领域拆分在 `test/`（`navigation_settings`/`accounts_assets`/`entries`/`budget`/`panels`/`backup`/`controller_unit`/`pure` 等 `*_test.dart`），共享脚手架在 [test/support/](test/support/)：`test_harness.dart` 提供 `makeController`/`pumpApp` 等助手，`in_memory_ledger_repository.dart` 是注入控制器/widget 测试的内存仓储（同步、无真实 I/O）。真实 SQLite 数据层覆盖在 `test/repository_test.dart` 与 `test/controller_persistence_test.dart`（ffi）。测试覆盖用户可见行为（渲染、交互、导航、表单校验）。修改功能后至少运行 `flutter analyze` 和 `flutter test`。
 
-### 长期路线
+### 技术决策
 
-功能演进计划与技术决策记录在根目录 [TODO.md](TODO.md)，每完成一项勾选并独立提交。
+关键技术选型与理由记录在 [docs/dev/tech-decisions.md](docs/dev/tech-decisions.md)，变更相关实现时同步更新。功能演进的待办不在仓库内维护。
 
 ## 关键约束
 
