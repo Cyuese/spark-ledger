@@ -567,6 +567,9 @@ class VeriFinController extends ChangeNotifier {
   }
 
   void setThemePreference(ThemePreference preference) {
+    if (_themePreference == preference) {
+      return;
+    }
     _themePreference = preference;
     themePreferenceListenable.value = preference;
     _store.write(_themeKey, preference.name);
@@ -577,6 +580,9 @@ class VeriFinController extends ChangeNotifier {
 
   /// 语言是设备本地偏好：不进 JSON 备份，初始化数据时保留。
   void setLocalePreference(LocalePreference preference) {
+    if (_localePreference == preference) {
+      return;
+    }
     _localePreference = preference;
     localePreferenceListenable.value = preference;
     _store.write(_localeKey, preference.name);
@@ -599,6 +605,9 @@ class VeriFinController extends ChangeNotifier {
   }
 
   void setHapticsEnabled(bool enabled) {
+    if (_hapticsEnabled == enabled) {
+      return;
+    }
     _hapticsEnabled = enabled;
     _store.write(_hapticsKey, enabled.toString());
     notifyListeners();
@@ -715,6 +724,7 @@ class VeriFinController extends ChangeNotifier {
     }
     _onboardingCompleted = true;
     _store.write(_onboardingKey, 'true');
+    notifyListeners();
   }
 
   bool get privacyConsentAccepted => _privacyConsentAccepted;
