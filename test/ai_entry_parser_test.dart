@@ -23,6 +23,8 @@ void main() {
     test('includes category ids, accounts and today date', () {
       final prompt = buildAiEntryPrompt(_context());
       expect(prompt, contains('2026-07-05'));
+      expect(prompt, contains('09:30')); // 当前时间，供解析相对时间
+      expect(prompt, contains('time')); // time 字段说明
       expect(prompt, contains('dining'));
       expect(prompt, contains('transport'));
       expect(prompt, contains('salary'));
@@ -120,7 +122,7 @@ void main() {
       expect(draft.amount, 32.5);
     });
 
-    test('missing date defaults to today', () {
+    test('missing date and time default to now', () {
       final draft = parseAiEntryDraft(
         '{"type":"expense","amount":10,"categoryId":"dining"}',
         _context(),
@@ -128,6 +130,41 @@ void main() {
       expect(draft.occurredAt.year, 2026);
       expect(draft.occurredAt.month, 7);
       expect(draft.occurredAt.day, 5);
+      // 未提供 time → 沿用当前时刻的时分。
+      expect(draft.occurredAt.hour, 9);
+      expect(draft.occurredAt.minute, 30);
+    });
+
+    test('explicit time is applied on top of the date', () {
+      final draft = parseAiEntryDraft(
+        '{"type":"expense","amount":58,"categoryId":"dining",'
+        '"date":"2026-07-04","time":"20:00"}',
+        _context(),
+      );
+      expect(draft.occurredAt.day, 4);
+      expect(draft.occurredAt.hour, 20);
+      expect(draft.occurredAt.minute, 0);
+    });
+
+    test('time without a date uses today with the given time', () {
+      final draft = parseAiEntryDraft(
+        '{"type":"expense","amount":15,"categoryId":"dining","time":"7:05"}',
+        _context(),
+      );
+      expect(draft.occurredAt.day, 5);
+      expect(draft.occurredAt.hour, 7);
+      expect(draft.occurredAt.minute, 5);
+    });
+
+    test('invalid time falls back to the current time', () {
+      final draft = parseAiEntryDraft(
+        '{"type":"expense","amount":15,"categoryId":"dining",'
+        '"date":"2026-07-04","time":"25:99"}',
+        _context(),
+      );
+      expect(draft.occurredAt.day, 4);
+      expect(draft.occurredAt.hour, 9);
+      expect(draft.occurredAt.minute, 30);
     });
 
     test('no amount throws noAmount', () {
