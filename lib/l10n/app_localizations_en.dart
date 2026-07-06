@@ -836,9 +836,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonCategory => 'Category';
 
   @override
-  String get categoryAutoSuggested => 'Auto-suggested';
-
-  @override
   String get allLabel => 'All';
 
   @override

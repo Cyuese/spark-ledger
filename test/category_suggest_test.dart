@@ -3,120 +3,128 @@ import 'package:verifin/app/category_suggest.dart';
 import 'package:verifin/app/models.dart';
 
 LedgerEntry _e({
+  required EntryType type,
   required String categoryId,
   required String note,
   double amount = 30,
   int hour = 12,
+  List<String> tagIds = const <String>[],
 }) {
   return LedgerEntry(
-    id: 'e-$categoryId-$note-$hour-$amount',
+    id: 'e-$categoryId-$note-$hour-$amount-${tagIds.join()}',
     bookId: 'default',
-    type: EntryType.expense,
+    type: type,
     amount: amount,
     categoryId: categoryId,
     accountId: 'cash',
     note: note,
     occurredAt: DateTime(2026, 7, 5, hour, 0),
+    tagIds: tagIds,
   );
 }
 
-const _candidates = <String>{'dining', 'transport', 'coffee', 'grocery'};
+const _expenseIds = <String>{'dining', 'transport', 'coffee', 'grocery'};
+const _incomeIds = <String>{'salary', 'redpacket', 'interest'};
+
+EntrySuggestion _suggest({
+  required List<LedgerEntry> history,
+  String note = '',
+  required double amount,
+  int hour = 12,
+  EntryType? forcedType,
+}) {
+  return suggestEntry(
+    history: history,
+    expenseCategoryIds: _expenseIds,
+    incomeCategoryIds: _incomeIds,
+    note: note,
+    amount: amount,
+    hour: hour,
+    forcedType: forcedType,
+  );
+}
 
 void main() {
-  group('suggestCategoryId', () {
-    test('note keyword matches a past entry category', () {
+  group('suggestEntry', () {
+    test('exact amount carries type, category, tags and note', () {
       final history = <LedgerEntry>[
-        _e(categoryId: 'transport', note: '打车回家'),
-        _e(categoryId: 'grocery', note: '超市买菜'),
-        _e(categoryId: 'dining', note: '午饭'),
+        _e(
+          type: EntryType.expense,
+          categoryId: 'coffee',
+          note: '水',
+          amount: 2.8,
+          tagIds: <String>['tag-drink'],
+        ),
       ];
-      final suggestion = suggestCategoryId(
-        history: history,
-        candidateIds: _candidates,
-        note: '打车去公司',
-        amount: 25,
-        hour: 9,
-      );
-      expect(suggestion, 'transport');
+      // 再次输入 2.8：应带出支出 + 咖啡分类 + 标签 + 备注「水」。
+      final s = _suggest(history: history, amount: 2.8);
+      expect(s.type, EntryType.expense);
+      expect(s.categoryId, 'coffee');
+      expect(s.tagIds, <String>['tag-drink']);
+      expect(s.note, '水');
     });
 
-    test('habit: same hour and amount points to a category without a note', () {
+    test('tiny amount recorded as income is inferred as income', () {
       final history = <LedgerEntry>[
-        // 早 8 点、~15 元，稳定是早餐（dining）。
-        for (var i = 0; i < 6; i++)
-          _e(categoryId: 'dining', note: '', amount: 15, hour: 8),
-        // 其他分类在别的时段/金额。
-        for (var i = 0; i < 6; i++)
-          _e(categoryId: 'transport', note: '', amount: 100, hour: 18),
+        _e(
+          type: EntryType.income,
+          categoryId: 'redpacket',
+          note: '红包',
+          amount: 0.01,
+        ),
       ];
-      final suggestion = suggestCategoryId(
-        history: history,
-        candidateIds: _candidates,
-        note: '',
-        amount: 16,
-        hour: 8,
-      );
-      expect(suggestion, 'dining');
+      final s = _suggest(history: history, amount: 0.01);
+      expect(s.type, EntryType.income);
+      expect(s.categoryId, 'redpacket');
     });
 
-    test('returns null when there is no usable history', () {
-      final suggestion = suggestCategoryId(
-        history: const <LedgerEntry>[],
-        candidateIds: _candidates,
-        note: '随便写点',
-        amount: 42,
-        hour: 10,
-      );
-      expect(suggestion, isNull);
+    test('note keyword drives the category', () {
+      final history = <LedgerEntry>[
+        _e(type: EntryType.expense, categoryId: 'transport', note: '打车回家'),
+      ];
+      final s = _suggest(history: history, note: '打车去公司', amount: 25);
+      expect(s.type, EntryType.expense);
+      expect(s.categoryId, 'transport');
     });
 
-    test('returns null when signals are evenly split (low confidence)', () {
+    test('no relevant history yields an empty suggestion', () {
       final history = <LedgerEntry>[
-        _e(categoryId: 'dining', note: '', amount: 30, hour: 12),
-        _e(categoryId: 'transport', note: '', amount: 30, hour: 12),
+        _e(
+          type: EntryType.expense,
+          categoryId: 'dining',
+          note: '午饭',
+          amount: 40,
+        ),
       ];
-      final suggestion = suggestCategoryId(
-        history: history,
-        candidateIds: _candidates,
-        note: '',
-        amount: 30,
-        hour: 12,
-      );
-      expect(suggestion, isNull);
+      // 金额与备注都对不上 → 不猜。
+      final s = _suggest(history: history, amount: 7, note: '不相关');
+      expect(s.isEmpty, isTrue);
     });
 
-    test('ignores categories outside the candidate set', () {
+    test('a single non-exact loose amount match does not flip type', () {
       final history = <LedgerEntry>[
-        // 历史里全是已删除/异类分类，无一在候选集内。
-        _e(categoryId: 'legacy-cat', note: '打车'),
-        _e(categoryId: 'legacy-cat', note: '打车'),
+        // 唯一一笔 ~50 是收入，但金额并非精确复现（当前 55）。
+        _e(type: EntryType.income, categoryId: 'salary', note: '', amount: 50),
       ];
-      final suggestion = suggestCategoryId(
-        history: history,
-        candidateIds: _candidates,
-        note: '打车',
-        amount: 25,
-        hour: 9,
-      );
-      expect(suggestion, isNull);
+      final s = _suggest(history: history, amount: 55);
+      // 单笔且非精确 → 不敢定类型。
+      expect(s.type, isNull);
     });
 
-    test('strong note match wins over a more frequent other category', () {
+    test('forcedType keeps type and suggests category within it', () {
       final history = <LedgerEntry>[
-        // dining 很常见，但都与「咖啡」无关。
-        for (var i = 0; i < 20; i++)
-          _e(categoryId: 'dining', note: '午饭', amount: 40, hour: 12),
-        // coffee 只有一笔，但备注高度吻合。
-        _e(categoryId: 'coffee', note: '瑞幸咖啡', amount: 18, hour: 15),
+        _e(type: EntryType.income, categoryId: 'salary', note: '', amount: 50),
+        _e(type: EntryType.expense, categoryId: 'dining', note: '', amount: 50),
+        _e(type: EntryType.expense, categoryId: 'dining', note: '', amount: 50),
       ];
-      final suggestion = suggestCategoryId(
+      // 用户已选定支出：即便历史里也有 50 的收入，也只在支出内识别。
+      final s = _suggest(
         history: history,
-        candidateIds: _candidates,
-        note: '瑞幸咖啡',
-        amount: 18,
-        hour: 15,
+        amount: 50,
+        forcedType: EntryType.expense,
       );
-      expect(suggestion, 'coffee');
+      expect(s.type, EntryType.expense);
+      expect(s.categoryId, 'dining');
     });
   });
 }

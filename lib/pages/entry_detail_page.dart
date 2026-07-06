@@ -8,7 +8,6 @@ import '../app/demo_data.dart';
 import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
-import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
 import 'attachments_editor.dart';
@@ -49,10 +48,17 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   final List<String> _pendingAttachments = <String>[];
   final TextEditingController _noteController = TextEditingController();
 
-  // 自动分类：用户尚未手动选过分类前，按备注/习惯自动推荐并选中；一旦手动选过就不再
-  // 覆盖。_suggestedCategoryId 记当前推荐项（用于提示与置顶展示）。
+  // 自动识别：用户未手动改动某字段前，按历史（金额/备注/时段）自动填充类型、分类、
+  // 标签、备注；某字段一旦被用户改过就不再覆盖它。AI 草稿模式（initialDraft）下整体
+  // 关闭自动识别，尊重草稿。
+  bool _typeTouched = false;
   bool _categoryTouched = false;
-  String? _suggestedCategoryId;
+  bool _tagsTouched = false;
+  bool _noteTouched = false;
+  // 程序化写入备注时置真，令备注监听忽略这次（不误判为用户输入）。
+  bool _applyingSuggestion = false;
+  bool _didInitialSuggest = false;
+  late final bool _autoSuggestEnabled = widget.initialDraft == null;
 
   @override
   void initState() {
@@ -63,8 +69,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       _type = draft.type;
       if (draft.categoryId.isNotEmpty) {
         _categoryId = draft.categoryId;
-        // AI 已给出分类，视作已选，不用历史推荐覆盖。
-        _categoryTouched = true;
       }
       // 转账必须落到账户；收支允许「无账户」（空 accountId）。
       if (draft.type != EntryType.transfer && draft.accountId.isEmpty) {
@@ -75,7 +79,19 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       }
       _toAccountId = draft.toAccountId;
       _occurredAt = draft.occurredAt;
+      _applyingSuggestion = true;
       _noteController.text = draft.note;
+      _applyingSuggestion = false;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 开屏（金额已确定、备注为空）先按金额习惯识别一次。
+    if (_autoSuggestEnabled && !_didInitialSuggest) {
+      _didInitialSuggest = true;
+      _recomputeSuggestion();
     }
   }
 
@@ -86,39 +102,58 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     super.dispose();
   }
 
-  // 备注变化时，若用户还没手动选过分类，重跑推荐（触发 build 重算）。
   void _onNoteChanged() {
-    if (_categoryTouched || !mounted) {
+    if (!_autoSuggestEnabled || _applyingSuggestion || !mounted) {
       return;
     }
-    setState(() {});
+    // 用户真的在输备注：标记已改（不再回填备注），并按新备注重算类型/分类/标签。
+    _noteTouched = true;
+    _recomputeSuggestion();
   }
 
-  /// 在未手动选分类时，按当前备注/金额/时段从历史推荐一个分类并选中。
-  /// 直接在 build 期间调用（与既有「分类不在清单则回退首项」同为纯赋值，不触发
-  /// setState）。返回推荐的分类 id（无把握时为 null）。
-  String? _applyAutoCategory(VeriFinController controller, EntryType type) {
-    if (_categoryTouched || type == EntryType.transfer) {
-      return null;
+  /// 按当前金额/备注/时段从历史识别，并填充「用户尚未改过」的字段。
+  void _recomputeSuggestion() {
+    if (!_autoSuggestEnabled || !mounted) {
+      return;
     }
-    final candidateIds = controller
-        .categoriesForType(type)
-        .map((c) => c.id)
-        .toSet();
-    final history = controller.entries
-        .where((e) => e.type == type)
-        .toList(growable: false);
-    final suggestion = suggestCategoryId(
-      history: history,
-      candidateIds: candidateIds,
+    final controller = VeriFinScope.of(context);
+    final suggestion = suggestEntry(
+      history: controller.entries,
+      expenseCategoryIds: controller
+          .categoriesForType(EntryType.expense)
+          .map((c) => c.id)
+          .toSet(),
+      incomeCategoryIds: controller
+          .categoriesForType(EntryType.income)
+          .map((c) => c.id)
+          .toSet(),
       note: _noteController.text,
       amount: _amount,
       hour: _occurredAt.hour,
+      // 用户已手动选过类型：不再翻转类型，只在该类型内识别分类/标签/备注。
+      forcedType: _typeTouched ? _type : null,
     );
-    if (suggestion != null) {
-      _categoryId = suggestion;
+    if (suggestion.isEmpty) {
+      return;
     }
-    return suggestion;
+    setState(() {
+      if (!_typeTouched && suggestion.type != null) {
+        _type = suggestion.type!;
+      }
+      if (!_categoryTouched && suggestion.categoryId != null) {
+        _categoryId = suggestion.categoryId!;
+      }
+      if (!_tagsTouched && _tagIds.isEmpty && suggestion.tagIds != null) {
+        _tagIds = List<String>.of(suggestion.tagIds!);
+      }
+      if (!_noteTouched &&
+          _noteController.text.isEmpty &&
+          suggestion.note != null) {
+        _applyingSuggestion = true;
+        _noteController.text = suggestion.note!;
+        _applyingSuggestion = false;
+      }
+    });
   }
 
   /// 分类快捷区展示的前若干个分类；若当前选中项（含自动推荐）不在前 8 个里，则把它
@@ -158,8 +193,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     if (!categories.any((category) => category.id == _categoryId)) {
       _categoryId = categories.first.id;
     }
-    // 自动分类：未手动选过时按备注/习惯推荐并选中（可能改写上面的 _categoryId）。
-    _suggestedCategoryId = _applyAutoCategory(controller, _type);
     // 大金额颜色跟随类型:支出红、收入青绿、转账保持蓝色。
     final amountColor = switch (_type) {
       EntryType.expense => veriExpense,
@@ -202,12 +235,15 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     onSelectionChanged: (selection) {
                       setState(() {
                         _type = selection.first;
+                        _typeTouched = true;
                         _categoryId = controller
                             .categoriesForType(_type)
                             .first
                             .id;
                         _normalizeTransferAccounts(accounts);
                       });
+                      // 用户改了类型后，在该类型内重新识别分类/标签/备注。
+                      _recomputeSuggestion();
                     },
                   ),
                   const SizedBox(height: 16),
@@ -228,27 +264,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     ),
                   ),
                   const Divider(height: 24),
-                  Row(
-                    children: <Widget>[
-                      Text(
-                        AppLocalizations.of(context).commonCategory,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      if (_suggestedCategoryId != null &&
-                          !_categoryTouched) ...[
-                        const SizedBox(width: 8),
-                        Icon(Icons.auto_awesome, size: 14, color: veriRoyal),
-                        const SizedBox(width: 3),
-                        Text(
-                          AppLocalizations.of(context).categoryAutoSuggested,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: veriRoyal,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                      ],
-                    ],
+                  Text(
+                    AppLocalizations.of(context).commonCategory,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 10),
                   Wrap(
@@ -258,11 +276,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       ..._visibleCategoryChips(categories).map(
                         (category) => ChoiceChip(
                           avatar: Icon(
-                            _categoryId == category.id &&
-                                    _suggestedCategoryId == category.id &&
-                                    !_categoryTouched
-                                ? Icons.auto_awesome
-                                : iconForCode(category.iconCode),
+                            iconForCode(category.iconCode),
                             size: 18,
                           ),
                           label: Text(category.label),
@@ -271,7 +285,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                             setState(() {
                               _categoryId = category.id;
                               _categoryTouched = true;
-                              _suggestedCategoryId = null;
                             });
                           },
                         ),
@@ -455,6 +468,8 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     }
 
     setState(() => _amount = amount);
+    // 金额变了，按新金额重新识别。
+    _recomputeSuggestion();
   }
 
   Future<void> _editFee() async {
@@ -492,7 +507,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     setState(() {
       _categoryId = selected;
       _categoryTouched = true;
-      _suggestedCategoryId = null;
     });
   }
 
@@ -623,7 +637,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     if (!mounted || result == null) {
       return;
     }
-    setState(() => _tagIds = result);
+    setState(() {
+      _tagIds = result;
+      _tagsTouched = true;
+    });
   }
 
   void _save() {

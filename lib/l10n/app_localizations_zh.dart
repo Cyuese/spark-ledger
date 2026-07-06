@@ -822,9 +822,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonCategory => '分类';
 
   @override
-  String get categoryAutoSuggested => '已自动推荐';
-
-  @override
   String get allLabel => '全部';
 
   @override
