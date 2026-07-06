@@ -4909,6 +4909,60 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'重置'**
   String get resetLabel;
+
+  /// No description provided for @saveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存失败，请重试'**
+  String get saveFailed;
+
+  /// No description provided for @appLog.
+  ///
+  /// In zh, this message translates to:
+  /// **'软件日志'**
+  String get appLog;
+
+  /// No description provided for @appLogSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录错误与关键事件，反馈问题时可复制发给开发者'**
+  String get appLogSubtitle;
+
+  /// No description provided for @appLogEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无日志记录'**
+  String get appLogEmpty;
+
+  /// No description provided for @appLogCopyAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制全部'**
+  String get appLogCopyAll;
+
+  /// No description provided for @appLogCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已复制到剪贴板'**
+  String get appLogCopied;
+
+  /// No description provided for @appLogClear.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空日志'**
+  String get appLogClear;
+
+  /// No description provided for @appLogClearConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要清空全部日志吗？'**
+  String get appLogClearConfirm;
+
+  /// No description provided for @appLogCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'共 {count} 条记录'**
+  String appLogCount(int count);
 }
 
 class _AppLocalizationsDelegate

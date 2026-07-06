@@ -1672,5 +1672,21 @@
   "zoomLabel": "缩放",
   "horizontalLabel": "水平",
   "verticalLabel": "垂直",
-  "resetLabel": "重置"
+  "resetLabel": "重置",
+  "saveFailed": "保存失败，请重试",
+  "appLog": "软件日志",
+  "appLogSubtitle": "记录错误与关键事件，反馈问题时可复制发给开发者",
+  "appLogEmpty": "暂无日志记录",
+  "appLogCopyAll": "复制全部",
+  "appLogCopied": "已复制到剪贴板",
+  "appLogClear": "清空日志",
+  "appLogClearConfirm": "确定要清空全部日志吗？",
+  "appLogCount": "共 {count} 条记录",
+  "@appLogCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

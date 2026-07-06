@@ -30,6 +30,7 @@ import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import 'ai_settings_page.dart';
 import 'app_lock_page.dart';
+import 'app_log_page.dart';
 import 'report_analysis_page.dart';
 import 'reminder_settings_page.dart';
 import 'widget_gallery_page.dart';
@@ -2029,6 +2030,20 @@ class DataManagementPage extends StatelessWidget {
                       ),
                     ],
                   ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: SettingsRow(
+                  icon: Icons.description_outlined,
+                  title: AppLocalizations.of(context).appLog,
+                  trailing: AppLocalizations.of(context).viewLabel,
+                  trailingIcon: Icons.chevron_right,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => const AppLogPage(),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),

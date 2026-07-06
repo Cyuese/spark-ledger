@@ -2650,4 +2650,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get resetLabel => '重置';
+
+  @override
+  String get saveFailed => '保存失败，请重试';
+
+  @override
+  String get appLog => '软件日志';
+
+  @override
+  String get appLogSubtitle => '记录错误与关键事件，反馈问题时可复制发给开发者';
+
+  @override
+  String get appLogEmpty => '暂无日志记录';
+
+  @override
+  String get appLogCopyAll => '复制全部';
+
+  @override
+  String get appLogCopied => '已复制到剪贴板';
+
+  @override
+  String get appLogClear => '清空日志';
+
+  @override
+  String get appLogClearConfirm => '确定要清空全部日志吗？';
+
+  @override
+  String appLogCount(int count) {
+    return '共 $count 条记录';
+  }
 }

@@ -16,6 +16,7 @@ import 'category_tree.dart';
 import 'demo_data.dart';
 import 'amount_format.dart' as amount_format;
 import 'ledger_math.dart';
+import 'logging/app_logger.dart';
 import 'models.dart';
 import 'recurring.dart';
 import 'reminder/reminder_settings.dart';
@@ -45,9 +46,12 @@ class VeriFinController extends ChangeNotifier {
   VeriFinController._(
     this._store,
     this._repository, {
+    AppLogger? logger,
     bool systemIsEnglish = false,
     // ignore: prefer_initializing_formals
-  }) : _systemIsEnglish = systemIsEnglish {
+  }) : _systemIsEnglish = systemIsEnglish,
+       // ignore: prefer_initializing_formals
+       _logger = logger {
     _loadPreferences();
     themePreferenceListenable = ValueNotifier<ThemePreference>(
       _themePreference,
@@ -62,11 +66,13 @@ class VeriFinController extends ChangeNotifier {
   static Future<VeriFinController> create(
     LocalKeyValueStore store, {
     required LedgerRepository repository,
+    AppLogger? logger,
     bool systemIsEnglish = false,
   }) async {
     final controller = VeriFinController._(
       store,
       repository,
+      logger: logger,
       systemIsEnglish: systemIsEnglish,
     );
     await controller._loadFromRepository();
@@ -109,6 +115,15 @@ class VeriFinController extends ChangeNotifier {
   }
 
   final LocalKeyValueStore _store;
+
+  /// 软件日志（可空，测试宿主可不注入）。落库/加载失败等会记入此处。
+  final AppLogger? _logger;
+
+  /// 软件日志入口，供「软件日志」页读取；未注入时为 null。
+  AppLogger? get logger => _logger;
+
+  /// SQLite 落库失败时回调（由 UI 层挂钩弹出「保存失败」提示）。
+  void Function(Object error)? onPersistError;
 
   /// 系统语言是否为英文（由 main.dart 传入）。语言偏好为「跟随系统」时，
   /// 播种默认数据（账本名/分类/个人简介）依此选语言。
@@ -2147,8 +2162,16 @@ class VeriFinController extends ChangeNotifier {
   Future<void> _pendingWrite = Future<void>.value();
 
   void _trackWrite(Future<void> write) {
-    _pendingWrite = write;
-    unawaited(write);
+    // 挂 catchError：落库失败时记录日志并回调 UI 提示，避免「内存已改但库未写」
+    // 的静默不一致——用户以为已保存、重启后却丢失。
+    final tracked = write.catchError(_handlePersistError);
+    _pendingWrite = tracked;
+    unawaited(tracked);
+  }
+
+  void _handlePersistError(Object error, StackTrace stackTrace) {
+    _logger?.error('数据保存失败', source: 'persist', error: error);
+    onPersistError?.call(error);
   }
 
   /// 等待挂起的 SQLite 写入落库（仅测试使用）。

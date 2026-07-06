@@ -2708,4 +2708,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resetLabel => 'Reset';
+
+  @override
+  String get saveFailed => 'Save failed, please try again';
+
+  @override
+  String get appLog => 'App logs';
+
+  @override
+  String get appLogSubtitle =>
+      'Records errors and key events; copy and send to the developer when reporting issues';
+
+  @override
+  String get appLogEmpty => 'No log records yet';
+
+  @override
+  String get appLogCopyAll => 'Copy all';
+
+  @override
+  String get appLogCopied => 'Copied to clipboard';
+
+  @override
+  String get appLogClear => 'Clear logs';
+
+  @override
+  String get appLogClearConfirm => 'Clear all logs?';
+
+  @override
+  String appLogCount(int count) {
+    return '$count records';
+  }
 }
