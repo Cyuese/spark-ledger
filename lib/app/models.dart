@@ -175,10 +175,12 @@ enum AssetAccountViewMode {
   }
 }
 
-/// 首页 FAB（记一笔）点击后的行为：手动记账（默认）或 AI 对话记账。
+/// 首页 FAB（记一笔）点击后的行为：手动记账（默认）、AI 对话记账，或点击手动、
+/// 长按 AI。
 enum FabActionMode {
   manual,
-  ai;
+  ai,
+  manualTapAiLongPress;
 
   String label(AppLocalizations l10n) {
     switch (this) {
@@ -186,6 +188,8 @@ enum FabActionMode {
         return l10n.fabModeManual;
       case FabActionMode.ai:
         return l10n.fabModeAi;
+      case FabActionMode.manualTapAiLongPress:
+        return l10n.fabModeManualTapAiLongPress;
     }
   }
 

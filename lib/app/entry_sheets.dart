@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_theme.dart';
+import 'calc_expression.dart';
 import 'category_tree.dart';
 import 'common_widgets.dart';
 import 'demo_data.dart';
@@ -34,26 +35,36 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
       ? ''
       : formatAmount(widget.initialAmount!);
 
-  double get _amount => double.tryParse(_input) ?? 0;
+  /// 求值当前输入（可能是 `500+800` 这类算式）；不完整/无效时为 null。
+  double? get _result => evaluateAmountExpression(_input);
+  double get _amount => _result ?? 0;
+
+  /// 输入是否为算式（含运算符）——决定是否展示右下角结果预览。
+  bool get _hasOperator => amountExpressionHasOperator(_input);
 
   @override
   Widget build(BuildContext context) {
+    // 运算符置于右列，数字/删除排在左三列；共 5 行 20 键。
     final keys = <String>[
-      '1',
-      '2',
-      '3',
-      '⌫',
-      '4',
-      '5',
-      '6',
       'C',
+      '⌫',
+      '÷',
+      '×',
       '7',
       '8',
       '9',
+      '-',
+      '4',
+      '5',
+      '6',
+      '+',
+      '1',
+      '2',
+      '3',
       '.',
+      widget.allowNegative ? '+/-' : '',
       '0',
       '00',
-      widget.allowNegative ? '+/-' : '',
       'OK',
     ];
 
@@ -94,12 +105,33 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                     ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(veriRadiusMd),
                   ),
-                  child: Text(
-                    _input.isEmpty ? '0' : _input,
-                    textAlign: TextAlign.end,
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text(
+                        _input.isEmpty ? '0' : _input,
+                        textAlign: TextAlign.end,
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      // 算式模式在右下角展示浅色结果预览；不完整则提示。
+                      if (_hasOperator) ...<Widget>[
+                        const SizedBox(height: 2),
+                        Text(
+                          _result == null
+                              ? AppLocalizations.of(context).calcIncomplete
+                              : '= ${formatAmount(_result!)}',
+                          textAlign: TextAlign.end,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.45),
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -120,6 +152,7 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                     }
 
                     final isOk = value == 'OK';
+                    final isOperator = _operators.contains(value);
                     final isDark =
                         Theme.of(context).brightness == Brightness.dark;
                     final keyColor = isDark
@@ -128,6 +161,13 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                     final keyTextColor = isDark
                         ? Colors.white.withValues(alpha: 0.94)
                         : veriInk;
+                    // 运算符键用强调蓝底色，与数字键区分。
+                    final operatorColor = isDark
+                        ? veriRoyal.withValues(alpha: 0.28)
+                        : const Color(0xFFDCE7FA);
+                    final operatorTextColor = isDark
+                        ? Colors.white.withValues(alpha: 0.94)
+                        : veriRoyal;
                     final canSubmit = _canSubmit;
                     final enabled = !isOk || canSubmit;
                     final okDisabledBackground = isDark
@@ -138,9 +178,13 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                         : const Color(0xFF6B7C93);
                     final buttonBackground = isOk
                         ? (enabled ? veriRoyal : okDisabledBackground)
+                        : isOperator
+                        ? operatorColor
                         : keyColor;
                     final buttonForeground = isOk
                         ? (enabled ? Colors.white : okDisabledForeground)
+                        : isOperator
+                        ? operatorTextColor
                         : keyTextColor;
                     return FilledButton.tonal(
                       key: isOk
@@ -188,10 +232,36 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
   }
 
   bool get _canSubmit {
-    if (widget.allowNegative) {
-      return widget.allowZero || !isZeroAmount(_amount);
+    final result = _result;
+    if (result == null) {
+      // 算式不完整/无效（如末尾挂着运算符）时不允许确认。
+      return false;
     }
-    return widget.allowZero ? _amount >= 0 : _amount > 0;
+    if (widget.allowNegative) {
+      return widget.allowZero || !isZeroAmount(result);
+    }
+    return widget.allowZero ? result >= 0 : result > 0;
+  }
+
+  static const String _operators = '+-×÷';
+
+  /// 当前正在输入的操作数（最后一个运算符之后的片段；首位 `-` 视为负号不算运算符）。
+  String get _currentOperand {
+    final idx = _lastOperatorIndex();
+    return idx < 0 ? _input : _input.substring(idx + 1);
+  }
+
+  int _lastOperatorIndex() {
+    for (var i = _input.length - 1; i >= 0; i--) {
+      final ch = _input[i];
+      if (ch == '+' || ch == '×' || ch == '÷') {
+        return i;
+      }
+      if (ch == '-' && i != 0) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   void _handleKey(String value) {
@@ -219,6 +289,10 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
         return;
       }
       if (value == '+/-') {
+        // 正负号只在纯数字（无运算符）时切换首位负号。
+        if (_hasOperator) {
+          return;
+        }
         if (_input.startsWith('-')) {
           _input = _input.substring(1);
         } else if (_input.isNotEmpty && !isZeroAmount(_amount)) {
@@ -226,27 +300,63 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
         }
         return;
       }
-      if (value == '.') {
-        if (_input.contains('.')) {
-          return;
-        }
-        _input = _input.isEmpty ? '0.' : '$_input.';
+      if (_operators.contains(value)) {
+        _appendOperator(value);
         return;
       }
-      if (_input.contains('.')) {
-        final decimalLength = _input.split('.').last.length;
+      if (value == '.') {
+        final operand = _currentOperand;
+        if (operand.contains('.')) {
+          return;
+        }
+        _input += operand.isEmpty ? '0.' : '.';
+        return;
+      }
+      // 数字键：小数位与前导零规则只针对当前操作数。
+      final operand = _currentOperand;
+      if (operand.contains('.')) {
+        final decimalLength = operand.split('.').last.length;
         if (decimalLength >= 2) {
           return;
         }
       }
-      if (_input == '0' && value != '00') {
-        _input = value;
-      } else if (_input == '-0' && value != '00') {
-        _input = '-$value';
+      if (operand == '0' && value != '00') {
+        // 用新数字替换当前操作数的前导零。
+        _input = _input.substring(0, _input.length - 1) + value;
+      } else if (operand == '-0' && value != '00') {
+        _input = '${_input.substring(0, _input.length - 1)}$value';
+      } else if (operand.isEmpty && value == '00') {
+        _input += '0';
       } else {
-        _input = '$_input$value';
+        _input += value;
       }
     });
+  }
+
+  /// 追加一个运算符：不能以运算符开头；末尾已是运算符则替换；末尾的 `.` 先去掉。
+  void _appendOperator(String op) {
+    if (_input.isEmpty) {
+      return;
+    }
+    var next = _input;
+    if (next.endsWith('.')) {
+      next = next.substring(0, next.length - 1);
+    }
+    if (next.isEmpty || next == '-') {
+      return;
+    }
+    final last = next[next.length - 1];
+    final endsWithOperator =
+        last == '+' ||
+        last == '×' ||
+        last == '÷' ||
+        (last == '-' && next.length > 1);
+    if (endsWithOperator) {
+      next = next.substring(0, next.length - 1) + op;
+    } else {
+      next += op;
+    }
+    _input = next;
   }
 }
 

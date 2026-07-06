@@ -2190,6 +2190,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fabModeAi => 'AI entry';
 
   @override
+  String get fabModeManualTapAiLongPress => 'Tap: manual · Long-press: AI';
+
+  @override
+  String get defaultAccountTitle => 'Default account';
+
+  @override
+  String get defaultAccountPickerTitle => 'Default payment account';
+
+  @override
+  String get defaultAccountNone => 'No default';
+
+  @override
+  String get defaultAccountNoneHint =>
+      'No account preselected when adding entries';
+
+  @override
+  String get setAsDefaultAccount => 'Set as default account';
+
+  @override
+  String get setAsDefaultAccountHint =>
+      'Used as the default payment account for entries';
+
+  @override
+  String get calcIncomplete => 'Incomplete expression';
+
+  @override
   String get aiSettingsTitle => 'AI entry settings';
 
   @override

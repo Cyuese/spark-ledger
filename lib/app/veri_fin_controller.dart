@@ -94,6 +94,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _webdavKey = 'verifin.webdav.v1';
   static const String _reminderKey = 'verifin.reminder.v1';
   static const String _fabActionKey = 'verifin.fab_action.v1';
+  static const String _defaultAccountKey = 'verifin.default_account.v1';
   static const String _amountFormatKey = 'verifin.amount_format.v1';
   static const String _aiSettingsKey = 'verifin.ai.v1';
   static const String _onboardingKey = 'verifin.onboarding.v1';
@@ -146,6 +147,8 @@ class VeriFinController extends ChangeNotifier {
   final Map<String, double> _categoryBudgets = <String, double>{};
   // 按日预算：每个账本一条「每日花销上限」，键为 bookId、值为金额（适用于每一天）。
   final Map<String, double> _dailyBudgets = <String, double>{};
+  // 默认付款账户：每个账本各存一个账户 id（键为 bookId）。设备本地偏好。
+  final Map<String, String> _defaultAccountIds = <String, String>{};
   final Set<String> _collapsedAssetSections = <String>{};
   final Map<String, List<String>> _assetAccountOrders =
       <String, List<String>>{};
@@ -584,6 +587,65 @@ class VeriFinController extends ChangeNotifier {
     _fabActionMode = mode;
     _store.write(_fabActionKey, mode.name);
     notifyListeners();
+  }
+
+  /// 当前账本的默认付款账户 id；未设置、或该账户已删除/隐藏时返回 null。设备本地
+  /// 偏好，不进 JSON 备份、初始化时随账户一起清空。记账（手动/AI 未识别账户时）
+  /// 用它作默认账户。
+  String? get defaultAccountId {
+    final id = _defaultAccountIds[_activeBookId];
+    if (id == null || id.isEmpty) {
+      return null;
+    }
+    final valid = _accounts.any(
+      (account) =>
+          account.id == id &&
+          account.bookId == _activeBookId &&
+          !account.hidden,
+    );
+    return valid ? id : null;
+  }
+
+  void setDefaultAccountId(String? accountId) {
+    if (accountId == null || accountId.isEmpty) {
+      _defaultAccountIds.remove(_activeBookId);
+    } else {
+      _defaultAccountIds[_activeBookId] = accountId;
+    }
+    _persistDefaultAccounts();
+    notifyListeners();
+  }
+
+  void _loadDefaultAccounts() {
+    final raw = _store.read(_defaultAccountKey);
+    if (raw == null || raw.isEmpty) {
+      return;
+    }
+    try {
+      final decoded = jsonDecode(raw) as Map<dynamic, dynamic>;
+      _defaultAccountIds
+        ..clear()
+        ..addAll(
+          decoded.map(
+            (key, value) => MapEntry(key.toString(), value.toString()),
+          ),
+        );
+    } catch (_) {
+      _store.delete(_defaultAccountKey);
+    }
+  }
+
+  void _persistDefaultAccounts() {
+    _store.write(_defaultAccountKey, jsonEncode(_defaultAccountIds));
+  }
+
+  /// 删除账户时，清掉任何指向它的默认付款账户设置。
+  void _clearDefaultAccountRef(String accountId) {
+    final before = _defaultAccountIds.length;
+    _defaultAccountIds.removeWhere((_, id) => id == accountId);
+    if (_defaultAccountIds.length != before) {
+      _persistDefaultAccounts();
+    }
   }
 
   /// 是否强制所有金额展示两位小数（`12` → `12.00`）。设备本地偏好，不进 JSON 备份、
@@ -1058,6 +1120,8 @@ class VeriFinController extends ChangeNotifier {
     _monthlyBudgets.removeWhere((key, _) => key.startsWith('$bookId:'));
     _categoryBudgets.removeWhere((key, _) => key.startsWith('$bookId:'));
     _dailyBudgets.remove(bookId);
+    _defaultAccountIds.remove(bookId);
+    _persistDefaultAccounts();
     if (_activeBookId == bookId) {
       _activeBookId = defaultLedgerBookId;
       _store.write(_activeBookKey, _activeBookId);
@@ -1170,6 +1234,7 @@ class VeriFinController extends ChangeNotifier {
   void deleteAccount(String accountId) {
     _accounts.removeWhere((account) => account.id == accountId);
     _removeAccountFromOrders(accountId);
+    _clearDefaultAccountRef(accountId);
     _persistAssetAccountOrders();
     _persistAccounts();
     notifyListeners();
@@ -1183,6 +1248,7 @@ class VeriFinController extends ChangeNotifier {
     _entries.removeWhere((entry) => entryTouchesAccount(entry, accountId));
     _accounts.removeWhere((account) => account.id == accountId);
     _removeAccountFromOrders(accountId);
+    _clearDefaultAccountRef(accountId);
     _persistEntries();
     if (_removeAttachmentsForEntries(removedEntryIds)) {
       _persistAttachments();
@@ -1607,6 +1673,9 @@ class VeriFinController extends ChangeNotifier {
     _collapsedAssetSections.clear();
     _assetAccountOrders.clear();
     _assetSectionOrders.clear();
+    // 账户被清空，默认付款账户随之失效。
+    _defaultAccountIds.clear();
+    _persistDefaultAccounts();
     for (final page in PanelPageKind.values) {
       _pagePanels[page] = _defaultPanelSettings(page.specs);
     }
@@ -1911,6 +1980,7 @@ class VeriFinController extends ChangeNotifier {
     _webdavConfig = WebdavConfig.decode(_store.read(_webdavKey));
     _reminderSettings = ReminderSettings.decode(_store.read(_reminderKey));
     _fabActionMode = FabActionMode.fromStorage(_store.read(_fabActionKey));
+    _loadDefaultAccounts();
     _amountForceTwoDecimals = _store.read(_amountFormatKey) == 'true';
     amount_format.amountForceTwoDecimals = _amountForceTwoDecimals;
     _aiSettings = AiSettings.decode(_store.read(_aiSettingsKey));

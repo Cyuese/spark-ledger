@@ -82,11 +82,14 @@ class _VeriFinShellState extends State<VeriFinShell> {
       child: Scaffold(
         body: SafeArea(child: pages[_index]),
         floatingActionButton: _index == 0
-            ? FloatingActionButton(
-                key: const Key('quick_entry_fab'),
-                onPressed: () => _startQuickEntry(context),
-                tooltip: AppLocalizations.of(context).quickEntry,
-                child: const Icon(Icons.add),
+            ? GestureDetector(
+                onLongPress: () => _startQuickEntry(context, longPress: true),
+                child: FloatingActionButton(
+                  key: const Key('quick_entry_fab'),
+                  onPressed: () => _startQuickEntry(context),
+                  tooltip: AppLocalizations.of(context).quickEntry,
+                  child: const Icon(Icons.add),
+                ),
               )
             : null,
         bottomNavigationBar: VeriBottomNav(
@@ -118,9 +121,18 @@ class _VeriFinShellState extends State<VeriFinShell> {
     );
   }
 
-  Future<void> _startQuickEntry(BuildContext context) async {
-    // 记一笔按钮设为 AI 记账时，走自然语言解析入口；默认仍是手动记账。
-    if (VeriFinScope.of(context).fabActionMode == FabActionMode.ai) {
+  Future<void> _startQuickEntry(
+    BuildContext context, {
+    bool longPress = false,
+  }) async {
+    final controller = VeriFinScope.of(context);
+    // 「点击手动·长按 AI」模式按手势区分；纯手动/纯 AI 模式两种手势一致。
+    final useAi = switch (controller.fabActionMode) {
+      FabActionMode.manual => false,
+      FabActionMode.ai => true,
+      FabActionMode.manualTapAiLongPress => longPress,
+    };
+    if (useAi) {
       await startAiEntry(context);
       return;
     }
@@ -130,7 +142,7 @@ class _VeriFinShellState extends State<VeriFinShell> {
       isScrollControlled: true,
       builder: (context) => NumberPadSheet(
         title: AppLocalizations.of(context).quickEntry,
-        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
+        hapticsEnabled: controller.hapticsEnabled,
       ),
     );
 
@@ -140,7 +152,11 @@ class _VeriFinShellState extends State<VeriFinShell> {
 
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (context) => EntryDetailPage(initialAmount: amount),
+        builder: (context) => EntryDetailPage(
+          initialAmount: amount,
+          // 未设默认账户时为 null，记账页回落到首个账户（沿用原行为）。
+          initialAccountId: controller.defaultAccountId,
+        ),
       ),
     );
   }

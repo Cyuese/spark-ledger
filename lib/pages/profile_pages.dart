@@ -1607,6 +1607,14 @@ class SettingsPage extends StatelessWidget {
                     ),
                     const Divider(height: 1),
                     SettingsRow(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: AppLocalizations.of(context).defaultAccountTitle,
+                      trailing: _defaultAccountTrailing(context, controller),
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _pickDefaultAccount(context, controller),
+                    ),
+                    const Divider(height: 1),
+                    SettingsRow(
                       icon: Icons.auto_awesome_outlined,
                       title: AppLocalizations.of(context).aiSettingsTitle,
                       trailing: controller.aiSettings.isConfigured
@@ -1727,6 +1735,49 @@ class SettingsPage extends StatelessWidget {
     if (selected != null) {
       controller.setFabActionMode(selected);
     }
+  }
+
+  String _defaultAccountTrailing(
+    BuildContext context,
+    VeriFinController controller,
+  ) {
+    final id = controller.defaultAccountId;
+    if (id == null) {
+      return AppLocalizations.of(context).defaultAccountNone;
+    }
+    final account = controller.accounts
+        .where((account) => account.id == id)
+        .firstOrNull;
+    return account?.name ?? AppLocalizations.of(context).defaultAccountNone;
+  }
+
+  Future<void> _pickDefaultAccount(
+    BuildContext context,
+    VeriFinController controller,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final accounts = controller.accounts
+        .where((account) => !account.hidden)
+        .toList();
+    if (accounts.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.noUsableAccountTitle)));
+      return;
+    }
+    final selected = await showAccountPickerSheet(
+      context: context,
+      title: l10n.defaultAccountPickerTitle,
+      accounts: accounts,
+      selectedId: controller.defaultAccountId ?? '',
+      balanceOf: controller.accountBalance,
+      noneLabel: l10n.defaultAccountNone,
+      noneHint: l10n.defaultAccountNoneHint,
+    );
+    if (selected == null) {
+      return;
+    }
+    controller.setDefaultAccountId(selected.id.isEmpty ? null : selected.id);
   }
 
   Future<void> _checkForUpdate(BuildContext context) async {

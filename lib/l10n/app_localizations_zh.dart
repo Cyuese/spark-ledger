@@ -2154,6 +2154,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fabModeAi => 'AI 记账';
 
   @override
+  String get fabModeManualTapAiLongPress => '点击手动 · 长按 AI';
+
+  @override
+  String get defaultAccountTitle => '默认账户';
+
+  @override
+  String get defaultAccountPickerTitle => '默认付款账户';
+
+  @override
+  String get defaultAccountNone => '无默认账户';
+
+  @override
+  String get defaultAccountNoneHint => '记账时不预选账户';
+
+  @override
+  String get setAsDefaultAccount => '设为默认账户';
+
+  @override
+  String get setAsDefaultAccountHint => '记账时默认用此账户付款';
+
+  @override
+  String get calcIncomplete => '算式不完整';
+
+  @override
   String get aiSettingsTitle => 'AI 记账设置';
 
   @override

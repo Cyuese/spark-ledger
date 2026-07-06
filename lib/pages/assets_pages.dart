@@ -1686,6 +1686,22 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                       onTap: () => _pickAccountGroup(currentAccount),
                     ),
                     const Divider(),
+                    // 设为该账本记账时的默认付款账户（关闭即清除默认）。隐藏账户不提供。
+                    if (!currentAccount.hidden)
+                      CompactSwitchRow(
+                        icon: Icons.push_pin_outlined,
+                        title: Text(
+                          AppLocalizations.of(context).setAsDefaultAccount,
+                        ),
+                        subtitle: Text(
+                          AppLocalizations.of(context).setAsDefaultAccountHint,
+                        ),
+                        value: controller.defaultAccountId == currentAccount.id,
+                        onChanged: (value) => controller.setDefaultAccountId(
+                          value ? currentAccount.id : null,
+                        ),
+                      ),
+                    if (!currentAccount.hidden) const Divider(),
                     SettingsRow(
                       icon: Icons.delete_outline,
                       title: AppLocalizations.of(context).accountDelete,

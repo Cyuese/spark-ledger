@@ -3980,6 +3980,54 @@ abstract class AppLocalizations {
   /// **'AI 记账'**
   String get fabModeAi;
 
+  /// No description provided for @fabModeManualTapAiLongPress.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击手动 · 长按 AI'**
+  String get fabModeManualTapAiLongPress;
+
+  /// No description provided for @defaultAccountTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认账户'**
+  String get defaultAccountTitle;
+
+  /// No description provided for @defaultAccountPickerTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认付款账户'**
+  String get defaultAccountPickerTitle;
+
+  /// No description provided for @defaultAccountNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'无默认账户'**
+  String get defaultAccountNone;
+
+  /// No description provided for @defaultAccountNoneHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账时不预选账户'**
+  String get defaultAccountNoneHint;
+
+  /// No description provided for @setAsDefaultAccount.
+  ///
+  /// In zh, this message translates to:
+  /// **'设为默认账户'**
+  String get setAsDefaultAccount;
+
+  /// No description provided for @setAsDefaultAccountHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账时默认用此账户付款'**
+  String get setAsDefaultAccountHint;
+
+  /// No description provided for @calcIncomplete.
+  ///
+  /// In zh, this message translates to:
+  /// **'算式不完整'**
+  String get calcIncomplete;
+
   /// No description provided for @aiSettingsTitle.
   ///
   /// In zh, this message translates to:

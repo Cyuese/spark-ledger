@@ -70,10 +70,16 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       if (draft.categoryId.isNotEmpty) {
         _categoryId = draft.categoryId;
       }
-      // 转账必须落到账户；收支允许「无账户」（空 accountId）。
+      // 转账必须落到账户；收支允许「无账户」（空 accountId）。AI 没识别到账户时，
+      // 若配置了默认付款账户（initialAccountId）就用它，否则记为「无账户」。
       if (draft.type != EntryType.transfer && draft.accountId.isEmpty) {
-        _noAccount = true;
-        _accountId = '';
+        final fallback = widget.initialAccountId ?? '';
+        if (fallback.isNotEmpty) {
+          _accountId = fallback;
+        } else {
+          _noAccount = true;
+          _accountId = '';
+        }
       } else {
         _accountId = draft.accountId;
       }

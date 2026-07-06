@@ -52,8 +52,12 @@ Future<void> startAiEntry(BuildContext context) async {
   if (draft != null && context.mounted) {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            EntryDetailPage(initialAmount: draft.amount, initialDraft: draft),
+        builder: (_) => EntryDetailPage(
+          initialAmount: draft.amount,
+          // AI 未识别到账户时，记账页回落到默认付款账户（未设则为「无账户」）。
+          initialAccountId: controller.defaultAccountId,
+          initialDraft: draft,
+        ),
       ),
     );
   }
