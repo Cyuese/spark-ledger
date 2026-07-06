@@ -1,6 +1,8 @@
 package top.talyra42.verifin
 
 import android.Manifest
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -44,14 +46,11 @@ class MainActivity : FlutterFragmentActivity() {
                     pendingQuickEntryIntent = false
                     result.success(shouldOpen)
                 }
-                "updateTodayExpenseWidget" -> {
-                    QuickEntryWidgetProvider.updateData(
-                        this,
-                        call.argument<String>("amount") ?: "0",
-                        call.argument<String>("label") ?: "今日支出",
-                    )
+                "updateWidgetData" -> {
+                    updateWidgetData(call)
                     result.success(true)
                 }
+                "pinWidget" -> pinWidget(call.argument<String>("widget") ?: "", result)
                 "checkLatestRelease" -> checkLatestRelease(result)
                 "downloadLatestUpdate" -> downloadLatestUpdate(result)
                 "saveTextToDownloads" -> saveTextToDownloads(
@@ -117,6 +116,50 @@ class MainActivity : FlutterFragmentActivity() {
     private fun rememberQuickEntryIntent(intent: Intent?) {
         if (intent?.action == ACTION_QUICK_ENTRY) {
             pendingQuickEntryIntent = true
+        }
+    }
+
+    /// 一次写入三个小组件的全部字段并广播刷新各 Provider。字段由 Flutter 侧格式化。
+    private fun updateWidgetData(call: io.flutter.plugin.common.MethodCall) {
+        val values = mapOf(
+            WidgetData.KEY_TODAY_AMOUNT to (call.argument<String>("todayAmount") ?: "0"),
+            WidgetData.KEY_TODAY_LABEL to (call.argument<String>("todayLabel") ?: "今日支出"),
+            WidgetData.KEY_BUDGET_AMOUNT to (call.argument<String>("budgetAmount") ?: "0"),
+            WidgetData.KEY_BUDGET_LABEL to (call.argument<String>("budgetLabel") ?: "本月可用预算"),
+            WidgetData.KEY_NET_WORTH_AMOUNT to (call.argument<String>("netWorthAmount") ?: "0"),
+            WidgetData.KEY_NET_WORTH_LABEL to (call.argument<String>("netWorthLabel") ?: "资产总额"),
+        )
+        WidgetData.write(this, values)
+        WidgetData.refresh(this, QuickEntryWidgetProvider::class.java)
+        WidgetData.refresh(this, BudgetWidgetProvider::class.java)
+        WidgetData.refresh(this, NetWorthWidgetProvider::class.java)
+    }
+
+    /// 请求把指定小组件固定到桌面（API 26+ 且启动器支持时弹系统添加弹窗）。
+    /// 返回是否成功发起；不支持则返回 false，Flutter 侧回落为手动添加引导。
+    private fun pinWidget(widget: String, result: MethodChannel.Result) {
+        val provider = when (widget) {
+            "quick_entry" -> QuickEntryWidgetProvider::class.java
+            "budget" -> BudgetWidgetProvider::class.java
+            "net_worth" -> NetWorthWidgetProvider::class.java
+            else -> null
+        }
+        if (provider == null) {
+            result.success(false)
+            return
+        }
+        val manager = AppWidgetManager.getInstance(this)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            manager.isRequestPinAppWidgetSupported
+        ) {
+            val ok = manager.requestPinAppWidget(
+                ComponentName(this, provider),
+                null,
+                null,
+            )
+            result.success(ok)
+        } else {
+            result.success(false)
         }
     }
 

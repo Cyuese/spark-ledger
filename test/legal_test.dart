@@ -75,11 +75,11 @@ void main() {
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
 
+    // 法律条款在设置列表底部；列表变长后需滚动到位才会构建/命中。
+    await tester.scrollUntilVisible(find.text('隐私政策'), 200);
     expect(find.text('隐私政策'), findsOneWidget);
     expect(find.text('用户协议'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('隐私政策'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('隐私政策'));
     await tester.pumpAndSettle();
 

@@ -32,6 +32,7 @@ import 'ai_settings_page.dart';
 import 'app_lock_page.dart';
 import 'report_analysis_page.dart';
 import 'reminder_settings_page.dart';
+import 'widget_gallery_page.dart';
 import 'legal_pages.dart';
 import 'sheets.dart';
 
@@ -1583,6 +1584,20 @@ class SettingsPage extends StatelessWidget {
                         Navigator.of(context).push<void>(
                           MaterialPageRoute<void>(
                             builder: (context) => const AiSettingsPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                    SettingsRow(
+                      icon: Icons.widgets_outlined,
+                      title: AppLocalizations.of(context).widgetGalleryTitle,
+                      trailing: '',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () {
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const WidgetGalleryPage(),
                           ),
                         );
                       },

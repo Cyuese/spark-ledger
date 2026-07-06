@@ -2568,6 +2568,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get widgetTodayExpense => 'Today\'s spending';
 
   @override
+  String get widgetBudgetAvailable => 'Budget left this month';
+
+  @override
+  String get widgetBudgetOverspent => 'Over budget this month';
+
+  @override
+  String get widgetNetWorth => 'Total assets';
+
+  @override
+  String get widgetGalleryTitle => 'Home widgets';
+
+  @override
+  String get widgetGallerySubtitle =>
+      'Put the numbers you check most on your home screen';
+
+  @override
+  String get widgetAddToHome => 'Add to home screen';
+
+  @override
+  String get widgetPinRequested =>
+      'Add request sent — confirm in the system dialog';
+
+  @override
+  String get widgetPinUnsupported =>
+      'This launcher doesn\'t support one-tap add — add it manually as shown below';
+
+  @override
+  String get widgetHowToAddTitle => 'How to add manually';
+
+  @override
+  String get widgetHowToAddDesc =>
+      'Long-press an empty spot on your home screen → choose Widgets → find Veri Fin → drag the widget you want onto the screen.';
+
+  @override
+  String get widgetQuickEntryName => 'Today\'s spending + quick entry';
+
+  @override
+  String get widgetQuickEntryDesc =>
+      'See today\'s spending and tap to add an entry';
+
+  @override
+  String get widgetBudgetName => 'Budget left this month';
+
+  @override
+  String get widgetBudgetDesc => 'How much you can still spend this month';
+
+  @override
+  String get widgetNetWorthName => 'Total assets';
+
+  @override
+  String get widgetNetWorthDesc => 'Sum of all visible account balances';
+
+  @override
   String get reminderNotifBody => 'Don\'t forget to record today\'s spending!';
 
   @override

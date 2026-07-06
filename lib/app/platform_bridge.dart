@@ -43,20 +43,44 @@ class AppPlatformBridge {
     }
   }
 
-  /// 推送「今日支出」到 Android 桌面小组件（非 Android 平台静默忽略）。
-  static Future<void> updateTodayExpenseWidget({
-    required String amount,
-    required String label,
+  /// 一次推送三个桌面小组件（今日支出 / 本月预算 / 资产总额）的数据到 Android
+  /// （非 Android 平台静默忽略）。金额均由调用方按用户偏好格式化好。
+  static Future<void> updateWidgetData({
+    required String todayAmount,
+    required String todayLabel,
+    required String budgetAmount,
+    required String budgetLabel,
+    required String netWorthAmount,
+    required String netWorthLabel,
   }) async {
     try {
-      await _channel.invokeMethod<void>('updateTodayExpenseWidget', {
-        'amount': amount,
-        'label': label,
+      await _channel.invokeMethod<void>('updateWidgetData', {
+        'todayAmount': todayAmount,
+        'todayLabel': todayLabel,
+        'budgetAmount': budgetAmount,
+        'budgetLabel': budgetLabel,
+        'netWorthAmount': netWorthAmount,
+        'netWorthLabel': netWorthLabel,
       });
     } on MissingPluginException {
       // 非 Android 平台没有桌面小组件。
     } on PlatformException {
       // 小组件更新失败不影响主流程，忽略。
+    }
+  }
+
+  /// 请求把指定小组件固定到桌面（`quick_entry`/`budget`/`net_worth`）。
+  /// 返回是否成功发起系统添加弹窗；不支持的启动器/平台返回 false。
+  static Future<bool> pinWidget(String widget) async {
+    try {
+      final ok = await _channel.invokeMethod<bool>('pinWidget', {
+        'widget': widget,
+      });
+      return ok ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
     }
   }
 

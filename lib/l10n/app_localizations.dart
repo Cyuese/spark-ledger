@@ -4646,6 +4646,102 @@ abstract class AppLocalizations {
   /// **'今日支出'**
   String get widgetTodayExpense;
 
+  /// No description provided for @widgetBudgetAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月可用预算'**
+  String get widgetBudgetAvailable;
+
+  /// No description provided for @widgetBudgetOverspent.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月已超支'**
+  String get widgetBudgetOverspent;
+
+  /// No description provided for @widgetNetWorth.
+  ///
+  /// In zh, this message translates to:
+  /// **'资产总额'**
+  String get widgetNetWorth;
+
+  /// No description provided for @widgetGalleryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'桌面小组件'**
+  String get widgetGalleryTitle;
+
+  /// No description provided for @widgetGallerySubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'把常看的数据放到手机桌面'**
+  String get widgetGallerySubtitle;
+
+  /// No description provided for @widgetAddToHome.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加到桌面'**
+  String get widgetAddToHome;
+
+  /// No description provided for @widgetPinRequested.
+  ///
+  /// In zh, this message translates to:
+  /// **'已发起添加，请在系统弹窗中确认'**
+  String get widgetPinRequested;
+
+  /// No description provided for @widgetPinUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前桌面不支持一键添加，请按下方说明手动添加'**
+  String get widgetPinUnsupported;
+
+  /// No description provided for @widgetHowToAddTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'如何手动添加'**
+  String get widgetHowToAddTitle;
+
+  /// No description provided for @widgetHowToAddDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'长按桌面空白处 → 选择「小组件」→ 找到 Veri Fin → 拖动想要的小组件到桌面。'**
+  String get widgetHowToAddDesc;
+
+  /// No description provided for @widgetQuickEntryName.
+  ///
+  /// In zh, this message translates to:
+  /// **'今日支出 + 记一笔'**
+  String get widgetQuickEntryName;
+
+  /// No description provided for @widgetQuickEntryDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看今日支出，点按快速记一笔'**
+  String get widgetQuickEntryDesc;
+
+  /// No description provided for @widgetBudgetName.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月可用预算'**
+  String get widgetBudgetName;
+
+  /// No description provided for @widgetBudgetDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前账本本月还能花多少'**
+  String get widgetBudgetDesc;
+
+  /// No description provided for @widgetNetWorthName.
+  ///
+  /// In zh, this message translates to:
+  /// **'资产总额'**
+  String get widgetNetWorthName;
+
+  /// No description provided for @widgetNetWorthDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'所有可见账户余额合计'**
+  String get widgetNetWorthDesc;
+
   /// No description provided for @reminderNotifBody.
   ///
   /// In zh, this message translates to:

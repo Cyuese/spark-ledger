@@ -3,14 +3,13 @@ package top.talyra42.verifin
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 
 /// 桌面小组件：展示「今日支出」并提供快速记账入口。
-/// 数据由 Flutter 侧经 MethodChannel（`updateTodayExpenseWidget`）写入本地 SharedPreferences，
-/// 点「记一笔」复用 [MainActivity.ACTION_QUICK_ENTRY]，点主体打开应用。
+/// 数据由 Flutter 侧经 MethodChannel（`updateWidgetData`）写入 [WidgetData] 的
+/// SharedPreferences，点「记一笔」复用 [MainActivity.ACTION_QUICK_ENTRY]，点主体打开应用。
 class QuickEntryWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
@@ -21,32 +20,13 @@ class QuickEntryWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
-        private const val PREFS_NAME = "verifin_widget"
-        private const val KEY_AMOUNT = "today_expense"
-        private const val KEY_LABEL = "today_label"
-
-        /// 由 [MainActivity] 调用：保存最新数据并刷新所有已放置的小组件实例。
-        fun updateData(context: Context, amount: String, label: String) {
-            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .edit()
-                .putString(KEY_AMOUNT, amount)
-                .putString(KEY_LABEL, label)
-                .apply()
-            val manager = AppWidgetManager.getInstance(context)
-            val ids = manager.getAppWidgetIds(
-                ComponentName(context, QuickEntryWidgetProvider::class.java),
-            )
-            ids.forEach { renderWidget(context, manager, it) }
-        }
-
         private fun renderWidget(
             context: Context,
             manager: AppWidgetManager,
             widgetId: Int,
         ) {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val amount = prefs.getString(KEY_AMOUNT, "0") ?: "0"
-            val label = prefs.getString(KEY_LABEL, "今日支出") ?: "今日支出"
+            val amount = WidgetData.read(context, WidgetData.KEY_TODAY_AMOUNT, "0")
+            val label = WidgetData.read(context, WidgetData.KEY_TODAY_LABEL, "今日支出")
 
             val views = RemoteViews(context.packageName, R.layout.quick_entry_widget)
             views.setTextViewText(R.id.widget_amount, amount)

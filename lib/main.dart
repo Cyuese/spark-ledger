@@ -63,12 +63,12 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     );
     BackupCoordinator.maybeBackupOnOpen(_controller);
     // 打开应用时刷新桌面小组件「今日支出」。
-    pushTodayExpenseToWidget(_controller);
+    pushWidgetData(_controller);
   }
 
   void _handleEntryAdded() {
     BackupCoordinator.maybeBackupAfterEntry(_controller);
-    pushTodayExpenseToWidget(_controller);
+    pushWidgetData(_controller);
   }
 
   void _handleReminderChanged(ReminderSettings settings) {
@@ -83,7 +83,7 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       _controller.applyDueRecurring(DateTime.now());
       BackupCoordinator.maybeBackupOnOpen(_controller);
-      pushTodayExpenseToWidget(_controller);
+      pushWidgetData(_controller);
     }
   }
 

@@ -66,6 +66,28 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/quick_entry_widget_info" />
         </receiver>
+        <!-- 桌面小组件：本月可用预算。 -->
+        <receiver
+            android:name=".BudgetWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/budget_widget_info" />
+        </receiver>
+        <!-- 桌面小组件：资产总额。 -->
+        <receiver
+            android:name=".NetWorthWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/net_worth_widget_info" />
+        </receiver>
         <!-- flutter_local_notifications 定时通知的接收器；开机后重排已安排的记账提醒。 -->
         <receiver
             android:exported="false"

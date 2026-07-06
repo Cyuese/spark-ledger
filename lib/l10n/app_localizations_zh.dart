@@ -2518,6 +2518,55 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetTodayExpense => '今日支出';
 
   @override
+  String get widgetBudgetAvailable => '本月可用预算';
+
+  @override
+  String get widgetBudgetOverspent => '本月已超支';
+
+  @override
+  String get widgetNetWorth => '资产总额';
+
+  @override
+  String get widgetGalleryTitle => '桌面小组件';
+
+  @override
+  String get widgetGallerySubtitle => '把常看的数据放到手机桌面';
+
+  @override
+  String get widgetAddToHome => '添加到桌面';
+
+  @override
+  String get widgetPinRequested => '已发起添加，请在系统弹窗中确认';
+
+  @override
+  String get widgetPinUnsupported => '当前桌面不支持一键添加，请按下方说明手动添加';
+
+  @override
+  String get widgetHowToAddTitle => '如何手动添加';
+
+  @override
+  String get widgetHowToAddDesc =>
+      '长按桌面空白处 → 选择「小组件」→ 找到 Veri Fin → 拖动想要的小组件到桌面。';
+
+  @override
+  String get widgetQuickEntryName => '今日支出 + 记一笔';
+
+  @override
+  String get widgetQuickEntryDesc => '查看今日支出，点按快速记一笔';
+
+  @override
+  String get widgetBudgetName => '本月可用预算';
+
+  @override
+  String get widgetBudgetDesc => '当前账本本月还能花多少';
+
+  @override
+  String get widgetNetWorthName => '资产总额';
+
+  @override
+  String get widgetNetWorthDesc => '所有可见账户余额合计';
+
+  @override
   String get reminderNotifBody => '别忘了记录今天的收支～';
 
   @override
