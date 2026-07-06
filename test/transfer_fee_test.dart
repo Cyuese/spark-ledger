@@ -28,6 +28,23 @@ void main() {
     expect(accountDeltaForEntry(entry, 'other'), 0);
   });
 
+  test('同账户转账（转出=转入）净额为 −手续费，不吞掉入账', () {
+    final entry = LedgerEntry(
+      id: 'self',
+      bookId: defaultLedgerBookId,
+      type: EntryType.transfer,
+      amount: 100,
+      categoryId: 'transfer_out',
+      accountId: 'a',
+      toAccountId: 'a',
+      note: '',
+      occurredAt: DateTime(2026, 7, 4),
+      fee: 3,
+    );
+    // 转出 -103 + 转入 +100 = -3（仅手续费），而非 -103。
+    expect(accountDeltaForEntry(entry, 'a'), -3);
+  });
+
   test('手续费影响账户余额，且不计入收支统计', () async {
     final controller = await makeController();
     final bookId = controller.activeBook.id;

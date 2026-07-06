@@ -287,11 +287,12 @@ String _excelSerialToDate(String raw) {
     return raw.trim();
   }
   // Excel 1900 系统以 1899-12-30 为 0（含 1900 闰年 bug 的偏移）。
-  final base = DateTime(1899, 12, 30);
   final whole = serial.floor();
   final fraction = serial - whole;
   final seconds = (fraction * 86400).round();
-  final date = base.add(Duration(days: whole, seconds: seconds));
+  // 用 DateTime 构造器做墙钟日期运算（而非叠加绝对 Duration），避免 DST 地区跨夏令时
+  // 偏移一小时把时间推到相邻日；构造器会自动归一化天/秒溢出。
+  final date = DateTime(1899, 12, 30 + whole, 0, 0, seconds);
   String two(int n) => n.toString().padLeft(2, '0');
   return '${date.year}-${two(date.month)}-${two(date.day)} '
       '${two(date.hour)}:${two(date.minute)}:${two(date.second)}';

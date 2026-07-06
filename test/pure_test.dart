@@ -14,6 +14,23 @@ import 'support/test_harness.dart';
 void main() {
   useTestDatabases();
 
+  test('DateWindow.days 正常区间含首尾，逆序区间返回空不崩溃', () {
+    final normal = DateWindow(
+      start: DateTime(2026, 7, 1),
+      end: DateTime(2026, 7, 3),
+    ).days;
+    expect(normal.length, 3);
+    expect(normal.first, DateTime(2026, 7, 1));
+    expect(normal.last, DateTime(2026, 7, 3));
+
+    // end 早于 start：不再抛异常，返回空列表。
+    final reversed = DateWindow(
+      start: DateTime(2026, 7, 3),
+      end: DateTime(2026, 7, 1),
+    ).days;
+    expect(reversed, isEmpty);
+  });
+
   test('android package name is not the Flutter template package', () async {
     final buildGradle = File('android/app/build.gradle.kts').readAsStringSync();
     final mainActivity = File(

@@ -25,14 +25,16 @@ double accountDeltaForEntry(LedgerEntry entry, String accountId) {
     case EntryType.income:
       return entry.accountId == accountId ? entry.amount : 0;
     case EntryType.transfer:
+      var delta = 0.0;
+      // 用累加而非 if/else return：兼容「转出=转入」的同账户转账（净额应为 −手续费，
+      // 而非把入账吞掉）。
       if (entry.accountId == accountId) {
-        // 转出账户额外扣除手续费。
-        return -(entry.amount + entry.fee);
+        delta -= entry.amount + entry.fee; // 转出账户额外扣手续费
       }
       if (entry.toAccountId == accountId) {
-        return entry.amount;
+        delta += entry.amount;
       }
-      return 0;
+      return delta;
   }
 }
 
@@ -67,10 +69,16 @@ class DateWindow {
   final DateTime end;
 
   List<DateTime> get days {
-    final count = end.difference(start).inDays + 1;
+    // 用「按日构造」而非 start.add(Duration(days:))，避免 DST 地区跨夏令时偏移一小时
+    // 导致标签/边界落到相邻日；count 下限 0 防 end<start 时 List.generate 抛异常。
+    final startDay = dateOnly(start);
+    final count = (dateOnly(end).difference(startDay).inDays + 1).clamp(
+      0,
+      100000,
+    );
     return List<DateTime>.generate(
       count,
-      (index) => start.add(Duration(days: index)),
+      (index) => DateTime(startDay.year, startDay.month, startDay.day + index),
     );
   }
 

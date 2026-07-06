@@ -35,9 +35,10 @@ Uint8List packBackupArchive(String exportJson) {
     if (id is String && dataUrl is String && dataUrl.startsWith('data:')) {
       final bytes = _decodeDataUrl(dataUrl);
       if (bytes != null) {
-        archive.addFile(
-          ArchiveFile('$_attachmentsDir/$id', bytes.length, bytes),
-        );
+        // 附件是已压缩的 JPEG，再做 DEFLATE 几乎无收益却耗 CPU，改用 store（不压缩）。
+        final file = ArchiveFile('$_attachmentsDir/$id', bytes.length, bytes)
+          ..compression = CompressionType.none;
+        archive.addFile(file);
         // 从 JSON 剥离 base64，只留结构；解包时按 id 拼回。
         attachment['dataUrl'] = '';
       }
