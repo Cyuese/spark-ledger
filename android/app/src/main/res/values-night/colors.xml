@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 桌面小组件配色（深色）：近黑卡片 + 浅色文字，随系统深色模式自动切换。 -->
+    <color name="widget_surface">#FF1C1C1E</color>
+    <color name="widget_border">#FF38383A</color>
+    <color name="widget_label">#FF9CA3AF</color>
+    <color name="widget_value">#FFF5F5F7</color>
+    <color name="widget_accent">#FF5B8DEF</color>
+    <color name="widget_button_bg">#FF346EDB</color>
+    <color name="widget_button_text">#FFFFFFFF</color>
+</resources>

@@ -1648,6 +1648,7 @@
   "widgetNetWorth": "资产总额",
   "widgetGalleryTitle": "桌面小组件",
   "widgetGallerySubtitle": "把常看的数据放到手机桌面",
+  "widgetGalleryShort": "预览与添加",
   "widgetAddToHome": "添加到桌面",
   "widgetPinRequested": "已发起添加，请在系统弹窗中确认",
   "widgetPinUnsupported": "当前桌面不支持一键添加，请按下方说明手动添加",

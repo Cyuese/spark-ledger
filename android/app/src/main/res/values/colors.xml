@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 桌面小组件配色（浅色）：干净的白底卡片 + 深色文字，强调色仅用于按钮/数值。 -->
+    <color name="widget_surface">#FFFFFFFF</color>
+    <color name="widget_border">#FFE5E7EB</color>
+    <color name="widget_label">#FF6B7280</color>
+    <color name="widget_value">#FF111827</color>
+    <color name="widget_accent">#FF346EDB</color>
+    <color name="widget_button_bg">#FF346EDB</color>
+    <color name="widget_button_text">#FFFFFFFF</color>
+</resources>

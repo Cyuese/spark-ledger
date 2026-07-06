@@ -156,18 +156,16 @@ class MainActivity : FlutterFragmentActivity() {
             return
         }
         val manager = AppWidgetManager.getInstance(this)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            manager.isRequestPinAppWidgetSupported
-        ) {
-            val ok = manager.requestPinAppWidget(
-                ComponentName(this, provider),
-                null,
-                null,
-            )
-            result.success(ok)
-        } else {
-            result.success(false)
+        // 部分启动器（尤其国产 ROM）不支持一键固定，或调用时抛异常——一律安全回落，
+        // 由 Flutter 侧展示手动添加引导。
+        val ok = try {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                manager.isRequestPinAppWidgetSupported &&
+                manager.requestPinAppWidget(ComponentName(this, provider), null, null)
+        } catch (e: Exception) {
+            false
         }
+        result.success(ok)
     }
 
     private fun checkLatestRelease(includePrerelease: Boolean, result: MethodChannel.Result) {

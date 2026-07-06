@@ -16,7 +16,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="本月可用预算"
-        android:textColor="#DAE7FF"
+        android:textColor="@color/widget_label"
         android:textSize="12sp"
         android:includeFontPadding="false" />
 
@@ -26,7 +26,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
         android:text="0"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/widget_value"
         android:textSize="24sp"
         android:textStyle="bold"
         android:maxLines="1"

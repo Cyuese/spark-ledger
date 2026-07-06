@@ -250,6 +250,17 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ),
               ),
+              _FeatureTileData(
+                icon: Icons.widgets_outlined,
+                color: veriMint,
+                label: AppLocalizations.of(context).widgetGalleryTitle,
+                subtitle: AppLocalizations.of(context).widgetGalleryShort,
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const WidgetGalleryPage(),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -1606,20 +1617,6 @@ class SettingsPage extends StatelessWidget {
                         Navigator.of(context).push<void>(
                           MaterialPageRoute<void>(
                             builder: (context) => const AiSettingsPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    const Divider(height: 1),
-                    SettingsRow(
-                      icon: Icons.widgets_outlined,
-                      title: AppLocalizations.of(context).widgetGalleryTitle,
-                      trailing: '',
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () {
-                        Navigator.of(context).push<void>(
-                          MaterialPageRoute<void>(
-                            builder: (context) => const WidgetGalleryPage(),
                           ),
                         );
                       },

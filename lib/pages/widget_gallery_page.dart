@@ -179,7 +179,7 @@ class _WidgetCard extends StatelessWidget {
           const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerRight,
-            child: FilledButton.icon(
+            child: OutlinedButton.icon(
               onPressed: () => _addToHome(context),
               icon: const Icon(Icons.add_to_home_screen, size: 18),
               label: Text(l10n.widgetAddToHome),
@@ -191,7 +191,8 @@ class _WidgetCard extends StatelessWidget {
   }
 }
 
-/// 应用内还原小组件在桌面上的外观（渐变卡片 + 标签 + 大数值）。
+/// 应用内还原小组件在桌面上的外观：随系统深浅色切换的白/黑卡片 + 标签 + 大数值，
+/// 与原生 `widget_background`（`@color/widget_surface` 等）配色保持一致。
 class _WidgetPreview extends StatelessWidget {
   const _WidgetPreview({required this.spec});
 
@@ -199,16 +200,19 @@ class _WidgetPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final surface = dark ? const Color(0xFF1C1C1E) : Colors.white;
+    final border = dark ? const Color(0xFF38383A) : const Color(0xFFE5E7EB);
+    final labelColor = dark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280);
+    final valueColor = dark ? const Color(0xFFF5F5F7) : const Color(0xFF111827);
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[veriRoyal, veriBlue],
-        ),
+        color: surface,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border),
       ),
       child: Row(
         children: <Widget>[
@@ -221,18 +225,15 @@ class _WidgetPreview extends StatelessWidget {
                   spec.previewLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFDAE7FF),
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: labelColor, fontSize: 12),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   spec.previewValue,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: valueColor,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -245,10 +246,10 @@ class _WidgetPreview extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: veriRoyal,
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Icon(Icons.add, size: 18, color: veriRoyal),
+              child: const Icon(Icons.add, size: 18, color: Colors.white),
             ),
           ],
         ],

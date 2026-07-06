@@ -2620,6 +2620,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Put the numbers you check most on your home screen';
 
   @override
+  String get widgetGalleryShort => 'Preview & add';
+
+  @override
   String get widgetAddToHome => 'Add to home screen';
 
   @override
