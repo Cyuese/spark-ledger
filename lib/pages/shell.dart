@@ -81,14 +81,31 @@ class _VeriFinShellState extends State<VeriFinShell> {
       },
       child: Scaffold(
         body: SafeArea(child: pages[_index]),
+        // 自绘 FAB：由单个 InkWell 同时持有点击与长按（FloatingActionButton 内部
+        // InkWell 会吞掉外层 GestureDetector 的长按，故不用它）。外观沿用 FAB 主题
+        // 的 veriRoyal 圆角方形 + 白色加号。
         floatingActionButton: _index == 0
-            ? GestureDetector(
-                onLongPress: () => _startQuickEntry(context, longPress: true),
-                child: FloatingActionButton(
-                  key: const Key('quick_entry_fab'),
-                  onPressed: () => _startQuickEntry(context),
-                  tooltip: AppLocalizations.of(context).quickEntry,
-                  child: const Icon(Icons.add),
+            ? Tooltip(
+                message: AppLocalizations.of(context).quickEntry,
+                child: SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: Material(
+                    color: veriRoyal,
+                    elevation: 6,
+                    shadowColor: Colors.black.withValues(alpha: 0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(veriRadiusLg),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      key: const Key('quick_entry_fab'),
+                      onTap: () => _startQuickEntry(context),
+                      onLongPress: () =>
+                          _startQuickEntry(context, longPress: true),
+                      child: const Icon(Icons.add, color: Colors.white),
+                    ),
+                  ),
                 ),
               )
             : null,

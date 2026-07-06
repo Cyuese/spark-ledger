@@ -153,6 +153,8 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
 
                     final isOk = value == 'OK';
                     final isOperator = _operators.contains(value);
+                    final isClear = value == 'C' || value == '⌫';
+                    final isDot = value == '.';
                     final isDark =
                         Theme.of(context).brightness == Brightness.dark;
                     final keyColor = isDark
@@ -161,13 +163,6 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                     final keyTextColor = isDark
                         ? Colors.white.withValues(alpha: 0.94)
                         : veriInk;
-                    // 运算符键用强调蓝底色，与数字键区分。
-                    final operatorColor = isDark
-                        ? veriRoyal.withValues(alpha: 0.28)
-                        : const Color(0xFFDCE7FA);
-                    final operatorTextColor = isDark
-                        ? Colors.white.withValues(alpha: 0.94)
-                        : veriRoyal;
                     final canSubmit = _canSubmit;
                     final enabled = !isOk || canSubmit;
                     final okDisabledBackground = isDark
@@ -176,16 +171,42 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                     final okDisabledForeground = isDark
                         ? Colors.white.withValues(alpha: 0.46)
                         : const Color(0xFF6B7C93);
-                    final buttonBackground = isOk
-                        ? (enabled ? veriRoyal : okDisabledBackground)
-                        : isOperator
-                        ? operatorColor
-                        : keyColor;
-                    final buttonForeground = isOk
-                        ? (enabled ? Colors.white : okDisabledForeground)
-                        : isOperator
-                        ? operatorTextColor
-                        : keyTextColor;
+                    // 按键分组配色：运算符=强调蓝、清除/退格=红（比运算符更深、
+                    // 提示可清除）、小数点=琥珀、数字=浅底，彼此一眼可辨。
+                    final Color buttonBackground;
+                    final Color buttonForeground;
+                    if (isOk) {
+                      buttonBackground = enabled
+                          ? veriRoyal
+                          : okDisabledBackground;
+                      buttonForeground = enabled
+                          ? Colors.white
+                          : okDisabledForeground;
+                    } else if (isOperator) {
+                      buttonBackground = isDark
+                          ? veriRoyal.withValues(alpha: 0.28)
+                          : const Color(0xFFDCE7FA);
+                      buttonForeground = isDark
+                          ? Colors.white.withValues(alpha: 0.94)
+                          : veriRoyal;
+                    } else if (isClear) {
+                      buttonBackground = isDark
+                          ? veriExpense.withValues(alpha: 0.26)
+                          : const Color(0xFFF6D2D8);
+                      buttonForeground = isDark
+                          ? const Color(0xFFFFAAB6)
+                          : veriExpense;
+                    } else if (isDot) {
+                      buttonBackground = isDark
+                          ? veriWarning.withValues(alpha: 0.26)
+                          : const Color(0xFFFBEAC6);
+                      buttonForeground = isDark
+                          ? veriWarning
+                          : const Color(0xFF9A6A12);
+                    } else {
+                      buttonBackground = keyColor;
+                      buttonForeground = keyTextColor;
+                    }
                     return FilledButton.tonal(
                       key: isOk
                           ? const Key('number_pad_ok')
