@@ -1693,6 +1693,7 @@
   "cleartextWarnBody": "该地址使用未加密的 http，你的密钥/账号密码会以明文发送，可能被同一网络或链路上的第三方窃取。仅在你信任该网络（如本地/自建服务）时继续。",
   "cleartextWarnContinue": "仍要保存",
   "reminderPermissionDenied": "通知权限被拒，提醒将不会显示。请在系统设置中允许通知后重试。",
+  "backingUp": "备份中…",
   "aiErrNotConfigured": "AI 未配置：请先填写请求地址、API Key 与模型",
   "aiErrNotSupported": "当前平台不支持 AI 请求",
   "aiErrTimeout": "请求超时，请检查网络或稍后重试",

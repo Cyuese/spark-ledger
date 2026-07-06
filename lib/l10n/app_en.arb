@@ -869,6 +869,7 @@
   "cleartextWarnBody": "This address uses unencrypted http; your key/username and password will be sent in cleartext and could be intercepted by a third party on the same network or link. Continue only if you trust this network (e.g. a local/self-hosted service).",
   "cleartextWarnContinue": "Save anyway",
   "reminderPermissionDenied": "Notification permission denied; reminders won't show. Please allow notifications in system settings and try again.",
+  "backingUp": "Backing up…",
   "aiErrNotConfigured": "AI not configured: please fill in the base URL, API key and model first",
   "aiErrNotSupported": "AI requests are not supported on this platform",
   "aiErrTimeout": "Request timed out; check your network or try again later",

@@ -2694,6 +2694,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reminderPermissionDenied => '通知权限被拒，提醒将不会显示。请在系统设置中允许通知后重试。';
 
   @override
+  String get backingUp => '备份中…';
+
+  @override
   String get aiErrNotConfigured => 'AI 未配置：请先填写请求地址、API Key 与模型';
 
   @override

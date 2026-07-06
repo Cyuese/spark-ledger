@@ -4988,6 +4988,12 @@ abstract class AppLocalizations {
   /// **'通知权限被拒，提醒将不会显示。请在系统设置中允许通知后重试。'**
   String get reminderPermissionDenied;
 
+  /// No description provided for @backingUp.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份中…'**
+  String get backingUp;
+
   /// No description provided for @aiErrNotConfigured.
   ///
   /// In zh, this message translates to:

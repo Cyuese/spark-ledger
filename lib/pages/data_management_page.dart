@@ -364,6 +364,16 @@ class DataManagementPage extends StatelessWidget {
         return;
       }
     }
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    // 备份含加密（PBKDF2）与文件写入，耗时可感知：期间弹不可关闭的「备份中」转圈，
+    // 避免点了没反应的错觉。
+    final navigator = Navigator.of(context, rootNavigator: true);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _BackupProgressDialog(label: l10n.backingUp),
+    );
     try {
       final now = DateTime.now();
       final result = await BackupService.writeManualBackup(
@@ -373,25 +383,15 @@ class DataManagementPage extends StatelessWidget {
         passphrase: controller.backupPassphrase,
       );
       controller.recordBackupTime(now);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context).backedUpFile(result.filename),
-            ),
-          ),
-        );
-      }
+      navigator.pop(); // 关闭「备份中」
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.backedUpFile(result.filename))),
+      );
     } catch (error) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _backupErrorText(AppLocalizations.of(context), error),
-            ),
-          ),
-        );
-      }
+      navigator.pop(); // 关闭「备份中」
+      messenger.showSnackBar(
+        SnackBar(content: Text(_backupErrorText(l10n, error))),
+      );
     }
   }
 
@@ -1388,4 +1388,29 @@ class _PlatformOption {
   final IconData icon;
   final String title;
   final String subtitle;
+}
+
+/// 备份进行中的不可关闭转圈弹窗。
+class _BackupProgressDialog extends StatelessWidget {
+  const _BackupProgressDialog({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      content: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2.4),
+          ),
+          const SizedBox(width: 16),
+          Flexible(child: Text(label)),
+        ],
+      ),
+    );
+  }
 }

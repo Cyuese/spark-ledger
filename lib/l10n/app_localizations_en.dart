@@ -2754,6 +2754,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Notification permission denied; reminders won\'t show. Please allow notifications in system settings and try again.';
 
   @override
+  String get backingUp => 'Backing up…';
+
+  @override
   String get aiErrNotConfigured =>
       'AI not configured: please fill in the base URL, API key and model first';
 
