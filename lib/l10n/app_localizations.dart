@@ -3611,7 +3611,7 @@ abstract class AppLocalizations {
   /// No description provided for @yimuImportGuide.
   ///
   /// In zh, this message translates to:
-  /// **'一木记账 App →「我的」→「导出账单」→ 选择 Excel 格式，保存到本机后在此选择（文件为 .xls）。\n\n分类按二级分类导入，转账仅记转出账户。菜单以实际 App 版本为准。'**
+  /// **'一木记账 App →「我的」→「导出账单」→ 选择 Excel 格式，保存到本机后在此选择（文件为 .xls）。\n\n一木把「账单」和「转账」导出成两个文件，两个都在此依次导入即可（会自动识别）。分类按二级分类导入，转账保留转出/转入账户与手续费。菜单以实际 App 版本为准。'**
   String get yimuImportGuide;
 
   /// No description provided for @genericCsvImportGuide.

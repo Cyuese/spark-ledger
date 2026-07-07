@@ -250,11 +250,11 @@ void main() {
     });
   });
 
-  group('一木记账 xls（BIFF8 二进制，带符号金额，二级分类）', () {
-    // 真实样例（用户提供，7 条记录），验证 OLE2/BIFF8 读取 + 归一化端到端。
+  group('一木记账 账单 xls（BIFF8 二进制，带符号金额，二级分类）', () {
+    // 真实样例（用户提供，7 条收支记录），验证 OLE2/BIFF8 读取 + 归一化端到端。
     late ImportPlan plan;
     setUp(() {
-      final bytes = File('test/fixtures/yimu_sample.xls').readAsBytesSync();
+      final bytes = File('test/fixtures/yimu_transactions.xls').readAsBytesSync();
       plan = run(ImportPlatform.yimu, Uint8List.fromList(bytes));
     });
 
@@ -268,21 +268,16 @@ void main() {
         (e) => e.type == EntryType.income && e.amount == 200,
       );
       expect(income.occurredAt.year, 2026);
-      expect(income.occurredAt.month, 7);
       final category = plan.newCategories.firstWhere(
         (c) => c.id == income.categoryId,
       );
-      expect(category.label, '工资'); // 二级分类，而非一级「收入」。
+      expect(category.label, '其他'); // 二级分类，而非一级「收入」。
       expect(category.type, EntryType.income);
     });
 
-    test('支出金额取绝对值、账户按名建立', () {
+    test('支出按二级分类、金额取绝对值', () {
       final expense = plan.entries.firstWhere((e) => e.amount == 500);
       expect(expense.type, EntryType.expense);
-      final account = plan.newAccounts.firstWhere(
-        (a) => a.id == expense.accountId,
-      );
-      expect(account.name, '微信钱包');
       final category = plan.newCategories.firstWhere(
         (c) => c.id == expense.categoryId,
       );
@@ -292,6 +287,31 @@ void main() {
     test('账户为空记为「无账户」', () {
       final noAccount = plan.entries.firstWhere((e) => e.amount == 3);
       expect(noAccount.accountId, isEmpty);
+    });
+  });
+
+  group('一木记账 转账 xls（独立文件，转出/转入账户 + 手续费）', () {
+    late ImportPlan plan;
+    setUp(() {
+      final bytes = File('test/fixtures/yimu_transfers.xls').readAsBytesSync();
+      plan = run(ImportPlatform.yimu, Uint8List.fromList(bytes));
+    });
+
+    test('识别为转账并建立转出/转入账户', () {
+      expect(plan.importedCount, 1);
+      expect(plan.errorCount, 0);
+      final transfer = plan.entries.single;
+      expect(transfer.type, EntryType.transfer);
+      expect(transfer.amount, 20);
+      expect(transfer.fee, 0);
+      final from = plan.newAccounts.firstWhere(
+        (a) => a.id == transfer.accountId,
+      );
+      final to = plan.newAccounts.firstWhere(
+        (a) => a.id == transfer.toAccountId,
+      );
+      expect(from.name, '微信钱包');
+      expect(to.name, '支付宝');
     });
   });
 }

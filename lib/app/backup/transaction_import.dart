@@ -40,6 +40,7 @@ const Map<String, List<String>> _headerAliases = <String, List<String>>{
   'account': <String>['账户', 'account', '账号', '转出账户', '账户1', '支付账户'],
   'toAccount': <String>['转入账户', 'toaccount', 'to account', '目标账户', '账户2'],
   'note': <String>['备注', 'note', 'memo', '说明', '描述', '备注信息'],
+  'fee': <String>['手续费', 'fee', '服务费'],
 };
 
 /// 可识别的导入来源，用于给用户友好提示。
@@ -185,6 +186,22 @@ double? _parseAmount(String raw) {
   // 部分导出（如钱迹）支出金额为负，方向由「类型」列决定，这里取绝对值。
   final magnitude = value.abs();
   return magnitude == 0 ? null : magnitude;
+}
+
+/// 转账手续费：可空/可为 0，非法或负数按 0 处理（不像金额那样使整行失败）。
+double _parseFee(String raw) {
+  final cleaned = raw
+      .trim()
+      .replaceAll(RegExp(r'[¥$,\s]'), '')
+      .replaceAll('，', '');
+  if (cleaned.isEmpty) {
+    return 0;
+  }
+  final value = double.tryParse(cleaned);
+  if (value == null || value.isNaN || value.isInfinite || value < 0) {
+    return 0;
+  }
+  return value;
 }
 
 DateTime? _parseDate(String raw) {
@@ -381,6 +398,7 @@ ImportPlan buildImportPlan({
           toAccountId: toId,
           note: note,
           occurredAt: date,
+          fee: _parseFee(cell(row, 'fee')),
         ),
       );
       continue;

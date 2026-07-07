@@ -14,7 +14,8 @@ import 'xls_reader.dart';
 /// - [alipay] 支付宝「交易明细」CSV：GBK 编码、前置多行说明、含「不计收支」。
 /// - [wechat] 微信「支付账单」xlsx：二进制表格、日期为 Excel 序列号、含「中性交易」。
 /// - [mint] 薄荷记账 CSV：UTF-16LE 编码、**制表符分隔**、支出金额为负。
-/// - [yimu] 一木记账 xls：老式 BIFF8 二进制 Excel，金额带符号、含一/二级分类。
+/// - [yimu] 一木记账 xls：老式 BIFF8 二进制 Excel。一木把「账单（收支）」与「转账」
+///   导出成两个不同表头的文件，导入时按表头自动识别、各导一次。
 /// - [genericCsv] 通用 CSV（Veri Fin 模板 / 钱迹 / 随手记）：UTF-8 逗号分隔，走别名识别。
 enum ImportPlatform {
   alipay,
@@ -32,6 +33,7 @@ enum ImportPlatform {
 }
 
 /// Veri Fin 规范列头：各平台归一化后统一转成这套列，再复用 [buildImportPlan]。
+/// 「手续费」仅转账用（一木转账带此列），其他来源数据行不含该列、按 0 处理。
 const List<String> _canonicalHeader = <String>[
   '日期',
   '类型',
@@ -40,6 +42,7 @@ const List<String> _canonicalHeader = <String>[
   '账户',
   '转入账户',
   '备注',
+  '手续费',
 ];
 
 /// 解析所选平台的账单文件字节，构建导入计划（纯函数，便于测试）。
@@ -220,53 +223,81 @@ List<List<String>> _normalizeMint(String content) {
 }
 
 // ---------------------------------------------------------------------------
-// 一木记账：BIFF8 .xls，列含 日期/收支类型/金额(带符号)/类别/二级分类/账户。
-// 金额符号仅表方向（管线取绝对值），分类取二级分类（用户实际选择的叶子），
-// 为空回退一级类别；转账无「转入账户」列，仅记转出账户。
+// 一木记账：BIFF8 .xls，账单与转账是两个不同表头的文件，按表头自动分派。
+// - 账单：日期/收支类型/金额(带符号)/类别/二级分类/账户。金额符号仅表方向（管线取
+//   绝对值），分类取二级分类（用户实际选择的叶子）、为空回退一级类别。
+// - 转账：日期/类型/转出账户/转入账户/金额/手续费/备注。含手续费，映射到转账 fee。
 // ---------------------------------------------------------------------------
 
 List<List<String>> _normalizeYimu(List<List<String>> rows) {
-  final headerIndex = _findHeaderRow(
+  final txnHeader = _findHeaderRow(
     rows,
     mustHave: const <String>['日期', '收支类型', '金额'],
   );
-  if (headerIndex == null) {
-    throw const FormatException('未找到一木记账表头（日期/收支类型/金额），请确认选择的是一木记账导出的 xls');
+  if (txnHeader != null) {
+    return _normalizeYimuTransactions(rows, txnHeader);
   }
+  final xferHeader = _findHeaderRow(
+    rows,
+    mustHave: const <String>['转出账户', '转入账户', '金额'],
+  );
+  if (xferHeader != null) {
+    return _normalizeYimuTransfers(rows, xferHeader);
+  }
+  throw const FormatException('未找到一木记账表头，请确认选择的是一木导出的「账单」或「转账」xls');
+}
+
+List<List<String>> _normalizeYimuTransactions(
+  List<List<String>> rows,
+  int headerIndex,
+) {
   final cols = _columnIndex(rows[headerIndex]);
   final out = <List<String>>[_canonicalHeader];
   for (var i = headerIndex + 1; i < rows.length; i++) {
     final row = rows[i];
     final type = _at(row, cols['收支类型']).trim();
-    if (type != '支出' && type != '收入' && type != '转账') {
+    if (type != '支出' && type != '收入') {
       continue;
     }
     final level1 = _at(row, cols['类别']);
     final level2 = _at(row, cols['二级分类']);
     final category = level2.isNotEmpty ? level2 : level1;
-    final account = _at(row, cols['账户']);
-    final note = _at(row, cols['备注']);
-    if (type == '转账') {
-      out.add(<String>[
-        _at(row, cols['日期']),
-        type,
-        _at(row, cols['金额']),
-        '',
-        account,
-        '',
-        note,
-      ]);
-    } else {
-      out.add(<String>[
-        _at(row, cols['日期']),
-        type,
-        _at(row, cols['金额']),
-        category,
-        account,
-        '',
-        note,
-      ]);
+    out.add(<String>[
+      _at(row, cols['日期']),
+      type,
+      _at(row, cols['金额']),
+      category,
+      _at(row, cols['账户']),
+      '',
+      _at(row, cols['备注']),
+    ]);
+  }
+  return out;
+}
+
+List<List<String>> _normalizeYimuTransfers(
+  List<List<String>> rows,
+  int headerIndex,
+) {
+  final cols = _columnIndex(rows[headerIndex]);
+  final out = <List<String>>[_canonicalHeader];
+  for (var i = headerIndex + 1; i < rows.length; i++) {
+    final row = rows[i];
+    final from = _at(row, cols['转出账户']);
+    final to = _at(row, cols['转入账户']);
+    if (from.isEmpty && to.isEmpty) {
+      continue;
     }
+    out.add(<String>[
+      _at(row, cols['日期']),
+      '转账',
+      _at(row, cols['金额']),
+      '',
+      from,
+      to,
+      _at(row, cols['备注']),
+      _at(row, cols['手续费']),
+    ]);
   }
   return out;
 }

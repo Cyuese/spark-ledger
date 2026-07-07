@@ -1986,7 +1986,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yimuImportGuide =>
-      'In YiMu (一木记账): Me → Export bill → choose the Excel format, save it to your phone, then choose it here (the file is a .xls). \n\nCategories are imported from the second-level category; transfers keep only the source account. Menu paths may vary by app version.';
+      'In YiMu (一木记账): Me → Export bill → choose the Excel format, save it to your phone, then choose it here (the file is a .xls). \n\nYiMu exports \"bills\" and \"transfers\" as two separate files; import both here one after another (they are auto-detected). Categories use the second-level category; transfers keep both accounts and the fee. Menu paths may vary by app version.';
 
   @override
   String get genericCsvImportGuide =>

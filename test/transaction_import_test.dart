@@ -110,6 +110,18 @@ void main() {
       expect(same.errorCount, 1);
     });
 
+    test('转账手续费：识别「手续费」列并落到 fee（缺列则为 0）', () {
+      final withFee = build(
+        '日期,类型,金额,分类,账户,转入账户,备注,手续费\n2026-01-05,转账,500,,现金,储蓄卡,取现,2.5',
+      );
+      expect(withFee.entries.single.fee, 2.5);
+
+      final noFeeColumn = build(
+        '日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,转账,500,,现金,储蓄卡,取现',
+      );
+      expect(noFeeColumn.entries.single.fee, 0);
+    });
+
     test('账户为空的收支导入为无账户交易（不再报错）', () {
       final plan = build('日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,支出,23.5,餐饮,,,记一笔');
       expect(plan.importedCount, 1);
