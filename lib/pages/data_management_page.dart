@@ -604,7 +604,7 @@ class DataManagementPage extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(controller.dispose);
   }
 
   Future<void> _editBackupPassphrase(
@@ -681,6 +681,8 @@ class DataManagementPage extends StatelessWidget {
         );
       },
     );
+    keyController.dispose();
+    confirmController.dispose();
     if (result != null && result.isNotEmpty) {
       controller.setBackupPassphrase(result);
       if (context.mounted) {
@@ -833,6 +835,11 @@ class DataManagementPage extends StatelessWidget {
         );
       },
     );
+    // 对话框已关闭，输入值已由 current() 落入 saved，可安全释放控制器
+    // （下方有 mounted / 确认弹窗等早退分支，放这里确保各路径都释放）。
+    urlController.dispose();
+    userController.dispose();
+    passController.dispose();
     if (saved != null && saved.isConfigured) {
       if (!context.mounted) return;
       // http 发往公网主机会明文暴露账号密码，保存前提醒确认。

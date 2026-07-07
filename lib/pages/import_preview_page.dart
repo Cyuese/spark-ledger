@@ -332,7 +332,7 @@ class _ImportPreviewPageState extends State<ImportPreviewPage> {
           ),
         ],
       ),
-    );
+    ).whenComplete(controller.dispose);
   }
 
   @override
