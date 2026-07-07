@@ -384,6 +384,13 @@ class BarChartPainter extends CustomPainter {
       );
     }
 
+    // 空数据只画坐标轴与标签、不画柱子（reduce/除以 length 对空列表会抛异常），
+    // 与折线图对空数据的处理对齐。
+    if (values.isEmpty) {
+      _drawLabels(canvas, chartRect, xLabels, yLabels, axisColor);
+      return;
+    }
+
     final maxValue = math.max(values.reduce(math.max), 1);
     final gap = chartRect.width / values.length;
     for (var i = 0; i < values.length; i += 1) {
