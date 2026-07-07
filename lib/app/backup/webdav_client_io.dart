@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -13,6 +14,17 @@ class WebdavException implements Exception {
   @override
   String toString() => message;
 }
+
+/// 建立 TCP 连接的超时。服务器不可达 / 连接被黑洞挂起时快速失败，
+/// 避免请求无限期挂起（自动备份协调器曾因此永久卡住 `_running`）。
+const Duration _connectTimeout = Duration(seconds: 30);
+
+/// 小请求（PROPFIND / MKCOL / DELETE 等，无大体积 body）等待响应的超时。
+/// 上传 / 下载因 body 可能很大（含图片附件的大备份）不设总超时，仅靠
+/// [_connectTimeout] 与协调器层的兜底超时防挂死。
+const Duration _responseTimeout = Duration(seconds: 60);
+
+HttpClient _newClient() => HttpClient()..connectionTimeout = _connectTimeout;
 
 const String _propfindBody =
     '<?xml version="1.0" encoding="utf-8"?>'
@@ -40,6 +52,9 @@ Future<HttpClientRequest> _open(
 Never _fail(Object error) {
   if (error is WebdavException) {
     throw error;
+  }
+  if (error is TimeoutException) {
+    throw const WebdavException('连接服务器超时，请检查地址与网络');
   }
   if (error is SocketException) {
     throw const WebdavException('无法连接服务器，请检查地址与网络');
@@ -86,7 +101,7 @@ Future<void> _ensureCollection(HttpClient client, WebdavConfig config) async {
       _collectionUri(config),
       config,
     );
-    final response = await request.close();
+    final response = await request.close().timeout(_responseTimeout);
     await response.drain<void>();
     // 201 创建成功；405/301 通常表示已存在，忽略。
   } catch (_) {
@@ -95,7 +110,7 @@ Future<void> _ensureCollection(HttpClient client, WebdavConfig config) async {
 }
 
 Future<void> webdavTestConnection(WebdavConfig config) async {
-  final client = HttpClient();
+  final client = _newClient();
   try {
     final request = await _open(
       client,
@@ -110,7 +125,7 @@ Future<void> webdavTestConnection(WebdavConfig config) async {
       charset: 'utf-8',
     );
     request.write(_propfindBody);
-    final response = await request.close();
+    final response = await request.close().timeout(_responseTimeout);
     await response.drain<void>();
     if (response.statusCode >= 400) {
       throw WebdavException(_statusMessage(response.statusCode));
@@ -127,7 +142,7 @@ Future<void> webdavUpload(
   String filename,
   List<int> bytes,
 ) async {
-  final client = HttpClient();
+  final client = _newClient();
   try {
     await _ensureCollection(client, config);
     final target = Uri.parse(joinWebdavUrl(config.url, filename));
@@ -148,7 +163,7 @@ Future<void> webdavUpload(
 }
 
 Future<List<WebdavRemoteFile>> webdavList(WebdavConfig config) async {
-  final client = HttpClient();
+  final client = _newClient();
   try {
     final request = await _open(
       client,
@@ -163,8 +178,11 @@ Future<List<WebdavRemoteFile>> webdavList(WebdavConfig config) async {
       charset: 'utf-8',
     );
     request.write(_propfindBody);
-    final response = await request.close();
-    final body = await response.transform(utf8.decoder).join();
+    final response = await request.close().timeout(_responseTimeout);
+    final body = await response
+        .transform(utf8.decoder)
+        .join()
+        .timeout(_responseTimeout);
     if (response.statusCode >= 400) {
       throw WebdavException(_statusMessage(response.statusCode));
     }
@@ -181,7 +199,7 @@ Future<List<WebdavRemoteFile>> webdavList(WebdavConfig config) async {
 }
 
 Future<void> webdavDelete(WebdavConfig config, String href) async {
-  final client = HttpClient();
+  final client = _newClient();
   try {
     final request = await _open(
       client,
@@ -189,7 +207,7 @@ Future<void> webdavDelete(WebdavConfig config, String href) async {
       _resolveHref(config, href),
       config,
     );
-    final response = await request.close();
+    final response = await request.close().timeout(_responseTimeout);
     await response.drain<void>();
     // 404 视为已删除，其余 4xx/5xx 报错。
     if (response.statusCode >= 400 && response.statusCode != 404) {
@@ -203,7 +221,7 @@ Future<void> webdavDelete(WebdavConfig config, String href) async {
 }
 
 Future<Uint8List> webdavDownload(WebdavConfig config, String href) async {
-  final client = HttpClient();
+  final client = _newClient();
   try {
     final request = await _open(
       client,
@@ -211,7 +229,8 @@ Future<Uint8List> webdavDownload(WebdavConfig config, String href) async {
       _resolveHref(config, href),
       config,
     );
-    final response = await request.close();
+    // 只对响应头等待设超时；下载 body 可能很大，交给流自身与协调器兜底超时。
+    final response = await request.close().timeout(_responseTimeout);
     if (response.statusCode >= 400) {
       throw WebdavException(_statusMessage(response.statusCode));
     }
