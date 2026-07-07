@@ -24,10 +24,14 @@ List<int> _randomBytes(int length) {
   return List<int>.generate(length, (_) => random.nextInt(256));
 }
 
-Future<SecretKey> _deriveKey(String passphrase, List<int> salt) {
+Future<SecretKey> _deriveKey(
+  String passphrase,
+  List<int> salt,
+  int iterations,
+) {
   final pbkdf2 = Pbkdf2(
     macAlgorithm: Hmac.sha256(),
-    iterations: _pbkdf2Iterations,
+    iterations: iterations,
     bits: 256,
   );
   return pbkdf2.deriveKey(
@@ -54,7 +58,7 @@ Future<String> encryptBackup(String plaintext, String passphrase) async {
     throw const BackupCryptoException('加密密钥不能为空');
   }
   final salt = _randomBytes(_saltLength);
-  final key = await _deriveKey(passphrase, salt);
+  final key = await _deriveKey(passphrase, salt, _pbkdf2Iterations);
   final nonce = _aesGcm.newNonce();
   final box = await _aesGcm.encrypt(
     utf8.encode(plaintext),
@@ -96,7 +100,10 @@ Future<String> decryptBackup(String envelopeJson, String passphrase) async {
     final nonce = base64Decode(envelope['nonce'] as String);
     final cipher = base64Decode(envelope['cipher'] as String);
     final mac = base64Decode(envelope['mac'] as String);
-    final key = await _deriveKey(passphrase, salt);
+    // 按信封里记录的迭代数派生密钥，而非固定常量：将来若调整 _pbkdf2Iterations，
+    // 用旧迭代数加密的备份仍能解开。缺失时回退到当前常量（兼容早期信封）。
+    final iterations = (envelope['iter'] as num?)?.toInt() ?? _pbkdf2Iterations;
+    final key = await _deriveKey(passphrase, salt, iterations);
     final box = SecretBox(cipher, nonce: nonce, mac: Mac(mac));
     final clear = await _aesGcm.decrypt(box, secretKey: key);
     return utf8.decode(clear);
