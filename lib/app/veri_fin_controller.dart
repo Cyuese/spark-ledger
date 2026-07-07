@@ -1020,25 +1020,6 @@ class VeriFinController extends ChangeNotifier {
     return plan;
   }
 
-  /// 解析所选支付平台 / 记账软件导出的账单字节并导入当前账本。
-  /// 支付宝(GBK CSV)、微信(xlsx)、薄荷记账(UTF-16 CSV)各自适配，其他走通用 CSV。
-  /// 返回导入计划供 UI 反馈；解析失败抛 [FormatException]。
-  ImportPlan importTransactionsFromPlatform(
-    ImportPlatform platform,
-    Uint8List bytes,
-  ) {
-    final plan = buildPlatformImportPlan(
-      platform: platform,
-      bytes: bytes,
-      bookId: _activeBookId,
-      existingAccounts: accounts,
-      existingCategories: categories,
-      now: DateTime.now(),
-    );
-    _applyImportPlan(plan);
-    return plan;
-  }
-
   void _applyImportPlan(ImportPlan plan) {
     if (plan.entries.isEmpty) {
       return;
@@ -1052,6 +1033,82 @@ class VeriFinController extends ChangeNotifier {
       _categories.addAll(plan.newCategories);
     }
     _entries.addAll(plan.entries);
+    _entries.sort(_compareEntriesLatestFirst);
+    _persistAccounts();
+    _persistCategories();
+    _persistEntries();
+    notifyListeners();
+    // 导入也新增了交易：触发自动备份与小组件刷新，与手动记账一致。
+    onEntryAdded?.call();
+  }
+
+  /// 仅解析所选平台账单为导入计划，**不落库**——供导入预览页展示、让用户
+  /// 排除/编辑后再确认。解析失败抛 [FormatException]。
+  ImportPlan parsePlatformImport(ImportPlatform platform, Uint8List bytes) {
+    return buildPlatformImportPlan(
+      platform: platform,
+      bytes: bytes,
+      bookId: _activeBookId,
+      existingAccounts: accounts,
+      existingCategories: categories,
+      now: DateTime.now(),
+    );
+  }
+
+  /// 落库用户在导入预览页确认（可能已筛选/编辑）的交易子集。
+  /// [candidateAccounts]/[candidateCategories] 为解析计划里待新建的账户/分类，
+  /// 这里只创建被保留交易**实际引用到**、且当前尚不存在的那些，避免建出用不上的
+  /// 空账户/空分类。空交易列表直接返回、不写库。
+  void applyImportEntries({
+    required List<LedgerEntry> entries,
+    required List<Account> candidateAccounts,
+    required List<Category> candidateCategories,
+  }) {
+    if (entries.isEmpty) {
+      return;
+    }
+    final referencedAccountIds = <String>{};
+    final referencedCategoryIds = <String>{};
+    for (final entry in entries) {
+      if (entry.accountId.isNotEmpty) {
+        referencedAccountIds.add(entry.accountId);
+      }
+      final toAccountId = entry.toAccountId;
+      if (toAccountId != null && toAccountId.isNotEmpty) {
+        referencedAccountIds.add(toAccountId);
+      }
+      if (entry.categoryId.isNotEmpty) {
+        referencedCategoryIds.add(entry.categoryId);
+      }
+    }
+    final existingAccountIds = _accounts.map((account) => account.id).toSet();
+    final newAccounts = candidateAccounts
+        .where(
+          (account) =>
+              referencedAccountIds.contains(account.id) &&
+              !existingAccountIds.contains(account.id),
+        )
+        .toList();
+    final existingCategoryIds = _categories
+        .map((category) => category.id)
+        .toSet();
+    final newCategories = candidateCategories
+        .where(
+          (category) =>
+              referencedCategoryIds.contains(category.id) &&
+              !existingCategoryIds.contains(category.id),
+        )
+        .toList();
+
+    _accounts.addAll(newAccounts);
+    if (newCategories.isNotEmpty) {
+      // 首次导入前若仍是默认分类占位，先落地为真实列表再追加。
+      if (_categories.isEmpty) {
+        _categories.addAll(_seedCategories);
+      }
+      _categories.addAll(newCategories);
+    }
+    _entries.addAll(entries);
     _entries.sort(_compareEntriesLatestFirst);
     _persistAccounts();
     _persistCategories();

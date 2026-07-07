@@ -765,6 +765,55 @@
   "allImported": "All rows imported.",
   "skippedFollowing": "These rows were skipped:\n{lines}",
   "gotIt": "Got it",
+  "importPreviewTitle": "Import preview",
+  "importPreviewHint": "Tap to exclude / restore, long-press to edit",
+  "importPreviewSelectedOf": "Importing {selected} / {total}",
+  "@importPreviewSelectedOf": {
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewNewAccounts": "{count} new account(s)",
+  "@importPreviewNewAccounts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewNewCategories": "{count} new categor(ies)",
+  "@importPreviewNewCategories": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewSkipped": "{count} row(s) couldn't be parsed",
+  "@importPreviewSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewSkippedTitle": "Skipped rows",
+  "importPreviewSelectAll": "Select all",
+  "importPreviewDeselectAll": "Deselect all",
+  "importPreviewConfirm": "Import ({count})",
+  "@importPreviewConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewNothingToImport": "No transactions to import",
   "importLocalTitle": "Import local backup?",
   "importLocalMessage": "Importing replaces current local transactions, accounts, ledgers, budgets, profile and settings. Consider exporting current data first.",
   "importedLocal": "Local data imported",

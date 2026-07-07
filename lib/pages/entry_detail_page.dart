@@ -8,6 +8,7 @@ import '../app/demo_data.dart';
 import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
+import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
 import 'attachments_editor.dart';
@@ -19,13 +20,38 @@ class EntryDetailPage extends StatefulWidget {
     required this.initialAmount,
     this.initialAccountId,
     this.initialDraft,
-  });
+  }) : draftEntry = null,
+       draftExtraAccounts = null,
+       draftExtraCategories = null;
+
+  /// 草稿编辑模式：编辑一条已有交易（如导入预览里的条目），保存时**不落库**，
+  /// 而是通过 `Navigator.pop` 返回修改后的 [LedgerEntry] 供上层处理。
+  /// [extraAccounts]/[extraCategories] 是尚未落库的临时账户/分类（如导入将新建的），
+  /// 合并进选择器与展示，保证草稿引用到它们时能正确解析、不被回退。
+  EntryDetailPage.draft({
+    super.key,
+    required LedgerEntry entry,
+    List<Account> extraAccounts = const <Account>[],
+    List<Category> extraCategories = const <Category>[],
+  }) : draftEntry = entry,
+       draftExtraAccounts = extraAccounts,
+       draftExtraCategories = extraCategories,
+       initialAmount = entry.amount,
+       initialAccountId = null,
+       initialDraft = null;
 
   final double initialAmount;
   final String? initialAccountId;
 
   /// AI 解析出的草稿：非空时预填表单并显示复核提示，供用户确认/修改后落账。
   final AiEntryDraft? initialDraft;
+
+  /// 草稿编辑模式下要编辑的交易；非空即进入「返回草稿不落库」模式。
+  final LedgerEntry? draftEntry;
+
+  /// 草稿模式下额外可选的临时账户 / 分类（未落库，如导入待新建项）。
+  final List<Account>? draftExtraAccounts;
+  final List<Category>? draftExtraCategories;
 
   @override
   State<EntryDetailPage> createState() => _EntryDetailPageState();
@@ -58,12 +84,37 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   // 程序化写入备注时置真，令备注监听忽略这次（不误判为用户输入）。
   bool _applyingSuggestion = false;
   bool _didInitialSuggest = false;
-  late final bool _autoSuggestEnabled = widget.initialDraft == null;
+  // 草稿编辑模式（导入预览）与 AI 草稿一样关闭自动识别，尊重传入数据。
+  late final bool _autoSuggestEnabled =
+      widget.initialDraft == null && widget.draftEntry == null;
+
+  bool get _isDraft => widget.draftEntry != null;
 
   @override
   void initState() {
     super.initState();
     _noteController.addListener(_onNoteChanged);
+    final editing = widget.draftEntry;
+    if (editing != null) {
+      _type = editing.type;
+      if (editing.categoryId.isNotEmpty) {
+        _categoryId = editing.categoryId;
+      }
+      if (editing.type != EntryType.transfer && editing.accountId.isEmpty) {
+        _noAccount = true;
+        _accountId = '';
+      } else {
+        _accountId = editing.accountId;
+      }
+      _toAccountId = editing.toAccountId;
+      _occurredAt = editing.occurredAt;
+      _fee = editing.fee;
+      _reimbursable = editing.reimbursable;
+      _tagIds = List<String>.of(editing.tagIds);
+      _applyingSuggestion = true;
+      _noteController.text = editing.note;
+      _applyingSuggestion = false;
+    }
     final draft = widget.initialDraft;
     if (draft != null) {
       _type = draft.type;
@@ -162,6 +213,24 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     });
   }
 
+  /// 指定类型的可选分类：草稿模式下把传入的临时分类（未落库，如导入将新建的）
+  /// 追加到账本现有分类之后，保证草稿引用到它们时能被解析、不被回退。
+  List<Category> _categoriesForType(
+    VeriFinController controller,
+    EntryType type,
+  ) {
+    final base = controller.categoriesForType(type);
+    if (!_isDraft) {
+      return base;
+    }
+    return <Category>[
+      ...base,
+      ...widget.draftExtraCategories!.where(
+        (category) => category.type == type,
+      ),
+    ];
+  }
+
   /// 分类快捷区展示的前若干个分类；若当前选中项（含自动推荐）不在前 8 个里，则把它
   /// 置顶插入，保证被选中/推荐的分类始终可见。
   List<Category> _visibleCategoryChips(List<Category> categories) {
@@ -181,9 +250,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
-    final accounts = controller.accounts
-        .where((account) => !account.hidden)
-        .toList();
+    // 草稿模式下把临时账户（未落库，如导入将新建的）并入可选列表。
+    final baseAccounts = _isDraft
+        ? <Account>[...controller.accounts, ...widget.draftExtraAccounts!]
+        : controller.accounts;
+    final accounts = baseAccounts.where((account) => !account.hidden).toList();
     final hasAccounts = accounts.isNotEmpty;
     // 转账必须落到具体账户，不允许「无账户」。
     if (_type == EntryType.transfer) {
@@ -195,7 +266,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       _accountId = accounts.first.id;
     }
     _normalizeTransferAccounts(accounts);
-    final categories = controller.categoriesForType(_type);
+    final categories = _categoriesForType(controller, _type);
     if (!categories.any((category) => category.id == _categoryId)) {
       _categoryId = categories.first.id;
     }
@@ -242,10 +313,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       setState(() {
                         _type = selection.first;
                         _typeTouched = true;
-                        _categoryId = controller
-                            .categoriesForType(_type)
-                            .first
-                            .id;
+                        _categoryId = _categoriesForType(
+                          controller,
+                          _type,
+                        ).first.id;
                         _normalizeTransferAccounts(accounts);
                       });
                       // 用户改了类型后，在该类型内重新识别分类/标签/备注。
@@ -428,14 +499,17 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       ],
                     ),
                   ],
-                  const Divider(height: 24),
-                  AttachmentsEditor(
-                    dataUrls: _pendingAttachments,
-                    onAddDataUrl: (dataUrl) =>
-                        setState(() => _pendingAttachments.add(dataUrl)),
-                    onRemoveIndex: (index) =>
-                        setState(() => _pendingAttachments.removeAt(index)),
-                  ),
+                  // 导入草稿编辑不涉及图片附件（附件在正式落库后按 id 关联）。
+                  if (!_isDraft) ...<Widget>[
+                    const Divider(height: 24),
+                    AttachmentsEditor(
+                      dataUrls: _pendingAttachments,
+                      onAddDataUrl: (dataUrl) =>
+                          setState(() => _pendingAttachments.add(dataUrl)),
+                      onRemoveIndex: (index) =>
+                          setState(() => _pendingAttachments.removeAt(index)),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -501,7 +575,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       context: context,
       showDragHandle: true,
       builder: (context) => CategoryPickerSheet(
-        categories: VeriFinScope.of(context).categoriesForType(_type),
+        categories: _categoriesForType(VeriFinScope.of(context), _type),
         selectedId: _categoryId,
       ),
     );
@@ -652,6 +726,29 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   void _save() {
     final controller = VeriFinScope.of(context);
     final noAccount = _type != EntryType.transfer && _noAccount;
+    // 草稿编辑模式：不落库，构造修改后的交易并回传给上层（如导入预览页）。
+    if (_isDraft) {
+      final original = widget.draftEntry!;
+      Navigator.of(context).pop(
+        LedgerEntry(
+          id: original.id,
+          bookId: original.bookId,
+          type: _type,
+          amount: _amount,
+          // 转账不带分类，与导入/记账口径一致。
+          categoryId: _type == EntryType.transfer ? '' : _categoryId,
+          accountId: noAccount ? '' : _accountId,
+          toAccountId: _type == EntryType.transfer ? _toAccountId : null,
+          note: _noteController.text.trim(),
+          occurredAt: _occurredAt,
+          tagIds: _tagIds,
+          fee: _type == EntryType.transfer ? _fee : 0,
+          reimbursable: _type == EntryType.expense && _reimbursable,
+          refundedAmount: original.refundedAmount,
+        ),
+      );
+      return;
+    }
     if (!noAccount &&
         !controller.accounts
             .where((account) => !account.hidden)

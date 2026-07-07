@@ -15,10 +15,12 @@ import '../app/backup/webdav_client.dart';
 import '../app/backup/webdav_config.dart';
 import '../app/common_widgets.dart';
 import '../app/data_file_port.dart';
+import '../app/models.dart';
 import '../l10n/app_localizations.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import 'app_log_page.dart';
+import 'import_preview_page.dart';
 import 'sheets.dart';
 
 class DataManagementPage extends StatelessWidget {
@@ -1266,12 +1268,43 @@ class DataManagementPage extends StatelessWidget {
       if (bytes.isEmpty) {
         throw const FormatException('空文件');
       }
-      final plan = controller.importTransactionsFromPlatform(platform, bytes);
+      // 先只解析、不落库，进入导入预览页让用户核对 / 排除 / 编辑后再确认。
+      final plan = controller.parsePlatformImport(platform, bytes);
       if (!context.mounted) {
         return;
       }
-      if (plan.importedCount == 0 && plan.errorCount > 0) {
-        await _showImportResult(context, plan);
+      if (plan.importedCount == 0) {
+        // 无可导入交易：有错误行则列出，否则提示空。
+        if (plan.errorCount > 0) {
+          await _showImportResult(context, plan);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context).importPreviewNothingToImport,
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      final confirmed = await Navigator.of(context).push<List<LedgerEntry>>(
+        MaterialPageRoute<List<LedgerEntry>>(
+          builder: (_) => ImportPreviewPage(
+            plan: plan,
+            sourceLabel: _platformLabel(context, platform),
+          ),
+        ),
+      );
+      if (confirmed == null || confirmed.isEmpty || !context.mounted) {
+        return;
+      }
+      controller.applyImportEntries(
+        entries: confirmed,
+        candidateAccounts: plan.newAccounts,
+        candidateCategories: plan.newCategories,
+      );
+      if (!context.mounted) {
         return;
       }
       final suffix = plan.errorCount > 0
@@ -1280,13 +1313,10 @@ class DataManagementPage extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${AppLocalizations.of(context).importedEntries(plan.importedCount)}$suffix',
+            '${AppLocalizations.of(context).importedEntries(confirmed.length)}$suffix',
           ),
         ),
       );
-      if (plan.errorCount > 0) {
-        await _showImportResult(context, plan);
-      }
     } on FormatException catch (error) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

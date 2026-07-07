@@ -4406,6 +4406,72 @@ abstract class AppLocalizations {
   /// **'知道了'**
   String get gotIt;
 
+  /// No description provided for @importPreviewTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入预览'**
+  String get importPreviewTitle;
+
+  /// No description provided for @importPreviewHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'点按可排除 / 恢复某笔，长按可编辑'**
+  String get importPreviewHint;
+
+  /// No description provided for @importPreviewSelectedOf.
+  ///
+  /// In zh, this message translates to:
+  /// **'将导入 {selected} / {total} 笔'**
+  String importPreviewSelectedOf(int selected, int total);
+
+  /// No description provided for @importPreviewNewAccounts.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建账户 {count}'**
+  String importPreviewNewAccounts(int count);
+
+  /// No description provided for @importPreviewNewCategories.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建分类 {count}'**
+  String importPreviewNewCategories(int count);
+
+  /// No description provided for @importPreviewSkipped.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 行无法解析'**
+  String importPreviewSkipped(int count);
+
+  /// No description provided for @importPreviewSkippedTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'已跳过的行'**
+  String get importPreviewSkippedTitle;
+
+  /// No description provided for @importPreviewSelectAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全选'**
+  String get importPreviewSelectAll;
+
+  /// No description provided for @importPreviewDeselectAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全不选'**
+  String get importPreviewDeselectAll;
+
+  /// No description provided for @importPreviewConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认导入（{count}）'**
+  String importPreviewConfirm(int count);
+
+  /// No description provided for @importPreviewNothingToImport.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可导入的交易'**
+  String get importPreviewNothingToImport;
+
   /// No description provided for @importLocalTitle.
   ///
   /// In zh, this message translates to:

@@ -2395,6 +2395,49 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gotIt => '知道了';
 
   @override
+  String get importPreviewTitle => '导入预览';
+
+  @override
+  String get importPreviewHint => '点按可排除 / 恢复某笔，长按可编辑';
+
+  @override
+  String importPreviewSelectedOf(int selected, int total) {
+    return '将导入 $selected / $total 笔';
+  }
+
+  @override
+  String importPreviewNewAccounts(int count) {
+    return '新建账户 $count';
+  }
+
+  @override
+  String importPreviewNewCategories(int count) {
+    return '新建分类 $count';
+  }
+
+  @override
+  String importPreviewSkipped(int count) {
+    return '$count 行无法解析';
+  }
+
+  @override
+  String get importPreviewSkippedTitle => '已跳过的行';
+
+  @override
+  String get importPreviewSelectAll => '全选';
+
+  @override
+  String get importPreviewDeselectAll => '全不选';
+
+  @override
+  String importPreviewConfirm(int count) {
+    return '确认导入（$count）';
+  }
+
+  @override
+  String get importPreviewNothingToImport => '没有可导入的交易';
+
+  @override
   String get importLocalTitle => '导入本地备份？';
 
   @override

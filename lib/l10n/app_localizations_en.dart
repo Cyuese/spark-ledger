@@ -2443,6 +2443,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
+  String get importPreviewTitle => 'Import preview';
+
+  @override
+  String get importPreviewHint =>
+      'Tap to exclude / restore, long-press to edit';
+
+  @override
+  String importPreviewSelectedOf(int selected, int total) {
+    return 'Importing $selected / $total';
+  }
+
+  @override
+  String importPreviewNewAccounts(int count) {
+    return '$count new account(s)';
+  }
+
+  @override
+  String importPreviewNewCategories(int count) {
+    return '$count new categor(ies)';
+  }
+
+  @override
+  String importPreviewSkipped(int count) {
+    return '$count row(s) couldn\'t be parsed';
+  }
+
+  @override
+  String get importPreviewSkippedTitle => 'Skipped rows';
+
+  @override
+  String get importPreviewSelectAll => 'Select all';
+
+  @override
+  String get importPreviewDeselectAll => 'Deselect all';
+
+  @override
+  String importPreviewConfirm(int count) {
+    return 'Import ($count)';
+  }
+
+  @override
+  String get importPreviewNothingToImport => 'No transactions to import';
+
+  @override
   String get importLocalTitle => 'Import local backup?';
 
   @override

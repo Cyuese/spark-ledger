@@ -275,7 +275,9 @@ List<List<String>> _normalizeYimuTransfer(List<List<String>> rows) {
     mustHave: const <String>['转出账户', '转入账户', '金额'],
   );
   if (headerIndex == null) {
-    throw const FormatException('未找到一木「转账还款导出」表头（转出账户/转入账户/金额），请确认选择的是一木转账还款导出的 xls');
+    throw const FormatException(
+      '未找到一木「转账还款导出」表头（转出账户/转入账户/金额），请确认选择的是一木转账还款导出的 xls',
+    );
   }
   final cols = _columnIndex(rows[headerIndex]);
   final out = <List<String>>[_canonicalHeader];

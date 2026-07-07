@@ -1575,6 +1575,55 @@
     }
   },
   "gotIt": "知道了",
+  "importPreviewTitle": "导入预览",
+  "importPreviewHint": "点按可排除 / 恢复某笔，长按可编辑",
+  "importPreviewSelectedOf": "将导入 {selected} / {total} 笔",
+  "@importPreviewSelectedOf": {
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewNewAccounts": "新建账户 {count}",
+  "@importPreviewNewAccounts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewNewCategories": "新建分类 {count}",
+  "@importPreviewNewCategories": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewSkipped": "{count} 行无法解析",
+  "@importPreviewSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewSkippedTitle": "已跳过的行",
+  "importPreviewSelectAll": "全选",
+  "importPreviewDeselectAll": "全不选",
+  "importPreviewConfirm": "确认导入（{count}）",
+  "@importPreviewConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importPreviewNothingToImport": "没有可导入的交易",
   "importLocalTitle": "导入本地备份？",
   "importLocalMessage": "导入会替换当前本地交易、账户、账本、预算、个人信息和设置。建议先导出当前数据。",
   "importedLocal": "已导入本地数据",

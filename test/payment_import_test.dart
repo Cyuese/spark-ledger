@@ -254,7 +254,9 @@ void main() {
     // 真实样例（用户提供，7 条收支记录），验证 OLE2/BIFF8 读取 + 归一化端到端。
     late ImportPlan plan;
     setUp(() {
-      final bytes = File('test/fixtures/yimu_transactions.xls').readAsBytesSync();
+      final bytes = File(
+        'test/fixtures/yimu_transactions.xls',
+      ).readAsBytesSync();
       plan = run(ImportPlatform.yimuBill, Uint8List.fromList(bytes));
     });
 
