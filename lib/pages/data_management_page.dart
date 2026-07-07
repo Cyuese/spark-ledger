@@ -580,118 +580,25 @@ class DataManagementPage extends StatelessWidget {
     required String message,
     String errorText = '',
   }) {
-    final controller = TextEditingController();
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(message),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              autofocus: true,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context).backupKeyLabel,
-                errorText: errorText.isEmpty ? null : errorText,
-              ),
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text(AppLocalizations.of(context).okLabel),
-          ),
-        ],
+      builder: (context) => _PassphrasePromptDialog(
+        title: title,
+        message: message,
+        errorText: errorText,
       ),
-    ).whenComplete(controller.dispose);
+    );
   }
 
   Future<void> _editBackupPassphrase(
     BuildContext context,
     VeriFinController controller,
   ) async {
-    final keyController = TextEditingController();
-    final confirmController = TextEditingController();
     final isChange = controller.backupEncryptionEnabled;
     final result = await showDialog<String>(
       context: context,
-      builder: (context) {
-        String? errorText;
-        return StatefulBuilder(
-          builder: (context, setState) => AlertDialog(
-            title: Text(
-              isChange
-                  ? AppLocalizations.of(context).changeKeyTitle
-                  : AppLocalizations.of(context).setKeyTitle,
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(AppLocalizations.of(context).setKeyMessage),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: keyController,
-                  autofocus: true,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context).keyMinLabel,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: confirmController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context).keyRepeatLabel,
-                    errorText: errorText,
-                  ),
-                ),
-              ],
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(AppLocalizations.of(context).commonCancel),
-              ),
-              FilledButton(
-                onPressed: () {
-                  final key = keyController.text;
-                  if (key.length < 4) {
-                    setState(
-                      () =>
-                          errorText = AppLocalizations.of(context).keyTooShort,
-                    );
-                    return;
-                  }
-                  if (key != confirmController.text) {
-                    setState(
-                      () =>
-                          errorText = AppLocalizations.of(context).keyMismatch,
-                    );
-                    return;
-                  }
-                  Navigator.of(context).pop(key);
-                },
-                child: Text(AppLocalizations.of(context).commonSave),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (context) => _SetPassphraseDialog(isChange: isChange),
     );
-    keyController.dispose();
-    confirmController.dispose();
     if (result != null && result.isNotEmpty) {
       controller.setBackupPassphrase(result);
       if (context.mounted) {
@@ -734,121 +641,10 @@ class DataManagementPage extends StatelessWidget {
     VeriFinController controller,
   ) async {
     final existing = controller.webdavConfig;
-    final urlController = TextEditingController(text: existing.url);
-    final userController = TextEditingController(text: existing.username);
-    final passController = TextEditingController(text: existing.password);
-    WebdavConfig current() => WebdavConfig(
-      url: urlController.text.trim(),
-      username: userController.text.trim(),
-      password: passController.text,
-      autoUpload: existing.autoUpload,
-    );
-
     final saved = await showDialog<WebdavConfig>(
       context: context,
-      builder: (context) {
-        String? statusText;
-        var testing = false;
-        return StatefulBuilder(
-          builder: (context, setState) => AlertDialog(
-            title: Text(AppLocalizations.of(context).webdavServer),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  TextField(
-                    controller: urlController,
-                    autofocus: true,
-                    keyboardType: TextInputType.url,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context).webdavUrlLabel,
-                      hintText: 'https://dav.example.com/verifin/',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: userController,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context).webdavUserLabel,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: passController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context).webdavPassLabel,
-                    ),
-                  ),
-                  if (statusText != null) ...<Widget>[
-                    const SizedBox(height: 10),
-                    Text(
-                      statusText!,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(AppLocalizations.of(context).commonCancel),
-              ),
-              TextButton(
-                onPressed: testing || urlController.text.trim().isEmpty
-                    ? null
-                    : () async {
-                        setState(() {
-                          testing = true;
-                          statusText = AppLocalizations.of(
-                            context,
-                          ).testingConnection;
-                        });
-                        try {
-                          await webdavTestConnection(current());
-                          setState(
-                            () => statusText = AppLocalizations.of(
-                              context,
-                            ).connectionOk,
-                          );
-                        } catch (error) {
-                          setState(
-                            () => statusText = AppLocalizations.of(
-                              context,
-                            ).connectionFailed('$error'),
-                          );
-                        } finally {
-                          setState(() => testing = false);
-                        }
-                      },
-                child: Text(AppLocalizations.of(context).testConnection),
-              ),
-              FilledButton(
-                onPressed: () {
-                  if (urlController.text.trim().isEmpty) {
-                    setState(
-                      () => statusText = AppLocalizations.of(
-                        context,
-                      ).fillServerUrl,
-                    );
-                    return;
-                  }
-                  Navigator.of(context).pop(current());
-                },
-                child: Text(AppLocalizations.of(context).commonSave),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (context) => _WebdavEditDialog(existing: existing),
     );
-    // 对话框已关闭，输入值已由 current() 落入 saved，可安全释放控制器
-    // （下方有 mounted / 确认弹窗等早退分支，放这里确保各路径都释放）。
-    urlController.dispose();
-    userController.dispose();
-    passController.dispose();
     if (saved != null && saved.isConfigured) {
       if (!context.mounted) return;
       // http 发往公网主机会明文暴露账号密码，保存前提醒确认。
@@ -1545,6 +1341,264 @@ class _BackupProgressDialog extends StatelessWidget {
           Flexible(child: Text(label)),
         ],
       ),
+    );
+  }
+}
+
+/// 输入解密口令的对话框。用 StatefulWidget 在 [State.dispose]（退出动画结束后）
+/// 释放控制器，避免退出动画期间 TextField 用到已释放控制器。
+class _PassphrasePromptDialog extends StatefulWidget {
+  const _PassphrasePromptDialog({
+    required this.title,
+    required this.message,
+    required this.errorText,
+  });
+
+  final String title;
+  final String message;
+  final String errorText;
+
+  @override
+  State<_PassphrasePromptDialog> createState() =>
+      _PassphrasePromptDialogState();
+}
+
+class _PassphrasePromptDialogState extends State<_PassphrasePromptDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(widget.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(widget.message),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: l10n.backupKeyLabel,
+              errorText: widget.errorText.isEmpty ? null : widget.errorText,
+            ),
+          ),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: Text(l10n.okLabel),
+        ),
+      ],
+    );
+  }
+}
+
+/// 设置 / 修改加密口令的对话框（两次输入 + 校验）。控制器由 State 管理并释放。
+class _SetPassphraseDialog extends StatefulWidget {
+  const _SetPassphraseDialog({required this.isChange});
+
+  final bool isChange;
+
+  @override
+  State<_SetPassphraseDialog> createState() => _SetPassphraseDialogState();
+}
+
+class _SetPassphraseDialogState extends State<_SetPassphraseDialog> {
+  final TextEditingController _keyController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
+  String? _errorText;
+
+  @override
+  void dispose() {
+    _keyController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(widget.isChange ? l10n.changeKeyTitle : l10n.setKeyTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(l10n.setKeyMessage),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _keyController,
+            autofocus: true,
+            obscureText: true,
+            decoration: InputDecoration(labelText: l10n.keyMinLabel),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _confirmController,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: l10n.keyRepeatLabel,
+              errorText: _errorText,
+            ),
+          ),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final key = _keyController.text;
+            if (key.length < 4) {
+              setState(() => _errorText = l10n.keyTooShort);
+              return;
+            }
+            if (key != _confirmController.text) {
+              setState(() => _errorText = l10n.keyMismatch);
+              return;
+            }
+            Navigator.of(context).pop(key);
+          },
+          child: Text(l10n.commonSave),
+        ),
+      ],
+    );
+  }
+}
+
+/// 编辑 WebDAV 配置的对话框（含连通性测试）。控制器由 State 管理并释放。
+class _WebdavEditDialog extends StatefulWidget {
+  const _WebdavEditDialog({required this.existing});
+
+  final WebdavConfig existing;
+
+  @override
+  State<_WebdavEditDialog> createState() => _WebdavEditDialogState();
+}
+
+class _WebdavEditDialogState extends State<_WebdavEditDialog> {
+  late final TextEditingController _urlController = TextEditingController(
+    text: widget.existing.url,
+  );
+  late final TextEditingController _userController = TextEditingController(
+    text: widget.existing.username,
+  );
+  late final TextEditingController _passController = TextEditingController(
+    text: widget.existing.password,
+  );
+  String? _statusText;
+  bool _testing = false;
+
+  WebdavConfig _current() => WebdavConfig(
+    url: _urlController.text.trim(),
+    username: _userController.text.trim(),
+    password: _passController.text,
+    autoUpload: widget.existing.autoUpload,
+  );
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _userController.dispose();
+    _passController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _test() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _testing = true;
+      _statusText = l10n.testingConnection;
+    });
+    try {
+      await webdavTestConnection(_current());
+      if (mounted) setState(() => _statusText = l10n.connectionOk);
+    } catch (error) {
+      if (mounted) setState(() => _statusText = l10n.connectionFailed('$error'));
+    } finally {
+      if (mounted) setState(() => _testing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.webdavServer),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            TextField(
+              controller: _urlController,
+              autofocus: true,
+              keyboardType: TextInputType.url,
+              decoration: InputDecoration(
+                labelText: l10n.webdavUrlLabel,
+                hintText: 'https://dav.example.com/verifin/',
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _userController,
+              decoration: InputDecoration(labelText: l10n.webdavUserLabel),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _passController,
+              obscureText: true,
+              decoration: InputDecoration(labelText: l10n.webdavPassLabel),
+            ),
+            if (_statusText != null) ...<Widget>[
+              const SizedBox(height: 10),
+              Text(
+                _statusText!,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.commonCancel),
+        ),
+        TextButton(
+          onPressed: _testing || _urlController.text.trim().isEmpty
+              ? null
+              : _test,
+          child: Text(l10n.testConnection),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (_urlController.text.trim().isEmpty) {
+              setState(() => _statusText = l10n.fillServerUrl);
+              return;
+            }
+            Navigator.of(context).pop(_current());
+          },
+          child: Text(l10n.commonSave),
+        ),
+      ],
     );
   }
 }

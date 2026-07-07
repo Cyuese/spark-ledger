@@ -305,34 +305,10 @@ class _ImportPreviewPageState extends State<ImportPreviewPage> {
     required String title,
     required String initial,
   }) {
-    final l10n = AppLocalizations.of(context);
-    final controller = TextEditingController(text: initial);
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(labelText: l10n.mappingNewNameLabel),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              if (text.isNotEmpty) {
-                Navigator.of(context).pop(text);
-              }
-            },
-            child: Text(l10n.commonSave),
-          ),
-        ],
-      ),
-    ).whenComplete(controller.dispose);
+      builder: (context) => _NamePromptDialog(title: title, initial: initial),
+    );
   }
 
   @override
@@ -780,6 +756,58 @@ class _DecisionSheet extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 改名对话框。用 StatefulWidget 持有并在 [State.dispose]（路由完全移除、退出动画
+/// 结束后才触发）里释放控制器，避免退出动画期间 TextField 用到已释放的控制器。
+class _NamePromptDialog extends StatefulWidget {
+  const _NamePromptDialog({required this.title, required this.initial});
+
+  final String title;
+  final String initial;
+
+  @override
+  State<_NamePromptDialog> createState() => _NamePromptDialogState();
+}
+
+class _NamePromptDialogState extends State<_NamePromptDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initial,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(widget.title),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(labelText: l10n.mappingNewNameLabel),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final text = _controller.text.trim();
+            if (text.isNotEmpty) {
+              Navigator.of(context).pop(text);
+            }
+          },
+          child: Text(l10n.commonSave),
+        ),
+      ],
     );
   }
 }
