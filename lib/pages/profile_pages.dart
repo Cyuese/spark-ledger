@@ -1510,6 +1510,10 @@ class SettingsPage extends StatelessWidget {
                 showBack: true,
               ),
               const SizedBox(height: 10),
+              _sectionLabel(
+                context,
+                AppLocalizations.of(context).settingsSectionGeneral,
+              ),
               VeriCard(
                 child: Column(
                   children: <Widget>[
@@ -1567,25 +1571,17 @@ class SettingsPage extends StatelessWidget {
                         );
                       },
                     ),
-                    const Divider(height: 1),
-                    SettingsRow(
-                      icon: Icons.notifications_active_outlined,
-                      title: AppLocalizations.of(context).reminderTitle,
-                      trailing: controller.reminderSettings.enabled
-                          ? AppLocalizations.of(context).reminderDailyAt(
-                              controller.reminderSettings.timeLabel,
-                            )
-                          : AppLocalizations.of(context).notEnabled,
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () {
-                        Navigator.of(context).push<void>(
-                          MaterialPageRoute<void>(
-                            builder: (context) => const ReminderSettingsPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    const Divider(height: 1),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _sectionLabel(
+                context,
+                AppLocalizations.of(context).settingsSectionBookkeeping,
+              ),
+              VeriCard(
+                child: Column(
+                  children: <Widget>[
                     SettingsRow(
                       icon: Icons.bolt_outlined,
                       title: AppLocalizations.of(context).fabActionTitle,
@@ -1619,26 +1615,45 @@ class SettingsPage extends StatelessWidget {
                         );
                       },
                     ),
+                    const Divider(height: 1),
+                    SettingsRow(
+                      icon: Icons.notifications_active_outlined,
+                      title: AppLocalizations.of(context).reminderTitle,
+                      trailing: controller.reminderSettings.enabled
+                          ? AppLocalizations.of(context).reminderDailyAt(
+                              controller.reminderSettings.timeLabel,
+                            )
+                          : AppLocalizations.of(context).notEnabled,
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () {
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const ReminderSettingsPage(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
-              VeriCard(
-                child: SettingsRow(
-                  icon: Icons.system_update_alt_outlined,
-                  title: AppLocalizations.of(context).checkUpdate,
-                  trailing: 'GitHub Release',
-                  trailingIcon: Icons.chevron_right,
-                  onTap: () => _checkForUpdate(context),
-                ),
+              const SizedBox(height: 12),
+              _sectionLabel(
+                context,
+                AppLocalizations.of(context).settingsSectionAbout,
               ),
-              const SizedBox(height: 10),
               VeriCard(
                 child: Column(
                   children: <Widget>[
+                    SettingsRow(
+                      icon: Icons.system_update_alt_outlined,
+                      title: AppLocalizations.of(context).checkUpdate,
+                      trailing: 'GitHub Release',
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _checkForUpdate(context),
+                    ),
                     for (final entry
                         in LegalDocument.values.indexed) ...<Widget>[
-                      if (entry.$1 != 0) const Divider(),
+                      const Divider(height: 1),
                       SettingsRow(
                         icon: entry.$2 == LegalDocument.privacyPolicy
                             ? Icons.privacy_tip_outlined
@@ -1774,6 +1789,19 @@ class SettingsPage extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (context) => const _UpdateCheckDialog(),
+    );
+  }
+
+  static Widget _sectionLabel(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(6, 4, 6, 8),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }

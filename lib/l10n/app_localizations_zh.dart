@@ -1827,6 +1827,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsTitle => '设置';
 
   @override
+  String get settingsSectionGeneral => '通用';
+
+  @override
+  String get settingsSectionBookkeeping => '记账';
+
+  @override
+  String get settingsSectionAbout => '关于';
+
+  @override
   String get themeMode => '主题模式';
 
   @override

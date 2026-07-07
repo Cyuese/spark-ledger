@@ -3368,6 +3368,24 @@ abstract class AppLocalizations {
   /// **'设置'**
   String get settingsTitle;
 
+  /// No description provided for @settingsSectionGeneral.
+  ///
+  /// In zh, this message translates to:
+  /// **'通用'**
+  String get settingsSectionGeneral;
+
+  /// No description provided for @settingsSectionBookkeeping.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账'**
+  String get settingsSectionBookkeeping;
+
+  /// No description provided for @settingsSectionAbout.
+  ///
+  /// In zh, this message translates to:
+  /// **'关于'**
+  String get settingsSectionAbout;
+
   /// No description provided for @themeMode.
   ///
   /// In zh, this message translates to:
