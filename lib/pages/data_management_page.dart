@@ -397,10 +397,19 @@ class DataManagementPage extends StatelessWidget {
   }
 
   static String _backupErrorText(AppLocalizations l10n, Object error) {
-    final message = error is Exception
-        ? error.toString().replaceFirst('Exception: ', '')
-        : l10n.backupFailedRetry;
-    return message.isEmpty ? l10n.backupFailedRetry : message;
+    // 已知的、面向用户可读的领域异常（加密 / WebDAV）展示其自带消息；
+    // FormatException（空文件 / 格式无效，其内部 message 是硬编码中文）与其它
+    // 技术异常（平台 / 文件系统等）统一给本地化友好文案，不把原始技术信息暴露给用户。
+    if (error is BackupCryptoException) {
+      return error.message;
+    }
+    if (error is WebdavException) {
+      return error.message;
+    }
+    if (error is FormatException) {
+      return l10n.backupInvalidFile;
+    }
+    return l10n.backupFailedRetry;
   }
 
   Future<void> _pickBackupFrequency(
@@ -1272,7 +1281,12 @@ class DataManagementPage extends StatelessWidget {
         return;
       }
       if (bytes.isEmpty) {
-        throw const FormatException('空文件');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context).fileEmptyError)),
+          );
+        }
+        return;
       }
       // 先只解析、不落库，进入导入预览页让用户核对 / 排除 / 编辑后再确认。
       final plan = controller.parsePlatformImport(platform, bytes);

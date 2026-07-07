@@ -104,6 +104,18 @@ abstract class AppLocalizations {
   /// **'Veri Fin'**
   String get appTitle;
 
+  /// 导入的备份文件格式无效/为空时的提示
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件无效或已损坏'**
+  String get backupInvalidFile;
+
+  /// 所选文件为空时的提示
+  ///
+  /// In zh, this message translates to:
+  /// **'文件为空'**
+  String get fileEmptyError;
+
   /// 数据库打开失败错误页标题
   ///
   /// In zh, this message translates to:

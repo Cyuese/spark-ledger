@@ -12,6 +12,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => 'Veri Fin';
 
   @override
+  String get backupInvalidFile => '备份文件无效或已损坏';
+
+  @override
+  String get fileEmptyError => '文件为空';
+
+  @override
   String get dbErrorTitle => '无法打开数据';
 
   @override

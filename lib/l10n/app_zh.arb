@@ -4,6 +4,14 @@
   "@appTitle": {
     "description": "应用名称"
   },
+  "backupInvalidFile": "备份文件无效或已损坏",
+  "@backupInvalidFile": {
+    "description": "导入的备份文件格式无效/为空时的提示"
+  },
+  "fileEmptyError": "文件为空",
+  "@fileEmptyError": {
+    "description": "所选文件为空时的提示"
+  },
   "dbErrorTitle": "无法打开数据",
   "@dbErrorTitle": {
     "description": "数据库打开失败错误页标题"

@@ -12,6 +12,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Veri Fin';
 
   @override
+  String get backupInvalidFile => 'The backup file is invalid or corrupted.';
+
+  @override
+  String get fileEmptyError => 'The file is empty.';
+
+  @override
   String get dbErrorTitle => 'Couldn\'t open your data';
 
   @override
