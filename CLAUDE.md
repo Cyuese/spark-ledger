@@ -23,6 +23,8 @@ dart format .                          # 提交前格式化
 - **不要在本机构建 APK 作为交付物**。Android 安装包只由 GitHub Actions 生成。
 - CI（`.github/workflows/flutter.yml`）只在推送 `vX.Y.Z` 标签时触发：analyze → test → build apk --release → 发布 GitHub **预发布**（`prerelease`、不标记 Latest）。普通 `main` 推送不触发。**真机验收通过后，在 GitHub 手动把该 release 改为正式版（取消预发布、设为 Latest）**——CI 默认只出预发布，不直接出正式版。
 - 发版用 `scripts/publish.sh patch`（也支持 `minor`、`major` 或显式版本号）；脚本会更新 `pubspec.yaml` 和 `lib/app/app_version.dart` 里的 `appVersionLabel`、提交、打标签并推送。
+- **发版必须经用户明确同意**：只有用户明说「发布 patch/minor/major 版本」之类时才执行发版流程，绝不擅自发版；打标签会触发 CI 构建，不可逆。
+- 发版前先把 `CHANGELOG.md` 顶部的 `## [Unreleased]` 段落改名为本次版本号并加日期（如 `## [1.8.2] - 2026-07-08`），再在其上新开一个空的 `## [Unreleased]`，随发版提交一起提交，然后再跑 `scripts/publish.sh`。
 - Release APK 必须用项目内稳定 keystore（`android/app/verifin-release.jks`）签名。
 
 ## 提交规范
@@ -85,5 +87,6 @@ Android/测试差异统一用条件导出模式（`stub` + `if (dart.library.io)
 - **Android 功能必须有真实实现**：涉及本地存储、图片、文件、安装包或系统入口的功能，必须确认 Android 端有真实实现，并检查权限（Manifest、分区存储、Android 13+）、持久化和进程重启后的行为。data URL 图片预览用内存图片渲染，不要用 `Image.network`。
 - **数据结构变更要同步**：新增本地数据项时，确认导出/导入、设置页初始化、进程重启读取都覆盖到，并更新样例备份 `docs/dev/verifin-sample-backup.json`（测试应能真实导入它）。
 - **文档同步**：变更影响开发命令、架构、交付流程、配置或用户可见行为时，须在同一次变更中更新 `README.md`、`AGENTS.md`、`docs/`。
+- **CHANGELOG 同步**：凡用户可见的改动（新功能、界面/交互变化、修复、隐私安全项等），在同一次变更中往 `CHANGELOG.md` 的 `## [Unreleased]` 段落加一行（分类到 新增/优化/修复/安全 等小节）；纯内部重构、改测试/文档等对用户无感的不写。发版时再把 `Unreleased` 提升为版本号（见「发布与 CI」）。
 - UI 风格：紧凑型移动端工具风格；主色 `#346edb`，辅助蓝 `#3498db`，青绿色仅用于收入/正向状态。UI 规范见 `docs/ui-guidelines.md`。
 - 不要重写生成的平台工程文件（`android/`），除非任务明确要求；不要为简单需求引入额外工具链或依赖。
