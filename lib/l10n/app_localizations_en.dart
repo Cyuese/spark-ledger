@@ -208,7 +208,128 @@ class AppLocalizationsEn extends AppLocalizations {
   String get panelTrendLabel => 'Spending trend';
 
   @override
-  String get panelTrendDesc => 'Spending trend and balance in 7-day periods';
+  String get panelTrendDesc => 'Customizable data and trend chart';
+
+  @override
+  String get trendCustomizeTitle => 'Customize trend card';
+
+  @override
+  String get trendCustomizeEntry => 'Customize';
+
+  @override
+  String get trendCustomizeDisplayData => 'Displayed data';
+
+  @override
+  String get trendCustomizeChart => 'Chart';
+
+  @override
+  String get trendCustomizeTitleField => 'Card title';
+
+  @override
+  String get trendCustomizeTitleHint => 'Leave empty to show \"Overview\"';
+
+  @override
+  String get trendDefaultTitle => 'Overview';
+
+  @override
+  String get trendSlotBig => 'Headline number';
+
+  @override
+  String get trendSlotPill => 'Balance chip';
+
+  @override
+  String get trendSlotCard1 => 'Tile 1';
+
+  @override
+  String get trendSlotCard2 => 'Tile 2';
+
+  @override
+  String get trendSlotCard3 => 'Tile 3';
+
+  @override
+  String get trendSlotChart => 'Chart data';
+
+  @override
+  String get trendResetTitle => 'Reset trend card?';
+
+  @override
+  String get trendResetMessage =>
+      'Restores the card title and all displayed data to defaults.';
+
+  @override
+  String get trendResetConfirm => 'Reset';
+
+  @override
+  String get pickMetricTitle => 'Pick data';
+
+  @override
+  String get pickChartSeriesTitle => 'Pick chart data';
+
+  @override
+  String get metricSeriesNet => 'Balance';
+
+  @override
+  String get metricMonthExpense => 'This month spending';
+
+  @override
+  String get metricMonthIncome => 'This month income';
+
+  @override
+  String get metricMonthNet => 'This month balance';
+
+  @override
+  String get metricDailyAvgExpense => 'Daily avg spending';
+
+  @override
+  String get metricDailyAvgIncome => 'Daily avg income';
+
+  @override
+  String get metricTodayExpense => 'Today spending';
+
+  @override
+  String get metricTodayIncome => 'Today income';
+
+  @override
+  String get metricTodayNet => 'Today balance';
+
+  @override
+  String get metricWeekExpense => 'This week spending';
+
+  @override
+  String get metricWeekIncome => 'This week income';
+
+  @override
+  String get metricWeekNet => 'This week balance';
+
+  @override
+  String get metricYearExpense => 'This year spending';
+
+  @override
+  String get metricYearIncome => 'This year income';
+
+  @override
+  String get metricTotalExpense => 'Total spending';
+
+  @override
+  String get metricTotalIncome => 'Total income';
+
+  @override
+  String get metricTotalNet => 'Total balance';
+
+  @override
+  String get metricTotalAssets => 'Total assets';
+
+  @override
+  String get metricTotalLiabilities => 'Liabilities';
+
+  @override
+  String get metricNetAssets => 'Net assets';
+
+  @override
+  String get metricReimbursablePending => 'Reimbursable';
+
+  @override
+  String get metricReimbursed => 'Reimbursed';
 
   @override
   String get panelRecentLabel => 'Recent transactions';

@@ -15,6 +15,7 @@ import 'backup/webdav_config.dart';
 import 'category_tree.dart';
 import 'demo_data.dart';
 import 'amount_format.dart' as amount_format;
+import 'home_metrics.dart';
 import 'ledger_math.dart';
 import 'logging/app_logger.dart';
 import 'models.dart';
@@ -103,6 +104,7 @@ class VeriFinController extends ChangeNotifier {
   static const String _defaultAccountKey = 'verifin.default_account.v1';
   static const String _amountFormatKey = 'verifin.amount_format.v1';
   static const String _aiSettingsKey = 'verifin.ai.v1';
+  static const String _homeTrendKey = 'verifin.home_metrics.v1';
   static const String _onboardingKey = 'verifin.onboarding.v1';
 
   static String _panelsKeyFor(PanelPageKind page) {
@@ -198,6 +200,7 @@ class VeriFinController extends ChangeNotifier {
   WebdavConfig _webdavConfig = const WebdavConfig();
   ReminderSettings _reminderSettings = ReminderSettings.disabled;
   FabActionMode _fabActionMode = FabActionMode.manual;
+  HomeTrendConfig _homeTrendConfig = HomeTrendConfig.defaults;
   bool _amountForceTwoDecimals = false;
   AiSettings _aiSettings = const AiSettings();
 
@@ -620,6 +623,22 @@ class VeriFinController extends ChangeNotifier {
   void setFabActionMode(FabActionMode mode) {
     _fabActionMode = mode;
     _store.write(_fabActionKey, mode.name);
+    notifyListeners();
+  }
+
+  /// 首页走势卡片的自定义配置（各槽展示的指标、曲线序列、标题）。设备本地显示偏好，
+  /// 不进 JSON 备份、初始化时保留。
+  HomeTrendConfig get homeTrendConfig => _homeTrendConfig;
+
+  void setHomeTrendConfig(HomeTrendConfig config) {
+    _homeTrendConfig = config;
+    _store.write(_homeTrendKey, config.encode());
+    notifyListeners();
+  }
+
+  void resetHomeTrendConfig() {
+    _homeTrendConfig = HomeTrendConfig.defaults;
+    _store.delete(_homeTrendKey);
     notifyListeners();
   }
 
@@ -2087,6 +2106,7 @@ class VeriFinController extends ChangeNotifier {
     _amountForceTwoDecimals = _store.read(_amountFormatKey) == 'true';
     amount_format.amountForceTwoDecimals = _amountForceTwoDecimals;
     _aiSettings = AiSettings.decode(_store.read(_aiSettingsKey));
+    _homeTrendConfig = HomeTrendConfig.decode(_store.read(_homeTrendKey));
   }
 
   /// 从 SQLite 载入账目类数据；全新数据库首启动写入默认账本/账户/分组/分类。

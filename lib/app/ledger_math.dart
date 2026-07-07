@@ -94,13 +94,23 @@ DateTime dateOnly(DateTime date) {
   return DateTime(date.year, date.month, date.day);
 }
 
-DateWindow sevenDayWindowFor(DateTime date) {
-  final startDay = ((date.day - 1) ~/ 7) * 7 + 1;
+/// 累积展开的走势窗口：起点恒为当月 1 号，终点按 7 天为步长推进，直到覆盖整月。
+/// 即 1–7 号显示 1–7、8 号起显示 1–14、15 号起显示 1–21…… 满月为止（不再往后）。
+DateWindow cumulativeWeekWindowFor(DateTime date) {
   final daysInMonth = DateUtils.getDaysInMonth(date.year, date.month);
-  final endDay = (startDay + 6).clamp(1, daysInMonth);
+  final endDay = ((((date.day - 1) ~/ 7) + 1) * 7).clamp(1, daysInMonth);
   return DateWindow(
-    start: DateTime(date.year, date.month, startDay),
+    start: DateTime(date.year, date.month, 1),
     end: DateTime(date.year, date.month, endDay),
+  );
+}
+
+/// 整月窗口（1 号至当月最后一天），用于按月查看的走势详情。
+DateWindow monthWindowFor(DateTime date) {
+  final daysInMonth = DateUtils.getDaysInMonth(date.year, date.month);
+  return DateWindow(
+    start: DateTime(date.year, date.month, 1),
+    end: DateTime(date.year, date.month, daysInMonth),
   );
 }
 

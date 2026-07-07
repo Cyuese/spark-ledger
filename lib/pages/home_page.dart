@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import '../app/app_theme.dart';
 import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
+import '../app/home_metrics.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
 import 'budget_pages.dart';
+import 'home_metrics_settings_page.dart';
 import 'panel_settings_page.dart';
 import 'sheets.dart';
 import 'transactions_pages.dart';
@@ -31,10 +33,20 @@ class HomePage extends StatelessWidget {
         )
         .toList();
     final monthExpense = sumByType(monthEntries, EntryType.expense);
-    final trendWindow = sevenDayWindowFor(now);
+    final trendWindow = cumulativeWeekWindowFor(now);
     final trendEntries = entriesInWindow(monthEntries, trendWindow);
-    final trendExpense = sumByType(trendEntries, EntryType.expense);
-    final trendIncome = sumByType(trendEntries, EntryType.income);
+    final trendConfig = controller.homeTrendConfig;
+    final metricContext = HomeMetricContext(
+      entries: entries,
+      accounts: controller.accounts,
+      balanceOf: controller.accountBalance,
+      now: now,
+    );
+    final trendChartValues = trendSeriesValues(
+      trendConfig.series,
+      trendEntries,
+      trendWindow,
+    );
     final recentEntries = entries.take(5).toList();
     final monthlyBudget = controller.monthlyBudget(now);
     final categoryBudgetSnapshots = computeCategoryBudgetSnapshots(
@@ -51,13 +63,9 @@ class HomePage extends StatelessWidget {
         case 'trend':
           return HomeTrendPanel(
             window: trendWindow,
-            expense: trendExpense,
-            income: trendIncome,
-            values: valuesForTypeInWindow(
-              trendEntries,
-              trendWindow,
-              EntryType.expense,
-            ),
+            config: trendConfig,
+            metricContext: metricContext,
+            chartValues: trendChartValues,
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
@@ -214,33 +222,70 @@ class SectionHeaderAction extends StatelessWidget {
   }
 }
 
+/// 走势曲线按所选序列取逐日值（结余=逐日收入−支出）。
+List<double> trendSeriesValues(
+  HomeTrendSeries series,
+  List<LedgerEntry> entries,
+  DateWindow window,
+) {
+  switch (series) {
+    case HomeTrendSeries.expense:
+      return valuesForTypeInWindow(entries, window, EntryType.expense);
+    case HomeTrendSeries.income:
+      return valuesForTypeInWindow(entries, window, EntryType.income);
+    case HomeTrendSeries.net:
+      final income = valuesForTypeInWindow(entries, window, EntryType.income);
+      final expense = valuesForTypeInWindow(entries, window, EntryType.expense);
+      return <double>[
+        for (var i = 0; i < income.length; i++) income[i] - expense[i],
+      ];
+  }
+}
+
+Color _trendSeriesColor(HomeTrendSeries series) {
+  switch (series) {
+    case HomeTrendSeries.expense:
+      return veriExpense;
+    case HomeTrendSeries.income:
+      return veriIncome;
+    case HomeTrendSeries.net:
+      return veriBlue;
+  }
+}
+
 class HomeTrendPanel extends StatelessWidget {
   const HomeTrendPanel({
     super.key,
     required this.window,
-    required this.expense,
-    required this.income,
-    required this.values,
+    required this.config,
+    required this.metricContext,
+    required this.chartValues,
     required this.onTap,
   });
 
   final DateWindow window;
-  final double expense;
-  final double income;
-  final List<double> values;
+  final HomeTrendConfig config;
+  final HomeMetricContext metricContext;
+  final List<double> chartValues;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = Theme.of(context).colorScheme.onSurface;
     final mutedColor = textColor.withValues(alpha: isDark ? 0.62 : 0.52);
-    final net = income - expense;
-    final daysWithExpense = values.where((value) => value > 0).length;
-    final hasExpense = !isZeroAmount(expense);
-    final netColor = isZeroAmount(net)
+
+    final bigValue = computeHomeMetric(config.big, metricContext);
+    final bigColor = homeMetricColor(config.big, bigValue, mutedColor);
+    final pillValue = computeHomeMetric(config.pill, metricContext);
+    final pillColor = homeMetricColor(config.pill, pillValue, mutedColor);
+
+    final title = config.title.isEmpty ? l10n.trendDefaultTitle : config.title;
+    final seriesColor = isZeroAmount(chartValues.fold<double>(0, math.max))
         ? mutedColor
-        : (net > 0 ? veriIncome : veriExpense);
+        : _trendSeriesColor(config.series);
+    final seriesLabel = homeTrendSeriesLabel(l10n, config.series);
 
     return VeriCard(
       onTap: onTap,
@@ -265,7 +310,9 @@ class HomeTrendPanel extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        AppLocalizations.of(context).panelTrendLabel,
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
@@ -279,29 +326,46 @@ class HomeTrendPanel extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: <Widget>[
-                Text(
-                  formatExpenseAmount(expense),
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: hasExpense ? veriExpense : mutedColor,
-                    fontWeight: FontWeight.w800,
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        homeMetricLabel(l10n, config.big),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: mutedColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        formatHomeMetric(config.big, bigValue),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              color: bigColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: netColor.withValues(alpha: isDark ? 0.16 : 0.10),
+                    color: pillColor.withValues(alpha: isDark ? 0.16 : 0.10),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    AppLocalizations.of(
-                      context,
-                    ).trendNet(formatSignedAmount(net)),
+                    '${homeMetricLabel(l10n, config.pill)} '
+                    '${formatHomeMetric(config.pill, pillValue)}',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: netColor,
+                      color: pillColor,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -312,33 +376,29 @@ class HomeTrendPanel extends StatelessWidget {
             Row(
               children: <Widget>[
                 Expanded(
-                  child: _TrendMetric(
-                    label: AppLocalizations.of(context).entryTypeIncome,
-                    value: formatAmount(income),
-                    color: isZeroAmount(income) ? mutedColor : veriIncome,
+                  child: _MetricTile(
+                    metric: config.card1,
+                    metricContext: metricContext,
                     dark: isDark,
+                    mutedColor: mutedColor,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _TrendMetric(
-                    label: AppLocalizations.of(context).homeDaysTracked,
-                    value: AppLocalizations.of(
-                      context,
-                    ).daysCount(daysWithExpense),
-                    color: veriRoyal,
+                  child: _MetricTile(
+                    metric: config.card2,
+                    metricContext: metricContext,
                     dark: isDark,
+                    mutedColor: mutedColor,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _TrendMetric(
-                    label: AppLocalizations.of(context).homeDailyAvgExpense,
-                    value: formatAmount(
-                      expense / window.days.length.clamp(1, 7),
-                    ),
-                    color: veriBlue,
+                  child: _MetricTile(
+                    metric: config.card3,
+                    metricContext: metricContext,
                     dark: isDark,
+                    mutedColor: mutedColor,
                   ),
                 ),
               ],
@@ -350,20 +410,22 @@ class HomeTrendPanel extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(2, 6, 2, 0),
                 // 图表区域自行响应点击展示数据,不触发卡片跳转。
                 child: InteractiveTrendChart(
-                  color: hasExpense ? veriExpense : mutedColor,
-                  values: values,
+                  color: seriesColor,
+                  values: chartValues,
                   xLabels: labelsForWindow(window),
-                  yLabels: reportAxisLabels(values.fold(0, math.max)),
+                  yLabels: reportAxisLabels(
+                    chartValues.map((v) => v.abs()).fold(0, math.max),
+                  ),
                   labelColor: mutedColor,
                   glow: isDark,
                   tooltipOf: (index) {
                     final day = window.days[index];
                     return ChartTooltip(
-                      title: AppLocalizations.of(context).dateMonthDay(day),
+                      title: l10n.dateMonthDay(day),
                       lines: <ChartTooltipLine>[
                         ChartTooltipLine(
                           text:
-                              '${EntryType.expense.label(AppLocalizations.of(context))} ${formatExpenseAmount(values[index])}',
+                              '$seriesLabel ${formatSignedAmount(chartValues[index])}',
                         ),
                       ],
                     );
@@ -374,6 +436,33 @@ class HomeTrendPanel extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 走势卡片里的一个可自定义小卡片：展示某个指标的名称与数值。
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
+    required this.metric,
+    required this.metricContext,
+    required this.dark,
+    required this.mutedColor,
+  });
+
+  final HomeMetric metric;
+  final HomeMetricContext metricContext;
+  final bool dark;
+  final Color mutedColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = computeHomeMetric(metric, metricContext);
+    final color = homeMetricColor(metric, value, mutedColor);
+    return _TrendMetric(
+      label: homeMetricLabel(AppLocalizations.of(context), metric),
+      value: formatHomeMetric(metric, value),
+      color: color,
+      dark: dark,
     );
   }
 }
@@ -622,7 +711,7 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
     final visibleMonth = DateTime(_focusDate.year, _focusDate.month);
-    final window = sevenDayWindowFor(_focusDate);
+    final window = monthWindowFor(_focusDate);
     final scopedEntries = controller.entries
         .where(
           (entry) =>
@@ -657,6 +746,20 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
               VeriHeader(
                 title: AppLocalizations.of(context).incomeExpenseTitle,
                 showBack: true,
+                actions: <Widget>[
+                  HeaderAction(
+                    key: const Key('trend_customize'),
+                    icon: Icons.edit_outlined,
+                    tooltip: AppLocalizations.of(context).trendCustomizeEntry,
+                    onPressed: () {
+                      Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (context) => const HomeMetricsSettingsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Row(

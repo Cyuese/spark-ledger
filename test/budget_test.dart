@@ -20,10 +20,11 @@ void main() {
     await tester.tap(find.byType(InteractiveTrendChart).first);
     await tester.pumpAndSettle();
     expect(find.text('收支统计'), findsNothing);
-    expect(find.text('支出走势'), findsOneWidget);
+    // 默认标题为「概览」（可自定义，留空时回落此默认）。
+    expect(find.text('概览'), findsOneWidget);
 
     // 点击卡片标题区域仍然进入收支统计页。
-    await tester.tap(find.text('支出走势'));
+    await tester.tap(find.text('概览'));
     await tester.pumpAndSettle();
     expect(find.text('收支统计'), findsOneWidget);
   });

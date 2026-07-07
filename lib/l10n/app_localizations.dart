@@ -491,8 +491,248 @@ abstract class AppLocalizations {
   /// No description provided for @panelTrendDesc.
   ///
   /// In zh, this message translates to:
-  /// **'按 7 天周期展示支出趋势与结余'**
+  /// **'可自定义展示的数据与走势曲线'**
   String get panelTrendDesc;
+
+  /// No description provided for @trendCustomizeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义走势卡片'**
+  String get trendCustomizeTitle;
+
+  /// No description provided for @trendCustomizeEntry.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义'**
+  String get trendCustomizeEntry;
+
+  /// No description provided for @trendCustomizeDisplayData.
+  ///
+  /// In zh, this message translates to:
+  /// **'展示数据'**
+  String get trendCustomizeDisplayData;
+
+  /// No description provided for @trendCustomizeChart.
+  ///
+  /// In zh, this message translates to:
+  /// **'曲线'**
+  String get trendCustomizeChart;
+
+  /// No description provided for @trendCustomizeTitleField.
+  ///
+  /// In zh, this message translates to:
+  /// **'卡片标题'**
+  String get trendCustomizeTitleField;
+
+  /// No description provided for @trendCustomizeTitleHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'留空则显示「概览」'**
+  String get trendCustomizeTitleHint;
+
+  /// No description provided for @trendDefaultTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'概览'**
+  String get trendDefaultTitle;
+
+  /// No description provided for @trendSlotBig.
+  ///
+  /// In zh, this message translates to:
+  /// **'大数字'**
+  String get trendSlotBig;
+
+  /// No description provided for @trendSlotPill.
+  ///
+  /// In zh, this message translates to:
+  /// **'结余位'**
+  String get trendSlotPill;
+
+  /// No description provided for @trendSlotCard1.
+  ///
+  /// In zh, this message translates to:
+  /// **'小卡片 1'**
+  String get trendSlotCard1;
+
+  /// No description provided for @trendSlotCard2.
+  ///
+  /// In zh, this message translates to:
+  /// **'小卡片 2'**
+  String get trendSlotCard2;
+
+  /// No description provided for @trendSlotCard3.
+  ///
+  /// In zh, this message translates to:
+  /// **'小卡片 3'**
+  String get trendSlotCard3;
+
+  /// No description provided for @trendSlotChart.
+  ///
+  /// In zh, this message translates to:
+  /// **'曲线数据'**
+  String get trendSlotChart;
+
+  /// No description provided for @trendResetTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认走势卡片？'**
+  String get trendResetTitle;
+
+  /// No description provided for @trendResetMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'会把卡片标题与各处展示的数据恢复为默认。'**
+  String get trendResetMessage;
+
+  /// No description provided for @trendResetConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认'**
+  String get trendResetConfirm;
+
+  /// No description provided for @pickMetricTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择展示数据'**
+  String get pickMetricTitle;
+
+  /// No description provided for @pickChartSeriesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择曲线数据'**
+  String get pickChartSeriesTitle;
+
+  /// No description provided for @metricSeriesNet.
+  ///
+  /// In zh, this message translates to:
+  /// **'结余'**
+  String get metricSeriesNet;
+
+  /// No description provided for @metricMonthExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月支出'**
+  String get metricMonthExpense;
+
+  /// No description provided for @metricMonthIncome.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月收入'**
+  String get metricMonthIncome;
+
+  /// No description provided for @metricMonthNet.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月结余'**
+  String get metricMonthNet;
+
+  /// No description provided for @metricDailyAvgExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'日均消费'**
+  String get metricDailyAvgExpense;
+
+  /// No description provided for @metricDailyAvgIncome.
+  ///
+  /// In zh, this message translates to:
+  /// **'日均收入'**
+  String get metricDailyAvgIncome;
+
+  /// No description provided for @metricTodayExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'今日支出'**
+  String get metricTodayExpense;
+
+  /// No description provided for @metricTodayIncome.
+  ///
+  /// In zh, this message translates to:
+  /// **'今日收入'**
+  String get metricTodayIncome;
+
+  /// No description provided for @metricTodayNet.
+  ///
+  /// In zh, this message translates to:
+  /// **'今日结余'**
+  String get metricTodayNet;
+
+  /// No description provided for @metricWeekExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'本周支出'**
+  String get metricWeekExpense;
+
+  /// No description provided for @metricWeekIncome.
+  ///
+  /// In zh, this message translates to:
+  /// **'本周收入'**
+  String get metricWeekIncome;
+
+  /// No description provided for @metricWeekNet.
+  ///
+  /// In zh, this message translates to:
+  /// **'本周结余'**
+  String get metricWeekNet;
+
+  /// No description provided for @metricYearExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'本年支出'**
+  String get metricYearExpense;
+
+  /// No description provided for @metricYearIncome.
+  ///
+  /// In zh, this message translates to:
+  /// **'本年收入'**
+  String get metricYearIncome;
+
+  /// No description provided for @metricTotalExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'总支出'**
+  String get metricTotalExpense;
+
+  /// No description provided for @metricTotalIncome.
+  ///
+  /// In zh, this message translates to:
+  /// **'总收入'**
+  String get metricTotalIncome;
+
+  /// No description provided for @metricTotalNet.
+  ///
+  /// In zh, this message translates to:
+  /// **'总结余'**
+  String get metricTotalNet;
+
+  /// No description provided for @metricTotalAssets.
+  ///
+  /// In zh, this message translates to:
+  /// **'总资产'**
+  String get metricTotalAssets;
+
+  /// No description provided for @metricTotalLiabilities.
+  ///
+  /// In zh, this message translates to:
+  /// **'负资产'**
+  String get metricTotalLiabilities;
+
+  /// No description provided for @metricNetAssets.
+  ///
+  /// In zh, this message translates to:
+  /// **'净资产'**
+  String get metricNetAssets;
+
+  /// No description provided for @metricReimbursablePending.
+  ///
+  /// In zh, this message translates to:
+  /// **'待报销'**
+  String get metricReimbursablePending;
+
+  /// No description provided for @metricReimbursed.
+  ///
+  /// In zh, this message translates to:
+  /// **'已报销'**
+  String get metricReimbursed;
 
   /// No description provided for @panelRecentLabel.
   ///

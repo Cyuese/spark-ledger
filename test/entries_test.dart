@@ -15,7 +15,7 @@ void main() {
   ) async {
     await pumpApp(tester);
 
-    await tester.tap(find.text('支出走势'));
+    await tester.tap(find.text('概览'));
     await tester.pumpAndSettle();
 
     expect(find.text('收支统计'), findsOneWidget);

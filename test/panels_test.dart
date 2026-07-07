@@ -29,7 +29,7 @@ void main() {
 
     expect(find.text('首页面板'), findsOneWidget);
     expect(find.text('支出走势'), findsOneWidget);
-    expect(find.text('按 7 天周期展示支出趋势与结余'), findsOneWidget);
+    expect(find.text('可自定义展示的数据与走势曲线'), findsOneWidget);
 
     // 关闭日历后,首页不再渲染日历卡片。
     await tester.tap(find.byKey(const Key('panel_switch_calendar')));

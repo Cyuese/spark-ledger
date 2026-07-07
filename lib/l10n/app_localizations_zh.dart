@@ -208,7 +208,127 @@ class AppLocalizationsZh extends AppLocalizations {
   String get panelTrendLabel => '支出走势';
 
   @override
-  String get panelTrendDesc => '按 7 天周期展示支出趋势与结余';
+  String get panelTrendDesc => '可自定义展示的数据与走势曲线';
+
+  @override
+  String get trendCustomizeTitle => '自定义走势卡片';
+
+  @override
+  String get trendCustomizeEntry => '自定义';
+
+  @override
+  String get trendCustomizeDisplayData => '展示数据';
+
+  @override
+  String get trendCustomizeChart => '曲线';
+
+  @override
+  String get trendCustomizeTitleField => '卡片标题';
+
+  @override
+  String get trendCustomizeTitleHint => '留空则显示「概览」';
+
+  @override
+  String get trendDefaultTitle => '概览';
+
+  @override
+  String get trendSlotBig => '大数字';
+
+  @override
+  String get trendSlotPill => '结余位';
+
+  @override
+  String get trendSlotCard1 => '小卡片 1';
+
+  @override
+  String get trendSlotCard2 => '小卡片 2';
+
+  @override
+  String get trendSlotCard3 => '小卡片 3';
+
+  @override
+  String get trendSlotChart => '曲线数据';
+
+  @override
+  String get trendResetTitle => '恢复默认走势卡片？';
+
+  @override
+  String get trendResetMessage => '会把卡片标题与各处展示的数据恢复为默认。';
+
+  @override
+  String get trendResetConfirm => '恢复默认';
+
+  @override
+  String get pickMetricTitle => '选择展示数据';
+
+  @override
+  String get pickChartSeriesTitle => '选择曲线数据';
+
+  @override
+  String get metricSeriesNet => '结余';
+
+  @override
+  String get metricMonthExpense => '本月支出';
+
+  @override
+  String get metricMonthIncome => '本月收入';
+
+  @override
+  String get metricMonthNet => '本月结余';
+
+  @override
+  String get metricDailyAvgExpense => '日均消费';
+
+  @override
+  String get metricDailyAvgIncome => '日均收入';
+
+  @override
+  String get metricTodayExpense => '今日支出';
+
+  @override
+  String get metricTodayIncome => '今日收入';
+
+  @override
+  String get metricTodayNet => '今日结余';
+
+  @override
+  String get metricWeekExpense => '本周支出';
+
+  @override
+  String get metricWeekIncome => '本周收入';
+
+  @override
+  String get metricWeekNet => '本周结余';
+
+  @override
+  String get metricYearExpense => '本年支出';
+
+  @override
+  String get metricYearIncome => '本年收入';
+
+  @override
+  String get metricTotalExpense => '总支出';
+
+  @override
+  String get metricTotalIncome => '总收入';
+
+  @override
+  String get metricTotalNet => '总结余';
+
+  @override
+  String get metricTotalAssets => '总资产';
+
+  @override
+  String get metricTotalLiabilities => '负资产';
+
+  @override
+  String get metricNetAssets => '净资产';
+
+  @override
+  String get metricReimbursablePending => '待报销';
+
+  @override
+  String get metricReimbursed => '已报销';
 
   @override
   String get panelRecentLabel => '最近交易';

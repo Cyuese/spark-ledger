@@ -39,7 +39,7 @@ class ReportsPage extends StatelessWidget {
         .toList(growable: false);
     final categoryStats = _categoryStats(expenseEntries, controller.categories);
     final tagStats = _tagStats(expenseEntries, controller.tags, monthExpense);
-    final trendWindow = sevenDayWindowFor(DateTime.now());
+    final trendWindow = cumulativeWeekWindowFor(DateTime.now());
     final trendValues = valuesForTypeInWindow(
       entries,
       trendWindow,
