@@ -1866,19 +1866,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataMgmtSubtitle => '备份与恢复本地数据';
 
   @override
-  String get exportData => '导出数据';
+  String get exportData => '导出为文件';
 
   @override
-  String get jsonBackup => 'JSON 备份';
+  String get jsonBackup => '另存到系统下载目录';
 
   @override
-  String get importData => '导入数据';
+  String get importData => '从文件恢复';
 
   @override
-  String get restoreFromFile => '从文件恢复';
+  String get restoreFromFile => '选择备份文件导入';
 
   @override
-  String get importFromSheets => '从表格导入交易';
+  String get importFromSheets => '导入账单';
+
+  @override
+  String get dataSectionLocalBackup => '本地备份';
+
+  @override
+  String get dataSectionMaintenance => '应用维护';
 
   @override
   String get downloadCsvTemplate => '下载 CSV 模板';

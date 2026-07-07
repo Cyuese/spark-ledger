@@ -1898,19 +1898,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dataMgmtSubtitle => 'Back up and restore local data';
 
   @override
-  String get exportData => 'Export data';
+  String get exportData => 'Export to file';
 
   @override
-  String get jsonBackup => 'JSON backup';
+  String get jsonBackup => 'Save to system Downloads';
 
   @override
-  String get importData => 'Import data';
+  String get importData => 'Restore from file';
 
   @override
-  String get restoreFromFile => 'Restore from file';
+  String get restoreFromFile => 'Pick a backup file';
 
   @override
-  String get importFromSheets => 'Import from spreadsheets';
+  String get importFromSheets => 'Import bills';
+
+  @override
+  String get dataSectionLocalBackup => 'Local backup';
+
+  @override
+  String get dataSectionMaintenance => 'Maintenance';
 
   @override
   String get downloadCsvTemplate => 'Download CSV template';

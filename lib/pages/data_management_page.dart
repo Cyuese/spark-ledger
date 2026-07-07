@@ -40,57 +40,9 @@ class DataManagementPage extends StatelessWidget {
                 showBack: true,
               ),
               const SizedBox(height: 10),
-              VeriCard(
-                child: Column(
-                  children: <Widget>[
-                    SettingsRow(
-                      icon: Icons.download_outlined,
-                      title: AppLocalizations.of(context).exportData,
-                      trailing: AppLocalizations.of(context).jsonBackup,
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () => _exportData(context, controller),
-                    ),
-                    const Divider(),
-                    SettingsRow(
-                      icon: Icons.upload_file_outlined,
-                      title: AppLocalizations.of(context).importData,
-                      trailing: AppLocalizations.of(context).restoreFromFile,
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () => _confirmImport(context, controller),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
               _sectionLabel(
                 context,
-                AppLocalizations.of(context).importFromSheets,
-              ),
-              VeriCard(
-                child: Column(
-                  children: <Widget>[
-                    SettingsRow(
-                      icon: Icons.account_balance_wallet_outlined,
-                      title: AppLocalizations.of(context).importBillFile,
-                      trailing: AppLocalizations.of(context).importBillFileHint,
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () => _importFromPlatform(context, controller),
-                    ),
-                    const Divider(),
-                    SettingsRow(
-                      icon: Icons.file_download_outlined,
-                      title: AppLocalizations.of(context).downloadCsvTemplate,
-                      trailing: AppLocalizations.of(context).excelHint,
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () => _downloadCsvTemplate(context),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              _sectionLabel(
-                context,
-                AppLocalizations.of(context).backupToLocalDir,
+                AppLocalizations.of(context).dataSectionLocalBackup,
               ),
               VeriCard(
                 child: Column(
@@ -114,6 +66,22 @@ class DataManagementPage extends StatelessWidget {
                       ),
                       trailingIcon: Icons.chevron_right,
                       onTap: () => _backupNow(context, controller),
+                    ),
+                    const Divider(),
+                    SettingsRow(
+                      icon: Icons.download_outlined,
+                      title: AppLocalizations.of(context).exportData,
+                      trailing: AppLocalizations.of(context).jsonBackup,
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _exportData(context, controller),
+                    ),
+                    const Divider(),
+                    SettingsRow(
+                      icon: Icons.upload_file_outlined,
+                      title: AppLocalizations.of(context).importData,
+                      trailing: AppLocalizations.of(context).restoreFromFile,
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _confirmImport(context, controller),
                     ),
                     if (controller.backupSettings.hasDirectory) ...<Widget>[
                       const Divider(),
@@ -265,28 +233,60 @@ class DataManagementPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
+              _sectionLabel(
+                context,
+                AppLocalizations.of(context).importFromSheets,
+              ),
               VeriCard(
-                child: SettingsRow(
-                  icon: Icons.description_outlined,
-                  title: AppLocalizations.of(context).appLog,
-                  trailing: AppLocalizations.of(context).viewLabel,
-                  trailingIcon: Icons.chevron_right,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (context) => const AppLogPage(),
+                child: Column(
+                  children: <Widget>[
+                    SettingsRow(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: AppLocalizations.of(context).importBillFile,
+                      trailing: AppLocalizations.of(context).importBillFileHint,
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _importFromPlatform(context, controller),
                     ),
-                  ),
+                    const Divider(),
+                    SettingsRow(
+                      icon: Icons.file_download_outlined,
+                      title: AppLocalizations.of(context).downloadCsvTemplate,
+                      trailing: AppLocalizations.of(context).excelHint,
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => _downloadCsvTemplate(context),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 10),
+              _sectionLabel(
+                context,
+                AppLocalizations.of(context).dataSectionMaintenance,
+              ),
               VeriCard(
-                child: SettingsRow(
-                  icon: Icons.restart_alt,
-                  title: AppLocalizations.of(context).resetData,
-                  trailing: AppLocalizations.of(context).deleteAllLocal,
-                  trailingIcon: Icons.chevron_right,
-                  contentColor: veriExpense,
-                  onTap: () => _confirmReset(context, controller),
+                child: Column(
+                  children: <Widget>[
+                    SettingsRow(
+                      icon: Icons.description_outlined,
+                      title: AppLocalizations.of(context).appLog,
+                      trailing: AppLocalizations.of(context).viewLabel,
+                      trailingIcon: Icons.chevron_right,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (context) => const AppLogPage(),
+                        ),
+                      ),
+                    ),
+                    const Divider(),
+                    SettingsRow(
+                      icon: Icons.restart_alt,
+                      title: AppLocalizations.of(context).resetData,
+                      trailing: AppLocalizations.of(context).deleteAllLocal,
+                      trailingIcon: Icons.chevron_right,
+                      contentColor: veriExpense,
+                      onTap: () => _confirmReset(context, controller),
+                    ),
+                  ],
                 ),
               ),
             ],

@@ -3449,32 +3449,44 @@ abstract class AppLocalizations {
   /// No description provided for @exportData.
   ///
   /// In zh, this message translates to:
-  /// **'导出数据'**
+  /// **'导出为文件'**
   String get exportData;
 
   /// No description provided for @jsonBackup.
   ///
   /// In zh, this message translates to:
-  /// **'JSON 备份'**
+  /// **'另存到系统下载目录'**
   String get jsonBackup;
 
   /// No description provided for @importData.
   ///
   /// In zh, this message translates to:
-  /// **'导入数据'**
+  /// **'从文件恢复'**
   String get importData;
 
   /// No description provided for @restoreFromFile.
   ///
   /// In zh, this message translates to:
-  /// **'从文件恢复'**
+  /// **'选择备份文件导入'**
   String get restoreFromFile;
 
   /// No description provided for @importFromSheets.
   ///
   /// In zh, this message translates to:
-  /// **'从表格导入交易'**
+  /// **'导入账单'**
   String get importFromSheets;
+
+  /// No description provided for @dataSectionLocalBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地备份'**
+  String get dataSectionLocalBackup;
+
+  /// No description provided for @dataSectionMaintenance.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用维护'**
+  String get dataSectionMaintenance;
 
   /// No description provided for @downloadCsvTemplate.
   ///
