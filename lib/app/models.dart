@@ -244,8 +244,13 @@ class LedgerEntry {
   final double refundedAmount;
 
   /// 净支出额（原金额减去已退款/报销回款）。非支出返回原金额。
-  double get netAmount =>
-      type == EntryType.expense ? amount - refundedAmount : amount;
+  /// 净额钳制在 [0, amount]：编辑时把金额改到低于已退款额、或损坏备份导入越界值时，
+  /// 净额不会变负（否则支出会被 signedAmount 当成收入、账户余额虚增）。
+  double get netAmount {
+    if (type != EntryType.expense) return amount;
+    if (amount <= 0) return 0; // 异常/损坏数据兜底，避免 clamp 上界小于下界
+    return (amount - refundedAmount).clamp(0.0, amount);
+  }
 
   LedgerEntry copyWith({
     String? id,

@@ -34,6 +34,20 @@ void main() {
     expect(sumByType(<LedgerEntry>[entry], EntryType.expense), 70);
   });
 
+  test('已冲抵额超过金额时净额钳制为 0，不会变负被当成收入', () {
+    // 场景：待报销支出 amount=200 refunded=150，之后金额被改小到 100。
+    final entry = _expense(amount: 100, refunded: 150, reimbursable: true);
+    expect(entry.netAmount, 0);
+    expect(signedAmount(entry), 0); // 不会变成 +50「收入」
+    expect(accountDeltaForEntry(entry, 'cash'), 0); // 账户余额不会虚增
+    expect(sumByType(<LedgerEntry>[entry], EntryType.expense), 0);
+  });
+
+  test('损坏数据金额为负时净额兜底为 0，不抛异常', () {
+    final entry = _expense(amount: -50, refunded: 0);
+    expect(entry.netAmount, 0);
+  });
+
   test('setEntryRefundedAmount 冲抵后账户余额与月支出反映净额', () async {
     final controller = await makeController();
     final bookId = controller.activeBook.id;
