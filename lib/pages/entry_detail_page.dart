@@ -81,6 +81,8 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   bool _categoryTouched = false;
   bool _tagsTouched = false;
   bool _noteTouched = false;
+  // 防重复提交：极快双击「保存」可能在 pop 生效前触发两次、落两条交易。
+  bool _saving = false;
   // 程序化写入备注时置真，令备注监听忽略这次（不误判为用户输入）。
   bool _applyingSuggestion = false;
   bool _didInitialSuggest = false;
@@ -724,10 +726,14 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   void _save() {
+    if (_saving) {
+      return;
+    }
     final controller = VeriFinScope.of(context);
     final noAccount = _type != EntryType.transfer && _noAccount;
     // 草稿编辑模式：不落库，构造修改后的交易并回传给上层（如导入预览页）。
     if (_isDraft) {
+      _saving = true;
       final original = widget.draftEntry!;
       Navigator.of(context).pop(
         LedgerEntry(
@@ -755,6 +761,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
             .any((account) => account.id == _accountId)) {
       return;
     }
+    _saving = true;
     final entryId = DateTime.now().microsecondsSinceEpoch.toString();
     controller.addEntry(
       LedgerEntry(
