@@ -156,6 +156,19 @@ void main() {
       );
       expect(plan.entries.single.occurredAt, DateTime(2026, 1, 5, 9, 30));
     });
+
+    test('越界日期不被静默归一化，按错误行处理', () {
+      // 2-30 不存在、25:70 超范围；应记为错误而非静默变成 3-2 / 次日。
+      final plan = build(
+        '日期,类型,金额,分类,账户,转入账户,备注\n'
+        '2026-02-30,支出,10,餐饮,现金,,不存在的日\n'
+        '2026-01-05 25:70,支出,10,餐饮,现金,,越界时间\n'
+        '2026-01-05,支出,12,餐饮,现金,,正常',
+      );
+      expect(plan.importedCount, 1);
+      expect(plan.errorCount, 2);
+      expect(plan.entries.single.note, '正常');
+    });
   });
 
   group('第三方格式适配', () {

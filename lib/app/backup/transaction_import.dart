@@ -222,10 +222,22 @@ DateTime? _parseDate(String raw) {
   final hour = int.tryParse(match.group(4) ?? '') ?? 0;
   final minute = int.tryParse(match.group(5) ?? '') ?? 0;
   final second = int.tryParse(match.group(6) ?? '') ?? 0;
-  if (month < 1 || month > 12 || day < 1 || day > 31) {
+  if (month < 1 ||
+      month > 12 ||
+      day < 1 ||
+      day > 31 ||
+      hour > 23 ||
+      minute > 59 ||
+      second > 59) {
     return null;
   }
-  return DateTime(year, month, day, hour, minute, second);
+  final result = DateTime(year, month, day, hour, minute, second);
+  // DateTime 会把越界的日静默归一化（如 2-30 → 3-2）。回读校验，宁可判为无效日期
+  // 让该行报错，也不要静默记成错误的日期。
+  if (result.year != year || result.month != month || result.day != day) {
+    return null;
+  }
+  return result;
 }
 
 String _normalizeHeader(String raw) => raw.trim().toLowerCase();
