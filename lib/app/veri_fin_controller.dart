@@ -2262,6 +2262,10 @@ class VeriFinController extends ChangeNotifier {
   @visibleForTesting
   Future<void> waitForPendingWrites() => _pendingWrite;
 
+  /// 刷盘所有挂起的偏好类 KV 写入。应用切到后台时调用，确保应用锁 / 隐私同意等
+  /// 关键偏好在进程可能被系统回收前落盘。
+  Future<void> flushPreferenceWrites() => _store.flush();
+
   void _persistLedgerBooks() {
     _trackWrite(_repository.saveBooks(List<LedgerBook>.of(_ledgerBooks)));
   }

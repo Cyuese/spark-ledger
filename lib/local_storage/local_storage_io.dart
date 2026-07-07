@@ -14,6 +14,9 @@ class LocalKeyValueStore {
   final SharedPreferences? _preferences;
   final Map<String, String> _memory = <String, String>{};
 
+  // 追踪未完成的异步落盘，供 [flush] 在应用切后台时等待其完成。
+  final Set<Future<void>> _pending = <Future<void>>{};
+
   static Future<LocalKeyValueStore> create() async {
     final preferences = await SharedPreferences.getInstance();
     return LocalKeyValueStore._(preferences);
@@ -25,7 +28,7 @@ class LocalKeyValueStore {
     _memory[key] = value;
     final preferences = _preferences;
     if (preferences != null) {
-      unawaited(preferences.setString(key, value));
+      _track(preferences.setString(key, value));
     }
   }
 
@@ -33,7 +36,18 @@ class LocalKeyValueStore {
     _memory.remove(key);
     final preferences = _preferences;
     if (preferences != null) {
-      unawaited(preferences.remove(key));
+      _track(preferences.remove(key));
     }
   }
+
+  void _track(Future<void> op) {
+    final future = op.catchError((_) {});
+    _pending.add(future);
+    unawaited(future.whenComplete(() => _pending.remove(future)));
+  }
+
+  /// 等待所有挂起的写入落盘。应用切到后台（paused/hidden）时调用，确保 setString
+  /// 在进程可能被系统回收前完成刷盘——尤其是应用锁 / 隐私同意这类关键偏好，
+  /// 否则「设完 PIN 立刻杀进程」可能丢失最后一次写入。
+  Future<void> flush() => Future.wait(_pending.toList());
 }

@@ -232,6 +232,10 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
       _controller.applyDueRecurring(DateTime.now());
       BackupCoordinator.maybeBackupOnOpen(_controller);
       pushWidgetData(_controller);
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      // 切后台时把挂起的偏好写入刷盘，缩小「刚改完设置就被系统回收 → 丢失」的窗口。
+      unawaited(_controller.flushPreferenceWrites());
     }
   }
 

@@ -12,4 +12,7 @@ class LocalKeyValueStore {
   void delete(String key) {
     _memory.remove(key);
   }
+
+  /// 内存实现无异步落盘，无需等待。
+  Future<void> flush() async {}
 }
