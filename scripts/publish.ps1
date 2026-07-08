@@ -35,13 +35,35 @@ promote it to the latest release manually on GitHub.
 '@
 }
 
-# 运行原生命令并在失败（非零退出码）时中止——PowerShell 的 $ErrorActionPreference
-# 不会自动拦截原生命令的失败，故手动检查 $LASTEXITCODE。
+# 运行原生命令并在失败（非零退出码）时中止。原生命令（git/flutter 等）常把进度/
+# 提示写到 stderr（如 git push 的「To github.com…」），在 $ErrorActionPreference='Stop'
+# 下会被当成终止错误抛出；故在 Continue 语境里执行，只按 $LASTEXITCODE 判定成败。
 function Invoke-Native {
     param([Parameter(Mandatory)][scriptblock]$Command)
-    & $Command
-    if ($LASTEXITCODE -ne 0) {
-        throw "Command failed with exit code ${LASTEXITCODE}: $Command"
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & $Command
+        $code = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+    if ($code -ne 0) {
+        throw "Command failed with exit code ${code}: $Command"
+    }
+}
+
+# 运行原生命令、丢弃全部输出、只返回退出码（用于存在性探测）。同样在 Continue 语境
+# 里执行，避免 stderr 重定向在 Stop 下被包成 ErrorRecord 抛出。
+function Get-NativeExitCode {
+    param([Parameter(Mandatory)][scriptblock]$Command)
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & $Command *> $null
+        return $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previous
     }
 }
 
@@ -106,13 +128,11 @@ $nextVersion = "$nextName+$nextBuild"
 $tag = "v$nextName"
 
 # 标签不得已存在（本地或远端）。
-git rev-parse $tag *> $null
-if ($LASTEXITCODE -eq 0) {
+if ((Get-NativeExitCode { git rev-parse --verify --quiet "refs/tags/$tag" }) -eq 0) {
     Write-Error "Tag $tag already exists locally."
     exit 1
 }
-git ls-remote --exit-code --tags origin "refs/tags/$tag" *> $null
-if ($LASTEXITCODE -eq 0) {
+if ((Get-NativeExitCode { git ls-remote --exit-code --tags origin "refs/tags/$tag" }) -eq 0) {
     Write-Error "Tag $tag already exists on origin."
     exit 1
 }
