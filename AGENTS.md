@@ -8,7 +8,7 @@
 - `flutter run -d <android-device-id>`：在 Android 模拟器或真机上本地预览和调试。
 - `flutter analyze`：执行静态检查，使用 `flutter_lints` 规则。
 - `flutter test`：运行 `test/` 下的全部测试。
-- `scripts/publish.sh patch`：发布补丁版本，脚本会更新版本号、提交、创建 `vX.Y.Z` 标签并推送。
+- `scripts/publish.sh patch`：发布补丁版本，脚本会更新版本号、提交、创建 `vX.Y.Z` 标签并推送。Windows 上用等价的 `scripts/publish.ps1 patch`（PowerShell），两脚本逻辑一致，须同步维护。
 
 Android 安装包不在本机打包；最终 APK/AAB 由 GitHub CI 负责生成。普通提交不触发 Actions，只有推送 `vX.Y.Z` 标签时才构建。CI 默认发布 GitHub **预发布**（不标记 Latest）；真机验收通过后，在 GitHub 手动把该 release 改为正式版（设为 Latest）。不要在常规开发流程中运行或依赖本机 `flutter build apk` 作为交付依据。
 

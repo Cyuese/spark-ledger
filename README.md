@@ -112,7 +112,11 @@ Android 包名 `top.talyra42.verifin`。本地不构建交付 APK——正式安
 - 发版一条命令：
 
   ```bash
-  scripts/publish.sh patch   # 也支持 minor / major / 显式版本号
+  scripts/publish.sh patch   # macOS/Linux；也支持 minor / major / 显式版本号
+  ```
+
+  ```powershell
+  ./scripts/publish.ps1 patch  # Windows/PowerShell 等价脚本
   ```
 
   脚本会更新版本号、提交、打标签并推送。
