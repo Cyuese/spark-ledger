@@ -2094,6 +2094,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get platformYimuTransferHint => '转账还款导出（.xls）';
 
   @override
+  String get platformTally => 'Tally 记账';
+
+  @override
+  String get platformTallyHint => '备份 zip';
+
+  @override
   String get platformGenericCsv => '其他 CSV';
 
   @override
@@ -2123,6 +2129,10 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get yimuTransferImportGuide =>
       '一木记账 App →「我的」→「导入/导出」→「数据导出」→「转账还款导出」，选择 Excel（.xls）保存到本机后在此选择。\n\n导入转账记录，保留转出/转入账户与手续费。收支账单请用另一个入口「一木记账 · 账单」。菜单以实际 App 版本为准。';
+
+  @override
+  String get tallyImportGuide =>
+      'Tally 记账 App →「设置」→ 数据备份与恢复 →「导出备份」，得到 Tally 开头的 .zip 文件，保存到本机后在此选择。\n\n请选「备份 zip」而非 CSV「账单」导出：备份保留精确到秒的交易时间，收入/支出/转账、一级/二级分类、账户与备注都会一并导入（分类按二级分类）。菜单以实际 App 版本为准。';
 
   @override
   String get genericCsvImportGuide =>

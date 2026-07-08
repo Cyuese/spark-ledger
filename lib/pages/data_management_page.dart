@@ -907,6 +907,13 @@ class DataManagementPage extends StatelessWidget {
         assetPath: 'assets/import_icons/yimu.png',
       ),
       _PlatformOption(
+        ImportPlatform.tally,
+        Icons.receipt_long_outlined,
+        l10n.platformTally,
+        l10n.platformTallyHint,
+        assetPath: 'assets/import_icons/tally.png',
+      ),
+      _PlatformOption(
         ImportPlatform.genericCsv,
         Icons.table_chart_outlined,
         l10n.platformGenericCsv,
@@ -1008,6 +1015,7 @@ class DataManagementPage extends StatelessWidget {
       ImportPlatform.mint => l10n.platformMint,
       ImportPlatform.yimuBill => l10n.platformYimuBill,
       ImportPlatform.yimuTransfer => l10n.platformYimuTransfer,
+      ImportPlatform.tally => l10n.platformTally,
       ImportPlatform.genericCsv => l10n.platformGenericCsv,
     };
   }
@@ -1020,6 +1028,7 @@ class DataManagementPage extends StatelessWidget {
       ImportPlatform.mint => l10n.mintImportGuide,
       ImportPlatform.yimuBill => l10n.yimuBillImportGuide,
       ImportPlatform.yimuTransfer => l10n.yimuTransferImportGuide,
+      ImportPlatform.tally => l10n.tallyImportGuide,
       ImportPlatform.genericCsv => l10n.genericCsvImportGuide,
     };
   }

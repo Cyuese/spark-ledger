@@ -17,6 +17,9 @@ import 'xls_reader.dart';
 /// - [yimuBill] / [yimuTransfer] 一木记账 xls：老式 BIFF8 二进制 Excel。一木把
 ///   「账单导出（收支）」与「转账还款导出」做成两个不同表头的文件，且还有其他导出，
 ///   故拆成两个入口由用户显式选择、各认自己的表头（选错即报错，绝不猜测）。
+/// - [tally] Tally 记账「备份」导出：zip 内含 `backup_data.json`（Gson 全量数据）。
+///   相较其 CSV「账单」导出无损——交易时间精确到毫秒（epoch），故导 zip 而非 CSV。
+///   转账（type=2、category「资产互转」）的转出/转入账户编码在 note（"转出 -> 转入"）里。
 /// - [genericCsv] 通用 CSV（Veri Fin 模板 / 钱迹 / 随手记）：UTF-8 逗号分隔，走别名识别。
 enum ImportPlatform {
   alipay,
@@ -24,6 +27,7 @@ enum ImportPlatform {
   mint,
   yimuBill,
   yimuTransfer,
+  tally,
   genericCsv;
 
   /// 该来源可选择的文件扩展名（用于文件选择器过滤）。
@@ -31,6 +35,7 @@ enum ImportPlatform {
     ImportPlatform.wechat => const <String>['xlsx'],
     ImportPlatform.yimuBill => const <String>['xls'],
     ImportPlatform.yimuTransfer => const <String>['xls'],
+    ImportPlatform.tally => const <String>['zip'],
     _ => const <String>['csv', 'txt'],
   };
 }
@@ -66,6 +71,7 @@ ImportPlan buildPlatformImportPlan({
     ImportPlatform.mint => _normalizeMint(_decodeUtf16(bytes)),
     ImportPlatform.yimuBill => _normalizeYimuBill(parseXls(bytes)),
     ImportPlatform.yimuTransfer => _normalizeYimuTransfer(parseXls(bytes)),
+    ImportPlatform.tally => _normalizeTally(bytes),
     ImportPlatform.genericCsv => parseCsv(_decodeUtf8(bytes)),
   };
   return buildImportPlan(
@@ -300,6 +306,165 @@ List<List<String>> _normalizeYimuTransfer(List<List<String>> rows) {
     ]);
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Tally 记账「备份」：zip 内含 backup_data.json（Gson 全量数据）。取 records 数组
+// 逐条归一：date(epoch 毫秒)→本地时间字符串、type(0支出/1收入/2转账)、金额取绝对值、
+// 分类取二级分类（叶子）为空回退一级、assetId 经 assets 数组映射为账户名。转账的两个
+// 账户名编码在 note（"转出 -> 转入" 可能带 " (账单:X 优惠:Y)" 与 " | 备注: 用户备注"）。
+// ---------------------------------------------------------------------------
+
+List<List<String>> _normalizeTally(Uint8List bytes) {
+  final Archive archive;
+  try {
+    archive = ZipDecoder().decodeBytes(bytes);
+  } catch (_) {
+    throw const FormatException('无法读取 Tally 备份（可能不是有效的 zip 文件）');
+  }
+  String? jsonText;
+  for (final file in archive.files) {
+    if (file.isFile &&
+        (file.name == 'backup_data.json' ||
+            file.name.endsWith('/backup_data.json'))) {
+      jsonText = utf8.decode(file.content as List<int>);
+      break;
+    }
+  }
+  if (jsonText == null) {
+    throw const FormatException(
+      '未找到 Tally 备份数据 backup_data.json，请确认选择的是 Tally 导出的备份 zip',
+    );
+  }
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(jsonText);
+  } catch (_) {
+    throw const FormatException('Tally 备份数据格式无效（JSON 解析失败）');
+  }
+  if (decoded is! Map) {
+    throw const FormatException('Tally 备份数据格式无效');
+  }
+
+  // 资产 id → 名称。
+  final assetNames = <int, String>{};
+  final assets = decoded['assets'];
+  if (assets is List) {
+    for (final asset in assets) {
+      if (asset is Map) {
+        final id = (asset['id'] as num?)?.toInt();
+        final name = asset['name']?.toString().trim() ?? '';
+        if (id != null && name.isNotEmpty) {
+          assetNames[id] = name;
+        }
+      }
+    }
+  }
+
+  final records = decoded['records'];
+  if (records is! List) {
+    throw const FormatException('Tally 备份不含交易记录（records）');
+  }
+
+  final out = <List<String>>[_canonicalHeader];
+  for (final record in records) {
+    if (record is! Map) {
+      continue;
+    }
+    final millis = (record['date'] as num?)?.toInt();
+    final amount = ((record['amount'] as num?)?.toDouble() ?? 0).abs();
+    if (millis == null || amount == 0) {
+      continue;
+    }
+    final type = (record['type'] as num?)?.toInt() ?? 0;
+    final dateStr = _tallyMillisToDate(millis);
+    final amountStr = _formatTallyAmount(amount);
+    final assetId = (record['assetId'] as num?)?.toInt() ?? 0;
+    final accountName = assetNames[assetId] ?? '';
+    final noteRaw = record['note']?.toString().trim() ?? '';
+    final remark = record['remark']?.toString().trim() ?? '';
+
+    if (type == 2) {
+      // 转账：从 note 拆出转出/转入账户；转出为空时回退到 assetId 对应账户。
+      final transfer = _parseTallyTransferNote(noteRaw);
+      final from = transfer.from.isNotEmpty ? transfer.from : accountName;
+      out.add(<String>[
+        dateStr,
+        '转账',
+        amountStr,
+        '',
+        from,
+        transfer.to,
+        transfer.note,
+      ]);
+      continue;
+    }
+
+    final level1 = record['category']?.toString().trim() ?? '';
+    final level2 = record['subCategory']?.toString().trim() ?? '';
+    final category = level2.isNotEmpty ? level2 : level1;
+    out.add(<String>[
+      dateStr,
+      type == 1 ? '收入' : '支出',
+      amountStr,
+      category,
+      accountName,
+      '',
+      _joinNote(<String>[noteRaw, remark]),
+    ]);
+  }
+  return out;
+}
+
+/// Tally 转账 note 拆解结果：转出账户、转入账户、剩余用户备注。
+class _TallyTransfer {
+  const _TallyTransfer(this.from, this.to, this.note);
+
+  final String from;
+  final String to;
+  final String note;
+}
+
+/// 解析 Tally 转账 note："转出 -> 转入" 可能尾随 " (账单:X 优惠:Y)" 与 " | 备注: 备注"。
+/// 只剥离带明确关键字的优惠/账单尾注与用户备注，不动账户名内部的括号（如「招商(0966)」），
+/// 宁可保留货币模式下的 "(¥100.00)" 由用户在预览里改，也不误删真实账户名的括号。
+_TallyTransfer _parseTallyTransferNote(String raw) {
+  var base = raw;
+  var userNote = '';
+  const marker = ' | 备注: ';
+  final markerIndex = base.indexOf(marker);
+  if (markerIndex >= 0) {
+    userNote = base.substring(markerIndex + marker.length).trim();
+    base = base.substring(0, markerIndex);
+  }
+  base = base
+      .replaceAll(RegExp(r'\s*\((?:账单|优惠)[^)]*\)\s*$'), '')
+      .trim();
+  final arrow = base.indexOf(' -> ');
+  if (arrow < 0) {
+    return _TallyTransfer('', '', userNote.isEmpty ? base.trim() : userNote);
+  }
+  return _TallyTransfer(
+    base.substring(0, arrow).trim(),
+    base.substring(arrow + 4).trim(),
+    userNote,
+  );
+}
+
+/// epoch 毫秒 → 本地 "YYYY-MM-DD HH:MM:SS"（Tally 按本地时间生成时间戳）。
+String _tallyMillisToDate(int millis) {
+  final date = DateTime.fromMillisecondsSinceEpoch(millis);
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${date.year}-${two(date.month)}-${two(date.day)} '
+      '${two(date.hour)}:${two(date.minute)}:${two(date.second)}';
+}
+
+/// 金额格式化：整数值去掉小数尾巴（100.0→100），否则原样，交给管线再校验。
+String _formatTallyAmount(double value) {
+  if (value == value.roundToDouble()) {
+    return value.toInt().toString();
+  }
+  return value.toString();
 }
 
 // ---------------------------------------------------------------------------

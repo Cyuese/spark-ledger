@@ -2130,6 +2130,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get platformYimuTransferHint => 'Transfer export (.xls)';
 
   @override
+  String get platformTally => 'Tally';
+
+  @override
+  String get platformTallyHint => 'Backup zip';
+
+  @override
   String get platformGenericCsv => 'Other CSV';
 
   @override
@@ -2159,6 +2165,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get yimuTransferImportGuide =>
       'In YiMu (一木记账): Me → Import/Export → Export data → Export transfers, choose Excel (.xls) and save it to your phone, then choose it here.\n\nImports transfer records, keeping both accounts and the fee. For income/expense bills, use the separate \"YiMu · Bills\" entry. Menu paths may vary by app version.';
+
+  @override
+  String get tallyImportGuide =>
+      'In Tally (记账): Settings → Data backup & restore → Export backup, which produces a .zip file starting with \"Tally\". Save it to your phone, then choose it here.\n\nPick the backup zip rather than the CSV bill export: the backup keeps exact transaction times, and income/expense/transfers, first- and second-level categories, accounts and notes are all imported (categories use the second-level category). Menu paths may vary by app version.';
 
   @override
   String get genericCsvImportGuide =>

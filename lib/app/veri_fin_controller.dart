@@ -254,13 +254,17 @@ class VeriFinController extends ChangeNotifier {
   }
 
   /// 为交易新增一张图片附件（[dataUrl] 为压缩后的 JPEG data URL）。
+  // 附件 id 自增序号：连续两次 addAttachment 可能落在同一微秒，单靠
+  // microsecondsSinceEpoch 会生成相同 id，删一个会把同 id 的都删掉。加序号去重。
+  int _attachmentIdSeq = 0;
+
   void addAttachment(String entryId, String dataUrl) {
     if (dataUrl.isEmpty) {
       return;
     }
     _attachments.add(
       Attachment(
-        id: 'att_${DateTime.now().microsecondsSinceEpoch}',
+        id: 'att_${DateTime.now().microsecondsSinceEpoch}_${_attachmentIdSeq++}',
         entryId: entryId,
         dataUrl: dataUrl,
       ),

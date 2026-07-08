@@ -35,6 +35,13 @@ Uint8List _buildXlsx(List<List<String>> shared, String sheetRowsXml) {
   return Uint8List.fromList(ZipEncoder().encode(archive));
 }
 
+/// 构造 Tally「备份」zip：zip 内含 backup_data.json（Gson 全量数据的最小子集）。
+Uint8List _buildTallyBackup(Map<String, Object?> data) {
+  final archive = Archive()
+    ..addFile(ArchiveFile.string('backup_data.json', jsonEncode(data)));
+  return Uint8List.fromList(ZipEncoder().encode(archive));
+}
+
 void main() {
   ImportPlan run(ImportPlatform platform, Uint8List bytes) =>
       buildPlatformImportPlan(
@@ -331,6 +338,144 @@ void main() {
       // 转账入口选到账单文件 → 同样报错。
       expect(
         () => run(ImportPlatform.yimuTransfer, Uint8List.fromList(billBytes)),
+        throwsFormatException,
+      );
+    });
+  });
+
+  group('Tally 备份 zip（backup_data.json，精确时间戳）', () {
+    final expenseAt = DateTime(2026, 7, 5, 18, 4, 49);
+    final incomeAt = DateTime(2026, 7, 4, 9, 30);
+    final transferAt = DateTime(2026, 7, 3, 12);
+    final discountTransferAt = DateTime(2026, 7, 2, 8);
+
+    late ImportPlan plan;
+    setUp(() {
+      final bytes = _buildTallyBackup(<String, Object?>{
+        'assets': <Object?>[
+          <String, Object?>{'id': 1, 'name': '招商储蓄卡'},
+          <String, Object?>{'id': 2, 'name': '现金'},
+        ],
+        'records': <Object?>[
+          <String, Object?>{
+            'date': expenseAt.millisecondsSinceEpoch,
+            'type': 0,
+            'amount': 23.5,
+            'category': '餐饮',
+            'subCategory': '午餐',
+            'assetId': 1,
+            'note': '午饭',
+            'remark': '',
+          },
+          <String, Object?>{
+            'date': incomeAt.millisecondsSinceEpoch,
+            'type': 1,
+            'amount': 8000.0,
+            'category': '工资',
+            'subCategory': '',
+            'assetId': 1,
+            'note': '月薪',
+            'remark': '',
+          },
+          <String, Object?>{
+            'date': transferAt.millisecondsSinceEpoch,
+            'type': 2,
+            'amount': 500.0,
+            'category': '资产互转',
+            'assetId': 1,
+            'note': '招商储蓄卡 -> 现金 | 备注: 取现',
+            'remark': '',
+          },
+          <String, Object?>{
+            'date': discountTransferAt.millisecondsSinceEpoch,
+            'type': 2,
+            'amount': 500.0,
+            'category': '资产互转',
+            'assetId': 2,
+            'note': '现金 -> 招商储蓄卡 (账单:600 优惠:100)',
+            'remark': '',
+          },
+          // 金额为 0 的记录应被跳过。
+          <String, Object?>{
+            'date': transferAt.millisecondsSinceEpoch,
+            'type': 0,
+            'amount': 0,
+            'category': '其它',
+            'assetId': 1,
+            'note': '',
+          },
+        ],
+      });
+      plan = run(ImportPlatform.tally, bytes);
+    });
+
+    test('导入 4 笔（跳过金额为 0），无错误行', () {
+      expect(plan.importedCount, 4);
+      expect(plan.errorCount, 0);
+    });
+
+    test('支出：二级分类作分类、精确时间戳、账户映射', () {
+      final expense = plan.entries.firstWhere(
+        (e) => e.type == EntryType.expense,
+      );
+      expect(expense.amount, 23.5);
+      expect(expense.occurredAt, expenseAt);
+      expect(expense.note, '午饭');
+      final category = plan.newCategories.firstWhere(
+        (c) => c.id == expense.categoryId,
+      );
+      expect(category.label, '午餐');
+      final account = plan.newAccounts.firstWhere(
+        (a) => a.id == expense.accountId,
+      );
+      expect(account.name, '招商储蓄卡');
+    });
+
+    test('收入：无二级分类时回退一级分类', () {
+      final income = plan.entries.firstWhere((e) => e.type == EntryType.income);
+      expect(income.amount, 8000);
+      final category = plan.newCategories.firstWhere(
+        (c) => c.id == income.categoryId,
+      );
+      expect(category.label, '工资');
+    });
+
+    test('转账：从 note 拆出转出/转入账户，剥离用户备注', () {
+      final transfer = plan.entries.firstWhere(
+        (e) => e.type == EntryType.transfer && e.occurredAt == transferAt,
+      );
+      final from = plan.newAccounts.firstWhere(
+        (a) => a.id == transfer.accountId,
+      );
+      final to = plan.newAccounts.firstWhere(
+        (a) => a.id == transfer.toAccountId,
+      );
+      expect(from.name, '招商储蓄卡');
+      expect(to.name, '现金');
+      expect(transfer.note, '取现');
+      expect(transfer.amount, 500);
+    });
+
+    test('转账：剥离「(账单:X 优惠:Y)」尾注', () {
+      final transfer = plan.entries.firstWhere(
+        (e) => e.type == EntryType.transfer && e.occurredAt == discountTransferAt,
+      );
+      final from = plan.newAccounts.firstWhere(
+        (a) => a.id == transfer.accountId,
+      );
+      final to = plan.newAccounts.firstWhere(
+        (a) => a.id == transfer.toAccountId,
+      );
+      expect(from.name, '现金');
+      expect(to.name, '招商储蓄卡');
+    });
+
+    test('非 zip 字节报错', () {
+      expect(
+        () => run(
+          ImportPlatform.tally,
+          Uint8List.fromList(utf8.encode('not a zip')),
+        ),
         throwsFormatException,
       );
     });
