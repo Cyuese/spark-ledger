@@ -44,6 +44,8 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("verifinRelease")
+            // 追加本项目的 R8 规则（ML Kit 未引入脚本的缺类豁免）。
+            proguardFiles("proguard-rules.pro")
         }
     }
 }
@@ -64,4 +66,7 @@ dependencies {
     implementation("androidx.documentfile:documentfile:1.0.1")
     // flutter_local_notifications 定时通知所需的 desugaring 运行库。
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // 截图识账的中文离线识别库：google_mlkit_text_recognition 插件对各脚本库只
+    // compileOnly，使用方必须显式引入所需脚本，否则 release 构建 R8 报缺类。
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
 }
