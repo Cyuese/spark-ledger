@@ -923,6 +923,9 @@ class DataManagementPage extends StatelessWidget {
     return showModalBottomSheet<ImportPlatform>(
       context: context,
       showDragHandle: true,
+      // 平台较多时弹窗内容可能超过默认高度：开启可滚动并把列表放进滚动区，
+      // 表头固定、列表内部滚动，避免溢出且无法滑动。
+      isScrollControlled: true,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -942,47 +945,61 @@ class DataManagementPage extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
-            for (final item in items)
-              InkWell(
-                onTap: () => Navigator.of(context).pop(item.platform),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  // 图标与「标题+副标题」整体垂直居中（Row 默认 center 对齐），
-                  // 不依赖 ListTile 带副标题时的内部对齐规则。
-                  child: Row(
-                    children: <Widget>[
-                      _platformLeading(item),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              item.title,
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item.subtitle,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                  ),
-                            ),
-                          ],
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    for (final item in items)
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(item.platform),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          // 图标与「标题+副标题」整体垂直居中（Row 默认 center 对齐），
+                          // 不依赖 ListTile 带副标题时的内部对齐规则。
+                          child: Row(
+                            children: <Widget>[
+                              _platformLeading(item),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      item.title,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item.subtitle,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
               ),
-            const SizedBox(height: 8),
+            ),
           ],
         ),
       ),
