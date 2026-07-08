@@ -44,30 +44,6 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // 运算符置于右列，数字/删除排在左三列；共 5 行 20 键。
-    final keys = <String>[
-      'C',
-      '⌫',
-      '÷',
-      '×',
-      '7',
-      '8',
-      '9',
-      '-',
-      '4',
-      '5',
-      '6',
-      '+',
-      '1',
-      '2',
-      '3',
-      '.',
-      widget.allowNegative ? '+/-' : '',
-      '0',
-      '00',
-      'OK',
-    ];
-
     return SafeArea(
       top: false,
       child: Align(
@@ -135,112 +111,70 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 4 / 3,
-                  ),
-                  itemCount: keys.length,
-                  itemBuilder: (context, index) {
-                    final value = keys[index];
-                    if (value.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-
-                    final isOk = value == 'OK';
-                    final isOperator = _operators.contains(value);
-                    final isClear = value == 'C' || value == '⌫';
-                    final isDot = value == '.';
-                    final isDark =
-                        Theme.of(context).brightness == Brightness.dark;
-                    final keyColor = isDark
-                        ? Theme.of(context).colorScheme.surfaceContainerHighest
-                        : const Color(0xFFEAF0F8);
-                    final keyTextColor = isDark
-                        ? Colors.white.withValues(alpha: 0.94)
-                        : veriInk;
-                    final canSubmit = _canSubmit;
-                    final enabled = !isOk || canSubmit;
-                    final okDisabledBackground = isDark
-                        ? Colors.white.withValues(alpha: 0.10)
-                        : const Color(0xFFD9E5F3);
-                    final okDisabledForeground = isDark
-                        ? Colors.white.withValues(alpha: 0.46)
-                        : const Color(0xFF6B7C93);
-                    // 按键分组配色：运算符=强调蓝、清除/退格=红（比运算符更深、
-                    // 提示可清除）、小数点=琥珀、数字=浅底，彼此一眼可辨。
-                    final Color buttonBackground;
-                    final Color buttonForeground;
-                    if (isOk) {
-                      buttonBackground = enabled
-                          ? veriRoyal
-                          : okDisabledBackground;
-                      buttonForeground = enabled
-                          ? Colors.white
-                          : okDisabledForeground;
-                    } else if (isOperator) {
-                      buttonBackground = isDark
-                          ? veriRoyal.withValues(alpha: 0.28)
-                          : const Color(0xFFDCE7FA);
-                      buttonForeground = isDark
-                          ? Colors.white.withValues(alpha: 0.94)
-                          : veriRoyal;
-                    } else if (isClear) {
-                      buttonBackground = isDark
-                          ? veriExpense.withValues(alpha: 0.26)
-                          : const Color(0xFFF6D2D8);
-                      buttonForeground = isDark
-                          ? const Color(0xFFFFAAB6)
-                          : veriExpense;
-                    } else if (isDot) {
-                      buttonBackground = isDark
-                          ? veriWarning.withValues(alpha: 0.26)
-                          : const Color(0xFFFBEAC6);
-                      buttonForeground = isDark
-                          ? veriWarning
-                          : const Color(0xFF9A6A12);
-                    } else {
-                      buttonBackground = keyColor;
-                      buttonForeground = keyTextColor;
-                    }
-                    return FilledButton.tonal(
-                      key: isOk
-                          ? const Key('number_pad_ok')
-                          : Key('number_key_$value'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: buttonBackground,
-                        foregroundColor: buttonForeground,
-                        disabledBackgroundColor: isOk
-                            ? okDisabledBackground
-                            : keyColor.withValues(alpha: 0.42),
-                        disabledForegroundColor: isOk
-                            ? okDisabledForeground
-                            : keyTextColor.withValues(alpha: 0.36),
-                        minimumSize: const Size(64, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(veriRadiusMd),
+                // 5 行键盘：前 3 行满 4 列，最后两行左侧为 2×3 数字区
+                // （1 2 3 / 00 0 .，小数点落在 0 右边），右下角 OK 占竖两格。
+                // 可负场景（账户余额调整）额外需要 +/- 键，此时 OK 回退单格、
+                // +/- 补在其上方。用固定网格无法跨格，故手写布局。
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = 8.0;
+                    final cellW = (constraints.maxWidth - spacing * 3) / 4;
+                    final cellH = cellW * 3 / 4;
+                    Widget cell(String v) => SizedBox(
+                      width: cellW,
+                      height: cellH,
+                      child: _buildKey(context, v),
+                    );
+                    Widget keyRow(List<String> values) => Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        for (var i = 0; i < values.length; i++) ...<Widget>[
+                          if (i > 0) const SizedBox(width: spacing),
+                          cell(values[i]),
+                        ],
+                      ],
+                    );
+                    final leftBottom = Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        keyRow(<String>['1', '2', '3']),
+                        const SizedBox(height: spacing),
+                        keyRow(<String>['00', '0', '.']),
+                      ],
+                    );
+                    final Widget rightBottom = widget.allowNegative
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              cell('+/-'),
+                              const SizedBox(height: spacing),
+                              cell('OK'),
+                            ],
+                          )
+                        : SizedBox(
+                            width: cellW,
+                            height: cellH * 2 + spacing,
+                            child: _buildKey(context, 'OK'),
+                          );
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        keyRow(<String>['C', '⌫', '÷', '×']),
+                        const SizedBox(height: spacing),
+                        keyRow(<String>['7', '8', '9', '-']),
+                        const SizedBox(height: spacing),
+                        keyRow(<String>['4', '5', '6', '+']),
+                        const SizedBox(height: spacing),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            leftBottom,
+                            const SizedBox(width: spacing),
+                            rightBottom,
+                          ],
                         ),
-                      ),
-                      onPressed: isOk && !canSubmit
-                          ? null
-                          : () => _handleKey(value),
-                      child: value == '⌫'
-                          ? Icon(
-                              Icons.backspace_outlined,
-                              color: buttonForeground,
-                            )
-                          : Text(
-                              value,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    color: buttonForeground,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
+                      ],
                     );
                   },
                 ),
@@ -249,6 +183,86 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
           ),
         ),
       ),
+    );
+  }
+
+  /// 单个按键：尺寸由外层 SizedBox 约束，按分组配色。
+  Widget _buildKey(BuildContext context, String value) {
+    final isOk = value == 'OK';
+    final isOperator = _operators.contains(value);
+    final isClear = value == 'C' || value == '⌫';
+    final isDot = value == '.';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final keyColor = isDark
+        ? Theme.of(context).colorScheme.surfaceContainerHighest
+        : const Color(0xFFEAF0F8);
+    final keyTextColor = isDark
+        ? Colors.white.withValues(alpha: 0.94)
+        : veriInk;
+    final canSubmit = _canSubmit;
+    final enabled = !isOk || canSubmit;
+    final okDisabledBackground = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : const Color(0xFFD9E5F3);
+    final okDisabledForeground = isDark
+        ? Colors.white.withValues(alpha: 0.46)
+        : const Color(0xFF6B7C93);
+    // 按键分组配色：运算符=强调蓝、清除/退格=红（比运算符更深、
+    // 提示可清除）、小数点=琥珀、数字=浅底，彼此一眼可辨。
+    final Color buttonBackground;
+    final Color buttonForeground;
+    if (isOk) {
+      buttonBackground = enabled ? veriRoyal : okDisabledBackground;
+      buttonForeground = enabled ? Colors.white : okDisabledForeground;
+    } else if (isOperator) {
+      buttonBackground = isDark
+          ? veriRoyal.withValues(alpha: 0.28)
+          : const Color(0xFFDCE7FA);
+      buttonForeground = isDark
+          ? Colors.white.withValues(alpha: 0.94)
+          : veriRoyal;
+    } else if (isClear) {
+      buttonBackground = isDark
+          ? veriExpense.withValues(alpha: 0.26)
+          : const Color(0xFFF6D2D8);
+      buttonForeground = isDark ? const Color(0xFFFFAAB6) : veriExpense;
+    } else if (isDot) {
+      buttonBackground = isDark
+          ? veriWarning.withValues(alpha: 0.26)
+          : const Color(0xFFFBEAC6);
+      buttonForeground = isDark ? veriWarning : const Color(0xFF9A6A12);
+    } else {
+      buttonBackground = keyColor;
+      buttonForeground = keyTextColor;
+    }
+    return FilledButton.tonal(
+      key: isOk ? const Key('number_pad_ok') : Key('number_key_$value'),
+      style: FilledButton.styleFrom(
+        backgroundColor: buttonBackground,
+        foregroundColor: buttonForeground,
+        disabledBackgroundColor: isOk
+            ? okDisabledBackground
+            : keyColor.withValues(alpha: 0.42),
+        disabledForegroundColor: isOk
+            ? okDisabledForeground
+            : keyTextColor.withValues(alpha: 0.36),
+        minimumSize: Size.zero,
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(veriRadiusMd),
+        ),
+      ),
+      onPressed: isOk && !canSubmit ? null : () => _handleKey(value),
+      child: value == '⌫'
+          ? Icon(Icons.backspace_outlined, color: buttonForeground)
+          : Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: buttonForeground,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
     );
   }
 
