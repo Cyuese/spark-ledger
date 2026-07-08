@@ -113,8 +113,7 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                 const SizedBox(height: 10),
                 // 5 行键盘：前 3 行满 4 列，最后两行左侧为 2×3 数字区
                 // （1 2 3 / 00 0 .，小数点落在 0 右边），右下角 OK 占竖两格。
-                // 可负场景（账户余额调整）额外需要 +/- 键，此时 OK 回退单格、
-                // +/- 补在其上方。用固定网格无法跨格，故手写布局。
+                // 用固定网格无法跨格，故手写布局。
                 LayoutBuilder(
                   builder: (context, constraints) {
                     const spacing = 8.0;
@@ -142,20 +141,11 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
                         keyRow(<String>['00', '0', '.']),
                       ],
                     );
-                    final Widget rightBottom = widget.allowNegative
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              cell('+/-'),
-                              const SizedBox(height: spacing),
-                              cell('OK'),
-                            ],
-                          )
-                        : SizedBox(
-                            width: cellW,
-                            height: cellH * 2 + spacing,
-                            child: _buildKey(context, 'OK'),
-                          );
+                    final rightBottom = SizedBox(
+                      width: cellW,
+                      height: cellH * 2 + spacing,
+                      child: _buildKey(context, 'OK'),
+                    );
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
@@ -320,18 +310,6 @@ class _NumberPadSheetState extends State<NumberPadSheet> {
       if (value == '⌫') {
         if (_input.isNotEmpty) {
           _input = _input.substring(0, _input.length - 1);
-        }
-        return;
-      }
-      if (value == '+/-') {
-        // 正负号只在纯数字（无运算符）时切换首位负号。
-        if (_hasOperator) {
-          return;
-        }
-        if (_input.startsWith('-')) {
-          _input = _input.substring(1);
-        } else if (_input.isNotEmpty && !isZeroAmount(_amount)) {
-          _input = '-$_input';
         }
         return;
       }
