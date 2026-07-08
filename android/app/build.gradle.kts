@@ -44,8 +44,13 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("verifinRelease")
-            // 追加本项目的 R8 规则（ML Kit 未引入脚本的缺类豁免）。
-            proguardFiles("proguard-rules.pro")
+            // 默认优化规则（枚举 values()/valueOf、注解、反射等关键 keep）必须保留，
+            // 再追加本项目的 R8 规则（ML Kit 缺类豁免 + 识别器反射类 keep）。
+            // 只传自定义文件会顶掉默认规则，导致 ML Kit 反射实例化被裁成 release NPE。
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }
