@@ -70,11 +70,15 @@ class _ImportPreviewPageState extends State<ImportPreviewPage> {
 
   bool _isIncluded(LedgerEntry entry) => !_excluded.contains(entry.id);
 
-  /// 某待新建账户导入后的余额 = 初始余额 + 该账户在（全部）待导入交易中的增量合计。
-  /// 对携带余额的来源（如 Tally）即为该账户的当前余额；对纯交易来源即导入流水的净额。
+  /// 某待新建账户导入后的余额 = 初始余额 + 该账户在**当前保留且编辑后**的待导入交易
+  /// 中的增量合计。只算保留交易，与落库（`applyImportEntries` 同样只加入保留交易）
+  /// 结果一致——排除或改金额后此处会随之更新，不再一直显示来源原始余额。
   double _accountResultingBalance(Account account) {
     var balance = account.initialBalance;
-    for (final entry in widget.plan.entries) {
+    for (final entry in _entries) {
+      if (!_isIncluded(entry)) {
+        continue;
+      }
       balance += accountDeltaForEntry(entry, account.id);
     }
     return balance;
