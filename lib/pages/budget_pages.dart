@@ -6,13 +6,13 @@ import '../app/app_theme.dart';
 import '../app/category_tree.dart';
 import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
-import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
+import 'sheets.dart';
 
 class BudgetSettingsPage extends StatefulWidget {
   const BudgetSettingsPage({super.key, required this.initialMonth});
@@ -394,16 +394,11 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
   /// 预算金额输入统一走数字键盘（与记账一致，支持算式）；允许 0（清除该预算）。
   /// 返回 null 表示取消，返回 >=0 的金额。
   Future<double?> _promptBudgetAmount(String title, double current) {
-    return showModalBottomSheet<double>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => NumberPadSheet(
-        title: title,
-        initialAmount: current > 0 ? current : null,
-        allowZero: true,
-        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
-      ),
+    return showNumberPadSheet(
+      context,
+      title: title,
+      initialAmount: current > 0 ? current : null,
+      allowZero: true,
     );
   }
 

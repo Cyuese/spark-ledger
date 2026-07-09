@@ -358,15 +358,10 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
   }
 
   Future<void> _editAmount() async {
-    final amount = await showModalBottomSheet<double>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => NumberPadSheet(
-        title: AppLocalizations.of(context).amountLabel,
-        initialAmount: _amount > 0 ? _amount : null,
-        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
-      ),
+    final amount = await showNumberPadSheet(
+      context,
+      title: AppLocalizations.of(context).amountLabel,
+      initialAmount: _amount > 0 ? _amount : null,
     );
     if (amount == null || amount <= 0 || !mounted) {
       return;

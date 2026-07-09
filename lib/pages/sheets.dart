@@ -126,6 +126,31 @@ Future<T?> showOptionSheet<T>({
   );
 }
 
+/// 数字键盘弹窗:统一的金额输入入口(四则算式 + 结果预览)。触感偏好由内部从
+/// [VeriFinScope] 取,调用方不用手传。返回所输金额;取消返回 null。
+/// [allowNegative] 允许负数,[allowZero] 允许 0(如清除预算 / 手续费)。
+Future<double?> showNumberPadSheet(
+  BuildContext context, {
+  required String title,
+  double? initialAmount,
+  bool allowNegative = false,
+  bool allowZero = false,
+}) {
+  final hapticsEnabled = VeriFinScope.of(context).hapticsEnabled;
+  return showModalBottomSheet<double>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => NumberPadSheet(
+      title: title,
+      initialAmount: initialAmount,
+      allowNegative: allowNegative,
+      allowZero: allowZero,
+      hapticsEnabled: hapticsEnabled,
+    ),
+  );
+}
+
 /// 账户选择弹窗:与资产页账户列表一致,展示账户图标、名称(含卡号后四位)和余额。
 /// 账户选择弹窗。返回所选账户；用户取消返回 null。
 /// 传入 [noneLabel] 时，列表顶部额外提供「无账户」选项，选它返回 id 为空串的

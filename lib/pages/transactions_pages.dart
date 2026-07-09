@@ -1352,15 +1352,10 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   }
 
   Future<void> _editAmount() async {
-    final amount = await showModalBottomSheet<double>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => NumberPadSheet(
-        title: AppLocalizations.of(context).amountEditTitle,
-        initialAmount: _amount,
-        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
-      ),
+    final amount = await showNumberPadSheet(
+      context,
+      title: AppLocalizations.of(context).amountEditTitle,
+      initialAmount: _amount,
     );
     if (amount == null || amount <= 0 || !mounted) {
       return;
@@ -1369,16 +1364,11 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   }
 
   Future<void> _editFee() async {
-    final fee = await showModalBottomSheet<double>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => NumberPadSheet(
-        title: AppLocalizations.of(context).transferFeeTitle,
-        initialAmount: _fee > 0 ? _fee : null,
-        allowZero: true,
-        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
-      ),
+    final fee = await showNumberPadSheet(
+      context,
+      title: AppLocalizations.of(context).transferFeeTitle,
+      initialAmount: _fee > 0 ? _fee : null,
+      allowZero: true,
     );
     if (fee == null || fee < 0 || !mounted) {
       return;
@@ -1387,16 +1377,11 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   }
 
   Future<void> _editRefund() async {
-    final refunded = await showModalBottomSheet<double>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => NumberPadSheet(
-        title: AppLocalizations.of(context).refundAmountTitle,
-        initialAmount: _refundedAmount > 0 ? _refundedAmount : null,
-        allowZero: true,
-        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
-      ),
+    final refunded = await showNumberPadSheet(
+      context,
+      title: AppLocalizations.of(context).refundAmountTitle,
+      initialAmount: _refundedAmount > 0 ? _refundedAmount : null,
+      allowZero: true,
     );
     if (refunded == null || refunded < 0 || !mounted) {
       return;
