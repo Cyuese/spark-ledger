@@ -401,6 +401,11 @@ _TallyBackup _parseTallyBackup(Uint8List bytes) {
   // 资产 id → 名称（供交易账户解析），以及资产账户元数据（供余额/类型导入）。
   final assetNames = <int, String>{};
   final tallyAssets = <_TallyAsset>[];
+  // 同一份 Tally 备份内可能存在重名资产（如两个都叫「现金」的钱包），它们在 Tally
+  // 里靠 assetId 区分。若沿用同名，归一化后会被 resolveAccount 折叠成一个账户、余额
+  // 相互覆盖，故对重名的追加「 (n)」后缀，使全链路（交易行 / 建账户 / 余额回推）都能
+  // 把它们当作各自独立的账户。
+  final usedNames = <String>{};
   final assets = decoded['assets'];
   if (assets is List) {
     for (final asset in assets) {
@@ -408,12 +413,19 @@ _TallyBackup _parseTallyBackup(Uint8List bytes) {
         continue;
       }
       final id = (asset['id'] as num?)?.toInt();
-      final name = asset['name']?.toString().trim() ?? '';
-      if (id != null && name.isNotEmpty) {
-        assetNames[id] = name;
-      }
-      if (name.isEmpty) {
+      final rawName = asset['name']?.toString().trim() ?? '';
+      if (rawName.isEmpty) {
         continue;
+      }
+      var name = rawName;
+      var suffix = 2;
+      while (usedNames.contains(name)) {
+        name = '$rawName ($suffix)';
+        suffix++;
+      }
+      usedNames.add(name);
+      if (id != null) {
+        assetNames[id] = name;
       }
       final rawType = (asset['type'] as num?)?.toInt() ?? 0;
       final amount = (asset['amount'] as num?)?.toDouble() ?? 0;

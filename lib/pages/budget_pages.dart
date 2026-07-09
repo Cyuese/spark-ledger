@@ -6,12 +6,12 @@ import '../app/app_theme.dart';
 import '../app/category_tree.dart';
 import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
+import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
-import 'sheets.dart';
 import '../l10n/app_localizations.dart';
 
 class BudgetSettingsPage extends StatefulWidget {
@@ -391,63 +391,58 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
     });
   }
 
+  /// 预算金额输入统一走数字键盘（与记账一致，支持算式）；允许 0（清除该预算）。
+  /// 返回 null 表示取消，返回 >=0 的金额。
+  Future<double?> _promptBudgetAmount(String title, double current) {
+    return showModalBottomSheet<double>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => NumberPadSheet(
+        title: title,
+        initialAmount: current > 0 ? current : null,
+        allowZero: true,
+        hapticsEnabled: VeriFinScope.of(context).hapticsEnabled,
+      ),
+    );
+  }
+
   Future<void> _editMonthlyBudget() async {
     final controller = VeriFinScope.of(context);
-    final currentBudget = controller.monthlyBudget(_month);
-    final amountText = await showTextInputDialog(
-      context: context,
-      title: AppLocalizations.of(context).setMonthBudgetTitle,
-      label: AppLocalizations.of(context).monthBudgetAmountLabel,
-      initialValue: currentBudget <= 0 ? '' : formatAmount(currentBudget),
-      allowEmpty: true,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    final amount = await _promptBudgetAmount(
+      AppLocalizations.of(context).setMonthBudgetTitle,
+      controller.monthlyBudget(_month),
     );
-    if (amountText == null || !mounted) {
+    if (amount == null || !mounted) {
       return;
     }
     setState(() {
-      controller.setMonthlyBudget(_month, double.tryParse(amountText) ?? 0);
+      controller.setMonthlyBudget(_month, amount);
     });
   }
 
   Future<void> _editCategoryBudget(Category category) async {
     final controller = VeriFinScope.of(context);
-    final currentBudget = controller.categoryBudget(_month, category.id);
-    final amountText = await showTextInputDialog(
-      context: context,
-      title: AppLocalizations.of(
-        context,
-      ).setCategoryBudgetTitle(category.label),
-      label: AppLocalizations.of(context).categoryBudgetAmountLabel,
-      initialValue: currentBudget <= 0 ? '' : formatAmount(currentBudget),
-      allowEmpty: true,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    final amount = await _promptBudgetAmount(
+      AppLocalizations.of(context).setCategoryBudgetTitle(category.label),
+      controller.categoryBudget(_month, category.id),
     );
-    if (amountText == null || !mounted) {
+    if (amount == null || !mounted) {
       return;
     }
-    controller.setCategoryBudget(
-      _month,
-      category.id,
-      double.tryParse(amountText) ?? 0,
-    );
+    controller.setCategoryBudget(_month, category.id, amount);
   }
 
   Future<void> _editDailyBudget() async {
     final controller = VeriFinScope.of(context);
-    final currentBudget = controller.dailyBudget();
-    final amountText = await showTextInputDialog(
-      context: context,
-      title: AppLocalizations.of(context).setDailyBudgetTitle,
-      label: AppLocalizations.of(context).dailyBudgetAmountLabel,
-      initialValue: currentBudget <= 0 ? '' : formatAmount(currentBudget),
-      allowEmpty: true,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    final amount = await _promptBudgetAmount(
+      AppLocalizations.of(context).setDailyBudgetTitle,
+      controller.dailyBudget(),
     );
-    if (amountText == null || !mounted) {
+    if (amount == null || !mounted) {
       return;
     }
-    controller.setDailyBudget(double.tryParse(amountText) ?? 0);
+    controller.setDailyBudget(amount);
   }
 
   void _openBudgetHistory() {

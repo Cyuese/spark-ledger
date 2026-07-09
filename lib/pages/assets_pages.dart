@@ -1029,12 +1029,13 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
     final current = controller.accountGroups
         .where((group) => group.id == groupId)
         .firstOrNull;
-    final iconCode = await showOptionSheet<String>(
+    // 与账户图标选择用同一个组件（带图标预览）；分组图标以 iconForCode 渲染，
+    // 不支持银行等资产图标，故只列通用图标。
+    final iconCode = await showAccountIconSheet(
       context: context,
-      title: AppLocalizations.of(context).groupIconPickerTitle,
-      values: accountIconCodes,
       selected: current?.iconCode ?? 'folder',
-      labelOf: (code) => iconLabelForCode(AppLocalizations.of(context), code),
+      title: AppLocalizations.of(context).groupIconPickerTitle,
+      includeAssetIcons: false,
     );
     if (iconCode != null) {
       controller.updateAccountGroupIcon(groupId, iconCode);

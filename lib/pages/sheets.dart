@@ -334,9 +334,14 @@ class _NoneAccountRow extends StatelessWidget {
   }
 }
 
+/// 账户 / 账户分组图标选择器：每行带 [AccountIconBox] 预览。[includeAssetIcons] 为
+/// false 时只列通用图标（账户分组用——分组图标以 `iconForCode` 渲染，不支持银行等
+/// 资产图标），[title] 可覆盖标题（分组用「选择分组图标」）。
 Future<String?> showAccountIconSheet({
   required BuildContext context,
   required String selected,
+  String? title,
+  bool includeAssetIcons = true,
 }) {
   final l10n = AppLocalizations.of(context);
   final choices = <AccountIconChoice>[
@@ -346,12 +351,15 @@ Future<String?> showAccountIconSheet({
         label: iconLabelForCode(l10n, code),
         group: l10n.iconGroupGeneric,
       ),
-    for (final option in accountAssetIconOptions)
-      AccountIconChoice(
-        code: option.code,
-        label: option.label,
-        group: option.groupLabel(l10n),
-      ),
+    if (includeAssetIcons)
+      ...<AccountIconChoice>[
+        for (final option in accountAssetIconOptions)
+          AccountIconChoice(
+            code: option.code,
+            label: option.label,
+            group: option.groupLabel(l10n),
+          ),
+      ],
   ];
 
   return showModalBottomSheet<String>(
@@ -373,7 +381,7 @@ Future<String?> showAccountIconSheet({
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  l10n.accountIconPickerTitle,
+                  title ?? l10n.accountIconPickerTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -701,6 +709,17 @@ Future<void> confirmDeleteAccount(
 ) async {
   final controller = VeriFinScope.of(context);
   final l10n = AppLocalizations.of(context);
+  // 弹层随后会 pop，提前抓住 messenger（它位于被 pop 路由之上，pop 后仍有效），
+  // 用于删账户后提示被停用的周期规则。
+  final messenger = ScaffoldMessenger.of(context);
+  void notifyDisabledRules(int affected) {
+    if (affected > 0) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.accountRecurringRulesDisabled(affected))),
+      );
+    }
+  }
+
   if (entries.isNotEmpty) {
     final action = await showDialog<AccountDeleteAction>(
       context: context,
@@ -734,8 +753,9 @@ Future<void> confirmDeleteAccount(
       Navigator.of(context).pop();
       return;
     }
-    controller.deleteAccountAndRelatedEntries(account.id);
+    final affected = controller.deleteAccountAndRelatedEntries(account.id);
     Navigator.of(context).pop();
+    notifyDisabledRules(affected);
     return;
   }
 
@@ -759,8 +779,9 @@ Future<void> confirmDeleteAccount(
   if (!context.mounted || confirmed != true) {
     return;
   }
-  controller.deleteAccount(account.id);
+  final affected = controller.deleteAccount(account.id);
   Navigator.of(context).pop();
+  notifyDisabledRules(affected);
 }
 
 enum AccountDeleteAction { hide, delete }

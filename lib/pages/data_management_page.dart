@@ -613,25 +613,14 @@ class DataManagementPage extends StatelessWidget {
     BuildContext context,
     VeriFinController controller,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).clearKeyTitle),
-        content: Text(AppLocalizations.of(context).clearKeyMessage),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: veriExpense),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).clearLabel),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).clearKeyTitle,
+      message: AppLocalizations.of(context).clearKeyMessage,
+      confirmLabel: AppLocalizations.of(context).clearLabel,
+      destructive: true,
     );
-    if (confirmed == true) {
+    if (confirmed) {
       controller.clearBackupPassphrase();
     }
   }
@@ -804,25 +793,14 @@ class DataManagementPage extends StatelessWidget {
     BuildContext context,
     VeriFinController controller,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).clearWebdavTitle),
-        content: Text(AppLocalizations.of(context).clearWebdavMessage),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: veriExpense),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).clearLabel),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).clearWebdavTitle,
+      message: AppLocalizations.of(context).clearWebdavMessage,
+      confirmLabel: AppLocalizations.of(context).clearLabel,
+      destructive: true,
     );
-    if (confirmed == true) {
+    if (confirmed) {
       controller.clearWebdavConfig();
     }
   }
@@ -1281,47 +1259,25 @@ class DataManagementPage extends StatelessWidget {
     BuildContext context,
     VeriFinController controller,
   ) async {
-    final firstConfirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).resetAllTitle),
-        content: Text(AppLocalizations.of(context).resetAllMessage),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: veriExpense),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).continueLabel),
-          ),
-        ],
-      ),
+    final firstConfirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).resetAllTitle,
+      message: AppLocalizations.of(context).resetAllMessage,
+      confirmLabel: AppLocalizations.of(context).continueLabel,
+      destructive: true,
     );
-    if (firstConfirmed != true || !context.mounted) {
+    if (!firstConfirmed || !context.mounted) {
       return;
     }
 
-    final secondConfirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).resetConfirmTitle),
-        content: Text(AppLocalizations.of(context).resetConfirmMessage),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: veriExpense),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).resetConfirmAction),
-          ),
-        ],
-      ),
+    final secondConfirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).resetConfirmTitle,
+      message: AppLocalizations.of(context).resetConfirmMessage,
+      confirmLabel: AppLocalizations.of(context).resetConfirmAction,
+      destructive: true,
     );
-    if (secondConfirmed == true) {
+    if (secondConfirmed) {
       controller.resetAllData();
       if (context.mounted) {
         Navigator.of(context).pop();
