@@ -17,6 +17,8 @@ class QuickEntryWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { renderWidget(context, appWidgetManager, it) }
+        // 每次重绘顺带把下一次午夜刷新闹钟对齐好（跨天自愈的触发源）。
+        WidgetRefreshScheduler.scheduleNextMidnight(context)
     }
 
     companion object {
@@ -25,7 +27,8 @@ class QuickEntryWidgetProvider : AppWidgetProvider() {
             manager: AppWidgetManager,
             widgetId: Int,
         ) {
-            val amount = WidgetData.read(context, WidgetData.KEY_TODAY_AMOUNT, "0")
+            // 跨天自愈：已过午夜则展示归零值，不必等应用打开重新推送。
+            val amount = WidgetData.todayAmountForToday(context)
             val label = WidgetData.read(context, WidgetData.KEY_TODAY_LABEL, "今日支出")
 
             val views = RemoteViews(context.packageName, R.layout.quick_entry_widget)

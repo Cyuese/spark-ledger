@@ -208,11 +208,20 @@ class MainActivity : FlutterFragmentActivity() {
             WidgetData.KEY_BUDGET_LABEL to (call.argument<String>("budgetLabel") ?: "本月可用预算"),
             WidgetData.KEY_NET_WORTH_AMOUNT to (call.argument<String>("netWorthAmount") ?: "0"),
             WidgetData.KEY_NET_WORTH_LABEL to (call.argument<String>("netWorthLabel") ?: "资产总额"),
+            // 跨天/跨月自愈锚点。
+            WidgetData.KEY_TODAY_DATE to (call.argument<String>("todayDate") ?: ""),
+            WidgetData.KEY_TODAY_ZERO to (call.argument<String>("todayZeroAmount") ?: "0"),
+            WidgetData.KEY_BUDGET_MONTH to (call.argument<String>("budgetMonth") ?: ""),
+            WidgetData.KEY_BUDGET_FULL to (call.argument<String>("budgetFullAmount") ?: "0"),
+            WidgetData.KEY_BUDGET_FULL_LABEL to
+                (call.argument<String>("budgetFullLabel") ?: "本月可用预算"),
         )
         WidgetData.write(this, values)
         WidgetData.refresh(this, QuickEntryWidgetProvider::class.java)
         WidgetData.refresh(this, BudgetWidgetProvider::class.java)
         WidgetData.refresh(this, NetWorthWidgetProvider::class.java)
+        // 推送新数据后对齐下一次午夜刷新闹钟。
+        WidgetRefreshScheduler.scheduleNextMidnight(this)
     }
 
     /// 请求把指定小组件固定到桌面（API 26+ 且启动器支持时弹系统添加弹窗）。

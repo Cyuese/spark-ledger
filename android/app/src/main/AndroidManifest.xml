@@ -112,6 +112,15 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/net_worth_widget_info" />
         </receiver>
+        <!-- 桌面小组件午夜刷新：定时广播重绘小组件以跨天/跨月自愈；开机/更新后重排闹钟。 -->
+        <receiver
+            android:name=".WidgetRefreshReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <!-- flutter_local_notifications 定时通知的接收器；开机后重排已安排的记账提醒。 -->
         <receiver
             android:exported="false"

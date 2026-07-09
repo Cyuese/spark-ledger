@@ -90,6 +90,11 @@ class AppPlatformBridge {
     required String budgetLabel,
     required String netWorthAmount,
     required String netWorthLabel,
+    required String todayDate,
+    required String todayZeroAmount,
+    required String budgetMonth,
+    required String budgetFullAmount,
+    required String budgetFullLabel,
   }) async {
     try {
       await _channel.invokeMethod<void>('updateWidgetData', {
@@ -99,6 +104,13 @@ class AppPlatformBridge {
         'budgetLabel': budgetLabel,
         'netWorthAmount': netWorthAmount,
         'netWorthLabel': netWorthLabel,
+        // 跨天/跨月自愈用的锚点：原生按当前日期/月份判断推送值是否过期，
+        // 过期则展示归零/满额值，不必等应用打开重新推送。
+        'todayDate': todayDate,
+        'todayZeroAmount': todayZeroAmount,
+        'budgetMonth': budgetMonth,
+        'budgetFullAmount': budgetFullAmount,
+        'budgetFullLabel': budgetFullLabel,
       });
     } on MissingPluginException {
       // 非 Android 平台没有桌面小组件。

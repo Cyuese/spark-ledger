@@ -14,11 +14,12 @@ Future<void> pushWidgetData(VeriFinController controller) async {
 
   final todayTotal = dayExpenseTotal(entries, dateOnly(now));
 
+  final monthBudget = controller.monthlyBudget(now);
   final monthExpense = sumByType(
     entries.where((entry) => isInMonth(entry, now)),
     EntryType.expense,
   );
-  final remaining = controller.monthlyBudget(now) - monthExpense;
+  final remaining = monthBudget - monthExpense;
 
   final netWorth = controller.accounts
       .where((account) => !account.hidden)
@@ -26,6 +27,8 @@ Future<void> pushWidgetData(VeriFinController controller) async {
         0,
         (sum, account) => sum + controller.accountBalance(account),
       );
+
+  String two(int n) => n.toString().padLeft(2, '0');
 
   await AppPlatformBridge.updateWidgetData(
     todayAmount: formatAmount(todayTotal),
@@ -36,5 +39,12 @@ Future<void> pushWidgetData(VeriFinController controller) async {
         : l10n.widgetBudgetAvailable,
     netWorthAmount: formatAmount(netWorth),
     netWorthLabel: l10n.widgetNetWorth,
+    // 跨天/跨月锚点：原生据此判断展示值是否过期。跨天后「今日支出」归零，
+    // 跨月后「本月可用」回到整月预算（新月尚无支出）。
+    todayDate: '${now.year}-${two(now.month)}-${two(now.day)}',
+    todayZeroAmount: formatAmount(0),
+    budgetMonth: '${now.year}-${two(now.month)}',
+    budgetFullAmount: formatAmount(monthBudget),
+    budgetFullLabel: l10n.widgetBudgetAvailable,
   );
 }

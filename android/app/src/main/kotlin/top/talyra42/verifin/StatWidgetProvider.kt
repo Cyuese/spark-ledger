@@ -16,17 +16,24 @@ abstract class StatWidgetProvider : AppWidgetProvider() {
     protected abstract val labelKey: String
     protected abstract val defaultLabel: String
 
+    /// 解析展示的数值与标签；默认直接读取推送值。需要跨天/跨月自愈的子类（如预算）覆写。
+    protected open fun resolveAmountLabel(context: Context): Pair<String, String> {
+        return WidgetData.read(context, amountKey, "0") to
+            WidgetData.read(context, labelKey, defaultLabel)
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { render(context, appWidgetManager, it) }
+        // 每次重绘顺带把下一次午夜刷新闹钟对齐好（跨天/跨月自愈的触发源）。
+        WidgetRefreshScheduler.scheduleNextMidnight(context)
     }
 
     private fun render(context: Context, manager: AppWidgetManager, widgetId: Int) {
-        val amount = WidgetData.read(context, amountKey, "0")
-        val label = WidgetData.read(context, labelKey, defaultLabel)
+        val (amount, label) = resolveAmountLabel(context)
 
         val views = RemoteViews(context.packageName, R.layout.stat_widget)
         views.setTextViewText(R.id.stat_widget_label, label)
@@ -57,6 +64,10 @@ class BudgetWidgetProvider : StatWidgetProvider() {
     override val amountKey = WidgetData.KEY_BUDGET_AMOUNT
     override val labelKey = WidgetData.KEY_BUDGET_LABEL
     override val defaultLabel = "本月可用预算"
+
+    // 跨月自愈：进入新月后展示整月预算与「可用」文案。
+    override fun resolveAmountLabel(context: Context) =
+        WidgetData.budgetForMonth(context)
 }
 
 /// 资产总额小组件：展示所有可见账户余额合计。
