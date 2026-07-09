@@ -1877,3 +1877,38 @@ class EntryTagField extends StatelessWidget {
     );
   }
 }
+
+/// 统一的确认对话框：取消 + 确认两个按钮，返回用户是否确认（取消 / 点外部关闭
+/// 均返回 false）。[destructive] 为 true 时确认按钮用红色（删除 / 清空 / 重置等
+/// 破坏性操作），使全应用的危险操作视觉一致。
+Future<bool> showConfirmDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+  String? confirmLabel,
+  String? cancelLabel,
+  bool destructive = false,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(cancelLabel ?? l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          style: destructive
+              ? FilledButton.styleFrom(backgroundColor: veriExpense)
+              : null,
+          child: Text(confirmLabel ?? l10n.commonConfirm),
+        ),
+      ],
+    ),
+  );
+  return confirmed ?? false;
+}

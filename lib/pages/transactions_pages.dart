@@ -654,24 +654,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   Future<void> _batchDelete() async {
     final count = _selectedIds.length;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).deleteEntriesTitle(count)),
-        content: Text(AppLocalizations.of(context).deleteEntriesMessage),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).commonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).deleteEntriesTitle(count),
+      message: AppLocalizations.of(context).deleteEntriesMessage,
+      confirmLabel: AppLocalizations.of(context).commonDelete,
+      destructive: true,
     );
-    if (!mounted || confirmed != true) {
+    if (!mounted || !confirmed) {
       return;
     }
     VeriFinScope.of(context).deleteEntries(Set<String>.of(_selectedIds));
@@ -1632,24 +1622,14 @@ Future<void> _confirmDeleteEntry(
   LedgerEntry entry,
 ) async {
   final controller = VeriFinScope.of(context);
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(AppLocalizations.of(context).deleteEntryTitle),
-      content: Text(AppLocalizations.of(context).deleteEntryMessage),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: Text(AppLocalizations.of(context).commonCancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(true),
-          child: Text(AppLocalizations.of(context).commonDelete),
-        ),
-      ],
-    ),
+  final confirmed = await showConfirmDialog(
+    context,
+    title: AppLocalizations.of(context).deleteEntryTitle,
+    message: AppLocalizations.of(context).deleteEntryMessage,
+    confirmLabel: AppLocalizations.of(context).commonDelete,
+    destructive: true,
   );
-  if (!context.mounted || confirmed != true) {
+  if (!context.mounted || !confirmed) {
     return;
   }
   controller.deleteEntry(entry.id);

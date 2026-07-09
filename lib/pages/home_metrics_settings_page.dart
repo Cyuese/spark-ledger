@@ -147,24 +147,13 @@ class _HomeMetricsSettingsPageState extends State<HomeMetricsSettingsPage> {
 
   Future<void> _confirmReset() async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.trendResetTitle),
-        content: Text(l10n.trendResetMessage),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.trendResetConfirm),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.trendResetTitle,
+      message: l10n.trendResetMessage,
+      confirmLabel: l10n.trendResetConfirm,
     );
-    if (confirmed == true && mounted) {
+    if (confirmed && mounted) {
       VeriFinScope.of(context).resetHomeTrendConfig();
       _titleController.text = '';
     }

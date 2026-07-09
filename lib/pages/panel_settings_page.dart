@@ -168,24 +168,13 @@ class _PanelSettingsPageState extends State<PanelSettingsPage> {
 
   Future<void> _confirmReset(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.panelResetTitle(widget.kind.label(l10n))),
-        content: Text(l10n.panelResetMessage),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.panelResetConfirm),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.panelResetTitle(widget.kind.label(l10n)),
+      message: l10n.panelResetMessage,
+      confirmLabel: l10n.panelResetConfirm,
     );
-    if (confirmed == true && context.mounted) {
+    if (confirmed && context.mounted) {
       VeriFinScope.of(context).resetPanels(widget.kind);
     }
   }

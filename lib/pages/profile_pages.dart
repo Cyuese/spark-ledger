@@ -554,26 +554,14 @@ class _LedgerBookRow extends StatelessWidget {
   }
 
   Future<void> _deleteBook(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).bookDeleteTitle),
-        content: Text(
-          AppLocalizations.of(context).bookDeleteMessage(book.name),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).commonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).bookDeleteTitle,
+      message: AppLocalizations.of(context).bookDeleteMessage(book.name),
+      confirmLabel: AppLocalizations.of(context).commonDelete,
+      destructive: true,
     );
-    if (!context.mounted || confirmed != true) {
+    if (!context.mounted || !confirmed) {
       return;
     }
     VeriFinScope.of(context).deleteLedgerBook(book.id);
@@ -824,26 +812,17 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
     }
     final targetLabel = controller.categoryById(targetId).label;
     final count = controller.categoryUsageCount(category.id);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.mergeCategoryConfirmTitle),
-        content: Text(
-          l10n.mergeCategoryConfirmMessage(category.label, count, targetLabel),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.mergeCategoryConfirmButton),
-          ),
-        ],
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.mergeCategoryConfirmTitle,
+      message: l10n.mergeCategoryConfirmMessage(
+        category.label,
+        count,
+        targetLabel,
       ),
+      confirmLabel: l10n.mergeCategoryConfirmButton,
     );
-    if (!mounted || confirmed != true) {
+    if (!mounted || !confirmed) {
       return;
     }
     final changed = controller.mergeCategoryInto(category.id, targetId);
@@ -952,26 +931,14 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).deleteCategoryTitle),
-        content: Text(
-          AppLocalizations.of(context).deleteCategoryMessage(category.label),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).commonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).deleteCategoryTitle,
+      message: AppLocalizations.of(context).deleteCategoryMessage(category.label),
+      confirmLabel: AppLocalizations.of(context).commonDelete,
+      destructive: true,
     );
-    if (!mounted || confirmed != true) {
+    if (!mounted || !confirmed) {
       return;
     }
     final deleted = controller.deleteCategory(category.id);
@@ -1233,28 +1200,16 @@ class _TagManagementPageState extends State<TagManagementPage> {
   Future<void> _deleteTag(Tag tag) async {
     final controller = VeriFinScope.of(context);
     final usage = controller.tagUsageCount(tag.id);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).tagDeleteTitle),
-        content: Text(
-          usage > 0
-              ? AppLocalizations.of(context).tagDeleteInUse(tag.label, usage)
-              : AppLocalizations.of(context).tagDeleteMessage(tag.label),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).commonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).tagDeleteTitle,
+      message: usage > 0
+          ? AppLocalizations.of(context).tagDeleteInUse(tag.label, usage)
+          : AppLocalizations.of(context).tagDeleteMessage(tag.label),
+      confirmLabel: AppLocalizations.of(context).commonDelete,
+      destructive: true,
     );
-    if (!mounted || confirmed != true) {
+    if (!mounted || !confirmed) {
       return;
     }
     controller.deleteTag(tag.id);
