@@ -1093,8 +1093,9 @@ class VeriFinController extends ChangeNotifier {
     required List<LedgerEntry> entries,
     required List<Account> candidateAccounts,
     required List<Category> candidateCategories,
+    Set<String> alwaysCreateAccountIds = const <String>{},
   }) {
-    if (entries.isEmpty) {
+    if (entries.isEmpty && alwaysCreateAccountIds.isEmpty) {
       return;
     }
     final referencedAccountIds = <String>{};
@@ -1115,7 +1116,8 @@ class VeriFinController extends ChangeNotifier {
     final newAccounts = candidateAccounts
         .where(
           (account) =>
-              referencedAccountIds.contains(account.id) &&
+              (referencedAccountIds.contains(account.id) ||
+                  alwaysCreateAccountIds.contains(account.id)) &&
               !existingAccountIds.contains(account.id),
         )
         .toList();

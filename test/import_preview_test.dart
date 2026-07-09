@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/backup/payment_import.dart';
@@ -13,6 +14,12 @@ import 'package:verifin/pages/import_preview_page.dart';
 import 'support/test_harness.dart';
 
 Uint8List _csvBytes(String csv) => Uint8List.fromList(utf8.encode(csv));
+
+Uint8List _tallyBytes(Map<String, Object?> data) {
+  final archive = Archive()
+    ..addFile(ArchiveFile.string('backup_data.json', jsonEncode(data)));
+  return Uint8List.fromList(ZipEncoder().encode(archive));
+}
 
 const _csv =
     '日期,类型,金额,分类,账户,转入账户,备注\n'
@@ -236,6 +243,62 @@ void main() {
             .name,
         '我的钱包',
       );
+    });
+  });
+
+  group('Tally 导入：账户余额与无流水账户落库', () {
+    Uint8List sampleBackup() => _tallyBytes(<String, Object?>{
+      'assets': <Object?>[
+        <String, Object?>{'id': 1, 'name': '微信余额', 'amount': 1035.18, 'type': 0},
+        <String, Object?>{'id': 2, 'name': 'qq钱包', 'amount': 0, 'type': 0},
+        <String, Object?>{'id': 3, 'name': '妈妈', 'amount': 2000.0, 'type': 2},
+      ],
+      'records': <Object?>[
+        <String, Object?>{
+          'date': DateTime(2026, 7, 5, 12).millisecondsSinceEpoch,
+          'type': 1,
+          'amount': 2996.17,
+          'category': '工资',
+          'assetId': 1,
+          'note': '',
+        },
+        <String, Object?>{
+          'date': DateTime(2026, 7, 5, 13).millisecondsSinceEpoch,
+          'type': 0,
+          'amount': 1960.99,
+          'category': '购物',
+          'assetId': 1,
+          'note': '',
+        },
+      ],
+    });
+
+    test('落库后账户余额对齐 Tally，无流水账户也被创建', () async {
+      final controller = await makeController();
+      final plan = controller.parsePlatformImport(
+        ImportPlatform.tally,
+        sampleBackup(),
+      );
+      final result = ImportPreviewResult(
+        entries: plan.entries,
+        candidateAccounts: plan.newAccounts,
+        candidateCategories: plan.newCategories,
+        alwaysCreateAccountIds: plan.standaloneAccountIds,
+      );
+      controller.applyImportEntries(
+        entries: result.entries,
+        candidateAccounts: result.candidateAccounts,
+        candidateCategories: result.candidateCategories,
+        alwaysCreateAccountIds: result.alwaysCreateAccountIds,
+      );
+
+      final wechat = controller.accounts.firstWhere((a) => a.name == '微信余额');
+      expect(controller.accountBalance(wechat), closeTo(1035.18, 0.001));
+      // 无流水的账户也被创建。
+      final qq = controller.accounts.firstWhere((a) => a.name == 'qq钱包');
+      expect(controller.accountBalance(qq), 0);
+      final mama = controller.accounts.firstWhere((a) => a.name == '妈妈');
+      expect(controller.accountBalance(mama), 2000);
     });
   });
 

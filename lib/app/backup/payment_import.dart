@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:charset/charset.dart';
 
+import '../ledger_math.dart';
 import '../models.dart';
 import 'transaction_import.dart';
 import 'xls_reader.dart';
@@ -65,13 +66,33 @@ ImportPlan buildPlatformImportPlan({
   required List<Category> existingCategories,
   required DateTime now,
 }) {
+  // Tally 备份携带账户余额与类型，走专用路径：先归一化交易，再用 assets 修正账户
+  // 初始余额、补建无流水的账户（见 [_applyTallyAssets]）。
+  if (platform == ImportPlatform.tally) {
+    final backup = _parseTallyBackup(bytes);
+    final plan = buildImportPlan(
+      rows: backup.rows,
+      bookId: bookId,
+      existingAccounts: existingAccounts,
+      existingCategories: existingCategories,
+      now: now,
+    );
+    return _applyTallyAssets(
+      plan: plan,
+      assets: backup.assets,
+      existingAccounts: existingAccounts,
+      bookId: bookId,
+      now: now,
+    );
+  }
+
   final rows = switch (platform) {
     ImportPlatform.alipay => _normalizeAlipay(_decodeGbk(bytes)),
     ImportPlatform.wechat => _normalizeWechat(parseXlsx(bytes)),
     ImportPlatform.mint => _normalizeMint(_decodeUtf16(bytes)),
     ImportPlatform.yimuBill => _normalizeYimuBill(parseXls(bytes)),
     ImportPlatform.yimuTransfer => _normalizeYimuTransfer(parseXls(bytes)),
-    ImportPlatform.tally => _normalizeTally(bytes),
+    ImportPlatform.tally => const <List<String>>[],
     ImportPlatform.genericCsv => parseCsv(_decodeUtf8(bytes)),
   };
   return buildImportPlan(
@@ -315,7 +336,38 @@ List<List<String>> _normalizeYimuTransfer(List<List<String>> rows) {
 // 账户名编码在 note（"转出 -> 转入" 可能带 " (账单:X 优惠:Y)" 与 " | 备注: 用户备注"）。
 // ---------------------------------------------------------------------------
 
-List<List<String>> _normalizeTally(Uint8List bytes) {
+/// Tally 资产账户：名称、（按 Veri Fin 符号约定的）当前余额、是否计入总资产、账户类型。
+class _TallyAsset {
+  const _TallyAsset({
+    required this.name,
+    required this.signedBalance,
+    required this.includeInAssets,
+    required this.type,
+  });
+
+  final String name;
+
+  /// 已按符号归一：资产/借出/理财记正，负债/分期记负（与 Veri Fin「余额正负=资产/负债」一致）。
+  final double signedBalance;
+  final bool includeInAssets;
+  final AccountType type;
+}
+
+/// Tally 备份解析结果：归一化后的交易行 + 资产账户元数据。
+class _TallyBackup {
+  const _TallyBackup(this.rows, this.assets);
+
+  final List<List<String>> rows;
+  final List<_TallyAsset> assets;
+}
+
+/// 把 Tally 的资产类型（0资产/1负债/2借出/3理财/4分期）映射到 Veri Fin 账户类型。
+/// Veri Fin 无「负债/借出」独立类型（靠余额正负区分），故负债/分期只影响余额符号，
+/// 类型上把理财归为 investment，其余用 cash（与 CSV 导入默认一致）。
+AccountType _tallyAccountType(int type) =>
+    type == 3 ? AccountType.investment : AccountType.cash;
+
+_TallyBackup _parseTallyBackup(Uint8List bytes) {
   final Archive archive;
   try {
     archive = ZipDecoder().decodeBytes(bytes);
@@ -346,18 +398,37 @@ List<List<String>> _normalizeTally(Uint8List bytes) {
     throw const FormatException('Tally 备份数据格式无效');
   }
 
-  // 资产 id → 名称。
+  // 资产 id → 名称（供交易账户解析），以及资产账户元数据（供余额/类型导入）。
   final assetNames = <int, String>{};
+  final tallyAssets = <_TallyAsset>[];
   final assets = decoded['assets'];
   if (assets is List) {
     for (final asset in assets) {
-      if (asset is Map) {
-        final id = (asset['id'] as num?)?.toInt();
-        final name = asset['name']?.toString().trim() ?? '';
-        if (id != null && name.isNotEmpty) {
-          assetNames[id] = name;
-        }
+      if (asset is! Map) {
+        continue;
       }
+      final id = (asset['id'] as num?)?.toInt();
+      final name = asset['name']?.toString().trim() ?? '';
+      if (id != null && name.isNotEmpty) {
+        assetNames[id] = name;
+      }
+      if (name.isEmpty) {
+        continue;
+      }
+      final rawType = (asset['type'] as num?)?.toInt() ?? 0;
+      final amount = (asset['amount'] as num?)?.toDouble() ?? 0;
+      // Tally 里 amount 恒为正，符号由 type 决定：负债(1)/分期(4)减少总资产、记负；
+      // 资产(0)/借出(2)/理财(3)记正。isIncludedInTotal 缺省视为 true（兼容老数据）。
+      final signed = (rawType == 1 || rawType == 4) ? -amount.abs() : amount.abs();
+      final included = asset['isIncludedInTotal'] as bool? ?? true;
+      tallyAssets.add(
+        _TallyAsset(
+          name: name,
+          signedBalance: signed,
+          includeInAssets: included,
+          type: _tallyAccountType(rawType),
+        ),
+      );
     }
   }
 
@@ -413,7 +484,88 @@ List<List<String>> _normalizeTally(Uint8List bytes) {
       _joinNote(<String>[noteRaw, remark]),
     ]);
   }
-  return out;
+  return _TallyBackup(out, tallyAssets);
+}
+
+/// 用 Tally 资产账户元数据修正导入计划：让每个源账户导入后的**显示余额**等于 Tally
+/// 存的当前余额，并补建没有流水的账户（如零余额钱包、借出/负债对象）。
+///
+/// Veri Fin 账户显示余额 = `initialBalance + Σ 交易增量`，故对**本次导入新建**的账户回推
+/// `initialBalance = 目标余额 − Σ增量`；没有任何交易引用的资产则直接以目标余额新建，
+/// 并加入 [ImportPlan.standaloneAccountIds] 使其即便无流水也会落库。已存在的同名账户
+/// 不改动（避免覆盖用户既有数据）。
+ImportPlan _applyTallyAssets({
+  required ImportPlan plan,
+  required List<_TallyAsset> assets,
+  required List<Account> existingAccounts,
+  required String bookId,
+  required DateTime now,
+}) {
+  if (assets.isEmpty) {
+    return plan;
+  }
+
+  // 各账户在本次导入交易中的余额增量合计（按最终账户 id 聚合）。
+  final deltaByAccount = <String, double>{};
+  for (final entry in plan.entries) {
+    for (final id in <String?>[entry.accountId, entry.toAccountId]) {
+      if (id != null && id.isNotEmpty) {
+        deltaByAccount[id] =
+            (deltaByAccount[id] ?? 0) + accountDeltaForEntry(entry, id);
+      }
+    }
+  }
+
+  final newAccounts = List<Account>.from(plan.newAccounts);
+  final standalone = <String>{...plan.standaloneAccountIds};
+  var counter = 0;
+
+  for (final asset in assets) {
+    final newIndex = newAccounts.indexWhere((a) => a.name == asset.name);
+    if (newIndex != -1) {
+      // 本次导入新建的账户：回推初始余额，使显示余额对齐 Tally；标记为独立账户。
+      final account = newAccounts[newIndex];
+      final delta = deltaByAccount[account.id] ?? 0;
+      newAccounts[newIndex] = account.copyWith(
+        initialBalance: asset.signedBalance - delta,
+        includeInAssets: asset.includeInAssets,
+        type: asset.type,
+      );
+      standalone.add(account.id);
+      continue;
+    }
+    // 已存在的同名账户：不改动（尊重用户既有数据）。
+    if (existingAccounts.any((a) => a.name == asset.name)) {
+      continue;
+    }
+    // 没有任何流水的资产（零余额钱包、借出/负债对象等）：直接以当前余额新建。
+    counter++;
+    final id = 'tallyacct_${now.microsecondsSinceEpoch}_$counter';
+    newAccounts.add(
+      Account(
+        id: id,
+        bookId: bookId,
+        name: asset.name,
+        type: asset.type,
+        groupId: null,
+        initialBalance: asset.signedBalance,
+        iconCode: 'wallet',
+        note: '',
+        includeInAssets: asset.includeInAssets,
+        hidden: false,
+      ),
+    );
+    standalone.add(id);
+  }
+
+  return ImportPlan(
+    entries: plan.entries,
+    newAccounts: newAccounts,
+    newCategories: plan.newCategories,
+    errors: plan.errors,
+    source: plan.source,
+    standaloneAccountIds: standalone,
+  );
 }
 
 /// Tally 转账 note 拆解结果：转出账户、转入账户、剩余用户备注。

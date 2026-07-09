@@ -1140,13 +1140,16 @@ class DataManagementPage extends StatelessWidget {
           ),
         ),
       );
-      if (result == null || result.entries.isEmpty || !context.mounted) {
+      if (result == null ||
+          (result.entries.isEmpty && result.alwaysCreateAccountIds.isEmpty) ||
+          !context.mounted) {
         return;
       }
       controller.applyImportEntries(
         entries: result.entries,
         candidateAccounts: result.candidateAccounts,
         candidateCategories: result.candidateCategories,
+        alwaysCreateAccountIds: result.alwaysCreateAccountIds,
       );
       if (!context.mounted) {
         return;

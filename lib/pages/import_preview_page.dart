@@ -16,11 +16,16 @@ class ImportPreviewResult {
     required this.entries,
     required this.candidateAccounts,
     required this.candidateCategories,
+    this.alwaysCreateAccountIds = const <String>{},
   });
 
   final List<LedgerEntry> entries;
   final List<Account> candidateAccounts;
   final List<Category> candidateCategories;
+
+  /// 即便没有交易引用也要创建的候选账户 id（Tally 携带余额的账户）；已被用户映射到
+  /// 现有账户的不在其中。
+  final Set<String> alwaysCreateAccountIds;
 }
 
 /// 账单导入预览页：解析后、落库前展示即将导入的交易（按日期分组），用户可逐条排除
@@ -163,6 +168,10 @@ class _ImportPreviewPageState extends State<ImportPreviewPage> {
                   category.copyWith(label: _categoryName[category.id]),
             )
             .toList(),
+        // 映射到现有账户的独立账户不再新建（交易已改指向现有账户）。
+        alwaysCreateAccountIds: widget.plan.standaloneAccountIds
+            .where((id) => !_accountMapTo.containsKey(id))
+            .toSet(),
       ),
     );
   }

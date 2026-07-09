@@ -7,6 +7,7 @@ import 'package:charset/charset.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/backup/payment_import.dart';
 import 'package:verifin/app/backup/transaction_import.dart';
+import 'package:verifin/app/ledger_math.dart';
 import 'package:verifin/app/models.dart';
 
 /// 构造最小 xlsx（仅 sharedStrings + sheet1），供微信解析测试。
@@ -478,6 +479,93 @@ void main() {
         ),
         throwsFormatException,
       );
+    });
+  });
+
+  group('Tally 资产账户：余额与类型导入', () {
+    final at = DateTime(2026, 7, 5, 12);
+
+    // 某账户导入后的显示余额 = 初始余额 + 该账户在导入交易中的增量合计。
+    double displayedBalance(ImportPlan plan, Account account) {
+      var balance = account.initialBalance;
+      for (final entry in plan.entries) {
+        balance += accountDeltaForEntry(entry, account.id);
+      }
+      return balance;
+    }
+
+    late ImportPlan plan;
+    setUp(() {
+      final bytes = _buildTallyBackup(<String, Object?>{
+        'assets': <Object?>[
+          // 有流水的资产：当前余额 1035.18。
+          <String, Object?>{'id': 1, 'name': '微信余额', 'amount': 1035.18, 'type': 0},
+          // 无流水的零余额钱包。
+          <String, Object?>{'id': 2, 'name': 'qq钱包', 'amount': 0, 'type': 0},
+          // 借出（type 2）：正值资产。
+          <String, Object?>{'id': 3, 'name': '妈妈', 'amount': 2000.0, 'type': 2},
+          // 负债（type 1）：Veri Fin 里记为负余额。
+          <String, Object?>{'id': 4, 'name': '花呗', 'amount': 300.0, 'type': 1},
+          // 不计入总资产的资产。
+          <String, Object?>{
+            'id': 5,
+            'name': '公积金',
+            'amount': 500.0,
+            'type': 0,
+            'isIncludedInTotal': false,
+          },
+        ],
+        'records': <Object?>[
+          <String, Object?>{
+            'date': at.millisecondsSinceEpoch,
+            'type': 1,
+            'amount': 2996.17,
+            'category': '工资',
+            'assetId': 1,
+            'note': '',
+          },
+          <String, Object?>{
+            'date': at.millisecondsSinceEpoch,
+            'type': 0,
+            'amount': 1960.99,
+            'category': '购物',
+            'assetId': 1,
+            'note': '',
+          },
+        ],
+      });
+      plan = run(ImportPlatform.tally, bytes);
+    });
+
+    test('有流水账户回推初始余额，显示余额对齐 Tally 当前余额', () {
+      final wechat = plan.newAccounts.firstWhere((a) => a.name == '微信余额');
+      expect(displayedBalance(plan, wechat), closeTo(1035.18, 0.001));
+    });
+
+    test('无流水账户按当前余额补建，且标记为独立账户', () {
+      final qq = plan.newAccounts.firstWhere((a) => a.name == 'qq钱包');
+      expect(qq.initialBalance, 0);
+      expect(plan.standaloneAccountIds, contains(qq.id));
+      final mama = plan.newAccounts.firstWhere((a) => a.name == '妈妈');
+      expect(mama.initialBalance, 2000);
+      expect(displayedBalance(plan, mama), 2000);
+    });
+
+    test('负债账户记为负余额', () {
+      final huabei = plan.newAccounts.firstWhere((a) => a.name == '花呗');
+      expect(huabei.initialBalance, -300);
+    });
+
+    test('isIncludedInTotal=false 映射到 includeInAssets=false', () {
+      final fund = plan.newAccounts.firstWhere((a) => a.name == '公积金');
+      expect(fund.includeInAssets, isFalse);
+      final wechat = plan.newAccounts.firstWhere((a) => a.name == '微信余额');
+      expect(wechat.includeInAssets, isTrue);
+    });
+
+    test('所有资产账户均被补齐（含无流水的）', () {
+      final names = plan.newAccounts.map((a) => a.name).toSet();
+      expect(names, containsAll(<String>['微信余额', 'qq钱包', '妈妈', '花呗', '公积金']));
     });
   });
 }

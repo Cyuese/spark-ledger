@@ -16,6 +16,7 @@ class ImportPlan {
     required this.newCategories,
     required this.errors,
     this.source,
+    this.standaloneAccountIds = const <String>{},
   });
 
   final List<LedgerEntry> entries;
@@ -25,6 +26,11 @@ class ImportPlan {
 
   /// 识别到的导入来源（钱迹 / 随手记 / 模板），未识别为 null。
   final ImportSource? source;
+
+  /// 待新建账户中「即使没有交易引用也要创建」的 id 集合。默认空——普通 CSV 导入的
+  /// 账户都由交易派生、被排除后不应留下空账户；仅 Tally 这类携带账户余额/类型的来源，
+  /// 会把源账本里的资产账户（含零余额、无流水的账户）标记为独立账户一并落库。
+  final Set<String> standaloneAccountIds;
 
   int get importedCount => entries.length;
   int get errorCount => errors.length;
