@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../app/common_widgets.dart';
-import '../app/demo_data.dart';
 import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
@@ -277,10 +276,13 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
                       label: _type == EntryType.transfer
                           ? AppLocalizations.of(context).transferOutAccount
                           : AppLocalizations.of(context).accountLabel,
-                      value:
-                          account?.name ??
-                          AppLocalizations.of(context).addAccountFirst,
-                      placeholder: account == null,
+                      value: accounts.isEmpty
+                          ? AppLocalizations.of(context).addAccountFirst
+                          : _accountId.isEmpty
+                          ? AppLocalizations.of(context).noAccountLabel
+                          : account?.name ??
+                                AppLocalizations.of(context).noAccountLabel,
+                      placeholder: accounts.isEmpty,
                       onTap: accounts.isEmpty
                           ? null
                           : () => _pickAccount(false),
@@ -338,13 +340,20 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
   }
 
   bool _canSave(List<Account> accounts) {
-    if (_amount <= 0 || accounts.isEmpty) {
+    if (_amount <= 0) {
       return false;
     }
-    if (_type == EntryType.transfer &&
-        (_toAccountId == null || _toAccountId == _accountId)) {
-      return false;
+    if (_type == EntryType.transfer) {
+      // 转账两端都需具体账户，且不能相同。
+      if (accounts.length < 2 || _accountId.isEmpty) {
+        return false;
+      }
+      if (_toAccountId == null || _toAccountId == _accountId) {
+        return false;
+      }
+      return true;
     }
+    // 收支：选了具体账户或「无账户」都可保存（与记账页一致）。
     return true;
   }
 
@@ -381,30 +390,43 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
   }
 
   Future<void> _pickAccount(bool toAccount) async {
+    final l10n = AppLocalizations.of(context);
     final controller = VeriFinScope.of(context);
     final accounts = controller.accounts;
-    // 兜底：无账户时不弹选择器（避免 accounts.first 抛 Bad state）。
-    // 调用点也各有守卫，这里再挡一层，防未来新增入口漏判。
+    // 兜底：无账户时不弹选择器。调用点也各有守卫，这里再挡一层。
     if (accounts.isEmpty) {
       return;
     }
-    final selected = await showOptionSheet<String>(
+    final isTransfer = _type == EntryType.transfer;
+    // 转入账户不能与转出账户相同。
+    final pickable = toAccount
+        ? accounts.where((a) => a.id != _accountId).toList()
+        : accounts;
+    if (pickable.isEmpty) {
+      return;
+    }
+    // 与记账 / 编辑交易用同一个账户选择器：带账户图标、余额、卡号后四位；收支的
+    // 转出账户可选「无账户」，转账两端都需具体账户故不提供。
+    final selected = await showAccountPickerSheet(
       context: context,
       title: toAccount
-          ? AppLocalizations.of(context).pickTransferInAccount
-          : AppLocalizations.of(context).pickAccountTitle,
-      values: accounts.map((a) => a.id).toList(),
-      selected: (toAccount ? _toAccountId : _accountId) ?? accounts.first.id,
-      labelOf: (id) => accountById(accounts, id).name,
+          ? l10n.pickTransferInAccount
+          : (isTransfer ? l10n.pickTransferOutAccount : l10n.pickAccountTitle),
+      accounts: pickable,
+      selectedId: toAccount ? _toAccountId : _accountId,
+      balanceOf: controller.accountBalance,
+      noneLabel: (toAccount || isTransfer) ? null : l10n.noAccountLabel,
+      noneHint: (toAccount || isTransfer) ? null : l10n.noAccountHint,
     );
     if (selected == null || !mounted) {
       return;
     }
     setState(() {
       if (toAccount) {
-        _toAccountId = selected;
+        _toAccountId = selected.id;
       } else {
-        _accountId = selected;
+        // 选到「无账户」时 selected.id 为空串，正是 RecurringRule 表达无账户的方式。
+        _accountId = selected.id;
       }
     });
   }
