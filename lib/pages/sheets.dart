@@ -334,9 +334,14 @@ class _NoneAccountRow extends StatelessWidget {
   }
 }
 
+/// 账户 / 账户分组图标选择器：每行带 [AccountIconBox] 预览。[includeAssetIcons] 为
+/// false 时只列通用图标（账户分组用——分组图标以 `iconForCode` 渲染，不支持银行等
+/// 资产图标），[title] 可覆盖标题（分组用「选择分组图标」）。
 Future<String?> showAccountIconSheet({
   required BuildContext context,
   required String selected,
+  String? title,
+  bool includeAssetIcons = true,
 }) {
   final l10n = AppLocalizations.of(context);
   final choices = <AccountIconChoice>[
@@ -346,12 +351,15 @@ Future<String?> showAccountIconSheet({
         label: iconLabelForCode(l10n, code),
         group: l10n.iconGroupGeneric,
       ),
-    for (final option in accountAssetIconOptions)
-      AccountIconChoice(
-        code: option.code,
-        label: option.label,
-        group: option.groupLabel(l10n),
-      ),
+    if (includeAssetIcons)
+      ...<AccountIconChoice>[
+        for (final option in accountAssetIconOptions)
+          AccountIconChoice(
+            code: option.code,
+            label: option.label,
+            group: option.groupLabel(l10n),
+          ),
+      ],
   ];
 
   return showModalBottomSheet<String>(
@@ -373,7 +381,7 @@ Future<String?> showAccountIconSheet({
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  l10n.accountIconPickerTitle,
+                  title ?? l10n.accountIconPickerTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
