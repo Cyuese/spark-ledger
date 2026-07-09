@@ -545,15 +545,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   Future<void> _pickCategoryFilter(VeriFinController controller) async {
     // 与记账 / 编辑交易用同一个分类选择器（带图标、可折叠层级树），顶部加「全部」项。
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => CategoryPickerSheet(
-        categories: controller.categories,
-        selectedId: _selectedCategoryId ?? categoryPickerAll,
-        title: AppLocalizations.of(context).filterCategoryTitle,
-        allLabel: AppLocalizations.of(context).categoryAll,
-      ),
+    final selected = await showCategoryPickerSheet(
+      context,
+      categories: controller.categories,
+      selectedId: _selectedCategoryId ?? categoryPickerAll,
+      title: AppLocalizations.of(context).filterCategoryTitle,
+      allLabel: AppLocalizations.of(context).categoryAll,
     );
     if (selected != null && mounted) {
       setState(() {
@@ -1412,13 +1409,10 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   }
 
   Future<void> _pickCategory() async {
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => CategoryPickerSheet(
-        categories: VeriFinScope.of(context).categoriesForType(_type),
-        selectedId: _categoryId,
-      ),
+    final selected = await showCategoryPickerSheet(
+      context,
+      categories: VeriFinScope.of(context).categoriesForType(_type),
+      selectedId: _categoryId,
     );
     if (selected != null && mounted) {
       setState(() => _categoryId = selected);

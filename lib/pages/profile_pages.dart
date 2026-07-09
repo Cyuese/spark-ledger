@@ -777,19 +777,12 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       );
       return Future<String?>.value();
     }
-    return showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
-      ),
-      builder: (context) => CategoryPickerSheet(
-        categories: candidates,
-        selectedId: '',
-        title: title,
-        topLevelLabel: topLevelLabel,
-      ),
+    return showCategoryPickerSheet(
+      context,
+      categories: candidates,
+      selectedId: '',
+      title: title,
+      topLevelLabel: topLevelLabel,
     );
   }
 

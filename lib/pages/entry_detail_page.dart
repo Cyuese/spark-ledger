@@ -5,7 +5,6 @@ import '../app/app_theme.dart';
 import '../app/category_suggest.dart';
 import '../app/common_widgets.dart';
 import '../app/demo_data.dart';
-import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_controller.dart';
@@ -563,13 +562,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   Future<void> _showAllCategories() async {
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => CategoryPickerSheet(
-        categories: _categoriesForType(VeriFinScope.of(context), _type),
-        selectedId: _categoryId,
-      ),
+    final selected = await showCategoryPickerSheet(
+      context,
+      categories: _categoriesForType(VeriFinScope.of(context), _type),
+      selectedId: _categoryId,
     );
 
     if (!mounted || selected == null) {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../app/common_widgets.dart';
-import '../app/entry_sheets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
@@ -371,13 +370,10 @@ class _RecurringRuleEditPageState extends State<RecurringRuleEditPage> {
 
   Future<void> _pickCategory() async {
     final controller = VeriFinScope.of(context);
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => CategoryPickerSheet(
-        categories: controller.categoriesForType(_type),
-        selectedId: _categoryId,
-      ),
+    final selected = await showCategoryPickerSheet(
+      context,
+      categories: controller.categoriesForType(_type),
+      selectedId: _categoryId,
     );
     if (selected != null && mounted) {
       setState(() => _categoryId = selected);

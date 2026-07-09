@@ -30,7 +30,6 @@
 
 以下为已识别、正在分批整改的工程化债；完成后从本节移除。
 
-- **弹窗包装未 helper 化**：`CategoryPickerSheet` 目前由各页裸包 `showModalBottomSheet` 打开（约 5 处），待抽 `showCategoryPickerSheet` 统一。（`showNumberPadSheet` 已完成）
 - **指标块复制**：等价 `SummaryMetric` 的统计小块被各页复制多份，待参数化收敛。
 - **单 Controller 过载**：`VeriFinController` 约 2600 行、~30 领域，待用 `part`/mixin 物理拆分；偏好类 KV 待中期剥为独立 notifier。
 - **超大页面文件**：`profile_pages` / `budget_pages` / `transactions_pages` / `data_management_page` 待按子页拆分。

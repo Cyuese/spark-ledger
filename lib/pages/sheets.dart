@@ -151,6 +151,35 @@ Future<double?> showNumberPadSheet(
   );
 }
 
+/// 多级分类选择弹窗:统一的分类选择入口(带图标、可折叠父子层级)。返回所选分类
+/// id;取消返回 null。[allLabel] 非空时顶部加「全部」项(筛选用)→ 返回
+/// [categoryPickerAll];[topLevelLabel] 非空时加「移到顶级」→ 返回
+/// [categoryPickerTopLevel]。[categories] 由调用方按类型过滤后传入(筛选场景可传全部)。
+Future<String?> showCategoryPickerSheet(
+  BuildContext context, {
+  required List<Category> categories,
+  required String selectedId,
+  String? title,
+  String? topLevelLabel,
+  String? allLabel,
+}) {
+  return showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
+    ),
+    builder: (_) => CategoryPickerSheet(
+      categories: categories,
+      selectedId: selectedId,
+      title: title,
+      topLevelLabel: topLevelLabel,
+      allLabel: allLabel,
+    ),
+  );
+}
+
 /// 账户选择弹窗:与资产页账户列表一致,展示账户图标、名称(含卡号后四位)和余额。
 /// 账户选择弹窗。返回所选账户；用户取消返回 null。
 /// 传入 [noneLabel] 时，列表顶部额外提供「无账户」选项，选它返回 id 为空串的
