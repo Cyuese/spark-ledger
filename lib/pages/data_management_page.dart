@@ -389,6 +389,7 @@ class DataManagementPage extends StatelessWidget {
         SnackBar(content: Text(l10n.backedUpFile(result.filename))),
       );
     } catch (error) {
+      controller.logger?.error('手动备份失败', source: 'backup', error: error);
       navigator.pop(); // 关闭「备份中」
       messenger.showSnackBar(
         SnackBar(content: Text(_backupErrorText(l10n, error))),
@@ -1135,6 +1136,7 @@ class DataManagementPage extends StatelessWidget {
         context,
       ).showSnackBar(SnackBar(content: Text('$summary$suffix')));
     } on FormatException catch (error) {
+      controller.logger?.error('账单导入格式错误', source: 'import', error: error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1146,7 +1148,8 @@ class DataManagementPage extends StatelessWidget {
           ),
         );
       }
-    } catch (_) {
+    } catch (error) {
+      controller.logger?.error('账单导入失败', source: 'import', error: error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
