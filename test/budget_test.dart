@@ -51,8 +51,12 @@ void main() {
     await tester.tap(find.byIcon(Icons.edit_outlined).first);
     await tester.pumpAndSettle();
     expect(find.text('设置本月预算'), findsOneWidget);
-    await tester.enterText(find.byType(TextField).last, '2400');
-    await tester.tap(find.text('确认'));
+    // 月度预算默认回退为 800，数字键盘会带入该值；先清空再输入 2400。
+    await tester.tap(find.byKey(const Key('number_key_C')));
+    for (final key in <String>['2', '4', '00']) {
+      await tester.tap(find.byKey(Key('number_key_$key')));
+    }
+    await tester.tap(find.byKey(const Key('number_pad_ok')));
     await tester.pumpAndSettle();
 
     // 趋势卡片位于每日预算卡片之后，滚动到可见再断言
@@ -74,8 +78,10 @@ void main() {
     await tester.tap(find.text('餐饮'));
     await tester.pumpAndSettle();
     expect(find.text('设置餐饮预算'), findsOneWidget);
-    await tester.enterText(find.byType(TextField).last, '600');
-    await tester.tap(find.text('确认'));
+    for (final key in <String>['6', '00']) {
+      await tester.tap(find.byKey(Key('number_key_$key')));
+    }
+    await tester.tap(find.byKey(const Key('number_pad_ok')));
     await tester.pumpAndSettle();
     expect(find.text('600'), findsOneWidget);
 
