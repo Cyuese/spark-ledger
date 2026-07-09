@@ -150,229 +150,223 @@ class _TransactionsPageState extends State<TransactionsPage> {
     final income = sumByType(entries, EntryType.income);
     final groupedEntries = groupEntriesByDate(entries);
 
-    return Theme(
-      data: buildVeriFinTheme(Brightness.dark),
-      child: Scaffold(
-        bottomNavigationBar: _selectionMode
-            ? _BatchActionBar(
-                count: _selectedIds.length,
-                onSelectAll: () => setState(() {
-                  _selectedIds
-                    ..clear()
-                    ..addAll(entries.map((e) => e.id));
-                }),
-                onDelete: _selectedIds.isEmpty ? null : _batchDelete,
-                onChangeCategory: _selectedIds.isEmpty
+    return Scaffold(
+      bottomNavigationBar: _selectionMode
+          ? _BatchActionBar(
+              count: _selectedIds.length,
+              onSelectAll: () => setState(() {
+                _selectedIds
+                  ..clear()
+                  ..addAll(entries.map((e) => e.id));
+              }),
+              onDelete: _selectedIds.isEmpty ? null : _batchDelete,
+              onChangeCategory: _selectedIds.isEmpty
+                  ? null
+                  : () => _batchChangeCategory(controller),
+              onChangeAccount: _selectedIds.isEmpty
+                  ? null
+                  : () => _batchChangeAccount(controller),
+            )
+          : null,
+      body: SafeArea(
+        child: VeriPage(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
+            children: <Widget>[
+              VeriHeader(
+                title: _selectionMode
+                    ? AppLocalizations.of(
+                        context,
+                      ).selectedCount(_selectedIds.length)
+                    : (widget.title ??
+                          (_dateMode
+                              ? AppLocalizations.of(context).dayEntriesTitle
+                              : AppLocalizations.of(context).entriesListTitle)),
+                subtitle: _selectionMode
                     ? null
-                    : () => _batchChangeCategory(controller),
-                onChangeAccount: _selectedIds.isEmpty
-                    ? null
-                    : () => _batchChangeAccount(controller),
-              )
-            : null,
-        body: SafeArea(
-          child: VeriPage(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
-              children: <Widget>[
-                VeriHeader(
-                  title: _selectionMode
-                      ? AppLocalizations.of(
-                          context,
-                        ).selectedCount(_selectedIds.length)
-                      : (widget.title ??
-                            (_dateMode
-                                ? AppLocalizations.of(context).dayEntriesTitle
-                                : AppLocalizations.of(
-                                    context,
-                                  ).entriesListTitle)),
-                  subtitle: _selectionMode
-                      ? null
-                      : (_dateMode
-                            ? '${_visibleDate.month}.${_visibleDate.day}'
-                            : null),
-                  showBack: true,
-                  actions: <Widget>[
-                    if (_selectionMode)
-                      HeaderAction(
-                        icon: Icons.close,
-                        tooltip: AppLocalizations.of(context).exitMultiSelect,
-                        onPressed: () => setState(() {
-                          _selectionMode = false;
-                          _selectedIds.clear();
-                        }),
-                      )
-                    else if (entries.isNotEmpty)
-                      HeaderAction(
-                        icon: Icons.checklist,
-                        tooltip: AppLocalizations.of(context).multiSelect,
-                        onPressed: () => setState(() => _selectionMode = true),
-                      ),
+                    : (_dateMode
+                          ? '${_visibleDate.month}.${_visibleDate.day}'
+                          : null),
+                showBack: true,
+                actions: <Widget>[
+                  if (_selectionMode)
+                    HeaderAction(
+                      icon: Icons.close,
+                      tooltip: AppLocalizations.of(context).exitMultiSelect,
+                      onPressed: () => setState(() {
+                        _selectionMode = false;
+                        _selectedIds.clear();
+                      }),
+                    )
+                  else if (entries.isNotEmpty)
+                    HeaderAction(
+                      icon: Icons.checklist,
+                      tooltip: AppLocalizations.of(context).multiSelect,
+                      onPressed: () => setState(() => _selectionMode = true),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (_dateMode)
+                Row(
+                  children: <Widget>[
+                    _DateFilterBar(
+                      date: _visibleDate,
+                      onPrevious: () => setState(() {
+                        _visibleDate = _visibleDate.subtract(
+                          const Duration(days: 1),
+                        );
+                      }),
+                      onNext: () => setState(() {
+                        _visibleDate = _visibleDate.add(
+                          const Duration(days: 1),
+                        );
+                      }),
+                      onTap: _pickTimeFilter,
+                    ),
+                    const SizedBox(width: 10),
+                    FilterPill(
+                      label: _sortOrder.label(AppLocalizations.of(context)),
+                      onTap: _pickSortOrder,
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  children: <Widget>[
+                    _TransactionFilterBar(
+                      label: _periodLabel(),
+                      showNavigation: _timeFilter != TransactionTimeFilter.all,
+                      onPrevious: () => _movePeriod(-1),
+                      onNext: () => _movePeriod(1),
+                      onTap: _pickTimeFilter,
+                    ),
+                    const SizedBox(width: 10),
+                    FilterPill(
+                      label: _sortOrder.label(AppLocalizations.of(context)),
+                      onTap: _pickSortOrder,
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                if (_dateMode)
-                  Row(
-                    children: <Widget>[
-                      _DateFilterBar(
-                        date: _visibleDate,
-                        onPrevious: () => setState(() {
-                          _visibleDate = _visibleDate.subtract(
-                            const Duration(days: 1),
-                          );
-                        }),
-                        onNext: () => setState(() {
-                          _visibleDate = _visibleDate.add(
-                            const Duration(days: 1),
-                          );
-                        }),
-                        onTap: _pickTimeFilter,
-                      ),
-                      const SizedBox(width: 10),
-                      FilterPill(
-                        label: _sortOrder.label(AppLocalizations.of(context)),
-                        onTap: _pickSortOrder,
-                      ),
-                    ],
-                  )
-                else
-                  Row(
-                    children: <Widget>[
-                      _TransactionFilterBar(
-                        label: _periodLabel(),
-                        showNavigation:
-                            _timeFilter != TransactionTimeFilter.all,
-                        onPrevious: () => _movePeriod(-1),
-                        onNext: () => _movePeriod(1),
-                        onTap: _pickTimeFilter,
-                      ),
-                      const SizedBox(width: 10),
-                      FilterPill(
-                        label: _sortOrder.label(AppLocalizations.of(context)),
-                        onTap: _pickSortOrder,
-                      ),
-                    ],
-                  ),
-                const SizedBox(height: 10),
-                _TransactionSearchFilters(
-                  controller: _searchController,
-                  accountLabel: _accountFilterLabel(controller),
-                  categoryLabel: _categoryFilterLabel(controller),
-                  accountLocked: widget.accountId != null,
-                  onChanged: (value) => setState(() => _query = value.trim()),
-                  onPickAccount: widget.accountId == null
-                      ? () => _pickAccountFilter(controller)
-                      : null,
-                  onPickCategory: () => _pickCategoryFilter(controller),
-                  tagLabel: _tagFilterLabel(controller),
-                  tagSelected: _selectedTagId != null,
-                  onPickTag: controller.tags.isEmpty
-                      ? null
-                      : () => _pickTagFilter(controller),
-                  onClear: _hasSecondaryFilters
-                      ? () {
-                          setState(() {
-                            _searchController.clear();
-                            _query = '';
-                            if (widget.accountId == null) {
-                              _selectedAccountId = null;
-                            }
-                            _selectedCategoryId = null;
-                            _selectedTagId = null;
-                            _reimbursementFilter = ReimbursementFilter.all;
-                          });
-                        }
-                      : null,
-                  reimbursementLabel: _reimbursementFilterLabel(),
-                  reimbursementActive:
-                      _reimbursementFilter != ReimbursementFilter.all,
-                  onPickReimbursement: _pickReimbursementFilter,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  AppLocalizations.of(context).entriesCountFull(entries.length),
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.28),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                VeriCard(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 16,
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      SummaryMetric(
-                        label: AppLocalizations.of(context).entryTypeExpense,
-                        value: formatExpenseAmount(expense),
-                        color: isZeroAmount(expense)
-                            ? Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: 0.48)
-                            : veriExpense,
-                      ),
-                      SummaryMetric(
-                        label: AppLocalizations.of(context).entryTypeIncome,
-                        value: formatAmount(income),
-                        color: isZeroAmount(income)
-                            ? Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: 0.48)
-                            : veriIncome,
-                      ),
-                      SummaryMetric(
-                        label: AppLocalizations.of(context).netLabel,
-                        value: formatSignedAmount(income - expense),
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-                if (entries.isEmpty)
-                  VeriCard(
-                    child: EmptyState(
-                      icon: Icons.receipt_long_outlined,
-                      title: _hasSecondaryFilters
-                          ? AppLocalizations.of(context).noMatchTitle
-                          : AppLocalizations.of(context).noEntriesTitle,
-                      description: _hasSecondaryFilters
-                          ? AppLocalizations.of(context).noMatchDesc
-                          : AppLocalizations.of(context).emptyEntriesDesc,
-                    ),
-                  )
-                else
-                  for (final group in groupedEntries) ...<Widget>[
-                    DateGroupHeader(entries: group.entries, date: group.date),
-                    const SizedBox(height: 8),
-                    TransactionListCard(
-                      entries: group.entries,
-                      accounts: controller.accounts,
-                      categories: controller.categories,
-                      selectionMode: _selectionMode,
-                      selectedIds: _selectedIds,
-                      onEntryTap: (entry) {
-                        if (_selectionMode) {
-                          _toggleSelected(entry.id);
-                        } else {
-                          openEntryDetail(context, entry);
-                        }
-                      },
-                      onEntryLongPress: (entry) {
+              const SizedBox(height: 10),
+              _TransactionSearchFilters(
+                controller: _searchController,
+                accountLabel: _accountFilterLabel(controller),
+                categoryLabel: _categoryFilterLabel(controller),
+                accountLocked: widget.accountId != null,
+                onChanged: (value) => setState(() => _query = value.trim()),
+                onPickAccount: widget.accountId == null
+                    ? () => _pickAccountFilter(controller)
+                    : null,
+                onPickCategory: () => _pickCategoryFilter(controller),
+                tagLabel: _tagFilterLabel(controller),
+                tagSelected: _selectedTagId != null,
+                onPickTag: controller.tags.isEmpty
+                    ? null
+                    : () => _pickTagFilter(controller),
+                onClear: _hasSecondaryFilters
+                    ? () {
                         setState(() {
-                          _selectionMode = true;
-                          _selectedIds.add(entry.id);
+                          _searchController.clear();
+                          _query = '';
+                          if (widget.accountId == null) {
+                            _selectedAccountId = null;
+                          }
+                          _selectedCategoryId = null;
+                          _selectedTagId = null;
+                          _reimbursementFilter = ReimbursementFilter.all;
                         });
-                      },
+                      }
+                    : null,
+                reimbursementLabel: _reimbursementFilterLabel(),
+                reimbursementActive:
+                    _reimbursementFilter != ReimbursementFilter.all,
+                onPickReimbursement: _pickReimbursementFilter,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context).entriesCountFull(entries.length),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.28),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 12),
+              VeriCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 16,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    SummaryMetric(
+                      label: AppLocalizations.of(context).entryTypeExpense,
+                      value: formatExpenseAmount(expense),
+                      color: isZeroAmount(expense)
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.48)
+                          : veriExpense,
                     ),
-                    const SizedBox(height: 18),
+                    SummaryMetric(
+                      label: AppLocalizations.of(context).entryTypeIncome,
+                      value: formatAmount(income),
+                      color: isZeroAmount(income)
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.48)
+                          : veriIncome,
+                    ),
+                    SummaryMetric(
+                      label: AppLocalizations.of(context).netLabel,
+                      value: formatSignedAmount(income - expense),
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ],
-              ],
-            ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              if (entries.isEmpty)
+                VeriCard(
+                  child: EmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: _hasSecondaryFilters
+                        ? AppLocalizations.of(context).noMatchTitle
+                        : AppLocalizations.of(context).noEntriesTitle,
+                    description: _hasSecondaryFilters
+                        ? AppLocalizations.of(context).noMatchDesc
+                        : AppLocalizations.of(context).emptyEntriesDesc,
+                  ),
+                )
+              else
+                for (final group in groupedEntries) ...<Widget>[
+                  DateGroupHeader(entries: group.entries, date: group.date),
+                  const SizedBox(height: 8),
+                  TransactionListCard(
+                    entries: group.entries,
+                    accounts: controller.accounts,
+                    categories: controller.categories,
+                    selectionMode: _selectionMode,
+                    selectedIds: _selectedIds,
+                    onEntryTap: (entry) {
+                      if (_selectionMode) {
+                        _toggleSelected(entry.id);
+                      } else {
+                        openEntryDetail(context, entry);
+                      }
+                    },
+                    onEntryLongPress: (entry) {
+                      setState(() {
+                        _selectionMode = true;
+                        _selectedIds.add(entry.id);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 18),
+                ],
+            ],
           ),
         ),
       ),
@@ -1176,207 +1170,198 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       EntryType.transfer => formatAmount(_amount),
     };
 
-    return Theme(
-      data: buildVeriFinTheme(Brightness.dark),
-      child: Scaffold(
-        body: SafeArea(
-          child: VeriPage(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 26),
-              children: <Widget>[
-                VeriHeader(
-                  title: _type.label(AppLocalizations.of(context)),
-                  showBack: true,
-                  actions: <Widget>[
-                    HeaderAction(
-                      icon: Icons.delete_outline,
-                      tooltip: AppLocalizations.of(context).deleteEntryTooltip,
-                      destructive: true,
-                      onPressed: () => _confirmDeleteEntry(context, entry),
+    return Scaffold(
+      body: SafeArea(
+        child: VeriPage(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 26),
+            children: <Widget>[
+              VeriHeader(
+                title: _type.label(AppLocalizations.of(context)),
+                showBack: true,
+                actions: <Widget>[
+                  HeaderAction(
+                    icon: Icons.delete_outline,
+                    tooltip: AppLocalizations.of(context).deleteEntryTooltip,
+                    destructive: true,
+                    onPressed: () => _confirmDeleteEntry(context, entry),
+                  ),
+                  HeaderAction(
+                    icon: Icons.check,
+                    tooltip: AppLocalizations.of(context).saveEntryTooltip,
+                    onPressed: canSave ? _save : null,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              VeriCard(
+                onTap: _editAmount,
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            AppLocalizations.of(context).amountLabel,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.42),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            amountText,
+                            style: Theme.of(context).textTheme.displayLarge
+                                ?.copyWith(
+                                  color: amountColor,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
-                    HeaderAction(
-                      icon: Icons.check,
-                      tooltip: AppLocalizations.of(context).saveEntryTooltip,
-                      onPressed: canSave ? _save : null,
+                    VeriIconBox(
+                      icon: iconForCode(category.iconCode),
+                      color: amountColor,
+                      size: 38,
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                VeriCard(
-                  onTap: _editAmount,
-                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              const SizedBox(height: 10),
+              VeriCard(
+                child: Column(
+                  children: <Widget>[
+                    DetailInfoRow(
+                      label: AppLocalizations.of(context).commonType,
+                      value: _type.label(AppLocalizations.of(context)),
+                      onTap: _pickType,
+                    ),
+                    DetailInfoRow(
+                      label: AppLocalizations.of(context).commonCategory,
+                      value: category.label,
+                      onTap: _pickCategory,
+                    ),
+                    if (_type == EntryType.transfer) ...<Widget>[
+                      DetailInfoRow(
+                        label: AppLocalizations.of(context).transferOutAccount,
+                        value:
+                            '${account.name} (${formatAmount(controller.accountBalance(account))})',
+                        onTap: accounts.isEmpty
+                            ? null
+                            : () => _pickAccount(accounts),
+                      ),
+                      DetailInfoRow(
+                        label: AppLocalizations.of(context).transferInAccount,
+                        value: toAccount == null
+                            ? AppLocalizations.of(context).pleaseSelect
+                            : '${toAccount.name} (${formatAmount(controller.accountBalance(toAccount))})',
+                        placeholder: toAccount == null,
+                        onTap: accounts.length < 2
+                            ? null
+                            : () => _pickToAccount(accounts),
+                      ),
+                      DetailInfoRow(
+                        label: AppLocalizations.of(context).feeLabel,
+                        value: _fee > 0
+                            ? formatAmount(_fee)
+                            : AppLocalizations.of(context).commonNoneShort,
+                        placeholder: _fee <= 0,
+                        onTap: _editFee,
+                      ),
+                    ] else
+                      DetailInfoRow(
+                        label: AppLocalizations.of(context).accountLabel,
+                        value: accountFieldValue,
+                        placeholder: _noAccount,
+                        onTap: accounts.isEmpty && !_noAccount
+                            ? null
+                            : () => _pickAccount(accounts),
+                      ),
+                    DetailInfoRow(
+                      label: AppLocalizations.of(context).dateLabel,
+                      value:
+                          '${AppLocalizations.of(context).dateMonthDay(_occurredAt)}  ${relativeDay(AppLocalizations.of(context), _occurredAt)}',
+                      onTap: _pickDate,
+                    ),
+                    DetailInfoRow(
+                      label: AppLocalizations.of(context).timeLabel,
+                      value: formatTime(_occurredAt),
+                      onTap: _pickTime,
+                    ),
+                    DetailInfoRow(
+                      label: AppLocalizations.of(context).commonNote,
+                      value: _noteController.text.trim().isEmpty
+                          ? AppLocalizations.of(context).noteHint
+                          : _noteController.text.trim(),
+                      placeholder: _noteController.text.trim().isEmpty,
+                      onTap: _editNote,
+                    ),
+                    DetailInfoRow(
+                      label: AppLocalizations.of(context).tagLabel,
+                      value: _tagLabels(controller).isEmpty
+                          ? AppLocalizations.of(context).entryAddTags
+                          : _tagLabels(controller).join('、'),
+                      placeholder: _tagLabels(controller).isEmpty,
+                      onTap: _pickTags,
+                    ),
+                    if (_type == EntryType.expense) ...<Widget>[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
                           children: <Widget>[
-                            Text(
-                              AppLocalizations.of(context).amountLabel,
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.42),
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                            Expanded(
+                              child: Text(
+                                AppLocalizations.of(context).markReimbursable,
+                              ),
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              amountText,
-                              style: Theme.of(context).textTheme.displayLarge
-                                  ?.copyWith(
-                                    color: amountColor,
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                            Switch(
+                              value: _reimbursable,
+                              onChanged: (value) =>
+                                  setState(() => _reimbursable = value),
                             ),
                           ],
                         ),
                       ),
-                      VeriIconBox(
-                        icon: iconForCode(category.iconCode),
-                        color: amountColor,
-                        size: 38,
+                      DetailInfoRow(
+                        label: AppLocalizations.of(context).refundLabel,
+                        value: _refundedAmount > 0
+                            ? AppLocalizations.of(context).refundedAmountLabel(
+                                formatAmount(_refundedAmount),
+                              )
+                            : AppLocalizations.of(context).commonNoneShort,
+                        placeholder: _refundedAmount <= 0,
+                        onTap: _editRefund,
                       ),
                     ],
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                VeriCard(
-                  child: Column(
-                    children: <Widget>[
-                      DetailInfoRow(
-                        label: AppLocalizations.of(context).commonType,
-                        value: _type.label(AppLocalizations.of(context)),
-                        onTap: _pickType,
-                      ),
-                      DetailInfoRow(
-                        label: AppLocalizations.of(context).commonCategory,
-                        value: category.label,
-                        onTap: _pickCategory,
-                      ),
-                      if (_type == EntryType.transfer) ...<Widget>[
-                        DetailInfoRow(
-                          label: AppLocalizations.of(
-                            context,
-                          ).transferOutAccount,
-                          value:
-                              '${account.name} (${formatAmount(controller.accountBalance(account))})',
-                          onTap: accounts.isEmpty
-                              ? null
-                              : () => _pickAccount(accounts),
-                        ),
-                        DetailInfoRow(
-                          label: AppLocalizations.of(context).transferInAccount,
-                          value: toAccount == null
-                              ? AppLocalizations.of(context).pleaseSelect
-                              : '${toAccount.name} (${formatAmount(controller.accountBalance(toAccount))})',
-                          placeholder: toAccount == null,
-                          onTap: accounts.length < 2
-                              ? null
-                              : () => _pickToAccount(accounts),
-                        ),
-                        DetailInfoRow(
-                          label: AppLocalizations.of(context).feeLabel,
-                          value: _fee > 0
-                              ? formatAmount(_fee)
-                              : AppLocalizations.of(context).commonNoneShort,
-                          placeholder: _fee <= 0,
-                          onTap: _editFee,
-                        ),
-                      ] else
-                        DetailInfoRow(
-                          label: AppLocalizations.of(context).accountLabel,
-                          value: accountFieldValue,
-                          placeholder: _noAccount,
-                          onTap: accounts.isEmpty && !_noAccount
-                              ? null
-                              : () => _pickAccount(accounts),
-                        ),
-                      DetailInfoRow(
-                        label: AppLocalizations.of(context).dateLabel,
-                        value:
-                            '${AppLocalizations.of(context).dateMonthDay(_occurredAt)}  ${relativeDay(AppLocalizations.of(context), _occurredAt)}',
-                        onTap: _pickDate,
-                      ),
-                      DetailInfoRow(
-                        label: AppLocalizations.of(context).timeLabel,
-                        value: formatTime(_occurredAt),
-                        onTap: _pickTime,
-                      ),
-                      DetailInfoRow(
-                        label: AppLocalizations.of(context).commonNote,
-                        value: _noteController.text.trim().isEmpty
-                            ? AppLocalizations.of(context).noteHint
-                            : _noteController.text.trim(),
-                        placeholder: _noteController.text.trim().isEmpty,
-                        onTap: _editNote,
-                      ),
-                      DetailInfoRow(
-                        label: AppLocalizations.of(context).tagLabel,
-                        value: _tagLabels(controller).isEmpty
-                            ? AppLocalizations.of(context).entryAddTags
-                            : _tagLabels(controller).join('、'),
-                        placeholder: _tagLabels(controller).isEmpty,
-                        onTap: _pickTags,
-                      ),
-                      if (_type == EntryType.expense) ...<Widget>[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: Text(
-                                  AppLocalizations.of(context).markReimbursable,
-                                ),
-                              ),
-                              Switch(
-                                value: _reimbursable,
-                                onChanged: (value) =>
-                                    setState(() => _reimbursable = value),
-                              ),
-                            ],
-                          ),
-                        ),
-                        DetailInfoRow(
-                          label: AppLocalizations.of(context).refundLabel,
-                          value: _refundedAmount > 0
-                              ? AppLocalizations.of(
-                                  context,
-                                ).refundedAmountLabel(
-                                  formatAmount(_refundedAmount),
-                                )
-                              : AppLocalizations.of(context).commonNoneShort,
-                          placeholder: _refundedAmount <= 0,
-                          onTap: _editRefund,
-                        ),
-                      ],
-                    ],
-                  ),
+              ),
+              const SizedBox(height: 12),
+              VeriCard(
+                child: Builder(
+                  builder: (context) {
+                    final attachments = controller.attachmentsForEntry(
+                      widget.entryId,
+                    );
+                    return AttachmentsEditor(
+                      dataUrls: attachments
+                          .map((a) => a.dataUrl)
+                          .toList(growable: false),
+                      onAddDataUrl: (dataUrl) =>
+                          controller.addAttachment(widget.entryId, dataUrl),
+                      onRemoveIndex: (index) =>
+                          controller.removeAttachment(attachments[index].id),
+                    );
+                  },
                 ),
-                const SizedBox(height: 12),
-                VeriCard(
-                  child: Builder(
-                    builder: (context) {
-                      final attachments = controller.attachmentsForEntry(
-                        widget.entryId,
-                      );
-                      return AttachmentsEditor(
-                        dataUrls: attachments
-                            .map((a) => a.dataUrl)
-                            .toList(growable: false),
-                        onAddDataUrl: (dataUrl) =>
-                            controller.addAttachment(widget.entryId, dataUrl),
-                        onRemoveIndex: (index) =>
-                            controller.removeAttachment(attachments[index].id),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

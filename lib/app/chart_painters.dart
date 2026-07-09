@@ -198,7 +198,8 @@ class TrendLinePainter extends CustomPainter {
       hasXLabels: xLabels.isNotEmpty,
       hasYLabels: yLabels.isNotEmpty,
     );
-    final axisColor = labelColor ?? Colors.white.withValues(alpha: 0.45);
+    // 兜底用中性灰（在深浅背景上都可辨），避免调用方漏传 labelColor 时浅色下白轴看不见。
+    final axisColor = labelColor ?? Colors.grey.withValues(alpha: 0.45);
     final gridPaint = Paint()
       ..color = axisColor.withValues(alpha: 0.16)
       ..strokeWidth = 1;
@@ -357,7 +358,8 @@ class BarChartPainter extends CustomPainter {
       hasXLabels: xLabels.isNotEmpty,
       hasYLabels: yLabels.isNotEmpty,
     );
-    final axisColor = labelColor ?? Colors.white.withValues(alpha: 0.45);
+    // 兜底用中性灰（在深浅背景上都可辨），避免调用方漏传 labelColor 时浅色下白轴看不见。
+    final axisColor = labelColor ?? Colors.grey.withValues(alpha: 0.45);
     final axisPaint = Paint()
       ..color = axisColor.withValues(alpha: 0.18)
       ..strokeWidth = 1;
