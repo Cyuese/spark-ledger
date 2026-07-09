@@ -33,7 +33,5 @@
 - **单 Controller 过载**：`VeriFinController` 约 2600 行、~30 领域，待用 `part`/mixin 物理拆分；偏好类 KV 待中期剥为独立 notifier。
 - **超大页面文件**：`profile_pages` / `budget_pages` / `transactions_pages` / `data_management_page` 待按子页拆分。
 - **时间/ID 硬编码 `DateTime.now()`**：ID 依赖 `microsecondsSinceEpoch`，理论有碰撞窗口（`addAttachment` 已加序号缓解），待注入 `Clock` + 稳健 ID。
-- **CI 仅 tag 触发**：普通 push / PR 不跑 analyze+test，待加质量门禁。
-- **依赖滞后**：`local_auth` 栈落后一个大版本，待升级。
 
 整改进度不在本文件逐条勾选；以 git 历史与 `CHANGELOG.md` 为准。
