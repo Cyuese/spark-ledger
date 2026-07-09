@@ -599,6 +599,43 @@
   "moveCategoryTitle": "Move \"{name}\" to",
   "topCategory": "Top level",
   "cannotMoveHere": "Can't move the category here",
+  "mergeCategory": "Merge into another category",
+  "mergeCategoryPickTitle": "Merge \"{name}\" into",
+  "@mergeCategoryPickTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeCategoryConfirmTitle": "Merge category?",
+  "mergeCategoryConfirmMessage": "{count} transactions in \"{source}\" will be moved into \"{target}\", then \"{source}\" will be deleted. This can't be undone.",
+  "@mergeCategoryConfirmMessage": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeCategoryConfirmButton": "Merge",
+  "mergedCategoryResult": "Moved {count} transactions into \"{target}\"",
+  "@mergedCategoryResult": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeCategoryFailed": "Can't merge this category",
   "renameCategoryTitle": "Rename category",
   "pickIconTitle": "Choose icon",
   "systemCategoryUndeletable": "System categories can't be deleted",

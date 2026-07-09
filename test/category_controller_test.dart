@@ -141,6 +141,77 @@ void main() {
     expect(controller.categoryBudget(month, tempId), 0);
   });
 
+  LedgerEntry expenseEntry(
+    VeriFinController controller,
+    String id,
+    String categoryId,
+  ) {
+    return LedgerEntry(
+      id: id,
+      bookId: controller.activeBook.id,
+      type: EntryType.expense,
+      amount: 10,
+      categoryId: categoryId,
+      accountId: '',
+      note: '',
+      occurredAt: DateTime(2026, 7, 1),
+    );
+  }
+
+  test('mergeCategoryInto 把源分类交易并入目标并删除源分类', () async {
+    final controller = await makeController();
+    final diningId = idOfLabel(controller, '餐饮');
+    final shoppingId = idOfLabel(controller, '购物');
+    controller.addEntry(expenseEntry(controller, 'm1', shoppingId));
+    controller.addEntry(expenseEntry(controller, 'm2', shoppingId));
+    controller.addEntry(expenseEntry(controller, 'm3', diningId));
+
+    final moved = controller.mergeCategoryInto(shoppingId, diningId);
+    expect(moved, 2);
+    // 源分类被删除，其交易全部改指向目标。
+    expect(controller.categories.any((c) => c.id == shoppingId), isFalse);
+    expect(
+      controller.entries.where((e) => e.categoryId == diningId).length,
+      3,
+    );
+    expect(controller.entries.any((e) => e.categoryId == shoppingId), isFalse);
+  });
+
+  test('mergeCategoryInto 拦截：源有子分类 / 目标是源后代 / 自身', () async {
+    final controller = await makeController();
+    final diningId = idOfLabel(controller, '餐饮');
+    final shoppingId = idOfLabel(controller, '购物');
+    controller.addCategory(
+      type: EntryType.expense,
+      label: '咖啡',
+      iconCode: 'dining',
+      parentId: diningId,
+    );
+    final coffeeId = idOfLabel(controller, '咖啡');
+
+    // 源有子分类：不能合并。
+    expect(controller.mergeCategoryInto(diningId, shoppingId), -1);
+    // 目标是源的后代：不能合并。
+    expect(controller.mergeCategoryInto(diningId, coffeeId), -1);
+    // 合并到自身：不能。
+    expect(controller.mergeCategoryInto(shoppingId, shoppingId), -1);
+    // 分类均未被改动。
+    expect(controller.categories.any((c) => c.id == diningId), isTrue);
+    expect(controller.categories.any((c) => c.id == shoppingId), isTrue);
+  });
+
+  test('mergeCategoryInto 清理源分类的分类预算', () async {
+    final controller = await makeController();
+    final month = DateTime(2026, 7);
+    final diningId = idOfLabel(controller, '餐饮');
+    final shoppingId = idOfLabel(controller, '购物');
+    controller.setCategoryBudget(month, shoppingId, 300);
+    expect(controller.categoryBudget(month, shoppingId), 300);
+
+    expect(controller.mergeCategoryInto(shoppingId, diningId) >= 0, isTrue);
+    expect(controller.categoryBudget(month, shoppingId), 0);
+  });
+
   test('categoryTreeForType 前序展开携带深度', () async {
     final controller = await makeController();
     final diningId = idOfLabel(controller, '餐饮');

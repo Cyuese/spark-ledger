@@ -1908,6 +1908,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cannotMoveHere => 'Can\'t move the category here';
 
   @override
+  String get mergeCategory => 'Merge into another category';
+
+  @override
+  String mergeCategoryPickTitle(String name) {
+    return 'Merge \"$name\" into';
+  }
+
+  @override
+  String get mergeCategoryConfirmTitle => 'Merge category?';
+
+  @override
+  String mergeCategoryConfirmMessage(String source, int count, String target) {
+    return '$count transactions in \"$source\" will be moved into \"$target\", then \"$source\" will be deleted. This can\'t be undone.';
+  }
+
+  @override
+  String get mergeCategoryConfirmButton => 'Merge';
+
+  @override
+  String mergedCategoryResult(int count, String target) {
+    return 'Moved $count transactions into \"$target\"';
+  }
+
+  @override
+  String get mergeCategoryFailed => 'Can\'t merge this category';
+
+  @override
   String get renameCategoryTitle => 'Rename category';
 
   @override

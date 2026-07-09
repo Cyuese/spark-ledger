@@ -3488,6 +3488,48 @@ abstract class AppLocalizations {
   /// **'该分类无法移动到此处'**
   String get cannotMoveHere;
 
+  /// No description provided for @mergeCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'合并到其他分类'**
+  String get mergeCategory;
+
+  /// No description provided for @mergeCategoryPickTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'把「{name}」合并到'**
+  String mergeCategoryPickTitle(String name);
+
+  /// No description provided for @mergeCategoryConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'合并分类？'**
+  String get mergeCategoryConfirmTitle;
+
+  /// No description provided for @mergeCategoryConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'「{source}」的 {count} 笔交易将并入「{target}」，合并后「{source}」会被删除，且不可撤销。'**
+  String mergeCategoryConfirmMessage(String source, int count, String target);
+
+  /// No description provided for @mergeCategoryConfirmButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'合并'**
+  String get mergeCategoryConfirmButton;
+
+  /// No description provided for @mergedCategoryResult.
+  ///
+  /// In zh, this message translates to:
+  /// **'已把 {count} 笔交易并入「{target}」'**
+  String mergedCategoryResult(int count, String target);
+
+  /// No description provided for @mergeCategoryFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法合并该分类'**
+  String get mergeCategoryFailed;
+
   /// No description provided for @renameCategoryTitle.
   ///
   /// In zh, this message translates to:

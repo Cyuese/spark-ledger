@@ -733,6 +733,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
         'icon',
         'add_sub',
         if (!protected) 'move',
+        if (!protected) 'merge',
         if (!protected) 'delete',
       ],
       selected: 'rename',
@@ -742,6 +743,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
         'icon' => AppLocalizations.of(context).changeIcon,
         'add_sub' => AppLocalizations.of(context).addSubCategory,
         'move' => AppLocalizations.of(context).moveTo,
+        'merge' => AppLocalizations.of(context).mergeCategory,
         'delete' => AppLocalizations.of(context).deleteCategory,
         _ => value,
       },
@@ -758,9 +760,82 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
         await _createCategory(parent: category);
       case 'move':
         await _moveCategory(category);
+      case 'merge':
+        await _mergeCategory(category);
       case 'delete':
         await _deleteCategory(category);
     }
+  }
+
+  /// 把该分类的全部交易并入另一个同类型分类，随后删除该分类（统一同义分类）。
+  Future<void> _mergeCategory(Category category) async {
+    final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    // 有子分类无法整体合并，先引导处理子分类。
+    if (controller.childCategories(category.id).isNotEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.moveSubFirst)));
+      return;
+    }
+    final candidates = controller
+        .categoriesForType(category.type)
+        .where((c) => c.id != category.id)
+        .toList();
+    if (candidates.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.noMoveTarget)));
+      return;
+    }
+    final targetId = await showOptionSheet<String>(
+      context: context,
+      title: l10n.mergeCategoryPickTitle(category.label),
+      values: candidates.map((c) => c.id).toList(),
+      selected: candidates.first.id,
+      showSelectedMarker: false,
+      labelOf: (value) => controller.categoryPathLabel(value),
+    );
+    if (!mounted || targetId == null) {
+      return;
+    }
+    final targetLabel = controller.categoryById(targetId).label;
+    final count = controller.categoryUsageCount(category.id);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.mergeCategoryConfirmTitle),
+        content: Text(
+          l10n.mergeCategoryConfirmMessage(category.label, count, targetLabel),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.mergeCategoryConfirmButton),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) {
+      return;
+    }
+    final changed = controller.mergeCategoryInto(category.id, targetId);
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          changed < 0
+              ? l10n.mergeCategoryFailed
+              : l10n.mergedCategoryResult(changed, targetLabel),
+        ),
+      ),
+    );
   }
 
   Future<void> _moveCategory(Category category) async {

@@ -1587,6 +1587,54 @@ class VeriFinController extends ChangeNotifier {
     return _entries.where((entry) => entry.categoryId == categoryId).length;
   }
 
+  /// 把 [sourceId] 分类合并到 [targetId]：其全部交易与周期规则改指向 [targetId]，
+  /// 随后删除 [sourceId]（连同其分类预算）。用于统一同义分类（如「交通出行」并入「交通」）。
+  ///
+  /// 返回被改动的交易笔数；无法合并时返回 -1（源受保护 / 源或目标不存在 / 类型不一致 /
+  /// 源与目标相同 / 源仍有子分类 / 目标是源的后代）。源有子分类时应先移动或删除子分类。
+  int mergeCategoryInto(String sourceId, String targetId) {
+    if (sourceId == targetId || _isProtectedCategory(sourceId)) {
+      return -1;
+    }
+    final source = _categories.where((c) => c.id == sourceId).firstOrNull;
+    final target = _categories.where((c) => c.id == targetId).firstOrNull;
+    if (source == null || target == null || source.type != target.type) {
+      return -1;
+    }
+    // 源有子分类无法整体合并（会孤立子树）；目标是源的后代同理不允许。
+    if (hasChildren(_categories, sourceId) ||
+        isDescendantOf(_categories, targetId, sourceId)) {
+      return -1;
+    }
+    var changed = 0;
+    for (var i = 0; i < _entries.length; i++) {
+      if (_entries[i].categoryId == sourceId) {
+        _entries[i] = _entries[i].copyWith(categoryId: targetId);
+        changed += 1;
+      }
+    }
+    var rulesChanged = false;
+    for (var i = 0; i < _recurringRules.length; i++) {
+      if (_recurringRules[i].categoryId == sourceId) {
+        _recurringRules[i] = _recurringRules[i].copyWith(categoryId: targetId);
+        rulesChanged = true;
+      }
+    }
+    _categories.removeWhere((c) => c.id == sourceId);
+    // 清理源分类的分类预算，避免残留孤儿键。
+    _categoryBudgets.removeWhere((key, _) => key.endsWith(':$sourceId'));
+    if (changed > 0) {
+      _persistEntries();
+    }
+    if (rulesChanged) {
+      _persistRecurringRules();
+    }
+    _persistCategories();
+    _persistCategoryBudgets();
+    notifyListeners();
+    return changed;
+  }
+
   // ---- 标签 ----
 
   /// 新增标签。名称去重（忽略首尾空白，区分大小写），已存在则返回其 id。

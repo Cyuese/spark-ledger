@@ -1237,6 +1237,43 @@
   },
   "topCategory": "顶级分类",
   "cannotMoveHere": "该分类无法移动到此处",
+  "mergeCategory": "合并到其他分类",
+  "mergeCategoryPickTitle": "把「{name}」合并到",
+  "@mergeCategoryPickTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeCategoryConfirmTitle": "合并分类？",
+  "mergeCategoryConfirmMessage": "「{source}」的 {count} 笔交易将并入「{target}」，合并后「{source}」会被删除，且不可撤销。",
+  "@mergeCategoryConfirmMessage": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeCategoryConfirmButton": "合并",
+  "mergedCategoryResult": "已把 {count} 笔交易并入「{target}」",
+  "@mergedCategoryResult": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeCategoryFailed": "无法合并该分类",
   "renameCategoryTitle": "重命名分类",
   "pickIconTitle": "选择图标",
   "systemCategoryUndeletable": "系统分类不能删除",

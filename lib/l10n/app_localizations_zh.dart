@@ -1875,6 +1875,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cannotMoveHere => '该分类无法移动到此处';
 
   @override
+  String get mergeCategory => '合并到其他分类';
+
+  @override
+  String mergeCategoryPickTitle(String name) {
+    return '把「$name」合并到';
+  }
+
+  @override
+  String get mergeCategoryConfirmTitle => '合并分类？';
+
+  @override
+  String mergeCategoryConfirmMessage(String source, int count, String target) {
+    return '「$source」的 $count 笔交易将并入「$target」，合并后「$source」会被删除，且不可撤销。';
+  }
+
+  @override
+  String get mergeCategoryConfirmButton => '合并';
+
+  @override
+  String mergedCategoryResult(int count, String target) {
+    return '已把 $count 笔交易并入「$target」';
+  }
+
+  @override
+  String get mergeCategoryFailed => '无法合并该分类';
+
+  @override
   String get renameCategoryTitle => '重命名分类';
 
   @override
