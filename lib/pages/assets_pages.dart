@@ -855,8 +855,9 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
                               child: VeriCard(
                                 child: Row(
                                   children: <Widget>[
-                                    VeriIconBox(
-                                      icon: iconForCode(group.iconCode),
+                                    AccountIconBox(
+                                      iconCode: group.iconCode,
+                                      size: 30,
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
@@ -977,38 +978,12 @@ class _AccountGroupsPageState extends State<AccountGroupsPage> {
     final editingGroup = groupId == null
         ? null
         : controller.accountGroups.firstWhere((group) => group.id == groupId);
-    final textController = TextEditingController(
-      text: editingGroup?.name ?? '',
-    );
-    final name = await showDialog<String>(
+    final l10n = AppLocalizations.of(context);
+    final name = await showTextInputDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          groupId == null
-              ? AppLocalizations.of(context).groupAdd
-              : AppLocalizations.of(context).groupRenameTitle,
-        ),
-        content: TextField(
-          controller: textController,
-          autofocus: true,
-          decoration: InputDecoration(
-            labelText: AppLocalizations.of(context).groupNameLabel,
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(textController.text),
-            child: Text(AppLocalizations.of(context).commonConfirm),
-          ),
-        ],
-      ),
-    );
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => textController.dispose(),
+      title: groupId == null ? l10n.groupAdd : l10n.groupRenameTitle,
+      label: l10n.groupNameLabel,
+      initialValue: editingGroup?.name ?? '',
     );
     if (!context.mounted || name == null) {
       return;
@@ -1048,50 +1023,6 @@ class AddAccountPage extends StatefulWidget {
 
   @override
   State<AddAccountPage> createState() => _AddAccountPageState();
-}
-
-class _AccountIconSelectField extends StatelessWidget {
-  const _AccountIconSelectField({
-    super.key,
-    required this.iconCode,
-    required this.onTap,
-  });
-
-  final String iconCode;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(veriRadiusMd),
-        onTap: onTap,
-        child: InputDecorator(
-          decoration: InputDecoration(
-            labelText: AppLocalizations.of(context).accountIconLabel,
-            suffixIcon: Icon(Icons.keyboard_arrow_down),
-          ),
-          child: Row(
-            children: <Widget>[
-              AccountIconBox(iconCode: iconCode, size: 28),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  iconLabelForCode(AppLocalizations.of(context), iconCode),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _AddAccountPageState extends State<AddAccountPage> {
@@ -1200,9 +1131,14 @@ class _AddAccountPageState extends State<AddAccountPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                _AccountIconSelectField(
+                SelectField(
                   key: const Key('account_icon_select_field'),
-                  iconCode: _iconCode,
+                  label: AppLocalizations.of(context).accountIconLabel,
+                  value: iconLabelForCode(
+                    AppLocalizations.of(context),
+                    _iconCode,
+                  ),
+                  leading: AccountIconBox(iconCode: _iconCode, size: 28),
                   onTap: _pickAccountIcon,
                 ),
                 const SizedBox(height: 10),
