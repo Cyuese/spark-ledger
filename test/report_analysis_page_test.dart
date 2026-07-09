@@ -90,4 +90,64 @@ void main() {
     expect(find.textContaining('${now.year}年'), findsWidgets);
     expect(find.text('同比 · 环比'), findsNothing);
   });
+
+  testWidgets('统计分析页可切换分类/子分类/标签维度并下钻', (WidgetTester tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    // 在「餐饮」下建子分类「午餐」。
+    controller.addCategory(
+      type: EntryType.expense,
+      label: '午餐',
+      iconCode: 'dining',
+      parentId: 'dining',
+    );
+    final lunchId = controller.categories
+        .firstWhere((c) => c.label == '午餐')
+        .id;
+    final tagId = controller.addTag('工作')!;
+    controller
+      ..addEntry(
+        LedgerEntry(
+          id: 'sub-1',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 60,
+          categoryId: lunchId,
+          accountId: '',
+          note: '',
+          occurredAt: now,
+          tagIds: <String>[tagId],
+        ),
+      )
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('统计分析'));
+    await tester.pumpAndSettle();
+
+    final scrollable = find.byType(Scrollable).first;
+    // 切到「子分类」维度 → 出现「午餐」。
+    await tester.scrollUntilVisible(find.text('子分类'), 250, scrollable: scrollable);
+    await tester.tap(find.text('子分类'));
+    await tester.pumpAndSettle();
+    expect(find.text('午餐'), findsWidgets);
+
+    // 切到「标签」维度 → 出现标签「工作」与排行标题。
+    await tester.tap(find.text('标签'));
+    await tester.pumpAndSettle();
+    expect(find.text('标签排行'), findsOneWidget);
+    expect(find.text('工作'), findsWidgets);
+
+    // 回「分类」维度，点「餐饮」行下钻 → 弹层出现「午餐」。
+    await tester.tap(find.text('分类').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('餐饮'), 250, scrollable: scrollable);
+    await tester.tap(find.text('餐饮').last);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('的子分类'), findsOneWidget);
+    expect(find.text('午餐'), findsWidgets);
+  });
 }

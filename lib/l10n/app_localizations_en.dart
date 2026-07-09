@@ -1579,6 +1579,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryRank => 'Category ranking';
 
   @override
+  String get rankGroupCategory => 'Category';
+
+  @override
+  String get rankGroupSubCategory => 'Subcategory';
+
+  @override
+  String get rankGroupTag => 'Tag';
+
+  @override
+  String get tagRank => 'Tag ranking';
+
+  @override
+  String get tagRankOverlapNote =>
+      'An entry can carry multiple tags, so the percentages may add up to more than 100%';
+
+  @override
+  String subCategoryOf(String name) {
+    return 'Subcategories of \"$name\"';
+  }
+
+  @override
   String noDimData(String dim) {
     return 'No $dim data';
   }

@@ -136,6 +136,149 @@ void main() {
     expect(incomeStats.first.percent, closeTo(1.0, 1e-9));
   });
 
+  group('子分类统计', () {
+    // 餐饮(顶级) → 午餐 / 晚餐(子分类)，加一个 transport 顶级。
+    const treeCategories = <Category>[
+      Category(
+        id: 'dining',
+        label: '餐饮',
+        type: EntryType.expense,
+        iconCode: 'dining',
+      ),
+      Category(
+        id: 'lunch',
+        label: '午餐',
+        type: EntryType.expense,
+        iconCode: 'dining',
+        parentId: 'dining',
+      ),
+      Category(
+        id: 'dinner',
+        label: '晚餐',
+        type: EntryType.expense,
+        iconCode: 'dining',
+        parentId: 'dining',
+      ),
+      Category(
+        id: 'transport',
+        label: '交通',
+        type: EntryType.expense,
+        iconCode: 'transport',
+      ),
+    ];
+    final treeEntries = <LedgerEntry>[
+      entry(
+        id: 'l1',
+        type: EntryType.expense,
+        amount: 30,
+        categoryId: 'lunch',
+        occurredAt: DateTime(2026, 5, 1),
+      ),
+      entry(
+        id: 'd1',
+        type: EntryType.expense,
+        amount: 50,
+        categoryId: 'dinner',
+        occurredAt: DateTime(2026, 5, 2),
+      ),
+      entry(
+        id: 'p1',
+        type: EntryType.expense,
+        amount: 20,
+        categoryId: 'dining',
+        occurredAt: DateTime(2026, 5, 3),
+      ),
+      entry(
+        id: 't1',
+        type: EntryType.expense,
+        amount: 100,
+        categoryId: 'transport',
+        occurredAt: DateTime(2026, 5, 4),
+      ),
+    ];
+
+    test('reportCategoryStats 顶级：餐饮汇总子分类，共 100', () {
+      final stats = reportCategoryStats(
+        treeEntries,
+        treeCategories,
+        EntryType.expense,
+      );
+      final dining = stats.firstWhere((s) => s.category.id == 'dining');
+      expect(dining.amount, 100); // 30 + 50 + 20
+      expect(dining.count, 3);
+    });
+
+    test('reportCategoryStatsByOwn 子分类：午餐/晚餐/餐饮各成一行', () {
+      final stats = reportCategoryStatsByOwn(
+        treeEntries,
+        treeCategories,
+        EntryType.expense,
+      );
+      final ids = stats.map((s) => s.category.id).toSet();
+      expect(
+        ids,
+        containsAll(<String>['lunch', 'dinner', 'dining', 'transport']),
+      );
+      expect(stats.firstWhere((s) => s.category.id == 'lunch').amount, 30);
+    });
+
+    test('reportCategoryChildStats 下钻：只含餐饮下的拆分（含直接记在餐饮的）', () {
+      final children = reportCategoryChildStats(
+        treeEntries,
+        treeCategories,
+        'dining',
+        EntryType.expense,
+      );
+      final ids = children.map((s) => s.category.id).toSet();
+      expect(ids, <String>{'lunch', 'dinner', 'dining'});
+      expect(ids.contains('transport'), isFalse);
+      // 晚餐占餐饮合计 50/100。
+      expect(
+        children.firstWhere((s) => s.category.id == 'dinner').percent,
+        closeTo(0.5, 1e-9),
+      );
+    });
+  });
+
+  group('标签统计', () {
+    LedgerEntry tagged(String id, double amount, List<String> tagIds) {
+      return LedgerEntry(
+        id: id,
+        bookId: 'default',
+        type: EntryType.expense,
+        amount: amount,
+        categoryId: 'dining',
+        accountId: 'cash',
+        note: '',
+        occurredAt: DateTime(2026, 5, 1),
+        tagIds: tagIds,
+      );
+    }
+
+    const tags = <Tag>[
+      Tag(id: 'work', label: '工作'),
+      Tag(id: 'food', label: '吃饭'),
+    ];
+
+    test('每笔计入其每个标签，占比相对维度总额（可重叠）', () {
+      final entries = <LedgerEntry>[
+        tagged('a', 100, <String>['work', 'food']),
+        tagged('b', 100, <String>['work']),
+        tagged('c', 100, <String>[]),
+      ];
+      final stats = reportTagStats(entries, tags, EntryType.expense);
+      final work = stats.firstWhere((s) => s.tag.id == 'work');
+      final food = stats.firstWhere((s) => s.tag.id == 'food');
+      expect(work.amount, 200); // a + b
+      expect(work.count, 2);
+      // 维度总额 = 300（含无标签的 c）；work 占比 200/300。
+      expect(work.percent, closeTo(200 / 300, 1e-9));
+      expect(food.amount, 100);
+      // 降序：work 在前。
+      expect(stats.first.tag.id, 'work');
+    });
+  });
+
   group('reportMonthlyComparison & changeRatio', () {
     test('changeRatio uses base magnitude and guards zero base', () {
       expect(changeRatio(120, 100), closeTo(0.2, 1e-9));

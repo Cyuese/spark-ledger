@@ -234,6 +234,117 @@ List<ReportCategoryStat> reportCategoryStats(
   return stats;
 }
 
+/// 按交易**自身分类**（叶子/记账时所选分类，不上卷到顶级）聚合金额，降序返回。
+/// 用于分类统计的「子分类」视图。[type] 只支持支出 / 收入。
+List<ReportCategoryStat> reportCategoryStatsByOwn(
+  Iterable<LedgerEntry> entries,
+  List<Category> categories,
+  EntryType type,
+) {
+  final totals = <String, double>{};
+  final counts = <String, int>{};
+  for (final entry in entries) {
+    if (entry.type != type) {
+      continue;
+    }
+    totals.update(
+      entry.categoryId,
+      (value) => value + entry.netAmount,
+      ifAbsent: () => entry.netAmount,
+    );
+    counts.update(entry.categoryId, (value) => value + 1, ifAbsent: () => 1);
+  }
+  final total = totals.values.fold<double>(0, (sum, value) => sum + value);
+  final stats =
+      totals.entries
+          .map(
+            (entry) => ReportCategoryStat(
+              category: categoryByIdFrom(categories, entry.key),
+              amount: entry.value,
+              percent: total <= 0 ? 0 : entry.value / total,
+              count: counts[entry.key] ?? 0,
+            ),
+          )
+          .toList()
+        ..sort((a, b) => b.amount.compareTo(a.amount));
+  return stats;
+}
+
+/// 某顶级分类 [rootId] 的下钻拆分：只取归属该顶级分类的交易，按其自身分类聚合
+/// （子分类各成一行；直接记在顶级分类上的归为「顶级分类」自己那行）。占比相对该
+/// 顶级分类的合计。[type] 只支持支出 / 收入。
+List<ReportCategoryStat> reportCategoryChildStats(
+  Iterable<LedgerEntry> entries,
+  List<Category> categories,
+  String rootId,
+  EntryType type,
+) {
+  final scoped = entries.where(
+    (entry) =>
+        entry.type == type && rootIdOf(categories, entry.categoryId) == rootId,
+  );
+  return reportCategoryStatsByOwn(scoped, categories, type);
+}
+
+/// 某维度（支出 / 收入）下按标签聚合。每笔交易计入其携带的**每个**标签，故各标签
+/// 金额之和可能超过该维度总额；[percent] 为该标签金额占该维度总额的比例。
+@immutable
+class ReportTagStat {
+  const ReportTagStat({
+    required this.tag,
+    required this.amount,
+    required this.percent,
+    required this.count,
+  });
+
+  final Tag tag;
+  final double amount;
+  final double percent;
+  final int count;
+}
+
+/// 按标签聚合指定类型（支出 / 收入）的交易金额（净额），降序返回。
+List<ReportTagStat> reportTagStats(
+  Iterable<LedgerEntry> entries,
+  List<Tag> tags,
+  EntryType type,
+) {
+  final tagById = <String, Tag>{for (final tag in tags) tag.id: tag};
+  final totals = <String, double>{};
+  final counts = <String, int>{};
+  var dimensionTotal = 0.0;
+  for (final entry in entries) {
+    if (entry.type != type) {
+      continue;
+    }
+    dimensionTotal += entry.netAmount;
+    for (final tagId in entry.tagIds) {
+      if (!tagById.containsKey(tagId)) {
+        continue;
+      }
+      totals.update(
+        tagId,
+        (value) => value + entry.netAmount,
+        ifAbsent: () => entry.netAmount,
+      );
+      counts.update(tagId, (value) => value + 1, ifAbsent: () => 1);
+    }
+  }
+  final stats =
+      totals.entries
+          .map(
+            (entry) => ReportTagStat(
+              tag: tagById[entry.key]!,
+              amount: entry.value,
+              percent: dimensionTotal <= 0 ? 0 : entry.value / dimensionTotal,
+              count: counts[entry.key] ?? 0,
+            ),
+          )
+          .toList()
+        ..sort((a, b) => b.amount.compareTo(a.amount));
+  return stats;
+}
+
 /// 趋势颗粒度：短范围按天，长范围（跨多月/整年）按月。
 enum ReportTrendGranularity { daily, monthly }
 

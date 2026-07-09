@@ -2912,6 +2912,42 @@ abstract class AppLocalizations {
   /// **'分类排行'**
   String get categoryRank;
 
+  /// No description provided for @rankGroupCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类'**
+  String get rankGroupCategory;
+
+  /// No description provided for @rankGroupSubCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'子分类'**
+  String get rankGroupSubCategory;
+
+  /// No description provided for @rankGroupTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'标签'**
+  String get rankGroupTag;
+
+  /// No description provided for @tagRank.
+  ///
+  /// In zh, this message translates to:
+  /// **'标签排行'**
+  String get tagRank;
+
+  /// No description provided for @tagRankOverlapNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'同一笔可带多个标签，各标签占比之和可能超过 100%'**
+  String get tagRankOverlapNote;
+
+  /// No description provided for @subCategoryOf.
+  ///
+  /// In zh, this message translates to:
+  /// **'「{name}」的子分类'**
+  String subCategoryOf(String name);
+
   /// No description provided for @noDimData.
   ///
   /// In zh, this message translates to:

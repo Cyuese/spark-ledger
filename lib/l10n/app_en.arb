@@ -503,6 +503,19 @@
   "yoyLabel": "YoY",
   "monthlyTrendTitle": "Monthly trend",
   "categoryRank": "Category ranking",
+  "rankGroupCategory": "Category",
+  "rankGroupSubCategory": "Subcategory",
+  "rankGroupTag": "Tag",
+  "tagRank": "Tag ranking",
+  "tagRankOverlapNote": "An entry can carry multiple tags, so the percentages may add up to more than 100%",
+  "subCategoryOf": "Subcategories of \"{name}\"",
+  "@subCategoryOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "noDimData": "No {dim} data",
   "noDimDesc": "No {dim} records in this time range.",
   "reportsSubtitle": "Dashboard",

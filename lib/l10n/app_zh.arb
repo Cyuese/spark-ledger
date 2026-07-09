@@ -1036,6 +1036,19 @@
   "yoyLabel": "同比",
   "monthlyTrendTitle": "月度趋势",
   "categoryRank": "分类排行",
+  "rankGroupCategory": "分类",
+  "rankGroupSubCategory": "子分类",
+  "rankGroupTag": "标签",
+  "tagRank": "标签排行",
+  "tagRankOverlapNote": "同一笔可带多个标签，各标签占比之和可能超过 100%",
+  "subCategoryOf": "「{name}」的子分类",
+  "@subCategoryOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "noDimData": "暂无{dim}数据",
   "@noDimData": {
     "placeholders": {

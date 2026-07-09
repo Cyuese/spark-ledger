@@ -1551,6 +1551,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryRank => '分类排行';
 
   @override
+  String get rankGroupCategory => '分类';
+
+  @override
+  String get rankGroupSubCategory => '子分类';
+
+  @override
+  String get rankGroupTag => '标签';
+
+  @override
+  String get tagRank => '标签排行';
+
+  @override
+  String get tagRankOverlapNote => '同一笔可带多个标签，各标签占比之和可能超过 100%';
+
+  @override
+  String subCategoryOf(String name) {
+    return '「$name」的子分类';
+  }
+
+  @override
   String noDimData(String dim) {
     return '暂无$dim数据';
   }

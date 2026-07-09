@@ -10,8 +10,11 @@ import '../app/series_math.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
 
+/// 排行分组维度：顶级分类 / 子分类（按记账所选分类）/ 标签。
+enum _ReportGrouping { topCategory, subCategory, tag }
+
 /// 统计分析页：支持本月 / 本年 / 自定义时间范围，支出与收入两个维度，
-/// 展示收支汇总、趋势曲线与分类排行。（阶段 4.1）
+/// 展示收支汇总、趋势曲线与分类 / 子分类 / 标签排行。（阶段 4.1）
 class ReportAnalysisPage extends StatefulWidget {
   const ReportAnalysisPage({super.key});
 
@@ -22,6 +25,7 @@ class ReportAnalysisPage extends StatefulWidget {
 class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
   late ReportRange _range = ReportRange.month(DateTime.now());
   EntryType _dimension = EntryType.expense;
+  _ReportGrouping _grouping = _ReportGrouping.topCategory;
 
   Future<void> _pickCustomRange() async {
     final now = DateTime.now();
@@ -48,13 +52,13 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
     final entries = entriesInWindow(controller.entries, _range.window);
+    final categories = controller.categories;
     final summary = reportSummary(entries);
     final trend = reportTrend(entries, _range, _dimension);
-    final stats = reportCategoryStats(
-      entries,
-      controller.categories,
-      _dimension,
-    );
+    final categoryStats = _grouping == _ReportGrouping.subCategory
+        ? reportCategoryStatsByOwn(entries, categories, _dimension)
+        : reportCategoryStats(entries, categories, _dimension);
+    final tagStats = reportTagStats(entries, controller.tags, _dimension);
     final dimensionColor = _dimension == EntryType.expense
         ? veriExpense
         : veriIncome;
@@ -107,15 +111,114 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
                 dimension: _dimension,
               ),
               const SizedBox(height: 10),
-              _CategoryRankCard(
-                stats: stats,
-                color: dimensionColor,
-                dimension: _dimension,
+              _GroupingSelector(
+                grouping: _grouping,
+                onChanged: (value) => setState(() => _grouping = value),
               ),
+              const SizedBox(height: 10),
+              if (_grouping == _ReportGrouping.tag)
+                _TagRankCard(
+                  stats: tagStats,
+                  color: dimensionColor,
+                  dimension: _dimension,
+                )
+              else
+                _CategoryRankCard(
+                  stats: categoryStats,
+                  color: dimensionColor,
+                  dimension: _dimension,
+                  // 仅顶级分类模式下可点行下钻看子分类拆分。
+                  onTapCategory: _grouping == _ReportGrouping.topCategory
+                      ? (stat) => _showCategoryDrill(
+                          context,
+                          entries,
+                          categories,
+                          stat,
+                        )
+                      : null,
+                ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// 顶级分类下钻：底部弹层展示该分类下按子分类（记账所选分类）的拆分。
+  Future<void> _showCategoryDrill(
+    BuildContext context,
+    List<LedgerEntry> entries,
+    List<Category> categories,
+    ReportCategoryStat stat,
+  ) {
+    final children = reportCategoryChildStats(
+      entries,
+      categories,
+      stat.category.id,
+      _dimension,
+    );
+    final color = _dimension == EntryType.expense ? veriExpense : veriIncome;
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
+      ),
+      builder: (context) {
+        final maxHeight = MediaQuery.sizeOf(context).height * 0.72;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      CategoryIconBox(
+                        iconCode: stat.category.iconCode,
+                        color: color,
+                        size: 30,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).subCategoryOf(stat.category.label),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      Text(
+                        formatAmount(stat.amount),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: color,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: <Widget>[
+                        for (final child in children)
+                          _CategoryRankTile(stat: child, color: color),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -644,16 +747,52 @@ class _TrendCard extends StatelessWidget {
   }
 }
 
+/// 排行分组维度选择器（分类 / 子分类 / 标签）。
+class _GroupingSelector extends StatelessWidget {
+  const _GroupingSelector({required this.grouping, required this.onChanged});
+
+  final _ReportGrouping grouping;
+  final ValueChanged<_ReportGrouping> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SegmentedButton<_ReportGrouping>(
+      showSelectedIcon: false,
+      segments: <ButtonSegment<_ReportGrouping>>[
+        ButtonSegment<_ReportGrouping>(
+          value: _ReportGrouping.topCategory,
+          label: Text(l10n.rankGroupCategory),
+        ),
+        ButtonSegment<_ReportGrouping>(
+          value: _ReportGrouping.subCategory,
+          label: Text(l10n.rankGroupSubCategory),
+        ),
+        ButtonSegment<_ReportGrouping>(
+          value: _ReportGrouping.tag,
+          label: Text(l10n.rankGroupTag),
+        ),
+      ],
+      selected: <_ReportGrouping>{grouping},
+      onSelectionChanged: (selection) => onChanged(selection.first),
+    );
+  }
+}
+
 class _CategoryRankCard extends StatelessWidget {
   const _CategoryRankCard({
     required this.stats,
     required this.color,
     required this.dimension,
+    this.onTapCategory,
   });
 
   final List<ReportCategoryStat> stats;
   final Color color;
   final EntryType dimension;
+
+  /// 可点行下钻（仅顶级分类模式传入）；为空则行不可点。
+  final ValueChanged<ReportCategoryStat>? onTapCategory;
 
   @override
   Widget build(BuildContext context) {
@@ -674,7 +813,15 @@ class _CategoryRankCard extends StatelessWidget {
               description: AppLocalizations.of(context).noDimDesc(dimLabel),
             )
           else
-            ...stats.map((stat) => _CategoryRankTile(stat: stat, color: color)),
+            ...stats.map(
+              (stat) => _CategoryRankTile(
+                stat: stat,
+                color: color,
+                onTap: onTapCategory == null
+                    ? null
+                    : () => onTapCategory!(stat),
+              ),
+            ),
         ],
       ),
     );
@@ -682,22 +829,119 @@ class _CategoryRankCard extends StatelessWidget {
 }
 
 class _CategoryRankTile extends StatelessWidget {
-  const _CategoryRankTile({required this.stat, required this.color});
+  const _CategoryRankTile({
+    required this.stat,
+    required this.color,
+    this.onTap,
+  });
 
   final ReportCategoryStat stat;
   final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return _RankTile(
+      leading: CategoryIconBox(
+        iconCode: stat.category.iconCode,
+        color: color,
+        size: 30,
+      ),
+      label: stat.category.label,
+      amount: stat.amount,
+      percent: stat.percent,
+      count: stat.count,
+      color: color,
+      onTap: onTap,
+    );
+  }
+}
+
+class _TagRankCard extends StatelessWidget {
+  const _TagRankCard({
+    required this.stats,
+    required this.color,
+    required this.dimension,
+  });
+
+  final List<ReportTagStat> stats;
+  final Color color;
+  final EntryType dimension;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final dimLabel = dimension.label(l10n);
+    return VeriCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SectionTitle(title: l10n.tagRank, trailing: dimLabel),
+          const SizedBox(height: 8),
+          if (stats.isEmpty)
+            EmptyState(
+              icon: Icons.label_outline,
+              title: l10n.noTagData,
+              description: l10n.noTagDesc,
+            )
+          else ...<Widget>[
+            ...stats.map(
+              (stat) => _RankTile(
+                leading: VeriIconBox(
+                  icon: Icons.label_outline,
+                  color: color,
+                  size: 30,
+                ),
+                label: stat.tag.label,
+                amount: stat.amount,
+                percent: stat.percent,
+                count: stat.count,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.tagRankOverlapNote,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.46),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 排行行：图标 + 名称 + 金额 + 进度条 + 占比/笔数。可选点按下钻。
+class _RankTile extends StatelessWidget {
+  const _RankTile({
+    required this.leading,
+    required this.label,
+    required this.amount,
+    required this.percent,
+    required this.count,
+    required this.color,
+    this.onTap,
+  });
+
+  final Widget leading;
+  final String label;
+  final double amount;
+  final double percent;
+  final int count;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: <Widget>[
-          CategoryIconBox(
-            iconCode: stat.category.iconCode,
-            color: color,
-            size: 30,
-          ),
+          leading,
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -707,24 +951,36 @@ class _CategoryRankTile extends StatelessWidget {
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        stat.category.label,
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
                     Text(
-                      formatAmount(stat.amount),
+                      formatAmount(amount),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: color,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    if (onTap != null) ...<Widget>[
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 18,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 6),
                 LinearProgressIndicator(
-                  value: stat.percent.clamp(0, 1).toDouble(),
+                  value: percent.clamp(0, 1).toDouble(),
                   minHeight: 5,
                   borderRadius: BorderRadius.circular(999),
                   color: color,
@@ -734,7 +990,7 @@ class _CategoryRankTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${(stat.percent * 100).toStringAsFixed(1)}% · ${AppLocalizations.of(context).entriesCount(stat.count)}',
+                  '${(percent * 100).toStringAsFixed(1)}% · ${AppLocalizations.of(context).entriesCount(count)}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -747,6 +1003,14 @@ class _CategoryRankTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+    if (onTap == null) {
+      return content;
+    }
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(veriRadiusSm),
+      child: content,
     );
   }
 }
