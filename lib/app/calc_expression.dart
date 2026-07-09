@@ -84,7 +84,9 @@ double? evaluateAmountExpression(String input) {
         ? foldedNumbers[i + 1]
         : -foldedNumbers[i + 1];
   }
-  return result;
+  // 金额是钱，把结果规整到「分」，消除浮点尾差
+  // （如 0.1+0.2 得 0.30 而非 0.30000000000000004 存进库）。
+  return (result * 100).roundToDouble() / 100;
 }
 
 /// [input] 去掉首位负号后是否仍含运算符——含则为「算式」，面板据此展示结果预览。
