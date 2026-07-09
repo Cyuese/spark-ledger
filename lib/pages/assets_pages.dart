@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -587,14 +589,18 @@ class _AssetsPageState extends State<AssetsPage> {
       return;
     }
     if (selected == 'add_account') {
-      Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(builder: (context) => const AddAccountPage()),
+      unawaited(
+        Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(builder: (context) => const AddAccountPage()),
+        ),
       );
     }
     if (selected == 'manage_groups') {
-      Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(
-          builder: (context) => const AccountGroupsPage(),
+      unawaited(
+        Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (context) => const AccountGroupsPage(),
+          ),
         ),
       );
     }

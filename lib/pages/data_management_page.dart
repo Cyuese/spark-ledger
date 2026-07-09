@@ -1,5 +1,6 @@
 // 数据管理页：从 profile_pages 拆出。集中导出/导入/初始化与备份子系统
 // （本地目录 SAF、加密、WebDAV、账单导入）的入口与流程。
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -370,10 +371,13 @@ class DataManagementPage extends StatelessWidget {
     // 备份含加密（PBKDF2）与文件写入，耗时可感知：期间弹不可关闭的「备份中」转圈，
     // 避免点了没反应的错觉。
     final navigator = Navigator.of(context, rootNavigator: true);
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _BackupProgressDialog(label: l10n.backingUp),
+    // 进度弹窗随后由 navigator.pop 关闭，故不 await（fire-and-forget）。
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => _BackupProgressDialog(label: l10n.backingUp),
+      ),
     );
     try {
       final now = DateTime.now();
