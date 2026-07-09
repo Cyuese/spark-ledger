@@ -255,7 +255,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.edit_outlined));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), '我的钱包');
-      await tester.tap(find.text('保存'));
+      await tester.tap(find.text('确认'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('确认导入（2）'));

@@ -745,26 +745,13 @@ class DataManagementPage extends StatelessWidget {
     if (chosen == null || !context.mounted) {
       return;
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).restoreFromThisTitle),
-        content: Text(
-          AppLocalizations.of(context).restoreFromThisMessage(chosen.name),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).restoreLabel),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).restoreFromThisTitle,
+      message: AppLocalizations.of(context).restoreFromThisMessage(chosen.name),
+      confirmLabel: AppLocalizations.of(context).restoreLabel,
     );
-    if (confirmed != true) {
+    if (!confirmed) {
       return;
     }
     try {
@@ -1200,24 +1187,13 @@ class DataManagementPage extends StatelessWidget {
     BuildContext context,
     VeriFinController controller,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).importLocalTitle),
-        content: Text(AppLocalizations.of(context).importLocalMessage),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).chooseFile),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: AppLocalizations.of(context).importLocalTitle,
+      message: AppLocalizations.of(context).importLocalMessage,
+      confirmLabel: AppLocalizations.of(context).chooseFile,
     );
-    if (confirmed != true || !context.mounted) {
+    if (!confirmed || !context.mounted) {
       return;
     }
     final fileTypeLabel = AppLocalizations.of(context).backupFileTypeLabel;
