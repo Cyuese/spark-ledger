@@ -1225,8 +1225,8 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                         ],
                       ),
                     ),
-                    VeriIconBox(
-                      icon: iconForCode(category.iconCode),
+                    CategoryIconBox(
+                      iconCode: category.iconCode,
                       color: amountColor,
                       size: 38,
                     ),

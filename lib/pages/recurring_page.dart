@@ -112,8 +112,8 @@ class _RecurringRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
         child: Row(
           children: <Widget>[
-            VeriIconBox(
-              icon: iconForCode(category.iconCode),
+            CategoryIconBox(
+              iconCode: category.iconCode,
               color: colorForType(rule.type),
               size: 32,
             ),

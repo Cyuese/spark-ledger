@@ -354,8 +354,8 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     children: <Widget>[
                       ..._visibleCategoryChips(categories).map(
                         (category) => ChoiceChip(
-                          avatar: Icon(
-                            iconForCode(category.iconCode),
+                          avatar: CategoryGlyph(
+                            iconCode: category.iconCode,
                             size: 18,
                           ),
                           label: Text(category.label),

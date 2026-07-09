@@ -1908,6 +1908,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pickIconTitle => '选择图标';
 
   @override
+  String get iconSectionBuiltin => '内置图标';
+
+  @override
+  String get iconSectionEmoji => 'Emoji';
+
+  @override
+  String get iconEmojiHint => '输入或粘贴一个 emoji';
+
+  @override
+  String get iconEmojiUse => '使用';
+
+  @override
   String get systemCategoryUndeletable => '系统分类不能删除';
 
   @override

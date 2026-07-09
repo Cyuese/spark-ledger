@@ -334,7 +334,8 @@ void main() {
     await tester.enterText(find.byType(TextField).last, '咖啡');
     await tester.tap(find.text('确认'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('分类').last);
+    // 图标选择器为网格，选第一个内置图标（category）。
+    await tester.tap(find.byIcon(Icons.category_outlined).last);
     await tester.pumpAndSettle();
 
     expect(find.text('咖啡'), findsOneWidget);
@@ -357,7 +358,8 @@ void main() {
     await tester.enterText(find.byType(TextField).last, '早餐');
     await tester.tap(find.text('确认'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('分类').last);
+    // 图标选择器为网格，选第一个内置图标（category）。
+    await tester.tap(find.byIcon(Icons.category_outlined).last);
     await tester.pumpAndSettle();
 
     expect(find.text('早餐'), findsOneWidget);

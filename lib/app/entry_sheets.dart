@@ -5,7 +5,6 @@ import 'app_theme.dart';
 import 'calc_expression.dart';
 import 'category_tree.dart';
 import 'common_widgets.dart';
-import 'demo_data.dart';
 import 'ledger_math.dart';
 import 'models.dart';
 import '../l10n/app_localizations.dart';
@@ -468,8 +467,8 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
                       left: 8 + node.depth * 20,
                       right: 8,
                     ),
-                    leading: VeriIconBox(
-                      icon: iconForCode(category.iconCode),
+                    leading: CategoryIconBox(
+                      iconCode: category.iconCode,
                       color: colorForType(category.type),
                       size: 32,
                     ),

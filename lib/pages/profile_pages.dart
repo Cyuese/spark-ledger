@@ -5,7 +5,6 @@ import '../app/app_version.dart';
 import '../app/avatar_picker.dart';
 import '../app/category_tree.dart';
 import '../app/common_widgets.dart';
-import '../app/demo_data.dart';
 import '../app/image_cropper.dart';
 import '../app/image_sources.dart';
 import '../app/ledger_math.dart';
@@ -907,13 +906,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   }
 
   Future<String?> _pickCategoryIcon({required String selected}) {
-    return showOptionSheet<String>(
-      context: context,
-      title: AppLocalizations.of(context).pickIconTitle,
-      values: categoryIconCodes,
-      selected: selected,
-      labelOf: (code) => iconLabelForCode(AppLocalizations.of(context), code),
-    );
+    return showCategoryIconPickerSheet(context: context, selected: selected);
   }
 
   Future<void> _deleteCategory(Category category) async {
@@ -1056,7 +1049,7 @@ class _CategoryManageRow extends StatelessWidget {
                       ),
               ),
               const SizedBox(width: 4),
-              VeriIconBox(icon: iconForCode(category.iconCode), size: 30),
+              CategoryIconBox(iconCode: category.iconCode, size: 30),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

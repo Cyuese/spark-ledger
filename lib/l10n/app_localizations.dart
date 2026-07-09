@@ -3542,6 +3542,30 @@ abstract class AppLocalizations {
   /// **'选择图标'**
   String get pickIconTitle;
 
+  /// No description provided for @iconSectionBuiltin.
+  ///
+  /// In zh, this message translates to:
+  /// **'内置图标'**
+  String get iconSectionBuiltin;
+
+  /// No description provided for @iconSectionEmoji.
+  ///
+  /// In zh, this message translates to:
+  /// **'Emoji'**
+  String get iconSectionEmoji;
+
+  /// No description provided for @iconEmojiHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入或粘贴一个 emoji'**
+  String get iconEmojiHint;
+
+  /// No description provided for @iconEmojiUse.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用'**
+  String get iconEmojiUse;
+
   /// No description provided for @systemCategoryUndeletable.
   ///
   /// In zh, this message translates to:

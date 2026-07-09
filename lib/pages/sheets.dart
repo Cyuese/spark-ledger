@@ -451,6 +451,203 @@ class AccountIconChoice {
   final String group;
 }
 
+/// 分类图标常用 emoji 快选（覆盖餐饮/出行/居家/娱乐/人情/理财等常见分类）。
+const List<String> categoryEmojiChoices = <String>[
+  '🍜', '🍔', '🍚', '🥗', '🍎', '☕', '🍺', '🍷', '🧋', '🍰',
+  '🍦', '🛒', '🛍️', '👕', '👗', '👟', '💄', '✂️', '🚌', '🚗',
+  '🚕', '⛽', '🚉', '✈️', '🅿️', '🚲', '🏠', '🔑', '💡', '💧',
+  '📱', '📶', '🔧', '🛋️', '🧺', '🎮', '🎬', '🎵', '⚽', '🏋️',
+  '📚', '🎓', '🐱', '🐶', '🍼', '🎁', '🧧', '❤️', '💊', '🏥',
+  '💰', '💵', '💳', '🧾', '📈', '💼', '🎉', '⭐', '🔥', '🏦',
+];
+
+/// 分类图标选择器：内置图标网格 + 常用 emoji 快选 + 自由输入 emoji。
+/// 返回选中的 iconCode（内置 code 或 `emoji:` 前缀的自定义 emoji）；取消返回 null。
+Future<String?> showCategoryIconPickerSheet({
+  required BuildContext context,
+  required String selected,
+}) {
+  return showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
+    ),
+    builder: (context) => _CategoryIconPickerBody(selected: selected),
+  );
+}
+
+class _CategoryIconPickerBody extends StatefulWidget {
+  const _CategoryIconPickerBody({required this.selected});
+
+  final String selected;
+
+  @override
+  State<_CategoryIconPickerBody> createState() =>
+      _CategoryIconPickerBodyState();
+}
+
+class _CategoryIconPickerBodyState extends State<_CategoryIconPickerBody> {
+  final TextEditingController _emojiController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emojiController.dispose();
+    super.dispose();
+  }
+
+  void _submitEmoji() {
+    final text = _emojiController.text.trim();
+    if (text.isEmpty) {
+      return;
+    }
+    // 取首个字形簇，兼容多码位 emoji（如带肤色/ZWJ 的组合）。
+    Navigator.of(context).pop(emojiIconCode(text.characters.first));
+  }
+
+  Widget _sectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 8),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.8;
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          16 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                l10n.pickIconTitle,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 6),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      _sectionTitle(l10n.iconSectionBuiltin),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: <Widget>[
+                          for (final code in categoryIconCodes)
+                            _IconChoiceCell(
+                              selected: widget.selected == code,
+                              onTap: () => Navigator.of(context).pop(code),
+                              child: CategoryIconBox(iconCode: code, size: 40),
+                            ),
+                        ],
+                      ),
+                      _sectionTitle(l10n.iconSectionEmoji),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: <Widget>[
+                          for (final emoji in categoryEmojiChoices)
+                            _IconChoiceCell(
+                              selected:
+                                  widget.selected == emojiIconCode(emoji),
+                              onTap: () => Navigator.of(
+                                context,
+                              ).pop(emojiIconCode(emoji)),
+                              child: CategoryIconBox(
+                                iconCode: emojiIconCode(emoji),
+                                size: 40,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: TextField(
+                              controller: _emojiController,
+                              decoration: InputDecoration(
+                                hintText: l10n.iconEmojiHint,
+                                isDense: true,
+                              ),
+                              onSubmitted: (_) => _submitEmoji(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: _submitEmoji,
+                            child: Text(l10n.iconEmojiUse),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 图标选择格子：统一尺寸 + 选中态描边。
+class _IconChoiceCell extends StatelessWidget {
+  const _IconChoiceCell({
+    required this.child,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Widget child;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(veriRadiusMd),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(veriRadiusMd),
+          border: Border.all(
+            color: selected
+                ? veriRoyal
+                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.10),
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
 Future<String?> showTextInputDialog({
   required BuildContext context,
   required String title,

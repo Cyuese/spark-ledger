@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../app/app_theme.dart';
 import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
-import '../app/demo_data.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/report_analysis.dart';
@@ -694,8 +693,8 @@ class _CategoryRankTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: <Widget>[
-          VeriIconBox(
-            icon: iconForCode(stat.category.iconCode),
+          CategoryIconBox(
+            iconCode: stat.category.iconCode,
             color: color,
             size: 30,
           ),

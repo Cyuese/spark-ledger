@@ -1941,6 +1941,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickIconTitle => 'Choose icon';
 
   @override
+  String get iconSectionBuiltin => 'Built-in icons';
+
+  @override
+  String get iconSectionEmoji => 'Emoji';
+
+  @override
+  String get iconEmojiHint => 'Type or paste an emoji';
+
+  @override
+  String get iconEmojiUse => 'Use';
+
+  @override
   String get systemCategoryUndeletable => 'System categories can\'t be deleted';
 
   @override

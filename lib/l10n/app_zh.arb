@@ -1276,6 +1276,10 @@
   "mergeCategoryFailed": "无法合并该分类",
   "renameCategoryTitle": "重命名分类",
   "pickIconTitle": "选择图标",
+  "iconSectionBuiltin": "内置图标",
+  "iconSectionEmoji": "Emoji",
+  "iconEmojiHint": "输入或粘贴一个 emoji",
+  "iconEmojiUse": "使用",
   "systemCategoryUndeletable": "系统分类不能删除",
   "categoryInUse": "已有 {count} 笔交易使用该分类，不能删除",
   "@categoryInUse": {

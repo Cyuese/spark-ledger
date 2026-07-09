@@ -853,8 +853,8 @@ class _CategoryStatTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: <Widget>[
-          VeriIconBox(
-            icon: iconForCode(stat.category.iconCode),
+          CategoryIconBox(
+            iconCode: stat.category.iconCode,
             color: veriExpense,
             size: 30,
           ),

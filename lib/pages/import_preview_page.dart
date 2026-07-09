@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../app/app_theme.dart';
 import '../app/backup/transaction_import.dart';
 import '../app/common_widgets.dart';
-import '../app/demo_data.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
@@ -294,8 +293,8 @@ class _ImportPreviewPageState extends State<ImportPreviewPage> {
             _DecisionOption(
               id: category.id,
               label: category.label,
-              leading: VeriIconBox(
-                icon: iconForCode(category.iconCode),
+              leading: CategoryIconBox(
+                iconCode: category.iconCode,
                 color: veriRoyal,
                 size: 26,
               ),

@@ -57,22 +57,79 @@ const List<String> accountIconCodes = <String>[
 const List<String> categoryIconCodes = <String>[
   'category',
   'dining',
-  'transport',
+  'coffee',
+  'drink',
+  'snack',
+  'cake',
+  'grocery',
   'shopping',
+  'clothing',
+  'beauty',
+  'haircut',
+  'transport',
+  'car',
+  'taxi',
+  'fuel',
+  'parking',
+  'train',
+  'flight',
+  'bike',
   'housing',
+  'rent',
+  'utilities',
+  'water',
+  'phone',
+  'internet',
+  'repair',
+  'furniture',
+  'laundry',
   'entertainment',
+  'game',
+  'music',
+  'sports',
+  'book',
+  'education',
+  'travel',
+  'hotel',
   'medical',
+  'medicine',
+  'pet',
+  'baby',
+  'family',
+  'love',
+  'gift',
+  'redpacket',
+  'charity',
+  'electronics',
+  'subscription',
+  'work',
   'salary',
+  'bonus',
   'savings',
   'interest',
   'investment',
-  'bonus',
-  'work',
+  'insurance',
+  'tax',
+  'refund',
+  'repayment',
   'transfer_out',
   'transfer_in',
-  'repayment',
+  'star',
   'adjust',
 ];
+
+/// emoji 分类图标的存储前缀：`emoji:🍜`。以此与内置图标 code 区分。
+const String emojiIconPrefix = 'emoji:';
+
+/// 该图标 code 是否为 emoji 自定义图标。
+bool isEmojiIconCode(String code) => code.startsWith(emojiIconPrefix);
+
+/// 取出 emoji 图标的字符（非 emoji code 原样返回）。
+String emojiOfIconCode(String code) =>
+    isEmojiIconCode(code) ? code.substring(emojiIconPrefix.length) : code;
+
+/// 把一个 emoji 字符封装为可存储的图标 code。
+String emojiIconCode(String emoji) => '$emojiIconPrefix$emoji';
 
 IconData iconForCode(String code) {
   switch (code) {
@@ -106,6 +163,95 @@ IconData iconForCode(String code) {
       return Icons.swap_horiz;
     case 'adjust':
       return Icons.tune;
+    // ---- 扩充分类图标（与 categoryIconCodes 对应）----
+    case 'coffee':
+      return Icons.local_cafe;
+    case 'grocery':
+      return Icons.local_grocery_store;
+    case 'snack':
+      return Icons.icecream;
+    case 'drink':
+      return Icons.local_bar;
+    case 'cake':
+      return Icons.cake;
+    case 'car':
+      return Icons.directions_car;
+    case 'taxi':
+      return Icons.local_taxi;
+    case 'fuel':
+      return Icons.local_gas_station;
+    case 'train':
+      return Icons.train;
+    case 'flight':
+      return Icons.flight;
+    case 'parking':
+      return Icons.local_parking;
+    case 'bike':
+      return Icons.pedal_bike;
+    case 'rent':
+      return Icons.vpn_key;
+    case 'utilities':
+      return Icons.bolt;
+    case 'water':
+      return Icons.water_drop;
+    case 'phone':
+      return Icons.smartphone;
+    case 'internet':
+      return Icons.wifi;
+    case 'repair':
+      return Icons.build;
+    case 'furniture':
+      return Icons.chair;
+    case 'laundry':
+      return Icons.local_laundry_service;
+    case 'clothing':
+      return Icons.checkroom;
+    case 'beauty':
+      return Icons.spa;
+    case 'haircut':
+      return Icons.content_cut;
+    case 'sports':
+      return Icons.fitness_center;
+    case 'game':
+      return Icons.sports_esports;
+    case 'music':
+      return Icons.music_note;
+    case 'book':
+      return Icons.menu_book;
+    case 'education':
+      return Icons.school;
+    case 'travel':
+      return Icons.luggage;
+    case 'hotel':
+      return Icons.hotel;
+    case 'pet':
+      return Icons.pets;
+    case 'baby':
+      return Icons.child_friendly;
+    case 'gift':
+      return Icons.card_giftcard;
+    case 'redpacket':
+      return Icons.redeem;
+    case 'medicine':
+      return Icons.medication;
+    case 'electronics':
+      return Icons.devices;
+    case 'subscription':
+      return Icons.subscriptions;
+    case 'tax':
+      return Icons.receipt_long;
+    case 'insurance':
+      return Icons.verified_user;
+    case 'charity':
+      return Icons.volunteer_activism;
+    case 'refund':
+      return Icons.replay;
+    case 'love':
+      return Icons.favorite;
+    case 'family':
+      return Icons.family_restroom;
+    case 'star':
+      return Icons.star;
     case 'alipay':
       return Icons.account_balance_wallet;
     case 'wechat':

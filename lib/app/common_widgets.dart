@@ -70,8 +70,8 @@ class TransactionTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
               ],
-              VeriIconBox(
-                icon: iconForCode(category.iconCode),
+              CategoryIconBox(
+                iconCode: category.iconCode,
                 color: amountColor,
                 size: 28,
               ),
@@ -586,6 +586,67 @@ class VeriIconBox extends StatelessWidget {
       ),
       child: Icon(icon, size: size * 0.54, color: color),
     );
+  }
+}
+
+/// 分类图标盒：内置图标走 [iconForCode] 上色渲染；emoji 自定义图标（`emoji:` 前缀）
+/// 以原色字符居中渲染（emoji 自带颜色，不上色）。统一分类图标的展示入口。
+class CategoryIconBox extends StatelessWidget {
+  const CategoryIconBox({
+    super.key,
+    required this.iconCode,
+    this.color = veriRoyal,
+    this.size = 30,
+  });
+
+  final String iconCode;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isEmojiIconCode(iconCode)) {
+      return Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.13),
+          borderRadius: BorderRadius.circular(veriRadiusSm),
+        ),
+        child: Text(
+          emojiOfIconCode(iconCode),
+          style: TextStyle(fontSize: size * 0.56, height: 1),
+        ),
+      );
+    }
+    return VeriIconBox(icon: iconForCode(iconCode), color: color, size: size);
+  }
+}
+
+/// 分类图标的裸字形（无背景盒）：内置图标为 [Icon]，emoji 为 [Text]。
+/// 用于 Chip avatar、内联小图标等不需要色块背景的场景。
+class CategoryGlyph extends StatelessWidget {
+  const CategoryGlyph({
+    super.key,
+    required this.iconCode,
+    this.size = 18,
+    this.color,
+  });
+
+  final String iconCode;
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isEmojiIconCode(iconCode)) {
+      return Text(
+        emojiOfIconCode(iconCode),
+        style: TextStyle(fontSize: size, height: 1),
+      );
+    }
+    return Icon(iconForCode(iconCode), size: size, color: color);
   }
 }
 
