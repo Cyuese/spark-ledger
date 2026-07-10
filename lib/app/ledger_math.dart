@@ -114,6 +114,50 @@ DateWindow monthWindowFor(DateTime date) {
   );
 }
 
+/// 自然周窗口（周一至周日，含 [date] 所在周），用于按周查看的走势。
+DateWindow weekWindowFor(DateTime date) {
+  final day = dateOnly(date);
+  // weekday: 周一=1 … 周日=7，回退到本周一。
+  final monday = DateTime(day.year, day.month, day.day - (day.weekday - 1));
+  return DateWindow(
+    start: monday,
+    end: DateTime(monday.year, monday.month, monday.day + 6),
+  );
+}
+
+/// 自然季窗口（季度首月 1 号至季度末月最后一天），用于按季查看的走势。
+DateWindow quarterWindowFor(DateTime date) {
+  final startMonth = ((date.month - 1) ~/ 3) * 3 + 1;
+  final endMonth = startMonth + 2;
+  return DateWindow(
+    start: DateTime(date.year, startMonth, 1),
+    end: DateTime(
+      date.year,
+      endMonth,
+      DateUtils.getDaysInMonth(date.year, endMonth),
+    ),
+  );
+}
+
+/// [date] 所在季度序号（1–4）。
+int quarterOfMonth(int month) => ((month - 1) ~/ 3) + 1;
+
+/// 某年 12 个月、指定类型的净额合计（按月聚合，用于按年查看的走势）。
+/// 下标 0–11 对应 1–12 月，无数据的月为 0。
+List<double> monthlyNetValuesForType(
+  Iterable<LedgerEntry> entries,
+  int year,
+  EntryType type,
+) {
+  final values = List<double>.filled(12, 0);
+  for (final entry in entries) {
+    if (entry.type == type && entry.occurredAt.year == year) {
+      values[entry.occurredAt.month - 1] += entry.netAmount;
+    }
+  }
+  return values;
+}
+
 List<LedgerEntry> entriesInWindow(
   Iterable<LedgerEntry> entries,
   DateWindow window,

@@ -31,6 +31,66 @@ void main() {
     expect(reversed, isEmpty);
   });
 
+  test('weekWindowFor 覆盖周一至周日（含跨月的周）', () {
+    // 2026-07-10 是周五，本周为 07-06(周一)~07-12(周日)。
+    final w = weekWindowFor(DateTime(2026, 7, 10, 15));
+    expect(w.start, DateTime(2026, 7, 6));
+    expect(w.end, DateTime(2026, 7, 12));
+    expect(w.days.length, 7);
+
+    // 跨月：2026-08-01 是周六，本周应从 07-27 起。
+    final cross = weekWindowFor(DateTime(2026, 8, 1));
+    expect(cross.start, DateTime(2026, 7, 27));
+    expect(cross.end, DateTime(2026, 8, 2));
+  });
+
+  test('quarterWindowFor / quarterOfMonth 覆盖整季', () {
+    expect(quarterOfMonth(7), 3);
+    final q3 = quarterWindowFor(DateTime(2026, 8, 15));
+    expect(q3.start, DateTime(2026, 7, 1));
+    expect(q3.end, DateTime(2026, 9, 30));
+
+    final q1 = quarterWindowFor(DateTime(2026, 2, 3));
+    expect(q1.start, DateTime(2026, 1, 1));
+    expect(q1.end, DateTime(2026, 3, 31));
+  });
+
+  test('monthlyNetValuesForType 按月聚合指定类型、只算当年、用净额', () {
+    LedgerEntry expense(String id, DateTime at, double amount, {double refunded = 0}) =>
+        LedgerEntry(
+          id: id,
+          bookId: 'b',
+          type: EntryType.expense,
+          amount: amount,
+          categoryId: 'c',
+          accountId: 'a',
+          note: '',
+          occurredAt: at,
+          refundedAmount: refunded,
+        );
+    final entries = <LedgerEntry>[
+      expense('a', DateTime(2026, 1, 5), 100),
+      expense('b', DateTime(2026, 1, 20), 50, refunded: 20), // 净 30
+      expense('c', DateTime(2026, 3, 8), 200),
+      expense('d', DateTime(2025, 3, 8), 999), // 去年，不计
+      LedgerEntry(
+        id: 'inc',
+        bookId: 'b',
+        type: EntryType.income,
+        amount: 300,
+        categoryId: 'c',
+        accountId: 'a',
+        note: '',
+        occurredAt: DateTime(2026, 1, 9),
+      ),
+    ];
+    final values = monthlyNetValuesForType(entries, 2026, EntryType.expense);
+    expect(values.length, 12);
+    expect(values[0], 130); // 1 月：100 + 30
+    expect(values[2], 200); // 3 月
+    expect(values[5], 0); // 6 月无数据
+  });
+
   test('android package name is not the Flutter template package', () async {
     final buildGradle = File('android/app/build.gradle.kts').readAsStringSync();
     final mainActivity = File(

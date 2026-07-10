@@ -105,7 +105,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     MonthSwitcher(
-                      month: _month,
+                      label: AppLocalizations.of(context).yearMonth(_month),
                       onPrevious: () => _changeMonth(-1),
                       onNext: () => _changeMonth(1),
                     ),
@@ -504,15 +504,16 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
   }
 }
 
+/// 前后翻页 + 中间标签的通用切换器（预算页按月，收支统计页按周/月/季/年）。
 class MonthSwitcher extends StatelessWidget {
   const MonthSwitcher({
     super.key,
-    required this.month,
+    required this.label,
     required this.onPrevious,
     required this.onNext,
   });
 
-  final DateTime month;
+  final String label;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
 
@@ -527,7 +528,7 @@ class MonthSwitcher extends StatelessWidget {
           icon: const Icon(Icons.chevron_left),
         ),
         Text(
-          AppLocalizations.of(context).yearMonth(month),
+          label,
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),

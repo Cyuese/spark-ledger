@@ -211,6 +211,21 @@
   "homeNoStatsTitle": "No data",
   "homeNoStatsDesc": "No records for this month.",
   "statTypeTitle": "Statistic type",
+  "statPeriodWeek": "Week",
+  "statPeriodMonth": "Month",
+  "statPeriodQuarter": "Quarter",
+  "statPeriodYear": "Year",
+  "statQuarterRange": "{year} Q{quarter}",
+  "@statQuarterRange": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "quarter": {
+        "type": "int"
+      }
+    }
+  },
   "budgetCatOver": "{category} over by {amount}",
   "budgetCatUsed": "{category} used {percent}%",
   "entriesCount": "{count} entries",

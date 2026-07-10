@@ -363,6 +363,21 @@
   "homeNoStatsTitle": "暂无统计",
   "homeNoStatsDesc": "当前月份没有对应记录。",
   "statTypeTitle": "统计类型",
+  "statPeriodWeek": "周",
+  "statPeriodMonth": "月",
+  "statPeriodQuarter": "季",
+  "statPeriodYear": "年",
+  "statQuarterRange": "{year}年第{quarter}季度",
+  "@statQuarterRange": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "quarter": {
+        "type": "int"
+      }
+    }
+  },
   "budgetCatOver": "{category}超出 {amount}",
   "@budgetCatOver": {
     "placeholders": {

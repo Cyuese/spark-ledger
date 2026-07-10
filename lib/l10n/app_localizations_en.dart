@@ -630,6 +630,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statTypeTitle => 'Statistic type';
 
   @override
+  String get statPeriodWeek => 'Week';
+
+  @override
+  String get statPeriodMonth => 'Month';
+
+  @override
+  String get statPeriodQuarter => 'Quarter';
+
+  @override
+  String get statPeriodYear => 'Year';
+
+  @override
+  String statQuarterRange(int year, int quarter) {
+    return '$year Q$quarter';
+  }
+
+  @override
   String budgetCatOver(String category, String amount) {
     return '$category over by $amount';
   }

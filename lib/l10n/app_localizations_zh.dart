@@ -618,6 +618,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statTypeTitle => '统计类型';
 
   @override
+  String get statPeriodWeek => '周';
+
+  @override
+  String get statPeriodMonth => '月';
+
+  @override
+  String get statPeriodQuarter => '季';
+
+  @override
+  String get statPeriodYear => '年';
+
+  @override
+  String statQuarterRange(int year, int quarter) {
+    return '$year年第$quarter季度';
+  }
+
+  @override
   String budgetCatOver(String category, String amount) {
     return '$category超出 $amount';
   }

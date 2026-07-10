@@ -715,30 +715,53 @@ class IncomeExpenseStatsPage extends StatefulWidget {
   State<IncomeExpenseStatsPage> createState() => _IncomeExpenseStatsPageState();
 }
 
+/// 收支统计的视图档位：周 / 月 / 季按天描点，年按 12 个月描点。
+enum _StatPeriod { week, month, quarter, year }
+
 class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
   DateTime _focusDate = DateTime.now();
   EntryType _type = EntryType.expense;
+  _StatPeriod _period = _StatPeriod.month;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final controller = VeriFinScope.of(context);
-    final visibleMonth = DateTime(_focusDate.year, _focusDate.month);
-    final window = monthWindowFor(_focusDate);
-    final scopedEntries = controller.entries
-        .where(
-          (entry) =>
-              entry.occurredAt.year == visibleMonth.year &&
-              entry.occurredAt.month == visibleMonth.month &&
-              entry.type == _type,
-        )
+    final isYear = _period == _StatPeriod.year;
+    // 年视图无「按天」窗口，用 12 个月聚合；其余按天窗口。
+    final window = isYear ? null : _windowForPeriod();
+    final scopedByType = controller.entries
+        .where((entry) => entry.type == _type)
         .toList();
-    final windowEntries = entriesInWindow(scopedEntries, window);
-    final total = windowEntries.fold<double>(
+
+    final List<LedgerEntry> rangeEntries;
+    final List<double> chartValues;
+    final List<String> chartXLabels;
+    if (isYear) {
+      rangeEntries = scopedByType
+          .where((entry) => entry.occurredAt.year == _focusDate.year)
+          .toList();
+      chartValues = monthlyNetValuesForType(
+        scopedByType,
+        _focusDate.year,
+        _type,
+      );
+      chartXLabels = List<String>.generate(12, (i) => '${i + 1}');
+    } else {
+      rangeEntries = entriesInWindow(scopedByType, window!);
+      chartValues = valuesForTypeInWindow(rangeEntries, window, _type);
+      chartXLabels = _period == _StatPeriod.week
+          ? labelsForWindow(window)
+          : sparseLabelsForWindow(window);
+    }
+
+    final total = rangeEntries.fold<double>(
       0,
       (sum, entry) => sum + entry.amount,
     );
-    final dayRows = _dailyStatRows(windowEntries, window.start, total);
-    final windowValues = valuesForTypeInWindow(windowEntries, window, _type);
+    final statRows = isYear
+        ? _monthlyStatRows(rangeEntries, _focusDate.year, total)
+        : _periodDayRows(rangeEntries, window!, total);
     final mutedColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.52);
@@ -749,6 +772,12 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
       EntryType.transfer => formatAmount(total),
     };
 
+    String amountTextOf(double value) => switch (_type) {
+      EntryType.expense => formatExpenseAmount(value),
+      EntryType.income => '+${formatIncomeAmount(value)}',
+      EntryType.transfer => formatAmount(value),
+    };
+
     return Scaffold(
       body: SafeArea(
         child: VeriPage(
@@ -756,13 +785,13 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
             children: <Widget>[
               VeriHeader(
-                title: AppLocalizations.of(context).incomeExpenseTitle,
+                title: l10n.incomeExpenseTitle,
                 showBack: true,
                 actions: <Widget>[
                   HeaderAction(
                     key: const Key('trend_customize'),
                     icon: Icons.edit_outlined,
-                    tooltip: AppLocalizations.of(context).trendCustomizeEntry,
+                    tooltip: l10n.trendCustomizeEntry,
                     onPressed: () {
                       Navigator.of(context).push<void>(
                         MaterialPageRoute<void>(
@@ -774,26 +803,42 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                 ],
               ),
               const SizedBox(height: 8),
+              SegmentedButton<_StatPeriod>(
+                showSelectedIcon: false,
+                segments: <ButtonSegment<_StatPeriod>>[
+                  ButtonSegment<_StatPeriod>(
+                    value: _StatPeriod.week,
+                    label: Text(l10n.statPeriodWeek),
+                  ),
+                  ButtonSegment<_StatPeriod>(
+                    value: _StatPeriod.month,
+                    label: Text(l10n.statPeriodMonth),
+                  ),
+                  ButtonSegment<_StatPeriod>(
+                    value: _StatPeriod.quarter,
+                    label: Text(l10n.statPeriodQuarter),
+                  ),
+                  ButtonSegment<_StatPeriod>(
+                    value: _StatPeriod.year,
+                    label: Text(l10n.statPeriodYear),
+                  ),
+                ],
+                selected: <_StatPeriod>{_period},
+                onSelectionChanged: (selection) {
+                  setState(() => _period = selection.first);
+                },
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: <Widget>[
                   MonthSwitcher(
-                    month: visibleMonth,
-                    onPrevious: () => setState(() {
-                      _focusDate = DateTime(
-                        _focusDate.year,
-                        _focusDate.month - 1,
-                      );
-                    }),
-                    onNext: () => setState(() {
-                      _focusDate = DateTime(
-                        _focusDate.year,
-                        _focusDate.month + 1,
-                      );
-                    }),
+                    label: _rangeLabel(l10n, window),
+                    onPrevious: () => _shiftFocus(-1),
+                    onNext: () => _shiftFocus(1),
                   ),
                   const Spacer(),
                   FilterPill(
-                    label: _type.label(AppLocalizations.of(context)),
+                    label: _type.label(l10n),
                     onTap: _pickEntryType,
                   ),
                 ],
@@ -804,7 +849,7 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      '${window.label} ${_type.label(AppLocalizations.of(context))}',
+                      '${_rangeLabel(l10n, window)} ${_type.label(l10n)}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -822,30 +867,22 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                       height: 180,
                       child: InteractiveTrendChart(
                         color: totalColor,
-                        values: windowValues,
-                        xLabels: sparseLabelsForWindow(window),
-                        yLabels: reportAxisLabels(
-                          windowValues.fold(0, math.max),
-                        ),
+                        values: chartValues,
+                        xLabels: chartXLabels,
+                        yLabels: reportAxisLabels(chartValues.fold(0, math.max)),
                         labelColor: Theme.of(
                           context,
                         ).colorScheme.onSurface.withValues(alpha: 0.50),
                         tooltipOf: (index) {
-                          final day = window.days[index];
-                          final value = windowValues[index];
-                          final valueText = switch (_type) {
-                            EntryType.expense => formatExpenseAmount(value),
-                            EntryType.income => '+${formatIncomeAmount(value)}',
-                            EntryType.transfer => formatAmount(value),
-                          };
+                          final value = chartValues[index];
+                          final title = isYear
+                              ? l10n.monthNumber(index + 1)
+                              : l10n.dateMonthDay(window!.days[index]);
                           return ChartTooltip(
-                            title: AppLocalizations.of(
-                              context,
-                            ).dateMonthDay(day),
+                            title: title,
                             lines: <ChartTooltipLine>[
                               ChartTooltipLine(
-                                text:
-                                    '${_type.label(AppLocalizations.of(context))} $valueText',
+                                text: '${_type.label(l10n)} ${amountTextOf(value)}',
                               ),
                             ],
                           );
@@ -859,28 +896,20 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
               VeriCard(
                 child: Column(
                   children: <Widget>[
-                    if (dayRows.isEmpty)
+                    if (statRows.isEmpty)
                       EmptyState(
                         icon: Icons.bar_chart_outlined,
-                        title: AppLocalizations.of(context).homeNoStatsTitle,
-                        description: AppLocalizations.of(
-                          context,
-                        ).homeNoStatsDesc,
+                        title: l10n.homeNoStatsTitle,
+                        description: l10n.homeNoStatsDesc,
                       )
                     else
-                      for (final row in dayRows.indexed) ...<Widget>[
+                      for (final row in statRows.indexed) ...<Widget>[
                         _DailyStatTile(
                           row: row.$2,
                           type: _type,
-                          // 点某天进入当天交易明细，与首页日历点日期一致。
-                          onTap: () => Navigator.of(context).push<void>(
-                            MaterialPageRoute<void>(
-                              builder: (context) =>
-                                  TransactionsPage(initialDate: row.$2.date),
-                            ),
-                          ),
+                          onTap: () => _openStatRow(row.$2),
                         ),
-                        if (row.$1 != dayRows.length - 1) const Divider(),
+                        if (row.$1 != statRows.length - 1) const Divider(),
                       ],
                   ],
                 ),
@@ -888,6 +917,65 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  DateWindow _windowForPeriod() => switch (_period) {
+    _StatPeriod.week => weekWindowFor(_focusDate),
+    _StatPeriod.quarter => quarterWindowFor(_focusDate),
+    _StatPeriod.year => monthWindowFor(_focusDate), // 年视图不用此窗口
+    _StatPeriod.month => monthWindowFor(_focusDate),
+  };
+
+  /// 顶部前后翻页：按当前档位步进（周±7 天、月±1 月、季±3 月、年±1 年）。
+  void _shiftFocus(int direction) {
+    setState(() {
+      _focusDate = switch (_period) {
+        _StatPeriod.week => DateTime(
+          _focusDate.year,
+          _focusDate.month,
+          _focusDate.day + direction * 7,
+        ),
+        _StatPeriod.month => DateTime(
+          _focusDate.year,
+          _focusDate.month + direction,
+        ),
+        _StatPeriod.quarter => DateTime(
+          _focusDate.year,
+          _focusDate.month + direction * 3,
+        ),
+        _StatPeriod.year => DateTime(
+          _focusDate.year + direction,
+          _focusDate.month,
+        ),
+      };
+    });
+  }
+
+  String _rangeLabel(AppLocalizations l10n, DateWindow? window) =>
+      switch (_period) {
+        _StatPeriod.week => window!.label,
+        _StatPeriod.month => l10n.yearMonth(_focusDate),
+        _StatPeriod.quarter => l10n.statQuarterRange(
+          _focusDate.year,
+          quarterOfMonth(_focusDate.month),
+        ),
+        _StatPeriod.year => l10n.yearLabel(_focusDate.year),
+      };
+
+  /// 点统计行：按天视图点某天进当天交易明细；按月（年视图）点某月下钻到该月视图。
+  void _openStatRow(_DailyStatRow row) {
+    if (row.monthly) {
+      setState(() {
+        _period = _StatPeriod.month;
+        _focusDate = DateTime(row.date.year, row.date.month);
+      });
+      return;
+    }
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => TransactionsPage(initialDate: row.date),
       ),
     );
   }
@@ -965,12 +1053,16 @@ class _DailyStatRow {
     required this.amount,
     required this.percent,
     required this.count,
+    this.monthly = false,
   });
 
   final DateTime date;
   final double amount;
   final double percent;
   final int count;
+
+  /// true 为「按月」行（年视图），标题显示月份、点击下钻到该月；false 为「按天」行。
+  final bool monthly;
 }
 
 class _DailyStatTile extends StatelessWidget {
@@ -1006,7 +1098,9 @@ class _DailyStatTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    '${row.date.month.toString().padLeft(2, '0')}.${row.date.day.toString().padLeft(2, '0')}',
+                    row.monthly
+                        ? AppLocalizations.of(context).monthNumber(row.date.month)
+                        : '${row.date.month.toString().padLeft(2, '0')}.${row.date.day.toString().padLeft(2, '0')}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -1051,16 +1145,16 @@ class _DailyStatTile extends StatelessWidget {
   }
 }
 
-List<_DailyStatRow> _dailyStatRows(
+/// 按天统计行（周/月/季视图）：遍历窗口内每一天，聚合当天该类型的交易。
+List<_DailyStatRow> _periodDayRows(
   List<LedgerEntry> entries,
-  DateTime month,
+  DateWindow window,
   double total,
 ) {
   final rows = <_DailyStatRow>[];
-  final days = DateUtils.getDaysInMonth(month.year, month.month);
-  for (var day = 1; day <= days; day += 1) {
+  for (final day in window.days) {
     final dayEntries = entries
-        .where((entry) => entry.occurredAt.day == day)
+        .where((entry) => DateUtils.isSameDay(entry.occurredAt, day))
         .toList();
     if (dayEntries.isEmpty) {
       continue;
@@ -1071,10 +1165,41 @@ List<_DailyStatRow> _dailyStatRows(
     );
     rows.add(
       _DailyStatRow(
-        date: DateTime(month.year, month.month, day),
+        date: day,
         amount: amount,
         percent: total <= 0 ? 0 : amount / total,
         count: dayEntries.length,
+      ),
+    );
+  }
+  return rows..sort((a, b) => b.date.compareTo(a.date));
+}
+
+/// 按月统计行（年视图）：聚合某年 12 个月里有记录的月份。
+List<_DailyStatRow> _monthlyStatRows(
+  List<LedgerEntry> entries,
+  int year,
+  double total,
+) {
+  final rows = <_DailyStatRow>[];
+  for (var month = 1; month <= 12; month += 1) {
+    final monthEntries = entries
+        .where((entry) => entry.occurredAt.month == month)
+        .toList();
+    if (monthEntries.isEmpty) {
+      continue;
+    }
+    final amount = monthEntries.fold<double>(
+      0,
+      (sum, entry) => sum + entry.amount,
+    );
+    rows.add(
+      _DailyStatRow(
+        date: DateTime(year, month, 1),
+        amount: amount,
+        percent: total <= 0 ? 0 : amount / total,
+        count: monthEntries.length,
+        monthly: true,
       ),
     );
   }

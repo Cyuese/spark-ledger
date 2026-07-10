@@ -23,6 +23,34 @@ void main() {
     expect(find.text('0'), findsWidgets);
   });
 
+  testWidgets('收支统计页可切换周/月/季/年视图', (WidgetTester tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('概览'));
+    await tester.pumpAndSettle();
+    expect(find.text('收支统计'), findsOneWidget);
+
+    // 四个档位分段都在（默认「月」）。
+    for (final seg in <String>['周', '月', '季', '年']) {
+      expect(find.text(seg), findsWidgets);
+    }
+
+    final now = DateTime.now();
+    // 切到「年」：范围标签显示「{year}年」，且不崩溃。
+    await tester.tap(find.text('年'));
+    await tester.pumpAndSettle();
+    expect(find.text('${now.year}年'), findsWidgets);
+
+    // 切到「季」：范围标签显示「{year}年第{q}季度」。
+    await tester.tap(find.text('季'));
+    await tester.pumpAndSettle();
+    final quarter = ((now.month - 1) ~/ 3) + 1;
+    expect(find.text('${now.year}年第$quarter季度'), findsOneWidget);
+
+    // 切到「周」：仅确认切换不抛异常。
+    await tester.tap(find.text('周'));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('creates an entry through the quick entry flow', (
     WidgetTester tester,
   ) async {

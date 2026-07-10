@@ -1256,6 +1256,36 @@ abstract class AppLocalizations {
   /// **'统计类型'**
   String get statTypeTitle;
 
+  /// No description provided for @statPeriodWeek.
+  ///
+  /// In zh, this message translates to:
+  /// **'周'**
+  String get statPeriodWeek;
+
+  /// No description provided for @statPeriodMonth.
+  ///
+  /// In zh, this message translates to:
+  /// **'月'**
+  String get statPeriodMonth;
+
+  /// No description provided for @statPeriodQuarter.
+  ///
+  /// In zh, this message translates to:
+  /// **'季'**
+  String get statPeriodQuarter;
+
+  /// No description provided for @statPeriodYear.
+  ///
+  /// In zh, this message translates to:
+  /// **'年'**
+  String get statPeriodYear;
+
+  /// No description provided for @statQuarterRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'{year}年第{quarter}季度'**
+  String statQuarterRange(int year, int quarter);
+
   /// No description provided for @budgetCatOver.
   ///
   /// In zh, this message translates to:
