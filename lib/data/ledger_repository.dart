@@ -529,11 +529,16 @@ class SqliteLedgerRepository implements LedgerRepository {
         'parent_id': c.parentId,
       };
 
-  static Category _categoryFromRow(Map<String, Object?> row) => Category(
-    id: row['id'] as String,
-    label: row['label'] as String,
-    type: EntryType.fromStorage(row['type'] as String),
-    iconCode: row['icon_code'] as String,
-    parentId: row['parent_id'] as String?,
-  );
+  static Category _categoryFromRow(Map<String, Object?> row) {
+    // 空串 parent_id 归一为 null（顶级），与 Category.fromJson 一致，避免「parent_id=''」
+    // 被当成指向 id 为空串的父分类而变成孤儿。
+    final rawParent = row['parent_id'] as String?;
+    return Category(
+      id: row['id'] as String,
+      label: row['label'] as String,
+      type: EntryType.fromStorage(row['type'] as String),
+      iconCode: row['icon_code'] as String,
+      parentId: (rawParent != null && rawParent.isEmpty) ? null : rawParent,
+    );
+  }
 }

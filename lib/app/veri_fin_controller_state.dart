@@ -203,7 +203,149 @@ mixin _ControllerState on ChangeNotifier {
     _dailyBudgets
       ..clear()
       ..addAll(await _repository.loadDailyBudgets());
+    // 一次性分类参照完整性自愈：修复历史/异构备份带入的孤儿 parentId、悬空分类引用、
+    // 重复同名分类（消除「幽灵同名分类」的数据根因）。改动了才落库。
+    if (_healCategoryData()) {
+      _persistAllLedgerData();
+    }
     notifyListeners();
+  }
+
+  /// 分类参照完整性自愈：在内存列表（[_categories]/[_entries]/[_recurringRules]）上就地
+  /// 修复脏分类数据，返回是否有改动（调用方据此决定落库）。**幂等**：数据已干净时零改动。
+  ///
+  /// 反复运行到不再变化（重挂孤儿会催生新的重复、合并重复会改变子分类归属，需收敛到稳定），
+  /// 循环有上限兜底防止异常数据下的死循环。修复三类问题：
+  /// 1) 孤儿 / 空串 parentId（指向不存在的父分类）→ 重挂为顶级（parentId=null）；
+  /// 2) 重复分类（同 type+parentId+label 的多条）→ 保留一条（系统分类优先），其余的交易 /
+  ///    周期规则 / 子分类 parentId 改指向保留者后删除；
+  /// 3) 悬空交易 / 周期规则引用（categoryId 指向不存在的分类）→ 归入按类型惰性创建的
+  ///    「未分类」分类（固定 id，保证幂等、重跑复用同一条）。
+  bool _healCategoryData() {
+    var everChanged = false;
+    // 8 次足以让「重挂→合并→再合并」收敛；纯防御上限，正常一两轮即稳定。
+    for (var round = 0; round < 8; round++) {
+      if (!_healCategoryDataOnce()) {
+        break;
+      }
+      everChanged = true;
+    }
+    return everChanged;
+  }
+
+  bool _healCategoryDataOnce() {
+    var changed = false;
+    final ids = <String>{for (final c in _categories) c.id};
+
+    // ---- 1) 孤儿 / 空串 parentId → 顶级 ----
+    for (var i = 0; i < _categories.length; i++) {
+      final parentId = _categories[i].parentId;
+      if (parentId != null && (parentId.isEmpty || !ids.contains(parentId))) {
+        _categories[i] = _categories[i].copyWith(parentId: null);
+        changed = true;
+      }
+    }
+
+    // ---- 2) 合并重复分类（同 type + parentId + label）----
+    String dedupeKey(Category c) =>
+        '${c.type.storageValue} ${c.parentId ?? ''} ${c.label}';
+    final canonical = <String, String>{}; // key -> 保留的 id
+    final remap = <String, String>{}; // 被并入的 id -> 保留的 id
+    for (final c in _categories) {
+      final key = dedupeKey(c);
+      final keep = canonical[key];
+      if (keep == null) {
+        canonical[key] = c.id;
+      } else if (_isProtectedCategory(c.id) && !_isProtectedCategory(keep)) {
+        // 当前是系统分类而已选保留者不是：改用系统分类为保留者，旧的并入。
+        canonical[key] = c.id;
+        remap[keep] = c.id;
+      } else {
+        remap[c.id] = keep;
+      }
+    }
+    if (remap.isNotEmpty) {
+      String resolve(String id) {
+        var cur = id;
+        final seen = <String>{};
+        while (remap.containsKey(cur) && seen.add(cur)) {
+          cur = remap[cur]!;
+        }
+        return cur;
+      }
+
+      final dupIds = remap.keys.toSet();
+      for (var i = 0; i < _entries.length; i++) {
+        if (dupIds.contains(_entries[i].categoryId)) {
+          _entries[i] = _entries[i].copyWith(
+            categoryId: resolve(_entries[i].categoryId),
+          );
+        }
+      }
+      for (var i = 0; i < _recurringRules.length; i++) {
+        if (dupIds.contains(_recurringRules[i].categoryId)) {
+          _recurringRules[i] = _recurringRules[i].copyWith(
+            categoryId: resolve(_recurringRules[i].categoryId),
+          );
+        }
+      }
+      for (var i = 0; i < _categories.length; i++) {
+        final parentId = _categories[i].parentId;
+        if (parentId != null && dupIds.contains(parentId)) {
+          _categories[i] = _categories[i].copyWith(parentId: resolve(parentId));
+        }
+      }
+      _categories.removeWhere((c) => dupIds.contains(c.id));
+      for (final dup in dupIds) {
+        _categoryBudgets.removeWhere((key, _) => key.endsWith(':$dup'));
+      }
+      changed = true;
+    }
+
+    // ---- 3) 悬空交易 / 周期规则引用 → 「未分类」（按类型惰性创建，固定 id 幂等）----
+    final liveIds = <String>{for (final c in _categories) c.id};
+    String uncategorizedIdFor(EntryType type) {
+      final id = 'uncategorized_${type.storageValue}';
+      if (!liveIds.contains(id)) {
+        _categories.add(
+          Category(
+            id: id,
+            label: _seedEnglish ? 'Uncategorized' : '未分类',
+            type: type,
+            iconCode: 'category',
+          ),
+        );
+        liveIds.add(id);
+        changed = true;
+      }
+      return id;
+    }
+
+    bool isDangling(String categoryId) =>
+        categoryId.isNotEmpty &&
+        !_isProtectedCategory(categoryId) &&
+        !liveIds.contains(categoryId);
+
+    for (var i = 0; i < _entries.length; i++) {
+      final categoryId = _entries[i].categoryId;
+      if (isDangling(categoryId)) {
+        _entries[i] = _entries[i].copyWith(
+          categoryId: uncategorizedIdFor(_entries[i].type),
+        );
+        changed = true;
+      }
+    }
+    for (var i = 0; i < _recurringRules.length; i++) {
+      final categoryId = _recurringRules[i].categoryId;
+      if (isDangling(categoryId)) {
+        _recurringRules[i] = _recurringRules[i].copyWith(
+          categoryId: uncategorizedIdFor(_recurringRules[i].type),
+        );
+        changed = true;
+      }
+    }
+
+    return changed;
   }
 
   void _removeAccountFromOrders(String accountId) {

@@ -186,12 +186,17 @@ String formatChangeRatio(double? ratio) {
 @immutable
 class ReportCategoryStat {
   const ReportCategoryStat({
+    required this.categoryId,
     required this.category,
     required this.amount,
     required this.percent,
     required this.count,
   });
 
+  /// 聚合分组用的原始 key（顶级排行为 rootId，子分类视图为交易自身 categoryId）。
+  /// **下钻取数须用它，而非 [category].id**——当 key 指向已删除/悬空分类时，[category]
+  /// 是「已删除分类」占位、其 id 不等于本 key，用占位 id 下钻会 scope 到错误的分类树。
+  final String categoryId;
   final Category category;
   final double amount;
   final double percent;
@@ -223,6 +228,7 @@ List<ReportCategoryStat> reportCategoryStats(
       totals.entries
           .map(
             (entry) => ReportCategoryStat(
+              categoryId: entry.key,
               category: categoryByIdFrom(categories, entry.key),
               amount: entry.value,
               percent: total <= 0 ? 0 : entry.value / total,
@@ -259,6 +265,7 @@ List<ReportCategoryStat> reportCategoryStatsByOwn(
       totals.entries
           .map(
             (entry) => ReportCategoryStat(
+              categoryId: entry.key,
               category: categoryByIdFrom(categories, entry.key),
               amount: entry.value,
               percent: total <= 0 ? 0 : entry.value / total,

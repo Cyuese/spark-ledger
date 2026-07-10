@@ -13,7 +13,7 @@ class AppDatabase {
   final Database db;
 
   static const String defaultDatabaseName = 'verifin.db';
-  static const int schemaVersion = 9;
+  static const int schemaVersion = 10;
 
   /// 打开（或创建）数据库。测试通过 [factory]/[path] 注入 ffi 与内存路径；
   /// 真实平台留空则由 [resolveDatabaseFactory]/[resolveDatabasePath] 决定。
@@ -106,7 +106,86 @@ class AppDatabase {
     if (oldVersion < 9) {
       await db.execute(_dailyBudgetsTable);
     }
+    // v9 → v10：分类唯一性约束。历史/异构备份可能带入重复同名分类（「幽灵分类」根因），
+    // 先按 (label,type,IFNULL(parent_id,'')) 去重（交易/周期规则/子分类引用改指向保留者、
+    // 删掉重复），再建唯一索引。**必须先去重再建索引**，否则 CREATE UNIQUE INDEX 会因已有
+    // 重复行失败。悬空引用/孤儿 parentId 不违反唯一性、由 controller 载入时的 _healCategoryData
+    // 处理，此处只管重复行。
+    if (oldVersion < 10) {
+      // 真实库自 v1 起必有 categories/entries；recurring_rules 由上面 v7 块保证在前。
+      // 判存在只为兼容迁移测试的最小桩库，并顺带抵御异常损坏的安装。
+      if (await _tableExists(db, 'categories')) {
+        await _dedupeCategories(db);
+        await db.execute(_categoriesUniqueIndex);
+      }
+    }
   }
+
+  static Future<bool> _tableExists(Database db, String name) async {
+    final rows = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
+      <Object?>[name],
+    );
+    return rows.isNotEmpty;
+  }
+
+  /// 合并重复分类：保留每个 (label,type,IFNULL(parent_id,'')) 组内 rowid 最小的一条，
+  /// 其余的交易/周期规则/子分类 parent_id 引用改指向保留者后删除。仅在对应表存在时改写引用
+  /// （真实库都在，判存在是为兼容最小桩库）。
+  static Future<void> _dedupeCategories(Database db) async {
+    await db.execute('''
+      CREATE TEMP TABLE _cat_keep AS
+        SELECT id AS keep_id, label, type, IFNULL(parent_id, '') AS pkey
+        FROM categories
+        WHERE rowid IN (
+          SELECT MIN(rowid) FROM categories
+          GROUP BY label, type, IFNULL(parent_id, '')
+        )
+    ''');
+    await db.execute('''
+      CREATE TEMP TABLE _cat_map AS
+        SELECT c.id AS old_id, k.keep_id AS keep_id
+        FROM categories c
+        JOIN _cat_keep k
+          ON c.label = k.label AND c.type = k.type
+          AND IFNULL(c.parent_id, '') = k.pkey
+    ''');
+    if (await _tableExists(db, 'entries')) {
+      await db.execute('''
+        UPDATE entries
+          SET category_id =
+            (SELECT keep_id FROM _cat_map WHERE old_id = entries.category_id)
+          WHERE category_id IN
+            (SELECT old_id FROM _cat_map WHERE old_id <> keep_id)
+      ''');
+    }
+    if (await _tableExists(db, 'recurring_rules')) {
+      await db.execute('''
+        UPDATE recurring_rules
+          SET category_id =
+            (SELECT keep_id FROM _cat_map WHERE old_id = recurring_rules.category_id)
+          WHERE category_id IN
+            (SELECT old_id FROM _cat_map WHERE old_id <> keep_id)
+      ''');
+    }
+    await db.execute('''
+      UPDATE categories
+        SET parent_id =
+          (SELECT keep_id FROM _cat_map WHERE old_id = categories.parent_id)
+        WHERE parent_id IN (SELECT old_id FROM _cat_map WHERE old_id <> keep_id)
+    ''');
+    await db.execute('''
+      DELETE FROM categories
+        WHERE id IN (SELECT old_id FROM _cat_map WHERE old_id <> keep_id)
+    ''');
+    await db.execute('DROP TABLE _cat_map');
+    await db.execute('DROP TABLE _cat_keep');
+  }
+
+  /// 分类唯一约束：同一父级（顶级按空串归一）下不允许同 label+type 的重复分类。
+  static const String _categoriesUniqueIndex =
+      "CREATE UNIQUE INDEX idx_categories_unique "
+      "ON categories (label, type, IFNULL(parent_id, ''))";
 
   static const String _dailyBudgetsTable = '''
     CREATE TABLE daily_budgets (
@@ -203,6 +282,7 @@ class AppDatabase {
       parent_id TEXT
     )
     ''',
+    _categoriesUniqueIndex,
     '''
     CREATE TABLE monthly_budgets (
       scope_key TEXT PRIMARY KEY,

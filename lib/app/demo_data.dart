@@ -560,11 +560,22 @@ Category categoryById(String id, [List<Category>? categories]) {
   return categoryByIdFrom(categories ?? defaultCategories, id);
 }
 
+/// 未知 / 已删除分类的展示占位（id 以 `id` 参数回填，保证不同的悬空 id 仍可各自成行）。
+/// 仿 [accountById] 对缺失账户返回「已删除账户」——**绝不回退成列表首个分类**，否则
+/// 交易的悬空/孤儿分类引用会被冒名成第一个分类（默认为「餐饮」），在分类排行里渲染出
+/// 与真分类同名的「幽灵分类」（历史 bug）。
+Category _deletedCategoryPlaceholder(String id) => Category(
+  id: id,
+  label: '已删除分类',
+  type: EntryType.expense,
+  iconCode: 'category',
+);
+
 Category categoryByIdFrom(List<Category> categories, String id) {
   final source = categories.isEmpty ? defaultCategories : categories;
   return source.firstWhere(
     (category) => category.id == id,
-    orElse: () => source.first,
+    orElse: () => _deletedCategoryPlaceholder(id),
   );
 }
 

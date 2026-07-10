@@ -154,7 +154,9 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
     final children = reportCategoryChildStats(
       entries,
       categories,
-      stat.category.id,
+      // 用聚合原始 key 而非 stat.category.id：后者在「已删除分类」占位时 id 不等于 key，
+      // 会把下钻 scope 到错误的分类树（历史「幽灵餐饮」下钻显示错误子列表的成因）。
+      stat.categoryId,
       _dimension,
     );
     final color = _dimension == EntryType.expense ? veriExpense : veriIncome;

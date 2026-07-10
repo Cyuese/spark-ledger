@@ -39,22 +39,47 @@ bool hasChildren(List<Category> all, String parentId) {
 }
 
 /// 从直接父分类到顶级的祖先 id 列表（不含自身），由近到远。
+///
+/// **只沿存在的分类记录向上走**：一旦某个 `parentId` 指向的分类在列表里查不到（孤儿分类），
+/// 就在此截断，不把这个「不存在的父 id」计入祖先。否则孤儿分类会把一个查不到的 id 当成
+/// 顶级返回，配合 [categoryByIdFrom] 的占位回退渲染出「幽灵同名分类」（见 report_analysis）。
 List<String> ancestorIds(List<Category> all, String id) {
   final index = categoryIndex(all);
   final result = <String>[];
   final visited = <String>{id};
   var current = index[id]?.parentId;
-  while (current != null && visited.add(current)) {
+  while (current != null && index.containsKey(current) && visited.add(current)) {
     result.add(current);
     current = index[current]?.parentId;
   }
   return result;
 }
 
-/// 顶级祖先的 id（自身即顶级时返回自身；找不到时返回自身）。
+/// 顶级祖先的 id：自身即顶级（或 `parentId` 悬空的孤儿）时返回自身；交易引用的分类
+/// 本身不存在（悬空引用）时也返回该 id 本身——此时由展示层的 [categoryByIdFrom] 归为
+/// 「已删除分类」占位，不再冒名成列表首个分类。
 String rootIdOf(List<Category> all, String id) {
   final ancestors = ancestorIds(all, id);
   return ancestors.isEmpty ? id : ancestors.last;
+}
+
+/// 分类名归一化键：用于「创建/导入分类时判断是否已存在同名分类」，避免仅因大小写、首尾
+/// 空白、全半角差异而增殖出重复分类（如「餐饮」与「餐饮 」、「ＡＢＣ」与「abc」）。
+/// 这是**去重匹配**用的宽松键，不改变分类真实 `label`（展示仍用原始 label）。
+String normalizedCategoryLabel(String label) {
+  final buffer = StringBuffer();
+  for (final rune in label.runes) {
+    if (rune >= 0xFF01 && rune <= 0xFF5E) {
+      // 全角 ASCII（U+FF01–U+FF5E）→ 对应半角（相差 0xFEE0）。
+      buffer.writeCharCode(rune - 0xFEE0);
+    } else if (rune == 0x3000) {
+      // 全角空格 → 半角空格（随后 trim 掉）。
+      buffer.writeCharCode(0x20);
+    } else {
+      buffer.writeCharCode(rune);
+    }
+  }
+  return buffer.toString().trim().toLowerCase();
 }
 
 /// 所有后代分类 id（任意层级，不含自身），前序遍历顺序。

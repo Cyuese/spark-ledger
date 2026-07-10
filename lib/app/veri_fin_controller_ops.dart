@@ -1249,6 +1249,18 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       // 子分类类型必须与父分类一致。
       resolvedType = parent.type;
     }
+    // 同一父级下已存在同名同类型分类则不重复创建（避免增殖出重复同名分类，
+    // 也避免触犯分类唯一约束；名称按归一化比较，容忍大小写/空白/全半角差异）。
+    final normalized = normalizedCategoryLabel(trimmedLabel);
+    final duplicate = _categories.any(
+      (category) =>
+          category.type == resolvedType &&
+          category.parentId == parentId &&
+          normalizedCategoryLabel(category.label) == normalized,
+    );
+    if (duplicate) {
+      return;
+    }
     _categories.add(
       Category(
         id: _generateId('category'),
@@ -1889,6 +1901,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _pagePanels[PanelPageKind.home] = nextHomePanels;
     _pagePanels[PanelPageKind.reports] = nextReportPanels;
 
+    // 备份恢复零参照完整性校验，是「幽灵同名分类」的唯一现实入口（内部不一致的外部/
+    // 异构/手改备份）；覆盖后跑一遍自愈，堵住这个入口。落库统一由下方 _persistAllLedgerData。
+    _healCategoryData();
     _persistAllLedgerData();
     _store.write(_activeBookKey, _activeBookId);
     _store.write(_profileKey, jsonEncode(_profile.toJson()));

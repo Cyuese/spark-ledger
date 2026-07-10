@@ -1,3 +1,4 @@
+import '../category_tree.dart';
 import '../models.dart';
 
 /// 单行导入错误（行号从 1 计，含表头）。
@@ -347,8 +348,13 @@ ImportPlan buildImportPlan({
     if (name.isEmpty) {
       return '';
     }
+    // 名称按归一化比较（容忍大小写/首尾空白/全半角差异），命中即复用现有分类，
+    // 不因近似同名而增殖出重复分类。
+    final normalized = normalizedCategoryLabel(name);
     final match = workingCategories.firstWhere(
-      (category) => category.label == name && category.type == type,
+      (category) =>
+          category.type == type &&
+          normalizedCategoryLabel(category.label) == normalized,
       orElse: () => const Category(
         id: '',
         label: '',

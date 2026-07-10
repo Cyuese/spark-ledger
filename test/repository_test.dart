@@ -676,6 +676,75 @@ void main() {
     await dir.delete(recursive: true);
   });
 
+  test('v9 数据库升级到 v10 合并重复同名分类并建唯一索引', () async {
+    final dir = await Directory.systemTemp.createTemp('verifin_mig10');
+    final path = '${dir.path}/mig10.db';
+    // 建一个 v9 库：两个同名同类型顶级「餐饮」+ 各自被交易引用（模拟幽灵重复分类）。
+    final v9 = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 9,
+        onCreate: (db, _) async {
+          await db.execute('''
+            CREATE TABLE categories (
+              id TEXT PRIMARY KEY, label TEXT NOT NULL, type TEXT NOT NULL,
+              icon_code TEXT NOT NULL, sort_order INTEGER NOT NULL,
+              parent_id TEXT
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE entries (
+              id TEXT PRIMARY KEY, category_id TEXT NOT NULL
+            )
+          ''');
+        },
+      ),
+    );
+    await v9.insert('categories', <String, Object?>{
+      'id': 'dining1',
+      'label': '餐饮',
+      'type': 'expense',
+      'icon_code': 'restaurant',
+      'sort_order': 0,
+    });
+    await v9.insert('categories', <String, Object?>{
+      'id': 'dining2',
+      'label': '餐饮',
+      'type': 'expense',
+      'icon_code': 'restaurant',
+      'sort_order': 1,
+    });
+    await v9.insert('entries', <String, Object?>{
+      'id': 'e1',
+      'category_id': 'dining1',
+    });
+    await v9.insert('entries', <String, Object?>{
+      'id': 'e2',
+      'category_id': 'dining2',
+    });
+    await v9.close();
+
+    final db = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+    // 重复「餐饮」已合并为一条。
+    final cats = await db.db.rawQuery(
+      "SELECT id FROM categories WHERE label='餐饮' AND type='expense'",
+    );
+    expect(cats, hasLength(1));
+    final keptId = cats.single['id'] as String;
+    // 两条交易都改指向保留者。
+    final entries = await db.db.rawQuery('SELECT category_id FROM entries');
+    expect(entries.every((r) => r['category_id'] == keptId), isTrue);
+    // 唯一索引已建立。
+    final index = await db.db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='index' "
+      "AND name='idx_categories_unique'",
+    );
+    expect(index, hasLength(1));
+
+    await db.close();
+    await dir.delete(recursive: true);
+  });
+
   test('预算键值映射保存读回', () async {
     final repo = await openRepo();
     await repo.saveMonthlyBudgets(<String, double>{'default:2026-01': 800});
