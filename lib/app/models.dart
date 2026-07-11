@@ -590,6 +590,7 @@ class Account {
     required this.hidden,
     this.cardLast4 = '',
     this.cardNumber = '',
+    this.cardLast4Follows = true,
     this.creditLimit,
     this.statementDay,
     this.dueDay,
@@ -608,9 +609,13 @@ class Account {
   final String cardLast4;
 
   /// 完整卡号（选填，仅信用卡/储蓄卡 supportsCardLast4）。列表/首页仍只展示后四位，
-  /// 详情页可展示完整卡号并一键复制。「后四位跟随完整卡号」在编辑页由本地开关控制，
-  /// 不额外持久化：保存时若开关打开则把 cardLast4 同步为本值的末四位。
+  /// 详情页可展示完整卡号并一键复制。
   final String cardNumber;
+
+  /// 「后四位跟随完整卡号」开关，持久化（落库 + 进备份），忠实还原用户选择、不再靠反推。
+  /// true：后四位自动取 cardNumber 末四位（`cardLast4Of`），编辑页只读；false：后四位可手填、
+  /// 独立于完整卡号。新账户默认 true；仅信用卡/储蓄卡有意义。
+  final bool cardLast4Follows;
 
   /// 信用额度上限（选填，仅信用卡/信用账户 supportsCredit）。设置后展示已用/可用额度。
   final double? creditLimit;
@@ -634,6 +639,7 @@ class Account {
     bool? hidden,
     String? cardLast4,
     String? cardNumber,
+    bool? cardLast4Follows,
     double? creditLimit,
     bool clearCreditLimit = false,
     int? statementDay,
@@ -654,6 +660,7 @@ class Account {
       hidden: hidden ?? this.hidden,
       cardLast4: cardLast4 ?? this.cardLast4,
       cardNumber: cardNumber ?? this.cardNumber,
+      cardLast4Follows: cardLast4Follows ?? this.cardLast4Follows,
       creditLimit: clearCreditLimit ? null : creditLimit ?? this.creditLimit,
       statementDay: clearStatementDay
           ? null
@@ -676,6 +683,7 @@ class Account {
       'hidden': hidden,
       'cardLast4': cardLast4,
       'cardNumber': cardNumber,
+      'cardLast4Follows': cardLast4Follows,
       if (creditLimit != null) 'creditLimit': creditLimit,
       if (statementDay != null) 'statementDay': statementDay,
       if (dueDay != null) 'dueDay': dueDay,
@@ -696,6 +704,8 @@ class Account {
       hidden: json['hidden'] as bool? ?? false,
       cardLast4: json['cardLast4'] as String? ?? '',
       cardNumber: json['cardNumber'] as String? ?? '',
+      // 旧备份（无此字段）默认 false：保留其手填后四位、不因跟随把它冲成空。
+      cardLast4Follows: json['cardLast4Follows'] as bool? ?? false,
       creditLimit: (json['creditLimit'] as num?)?.toDouble(),
       statementDay: (json['statementDay'] as num?)?.toInt(),
       dueDay: (json['dueDay'] as num?)?.toInt(),
@@ -707,16 +717,6 @@ class Account {
 String cardLast4Of(String cardNumber) {
   final digits = cardNumber.replaceAll(RegExp(r'\D'), '');
   return digits.length > 4 ? digits.substring(digits.length - 4) : digits;
-}
-
-/// 打开账户编辑时「后四位跟随完整卡号」开关的初始状态（不额外持久化，由数据反推）：
-/// 完整卡号为空时——后四位也为空则跟随（新账户默认打开）、后四位已手填则不跟随（保留手填值）；
-/// 完整卡号非空时——后四位正好等于其末四位则跟随、否则视为手填、不跟随。
-bool initialCardLast4Follows(String cardNumber, String cardLast4) {
-  if (cardNumber.isEmpty) {
-    return cardLast4.isEmpty;
-  }
-  return cardLast4 == cardLast4Of(cardNumber);
 }
 
 class AccountGroup {

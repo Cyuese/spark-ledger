@@ -180,6 +180,43 @@ void main() {
     expect(find.textContaining('8321'), findsOneWidget);
   });
 
+  testWidgets('CardNumberFields 受控：开关反映 follows，打开时同步后四位', (
+    WidgetTester tester,
+  ) async {
+    final numberController = TextEditingController(text: '6222000000001234');
+    final last4Controller = TextEditingController(text: '9999');
+    var follows = false;
+
+    await tester.pumpWidget(
+      zhMaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) => CardNumberFields(
+              numberController: numberController,
+              last4Controller: last4Controller,
+              follows: follows,
+              onFollowsChanged: (value) => setState(() => follows = value),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // 初始 follows=false：开关关、后四位保留手填值。
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+    expect(last4Controller.text, '9999');
+
+    // 打开跟随：开关回传 true、后四位同步为完整卡号末四位。
+    await tester.tap(find.byType(Switch));
+    await tester.pump();
+    expect(follows, isTrue);
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+    expect(last4Controller.text, '1234');
+
+    numberController.dispose();
+    last4Controller.dispose();
+  });
+
   testWidgets('switches asset account view and persists collapsed sections', (
     WidgetTester tester,
   ) async {

@@ -52,9 +52,7 @@ class _CreditRepaymentPageState extends State<CreditRepaymentPage> {
   /// 可作扣款账户的候选：非隐藏且不是本账户（不能从自己还给自己）。
   List<Account> _payableAccounts(VeriFinController controller) {
     return controller.accounts
-        .where(
-          (account) => !account.hidden && account.id != widget.account.id,
-        )
+        .where((account) => !account.hidden && account.id != widget.account.id)
         .toList();
   }
 

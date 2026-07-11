@@ -13,7 +13,7 @@ class AppDatabase {
   final Database db;
 
   static const String defaultDatabaseName = 'verifin.db';
-  static const int schemaVersion = 11;
+  static const int schemaVersion = 12;
 
   /// 打开（或创建）数据库。测试通过 [factory]/[path] 注入 ffi 与内存路径；
   /// 真实平台留空则由 [resolveDatabaseFactory]/[resolveDatabasePath] 决定。
@@ -126,6 +126,13 @@ class AppDatabase {
         "ALTER TABLE accounts ADD COLUMN card_number TEXT NOT NULL DEFAULT ''",
       );
       await db.execute('ALTER TABLE accounts ADD COLUMN credit_limit REAL');
+    }
+    // v11 → v12：「后四位跟随完整卡号」开关持久化。旧账户默认 0（不跟随），
+    // 保留其可能手填的后四位、不因跟随空卡号被冲成空。
+    if (oldVersion < 12 && await _tableExists(db, 'accounts')) {
+      await db.execute(
+        'ALTER TABLE accounts ADD COLUMN card_last4_follows INTEGER NOT NULL DEFAULT 0',
+      );
     }
   }
 
@@ -265,6 +272,7 @@ class AppDatabase {
       hidden INTEGER NOT NULL,
       card_last4 TEXT NOT NULL,
       card_number TEXT NOT NULL DEFAULT '',
+      card_last4_follows INTEGER NOT NULL DEFAULT 1,
       credit_limit REAL,
       sort_order INTEGER NOT NULL,
       statement_day INTEGER,

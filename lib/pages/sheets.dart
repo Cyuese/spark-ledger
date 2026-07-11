@@ -813,34 +813,41 @@ Future<String?> showTextInputDialog({
   return trimmed;
 }
 
-/// 编辑完整卡号 + 后四位（含「后四位跟随卡号」开关）。确认返回归一化后的两值，取消返回 null。
-Future<({String number, String last4})?> showCardNumberDialog({
+/// 编辑完整卡号 + 后四位（含「后四位跟随卡号」开关）。确认返回归一化后的两值与开关态，
+/// 取消返回 null。开关态由调用方持久化（`Account.cardLast4Follows`），不再靠反推。
+Future<({String number, String last4, bool follows})?> showCardNumberDialog({
   required BuildContext context,
   required String initialNumber,
   required String initialLast4,
+  required bool initialFollows,
 }) async {
   final numberController = TextEditingController(text: initialNumber);
   final last4Controller = TextEditingController(text: initialLast4);
+  var follows = initialFollows;
   final confirmed = await showDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: Text(AppLocalizations.of(context).cardNumberTitle),
-      content: SingleChildScrollView(
-        child: CardNumberFields(
-          numberController: numberController,
-          last4Controller: last4Controller,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text(AppLocalizations.of(context).cardNumberTitle),
+        content: SingleChildScrollView(
+          child: CardNumberFields(
+            numberController: numberController,
+            last4Controller: last4Controller,
+            follows: follows,
+            onFollowsChanged: (value) => setState(() => follows = value),
+          ),
         ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocalizations.of(context).commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocalizations.of(context).commonConfirm),
+          ),
+        ],
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: Text(AppLocalizations.of(context).commonCancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(true),
-          child: Text(AppLocalizations.of(context).commonConfirm),
-        ),
-      ],
     ),
   );
   final number = numberController.text.trim();
@@ -852,7 +859,7 @@ Future<({String number, String last4})?> showCardNumberDialog({
   if (confirmed != true) {
     return null;
   }
-  return (number: number, last4: last4);
+  return (number: number, last4: last4, follows: follows);
 }
 
 Future<void> confirmDeleteAccount(

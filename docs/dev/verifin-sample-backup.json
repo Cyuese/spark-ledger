@@ -337,6 +337,7 @@
         "hidden": false,
         "cardLast4": "8321",
         "cardNumber": "6225888812348321",
+        "cardLast4Follows": true,
         "creditLimit": 30000.0,
         "statementDay": 5,
         "dueDay": 25
@@ -369,7 +370,8 @@
         "note": "工资和主要转账账户",
         "includeInAssets": true,
         "hidden": false,
-        "cardLast4": "6608"
+        "cardLast4": "6608",
+        "cardLast4Follows": false
       },
       {
         "id": "acc_savings",

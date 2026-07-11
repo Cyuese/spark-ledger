@@ -10,9 +10,7 @@ import 'support/test_harness.dart';
 void main() {
   useTestDatabases();
 
-  testWidgets('信用卡还款：默认预填欠款，确认生成转账并抵消欠款', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('信用卡还款：默认预填欠款，确认生成转账并抵消欠款', (WidgetTester tester) async {
     final store = LocalKeyValueStore();
     final controller = await makeController(store);
     final card = Account(
@@ -84,15 +82,14 @@ void main() {
     expect(controller.accountBalance(card), 0);
     expect(controller.accountBalance(bank), 500);
     final repayment = controller.entries.firstWhere(
-      (entry) => entry.type == EntryType.transfer && entry.toAccountId == card.id,
+      (entry) =>
+          entry.type == EntryType.transfer && entry.toAccountId == card.id,
     );
     expect(repayment.amount, 500);
     expect(repayment.accountId, bank.id);
   });
 
-  testWidgets('信用卡还款：无账户（代还）只增额度不扣任何账户', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('信用卡还款：无账户（代还）只增额度不扣任何账户', (WidgetTester tester) async {
     final store = LocalKeyValueStore();
     final controller = await makeController(store);
     final card = Account(
@@ -146,7 +143,8 @@ void main() {
     // 欠款被抵消，且没有从任何账户扣款（转账 accountId 为空）。
     expect(controller.accountBalance(card), 0);
     final repayment = controller.entries.firstWhere(
-      (entry) => entry.type == EntryType.transfer && entry.toAccountId == card.id,
+      (entry) =>
+          entry.type == EntryType.transfer && entry.toAccountId == card.id,
     );
     expect(repayment.accountId, '');
     expect(repayment.amount, 300);

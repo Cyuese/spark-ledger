@@ -18,6 +18,8 @@ class _AddAccountPageState extends State<AddAccountPage> {
   String _iconCode = 'wallet';
   String _groupId = 'ungrouped';
   bool _iconManuallySelected = false;
+  // 「后四位跟随完整卡号」开关，新账户默认打开。
+  bool _cardLast4Follows = true;
 
   @override
   void initState() {
@@ -83,10 +85,11 @@ class _AddAccountPageState extends State<AddAccountPage> {
                 const SizedBox(height: 10),
                 if (_type.supportsCardLast4) ...<Widget>[
                   CardNumberFields(
-                    // key 随类型变化，切换账户类型时重置内部跟随开关状态。
-                    key: ValueKey<AccountType>(_type),
                     numberController: _cardNumberController,
                     last4Controller: _cardLast4Controller,
+                    follows: _cardLast4Follows,
+                    onFollowsChanged: (value) =>
+                        setState(() => _cardLast4Follows = value),
                   ),
                   const SizedBox(height: 10),
                 ],
@@ -149,6 +152,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
         if (!_type.supportsCardLast4) {
           _cardLast4Controller.clear();
           _cardNumberController.clear();
+          _cardLast4Follows = true;
         }
       });
     }
@@ -249,6 +253,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
         cardNumber: _type.supportsCardLast4
             ? _cardNumberController.text.trim()
             : '',
+        cardLast4Follows: _type.supportsCardLast4 ? _cardLast4Follows : true,
       ),
     );
     Navigator.of(context).pop();
