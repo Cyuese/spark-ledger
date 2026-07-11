@@ -11,6 +11,7 @@ import '../app/series_math.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
+import 'pending_refunds_page.dart';
 import 'sheets.dart';
 import 'transaction_detail_page.dart';
 
@@ -203,12 +204,26 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         _selectedIds.clear();
                       }),
                     )
-                  else if (entries.isNotEmpty)
-                    HeaderAction(
-                      icon: Icons.checklist,
-                      tooltip: AppLocalizations.of(context).multiSelect,
-                      onPressed: () => setState(() => _selectionMode = true),
-                    ),
+                  else ...<Widget>[
+                    if (controller.pendingRefunds.isNotEmpty)
+                      HeaderAction(
+                        icon: Icons.schedule,
+                        tooltip: AppLocalizations.of(
+                          context,
+                        ).pendingRefundsTitle,
+                        onPressed: () => Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const PendingRefundsPage(),
+                          ),
+                        ),
+                      ),
+                    if (entries.isNotEmpty)
+                      HeaderAction(
+                        icon: Icons.checklist,
+                        tooltip: AppLocalizations.of(context).multiSelect,
+                        onPressed: () => setState(() => _selectionMode = true),
+                      ),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),

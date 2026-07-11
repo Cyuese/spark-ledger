@@ -2666,6 +2666,30 @@ abstract class AppLocalizations {
   /// **'待到账 {amount}'**
   String refundPendingTotal(String amount);
 
+  /// No description provided for @pendingRefundsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'待退款'**
+  String get pendingRefundsTitle;
+
+  /// No description provided for @pendingRefundsSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'已申请、还没到账的退款'**
+  String get pendingRefundsSubtitle;
+
+  /// No description provided for @pendingRefundsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有待到账的退款'**
+  String get pendingRefundsEmpty;
+
+  /// No description provided for @pendingRefundsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 笔在路上'**
+  String pendingRefundsCount(int count);
+
   /// No description provided for @pickTypeTitle.
   ///
   /// In zh, this message translates to:

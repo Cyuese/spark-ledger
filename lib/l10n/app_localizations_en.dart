@@ -1409,6 +1409,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get pendingRefundsTitle => 'Pending refunds';
+
+  @override
+  String get pendingRefundsSubtitle => 'Refunds requested but not yet received';
+
+  @override
+  String get pendingRefundsEmpty => 'No pending refunds';
+
+  @override
+  String pendingRefundsCount(int count) {
+    return '$count on the way';
+  }
+
+  @override
   String get pickTypeTitle => 'Choose type';
 
   @override

@@ -4,6 +4,7 @@ import 'package:verifin/app/app_theme.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/app/veri_fin_scope.dart';
 import 'package:verifin/local_storage/local_storage.dart';
+import 'package:verifin/pages/pending_refunds_page.dart';
 import 'package:verifin/pages/transaction_detail_page.dart';
 
 import 'support/test_harness.dart';
@@ -114,5 +115,54 @@ void main() {
     expect(find.text('转账'), findsWidgets);
     // 「退款」不作为可选类型（选项弹窗里不出现）。
     expect(find.widgetWithText(ListTile, '退款'), findsNothing);
+  });
+
+  testWidgets('待退款清单：显示待到账退款并可标记已到账', (WidgetTester tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final bookId = controller.activeBook.id;
+    controller.addEntry(
+      LedgerEntry(
+        id: 'e3',
+        bookId: bookId,
+        type: EntryType.expense,
+        amount: 100,
+        categoryId: 'dining',
+        accountId: '',
+        note: '退货订单',
+        occurredAt: DateTime(2026, 7, 4),
+      ),
+    );
+    // 待到账退款（settledAt 为 null）。
+    controller.addRefund(
+      expenseId: 'e3',
+      amount: 40,
+      accountId: '',
+      initiatedAt: DateTime(2026, 7, 4),
+    );
+    expect(controller.pendingRefunds.length, 1);
+
+    await tester.binding.setSurfaceSize(const Size(460, 2000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(
+          theme: buildVeriFinTheme(Brightness.light),
+          home: const PendingRefundsPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('退货订单'), findsOneWidget);
+    expect(find.text('标记已到账'), findsOneWidget);
+
+    await tester.tap(find.text('标记已到账'));
+    await tester.pumpAndSettle();
+
+    // 核销后不再是待退款，且原支出净额降为 60。
+    expect(controller.pendingRefunds, isEmpty);
+    expect(controller.entries.firstWhere((e) => e.id == 'e3').netAmount, 60);
   });
 }

@@ -841,6 +841,17 @@
       }
     }
   },
+  "pendingRefundsTitle": "待退款",
+  "pendingRefundsSubtitle": "已申请、还没到账的退款",
+  "pendingRefundsEmpty": "没有待到账的退款",
+  "pendingRefundsCount": "{count} 笔在路上",
+  "@pendingRefundsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pickTypeTitle": "选择类型",
   "noteEditTitle": "编辑备注",
   "transferNeedsTwoAccounts": "转账需要两个不同的账户,请先添加转入账户。",

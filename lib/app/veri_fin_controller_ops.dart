@@ -955,6 +955,15 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return List<LedgerEntry>.unmodifiable(list);
   }
 
+  /// 当前账本所有「待到账」退款（发起日倒序），用于「待退款」清单页。
+  List<LedgerEntry> get pendingRefunds {
+    final list = _entries
+        .where((e) => e.bookId == _activeBookId && e.isPendingRefund)
+        .toList();
+    list.sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    return List<LedgerEntry>.unmodifiable(list);
+  }
+
   /// 某笔支出已挂的退款总额（含待到账），用于「剩余可退」与超额拦截。
   double refundedTotalFor(String expenseId) {
     var sum = 0.0;

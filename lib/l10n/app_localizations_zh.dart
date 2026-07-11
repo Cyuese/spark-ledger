@@ -1387,6 +1387,20 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get pendingRefundsTitle => '待退款';
+
+  @override
+  String get pendingRefundsSubtitle => '已申请、还没到账的退款';
+
+  @override
+  String get pendingRefundsEmpty => '没有待到账的退款';
+
+  @override
+  String pendingRefundsCount(int count) {
+    return '$count 笔在路上';
+  }
+
+  @override
   String get pickTypeTitle => '选择类型';
 
   @override
