@@ -14,3 +14,13 @@ Future<String> aiChatComplete({
 }) async {
   throw AiException(AiErrorCode.notSupported);
 }
+
+/// 测试宿主（无 dart:io）不支持流式网络请求。
+Stream<String> aiChatStream({
+  required AiSettings settings,
+  required List<Map<String, String>> messages,
+  double temperature = 0,
+  Duration timeout = const Duration(seconds: 60),
+}) async* {
+  throw AiException(AiErrorCode.notSupported);
+}
