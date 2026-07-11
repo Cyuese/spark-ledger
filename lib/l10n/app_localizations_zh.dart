@@ -918,6 +918,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dueDay => '还款日';
 
   @override
+  String get creditLimitLabel => '信用额度';
+
+  @override
+  String get creditLimitEditTitle => '设置信用额度';
+
+  @override
+  String get creditUsedLabel => '已用';
+
+  @override
+  String get creditAvailableLabel => '可用额度';
+
+  @override
+  String get currentBillLabel => '本期账单';
+
+  @override
   String monthlyDayLabel(int day) {
     return '每月 $day 日';
   }

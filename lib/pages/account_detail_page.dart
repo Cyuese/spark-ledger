@@ -78,7 +78,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                 ],
               ),
               const SizedBox(height: 10),
-              if (currentAccount.type == AccountType.creditCard &&
+              if (currentAccount.type.supportsCredit &&
                   currentAccount.dueDay != null) ...<Widget>[
                 _CreditCardDueBanner(dueDay: currentAccount.dueDay!),
                 const SizedBox(height: 10),
@@ -109,6 +109,16 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                 ),
               ),
               const SizedBox(height: 10),
+              if (currentAccount.type.supportsCredit &&
+                  (currentAccount.creditLimit != null ||
+                      currentAccount.statementDay != null)) ...<Widget>[
+                _CreditSummaryCard(
+                  account: currentAccount,
+                  balance: balance,
+                  entries: entries,
+                ),
+                const SizedBox(height: 10),
+              ],
               VeriCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,8 +323,17 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                         const Divider(),
                       ],
                     ],
-                    if (currentAccount.type ==
-                        AccountType.creditCard) ...<Widget>[
+                    if (currentAccount.type.supportsCredit) ...<Widget>[
+                      SettingsRow(
+                        icon: Icons.speed_outlined,
+                        title: AppLocalizations.of(context).creditLimitLabel,
+                        trailing: currentAccount.creditLimit == null
+                            ? AppLocalizations.of(context).notSet
+                            : formatAmount(currentAccount.creditLimit!),
+                        trailingIcon: Icons.chevron_right,
+                        onTap: () => _editCreditLimit(currentAccount),
+                      ),
+                      const Divider(),
                       SettingsRow(
                         icon: Icons.event_note_outlined,
                         title: AppLocalizations.of(context).statementDay,
@@ -512,11 +531,15 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       labelOf: (value) => value.label(AppLocalizations.of(context)),
     );
     if (selected != null && mounted) {
+      final losesCredit = !selected.supportsCredit;
       VeriFinScope.of(context).updateAccount(
         account.copyWith(
           type: selected,
           cardLast4: selected.supportsCardLast4 ? account.cardLast4 : '',
           cardNumber: selected.supportsCardLast4 ? account.cardNumber : '',
+          clearCreditLimit: losesCredit,
+          clearStatementDay: losesCredit,
+          clearDueDay: losesCredit,
         ),
       );
     }
@@ -558,6 +581,25 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).copiedToClipboard)),
+    );
+  }
+
+  /// 设置信用额度；输入 0 视为清除额度（不再展示可用额度）。
+  Future<void> _editCreditLimit(Account account) async {
+    final amount = await showNumberPadSheet(
+      context,
+      title: AppLocalizations.of(context).creditLimitEditTitle,
+      initialAmount: account.creditLimit,
+      allowZero: true,
+    );
+    if (amount == null || !mounted) {
+      return;
+    }
+    VeriFinScope.of(context).updateAccount(
+      account.copyWith(
+        creditLimit: amount <= 0 ? null : amount,
+        clearCreditLimit: amount <= 0,
+      ),
     );
   }
 
@@ -915,6 +957,157 @@ class _CreditCardDueBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 信用类账户（信用卡 / 信用账户）额度与本期账单卡片。
+/// 设了额度展示已用 / 可用 + 使用进度条；设了账单日展示本期账单（当前账单周期净消费）。
+class _CreditSummaryCard extends StatelessWidget {
+  const _CreditSummaryCard({
+    required this.account,
+    required this.balance,
+    required this.entries,
+  });
+
+  final Account account;
+  final double balance;
+  final List<LedgerEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final limit = account.creditLimit;
+    final statementDay = account.statementDay;
+    final used = usedCredit(balance);
+
+    return VeriCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (limit != null) ...<Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    l10n.creditLimitLabel,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  formatAmount(limit),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(veriRadiusSm),
+              child: LinearProgressIndicator(
+                value: limit > 0 ? (used / limit).clamp(0.0, 1.0) : 0.0,
+                minHeight: 8,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                color: veriBlue,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _CreditStat(
+                    label: l10n.creditUsedLabel,
+                    value: formatAmount(used),
+                  ),
+                ),
+                Expanded(
+                  child: _CreditStat(
+                    label: l10n.creditAvailableLabel,
+                    value: formatAmount(availableCredit(limit, balance) ?? 0),
+                    highlight: true,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (limit != null && statementDay != null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(height: 1),
+            ),
+          if (statementDay != null)
+            _CreditStat(
+              label: l10n.currentBillLabel,
+              value: formatAmount(
+                billingCycleExpense(
+                  entries,
+                  account.id,
+                  currentBillingCycle(statementDay, DateTime.now()),
+                ),
+              ),
+              hint: _billingHint(l10n, statementDay, account.dueDay),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _billingHint(AppLocalizations l10n, int statementDay, int? dueDay) {
+    final parts = <String>[
+      '${l10n.statementDay} ${l10n.monthlyDayLabel(statementDay)}',
+      if (dueDay != null) '${l10n.dueDay} ${l10n.monthlyDayLabel(dueDay)}',
+    ];
+    return parts.join(' · ');
+  }
+}
+
+class _CreditStat extends StatelessWidget {
+  const _CreditStat({
+    required this.label,
+    required this.value,
+    this.hint,
+    this.highlight = false,
+  });
+
+  final String label;
+  final String value;
+  final String? hint;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: highlight ? veriBlue : null,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        if (hint != null) ...<Widget>[
+          const SizedBox(height: 2),
+          Text(
+            hint!,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

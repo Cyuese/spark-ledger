@@ -933,6 +933,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dueDay => 'Due day';
 
   @override
+  String get creditLimitLabel => 'Credit limit';
+
+  @override
+  String get creditLimitEditTitle => 'Set credit limit';
+
+  @override
+  String get creditUsedLabel => 'Used';
+
+  @override
+  String get creditAvailableLabel => 'Available';
+
+  @override
+  String get currentBillLabel => 'This cycle';
+
+  @override
   String monthlyDayLabel(int day) {
     return 'Day $day of each month';
   }

@@ -1808,6 +1808,36 @@ abstract class AppLocalizations {
   /// **'还款日'**
   String get dueDay;
 
+  /// No description provided for @creditLimitLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'信用额度'**
+  String get creditLimitLabel;
+
+  /// No description provided for @creditLimitEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置信用额度'**
+  String get creditLimitEditTitle;
+
+  /// No description provided for @creditUsedLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'已用'**
+  String get creditUsedLabel;
+
+  /// No description provided for @creditAvailableLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'可用额度'**
+  String get creditAvailableLabel;
+
+  /// No description provided for @currentBillLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'本期账单'**
+  String get currentBillLabel;
+
   /// No description provided for @monthlyDayLabel.
   ///
   /// In zh, this message translates to:

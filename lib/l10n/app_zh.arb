@@ -549,6 +549,11 @@
   "clearOption": "不设置",
   "statementDay": "账单日",
   "dueDay": "还款日",
+  "creditLimitLabel": "信用额度",
+  "creditLimitEditTitle": "设置信用额度",
+  "creditUsedLabel": "已用",
+  "creditAvailableLabel": "可用额度",
+  "currentBillLabel": "本期账单",
   "monthlyDayLabel": "每月 {day} 日",
   "@monthlyDayLabel": {
     "placeholders": {

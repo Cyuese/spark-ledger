@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../l10n/app_localizations.dart';
 import 'account_icon_assets.dart';
 import 'app_theme.dart';
+import 'credit_card.dart';
 import 'demo_data.dart';
 import 'ledger_math.dart';
 import 'models.dart';
@@ -1264,35 +1265,56 @@ class _AccountRow extends StatelessWidget {
               AccountIconBox(iconCode: account.iconCode),
               const SizedBox(width: 10),
               Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    text: account.name,
-                    children: <TextSpan>[
-                      if (account.cardLast4.isNotEmpty &&
-                          account.type.supportsCardLast4)
-                        TextSpan(
-                          text: ' (${account.cardLast4})',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.42),
-                                fontSize:
-                                    (Theme.of(
-                                          context,
-                                        ).textTheme.titleMedium?.fontSize ??
-                                        16) *
-                                    0.82,
-                                fontWeight: FontWeight.w700,
-                              ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text.rich(
+                      TextSpan(
+                        text: account.name,
+                        children: <TextSpan>[
+                          if (account.cardLast4.isNotEmpty &&
+                              account.type.supportsCardLast4)
+                            TextSpan(
+                              text: ' (${account.cardLast4})',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.42),
+                                    fontSize:
+                                        (Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.fontSize ??
+                                                16) *
+                                        0.82,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (account.type.supportsCredit &&
+                        account.creditLimit != null)
+                      Text(
+                        '${AppLocalizations.of(context).creditAvailableLabel} '
+                        '${formatAmount(availableCredit(account.creditLimit, balance) ?? 0)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.55),
                         ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(width: 10),
