@@ -200,4 +200,37 @@ void main() {
     expect(controller.remainingRefundable('e1'), 0);
     controller.dispose();
   });
+
+  test('applyImportEntries：带退款标量的导入交易当场自愈成退款条目', () async {
+    final controller = await makeController();
+    final bookId = controller.activeBook.id;
+    controller.addAccount(account('A', bookId, 1000));
+    // 模拟平台导入（如一木「退款」列）：一条带 refundedAmount 标量的支出。
+    controller.applyImportEntries(
+      entries: <LedgerEntry>[
+        LedgerEntry(
+          id: 'imp1',
+          bookId: bookId,
+          type: EntryType.expense,
+          amount: 100,
+          categoryId: 'dining',
+          accountId: 'A',
+          note: '',
+          occurredAt: DateTime(2026, 7, 4),
+          refundedAmount: 30,
+        ),
+      ],
+      candidateAccounts: const <Account>[],
+      candidateCategories: const <Category>[],
+    );
+    // 标量当场迁成一条已到账退款条目，净额 = 70，余额 = 1000 − 100 + 30 = 930。
+    final refunds = controller.refundsForEntry('imp1');
+    expect(refunds.length, 1);
+    expect(refunds.single.amount, 30);
+    expect(refunds.single.settledAt, isNotNull);
+    expect(controller.entries.firstWhere((e) => e.id == 'imp1').netAmount, 70);
+    final a = controller.accounts.firstWhere((x) => x.id == 'A');
+    expect(controller.accountBalance(a), 930);
+    controller.dispose();
+  });
 }

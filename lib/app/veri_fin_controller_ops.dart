@@ -902,6 +902,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     }
     _entries.addAll(entries);
     _entries.sort(_compareEntriesLatestFirst);
+    // 导入数据里的旧式单标量退款（如一木账单的「退款」列）迁成关联退款条目、
+    // 并重算净额缓存，使余额/统计当场即正确（不必等下次载入自愈）。
+    _syncRefundData();
     _persistAccounts();
     _persistCategories();
     _persistEntries();
