@@ -37,7 +37,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byType(BudgetPanel),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     await tester.tap(find.byType(BudgetPanel));
     await tester.pumpAndSettle();
@@ -63,14 +63,14 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('近 6 月趋势'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('近 6 月趋势'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('餐饮'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('餐饮'), findsOneWidget);
     await tester.ensureVisible(find.text('餐饮'));
@@ -88,7 +88,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('预算设置'),
       -300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     await tester.tap(find.byIcon(Icons.arrow_back).first);
     await tester.pumpAndSettle();
@@ -115,7 +115,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byType(BudgetPanel),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     tester.widget<BudgetPanel>(find.byType(BudgetPanel)).onTap();
     await tester.pumpAndSettle();
@@ -124,7 +124,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('午餐'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('午餐'), findsOneWidget);
 
@@ -177,7 +177,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byType(BudgetPanel),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
 
     expect(find.text('餐饮超出 25'), findsOneWidget);
@@ -188,13 +188,13 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('近 6 月趋势'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('近 6 月趋势'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('历史对比'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('历史对比'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.history));
@@ -207,14 +207,14 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('餐饮已超支'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('餐饮已超支'), findsOneWidget);
     expect(find.textContaining('已超出 25'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('上月 40'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('上月 40'), findsOneWidget);
 
@@ -252,7 +252,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byType(BudgetPanel),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
 
     // 支出 150、预算 100：剩余应显示 -50（负数），而不再夹到 0。

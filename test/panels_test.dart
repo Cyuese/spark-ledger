@@ -19,7 +19,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('panel_settings_entry_home')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('4个首页面板'), findsOneWidget);
     expect(find.byType(CalendarPreview), findsOneWidget);
@@ -52,13 +52,13 @@ void main() {
 
     expect(find.byType(BudgetPanel), findsNothing);
     // 回到顶部确认支出走势仍然渲染。
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, 800));
+    await tester.drag(firstVerticalScrollable(), const Offset(0, 800));
     await tester.pumpAndSettle();
     expect(find.byType(HomeTrendPanel), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('panel_settings_entry_home')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('2个首页面板'), findsOneWidget);
     expect(find.byType(CalendarPreview), findsOneWidget);
@@ -81,7 +81,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('panel_settings_entry_reports')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('6个看板面板'), findsOneWidget);
 
@@ -135,7 +135,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('panel_settings_entry_home')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     expect(find.text('3个首页面板'), findsOneWidget);
     await tester.tap(find.byKey(const Key('panel_settings_entry_home')));

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/local_storage/local_storage.dart';
@@ -77,7 +76,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('必要'),
       250,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: firstVerticalScrollable(),
     );
     await tester.pumpAndSettle();
 

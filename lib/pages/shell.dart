@@ -26,6 +26,7 @@ class VeriFinShell extends StatefulWidget {
 class _VeriFinShellState extends State<VeriFinShell> {
   int _index = 0;
   DateTime? _lastBackPressedAt;
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
@@ -67,7 +68,19 @@ class _VeriFinShellState extends State<VeriFinShell> {
   void dispose() {
     AppPlatformBridge.clearQuickEntryHandler();
     AppPlatformBridge.clearSharedCaptureHandler();
+    _pageController.dispose();
     super.dispose();
+  }
+
+  /// 切换到指定 Tab：底部导航点击与返回键均走此入口，带一段短动画；
+  /// 页面索引由 [PageView.onPageChanged] 统一回写 [_index]，不在此处 setState，
+  /// 避免与手势滑动产生双写。
+  void _goToTab(int index) {
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -88,7 +101,16 @@ class _VeriFinShellState extends State<VeriFinShell> {
         _handleRootBack();
       },
       child: Scaffold(
-        body: SafeArea(child: pages[_index]),
+        // 四个主页面横向 PageView：左右滑动切换。图表（onHorizontalDrag）与
+        // 交易行 Dismissible 都是更深层的手势消费者，会在竞技场里本地胜出，
+        // 故在图表/可滑删行上拖动仍走各自交互，仅空白区滑动才切页。
+        body: SafeArea(
+          child: PageView(
+            controller: _pageController,
+            onPageChanged: (value) => setState(() => _index = value),
+            children: pages,
+          ),
+        ),
         // 自绘 FAB：由单个 InkWell 同时持有点击与长按（FloatingActionButton 内部
         // InkWell 会吞掉外层 GestureDetector 的长按，故不用它）。外观沿用 FAB 主题
         // 的 veriRoyal 圆角方形 + 白色加号。
@@ -119,7 +141,7 @@ class _VeriFinShellState extends State<VeriFinShell> {
             : null,
         bottomNavigationBar: VeriBottomNav(
           currentIndex: _index,
-          onTap: (value) => setState(() => _index = value),
+          onTap: _goToTab,
         ),
       ),
     );
@@ -127,7 +149,7 @@ class _VeriFinShellState extends State<VeriFinShell> {
 
   void _handleRootBack() {
     if (_index != 0) {
-      setState(() => _index = 0);
+      _goToTab(0);
       return;
     }
     final now = DateTime.now();
@@ -186,7 +208,7 @@ class _VeriFinShellState extends State<VeriFinShell> {
       return;
     }
     if (_index != 0) {
-      setState(() => _index = 0);
+      _goToTab(0);
       await Future<void>.delayed(const Duration(milliseconds: 120));
     }
     if (!mounted) {

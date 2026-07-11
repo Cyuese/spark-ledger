@@ -78,6 +78,21 @@ Future<void> tapBottomTab(WidgetTester tester, int index) async {
   await tester.pumpAndSettle();
 }
 
+/// 当前页面自身的纵向滚动视图。
+///
+/// 主壳用横向 [PageView] 承载四个 Tab（支持左右滑动切换页面），它本身也是一个
+/// [Scrollable]，会排在 `find.byType(Scrollable).first` 之前——直接取 `.first`
+/// 会误命中横向的 PageView。此助手按滚动轴过滤，只取纵向 Scrollable，
+/// 在已 push 的子页（PageView 变 offstage、不在场）下同样正确。
+Finder firstVerticalScrollable() => find
+    .byWidgetPredicate(
+      (widget) =>
+          widget is Scrollable &&
+          (widget.axisDirection == AxisDirection.down ||
+              widget.axisDirection == AxisDirection.up),
+    )
+    .first;
+
 Future<void> addTestAccount(WidgetTester tester, String name) async {
   await tapBottomTab(tester, 1);
   await tester.tap(find.byTooltip('资产操作'));
