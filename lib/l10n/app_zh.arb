@@ -146,6 +146,7 @@
   "entryTypeExpense": "支出",
   "entryTypeIncome": "收入",
   "entryTypeTransfer": "转账",
+  "entryTypeRefund": "退款",
   "themeSystem": "跟随系统",
   "themeLight": "浅色",
   "themeDark": "深色",

@@ -120,6 +120,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       EntryType.expense => formatExpenseAmount(_amount),
       EntryType.income => '+${formatIncomeAmount(_amount)}',
       EntryType.transfer => formatAmount(_amount),
+      EntryType.refund => '+${formatIncomeAmount(_amount)}',
     };
 
     return Scaffold(

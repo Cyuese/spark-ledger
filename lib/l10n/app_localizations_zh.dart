@@ -171,6 +171,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get entryTypeTransfer => '转账';
 
   @override
+  String get entryTypeRefund => '退款';
+
+  @override
   String get themeSystem => '跟随系统';
 
   @override

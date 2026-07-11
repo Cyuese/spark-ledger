@@ -410,6 +410,12 @@ abstract class AppLocalizations {
   /// **'转账'**
   String get entryTypeTransfer;
 
+  /// No description provided for @entryTypeRefund.
+  ///
+  /// In zh, this message translates to:
+  /// **'退款'**
+  String get entryTypeRefund;
+
   /// No description provided for @themeSystem.
   ///
   /// In zh, this message translates to:

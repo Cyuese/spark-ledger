@@ -52,6 +52,7 @@
   "entryTypeExpense": "Expense",
   "entryTypeIncome": "Income",
   "entryTypeTransfer": "Transfer",
+  "entryTypeRefund": "Refund",
   "themeSystem": "Follow system",
   "themeLight": "Light",
   "themeDark": "Dark",

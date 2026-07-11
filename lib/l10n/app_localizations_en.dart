@@ -173,6 +173,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entryTypeTransfer => 'Transfer';
 
   @override
+  String get entryTypeRefund => 'Refund';
+
+  @override
   String get themeSystem => 'Follow system';
 
   @override

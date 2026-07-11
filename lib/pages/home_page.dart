@@ -770,12 +770,14 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
       EntryType.expense => formatExpenseAmount(total),
       EntryType.income => formatIncomeAmount(total),
       EntryType.transfer => formatAmount(total),
+      EntryType.refund => formatIncomeAmount(total),
     };
 
     String amountTextOf(double value) => switch (_type) {
       EntryType.expense => formatExpenseAmount(value),
       EntryType.income => '+${formatIncomeAmount(value)}',
       EntryType.transfer => formatAmount(value),
+      EntryType.refund => '+${formatIncomeAmount(value)}',
     };
 
     return Scaffold(
@@ -1079,6 +1081,7 @@ class _DailyStatTile extends StatelessWidget {
       EntryType.expense => formatExpenseAmount(row.amount),
       EntryType.income => '+${formatIncomeAmount(row.amount)}',
       EntryType.transfer => formatAmount(row.amount),
+      EntryType.refund => '+${formatIncomeAmount(row.amount)}',
     };
     return InkWell(
       onTap: onTap,
