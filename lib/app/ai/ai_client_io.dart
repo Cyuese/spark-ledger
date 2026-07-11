@@ -79,6 +79,112 @@ Future<String> aiChatComplete({
   }
 }
 
+/// 流式版聊天补全（SSE）：逐段 `yield` 助手消息文本增量（`choices[0].delta.content`）。
+///
+/// 对话主循环用它把最终答复逐字呈现给用户；工具调用轮次则在上层缓冲后解析。
+/// 出错（配置缺失、鉴权失败、网络/TLS 等）抛 [AiException]，与非流式一致。
+Stream<String> aiChatStream({
+  required AiSettings settings,
+  required List<Map<String, String>> messages,
+  double temperature = 0,
+  Duration timeout = const Duration(seconds: 60),
+}) async* {
+  if (!settings.isConfigured) {
+    throw AiException(AiErrorCode.notConfigured);
+  }
+  final body = jsonEncode(<String, Object?>{
+    'model': settings.model.trim(),
+    'messages': messages,
+    'temperature': temperature,
+    'stream': true,
+  });
+
+  final client = HttpClient();
+  client.connectionTimeout = timeout;
+  try {
+    final uri = Uri.parse(settings.chatCompletionsUrl);
+    final request = await client.openUrl('POST', uri).timeout(timeout);
+    request.headers.set(
+      HttpHeaders.authorizationHeader,
+      'Bearer ${settings.apiKey.trim()}',
+    );
+    request.headers.contentType = ContentType(
+      'application',
+      'json',
+      charset: 'utf-8',
+    );
+    request.headers.set(HttpHeaders.acceptHeader, 'text/event-stream');
+    request.followRedirects = true;
+    request.add(utf8.encode(body));
+
+    final response = await request.close().timeout(timeout);
+    if (response.statusCode >= 400) {
+      final errorText = await response.transform(utf8.decoder).join();
+      throw _statusException(response.statusCode, errorText);
+    }
+
+    final lines = response
+        .transform(utf8.decoder)
+        .transform(const LineSplitter());
+    await for (final line in lines) {
+      if (!line.startsWith('data:')) {
+        continue;
+      }
+      final data = line.substring(5).trim();
+      if (data.isEmpty) {
+        continue;
+      }
+      if (data == '[DONE]') {
+        break;
+      }
+      final delta = _extractStreamDelta(data);
+      if (delta != null && delta.isNotEmpty) {
+        yield delta;
+      }
+    }
+  } on AiException {
+    rethrow;
+  } on TimeoutException {
+    throw AiException(AiErrorCode.timeout);
+  } on SocketException catch (error) {
+    throw AiException(AiErrorCode.network, detail: error.message);
+  } on HandshakeException {
+    throw AiException(AiErrorCode.tls);
+  } on FormatException {
+    throw AiException(AiErrorCode.badUrl);
+  } catch (error) {
+    throw AiException(AiErrorCode.unknown, detail: '$error');
+  } finally {
+    client.close(force: true);
+  }
+}
+
+/// 从一条 SSE `data:` 负载里取出文本增量；解析失败返回 null（跳过该片段）。
+String? _extractStreamDelta(String data) {
+  try {
+    final decoded = jsonDecode(data);
+    if (decoded is Map) {
+      final choices = decoded['choices'];
+      if (choices is List && choices.isNotEmpty) {
+        final first = choices.first;
+        if (first is Map) {
+          final delta = first['delta'];
+          if (delta is Map && delta['content'] is String) {
+            return delta['content'] as String;
+          }
+          // 兼容部分端点把增量放在 text 字段。
+          if (first['text'] is String) {
+            return first['text'] as String;
+          }
+        }
+      }
+    }
+  } catch (_) {
+    // 忽略非标准片段。
+  }
+  return null;
+}
+
 String _extractContent(String responseText) {
   final Object? decoded;
   try {
