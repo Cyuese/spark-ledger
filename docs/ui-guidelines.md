@@ -1,7 +1,42 @@
 # Veri Fin UI 规范
 
-## 顶部 Header
-所有页面顶部统一使用 `VeriHeader` 或 `PageHeader`。Header 固定高度，支持返回、标题、副标题和右侧操作。不要在页面内手写顶部 `Row + IconButton + Text`，避免不同页面高度和对齐不一致。
+## 顶部 Header 与页面骨架
+所有页面顶部统一使用 `VeriHeader` 或 `PageHeader`。Header 固定高度（`veriHeaderHeight`），支持返回、标题、副标题和右侧操作。不要在页面内手写顶部 `Row + IconButton + Text`，避免不同页面高度和对齐不一致。
+
+**新建页面一律套用同一套骨架**，否则头部会和其它页对不齐：
+
+```
+Scaffold(
+  body: SafeArea(               // SafeArea 在外、VeriPage 在内（顺序固定）
+    child: VeriPage(            // 渐变背景 + 居中 + maxWidth 约束
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 40),  // ← 头部对齐的关键
+        children: [
+          VeriHeader(title: ..., showBack: true, actions: [...]),
+          // 其余内容...
+        ],
+      ),
+    ),
+  ),
+)
+```
+
+**关键点**：`VeriHeader` 自身**没有横向内边距**——所有页面头部的左右缩进（14）与顶部间距（8）全靠这层外层 `padding: fromLTRB(14, 8, 14, …)`。少了它，标题栏会贴边、和别的页对不上（AI 助手页曾犯此错）。
+
+**带固定页脚的页面**（如聊天页底部有输入栏，不能整页放进一个 `ListView`）：用 `Column`，但**必须单独给头部套上同样的内边距**，否则同样错位：
+
+```
+SafeArea(child: VeriPage(child: Column(children: [
+  Padding(
+    padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+    child: VeriHeader(title: ..., showBack: true),
+  ),
+  Expanded(child: ListView(padding: EdgeInsets.fromLTRB(16, 14, 16, 18), ...)),
+  _FooterBar(),   // 固定页脚在 Column 末尾
+])))
+```
+
+参照实现：`report_analysis_page.dart`、`ai_settings_page.dart`（ListView 版）；`ai_chat_page.dart`（Column + 固定页脚版）。
 
 ## 卡片标题
 首页和功能卡片标题统一使用 `titleMedium` 加 `FontWeight.w800`，与“日历”卡片标题保持一致。不要为单个卡片手写更大的标题字号；需要右侧入口时使用统一的标题行组件或同等字号的 `Row`。
