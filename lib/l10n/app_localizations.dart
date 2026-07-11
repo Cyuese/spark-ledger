@@ -1838,6 +1838,54 @@ abstract class AppLocalizations {
   /// **'本期账单'**
   String get currentBillLabel;
 
+  /// No description provided for @creditRepayTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'还款'**
+  String get creditRepayTitle;
+
+  /// No description provided for @creditRepayAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'还款'**
+  String get creditRepayAction;
+
+  /// No description provided for @creditRepayAmountLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'还款金额'**
+  String get creditRepayAmountLabel;
+
+  /// No description provided for @creditRepayFromAccount.
+  ///
+  /// In zh, this message translates to:
+  /// **'扣款账户'**
+  String get creditRepayFromAccount;
+
+  /// No description provided for @creditRepayNoAccountLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'无账户（代还）'**
+  String get creditRepayNoAccountLabel;
+
+  /// No description provided for @creditRepayNoAccountHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'他人代还，不从你的账户扣款'**
+  String get creditRepayNoAccountHint;
+
+  /// No description provided for @creditRepayDefaultNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'还款'**
+  String get creditRepayDefaultNote;
+
+  /// No description provided for @creditRepaySuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'已记录还款'**
+  String get creditRepaySuccess;
+
   /// No description provided for @monthlyDayLabel.
   ///
   /// In zh, this message translates to:

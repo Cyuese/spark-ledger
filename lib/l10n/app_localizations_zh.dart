@@ -933,6 +933,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get currentBillLabel => '本期账单';
 
   @override
+  String get creditRepayTitle => '还款';
+
+  @override
+  String get creditRepayAction => '还款';
+
+  @override
+  String get creditRepayAmountLabel => '还款金额';
+
+  @override
+  String get creditRepayFromAccount => '扣款账户';
+
+  @override
+  String get creditRepayNoAccountLabel => '无账户（代还）';
+
+  @override
+  String get creditRepayNoAccountHint => '他人代还，不从你的账户扣款';
+
+  @override
+  String get creditRepayDefaultNote => '还款';
+
+  @override
+  String get creditRepaySuccess => '已记录还款';
+
+  @override
   String monthlyDayLabel(int day) {
     return '每月 $day 日';
   }

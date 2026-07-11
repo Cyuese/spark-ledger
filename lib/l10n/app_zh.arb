@@ -554,6 +554,14 @@
   "creditUsedLabel": "已用",
   "creditAvailableLabel": "可用额度",
   "currentBillLabel": "本期账单",
+  "creditRepayTitle": "还款",
+  "creditRepayAction": "还款",
+  "creditRepayAmountLabel": "还款金额",
+  "creditRepayFromAccount": "扣款账户",
+  "creditRepayNoAccountLabel": "无账户（代还）",
+  "creditRepayNoAccountHint": "他人代还，不从你的账户扣款",
+  "creditRepayDefaultNote": "还款",
+  "creditRepaySuccess": "已记录还款",
   "monthlyDayLabel": "每月 {day} 日",
   "@monthlyDayLabel": {
     "placeholders": {

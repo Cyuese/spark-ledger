@@ -948,6 +948,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentBillLabel => 'This cycle';
 
   @override
+  String get creditRepayTitle => 'Repayment';
+
+  @override
+  String get creditRepayAction => 'Repay';
+
+  @override
+  String get creditRepayAmountLabel => 'Repayment amount';
+
+  @override
+  String get creditRepayFromAccount => 'Payment account';
+
+  @override
+  String get creditRepayNoAccountLabel => 'No account (paid by others)';
+
+  @override
+  String get creditRepayNoAccountHint =>
+      'Paid by someone else; no account deducted';
+
+  @override
+  String get creditRepayDefaultNote => 'Repayment';
+
+  @override
+  String get creditRepaySuccess => 'Repayment recorded';
+
+  @override
   String monthlyDayLabel(int day) {
     return 'Day $day of each month';
   }

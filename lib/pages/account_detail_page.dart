@@ -14,6 +14,7 @@ import '../app/models.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
+import 'credit_repayment_page.dart';
 import 'entry_detail_page.dart';
 import 'sheets.dart';
 import 'transactions_pages.dart';
@@ -116,6 +117,17 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                   account: currentAccount,
                   balance: balance,
                   entries: entries,
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (currentAccount.type.supportsCredit) ...<Widget>[
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => _startRepayment(currentAccount),
+                    icon: const Icon(Icons.payments_outlined),
+                    label: Text(AppLocalizations.of(context).creditRepayAction),
+                  ),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -581,6 +593,14 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).copiedToClipboard)),
+    );
+  }
+
+  void _startRepayment(Account account) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => CreditRepaymentPage(account: account),
+      ),
     );
   }
 
