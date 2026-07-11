@@ -839,6 +839,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cardLast4Invalid => 'Enter 1-4 digits';
 
   @override
+  String get cardNumberLabel => 'Full card number (optional)';
+
+  @override
+  String get cardNumberTitle => 'Full card number';
+
+  @override
+  String get cardLast4Follow => 'Follow number';
+
+  @override
+  String get cardCopyTooltip => 'Copy card number';
+
+  @override
+  String get copiedToClipboard => 'Copied to clipboard';
+
+  @override
   String get accountBalanceLabel => 'Account balance';
 
   @override

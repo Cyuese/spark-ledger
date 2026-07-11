@@ -703,6 +703,22 @@ class Account {
   }
 }
 
+/// 从完整卡号提取后四位（只取数字，末四位）。空号返回空串。
+String cardLast4Of(String cardNumber) {
+  final digits = cardNumber.replaceAll(RegExp(r'\D'), '');
+  return digits.length > 4 ? digits.substring(digits.length - 4) : digits;
+}
+
+/// 打开账户编辑时「后四位跟随完整卡号」开关的初始状态（不额外持久化，由数据反推）：
+/// 完整卡号为空时——后四位也为空则跟随（新账户默认打开）、后四位已手填则不跟随（保留手填值）；
+/// 完整卡号非空时——后四位正好等于其末四位则跟随、否则视为手填、不跟随。
+bool initialCardLast4Follows(String cardNumber, String cardLast4) {
+  if (cardNumber.isEmpty) {
+    return cardLast4.isEmpty;
+  }
+  return cardLast4 == cardLast4Of(cardNumber);
+}
+
 class AccountGroup {
   const AccountGroup({
     required this.id,

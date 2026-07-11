@@ -250,4 +250,23 @@ void main() {
     expect(formatIncomeAmount(12.5), '12.50');
     expect(formatSignedAmount(12), '+12.00');
   });
+
+  test('cardLast4Of 取完整卡号末四位数字', () {
+    expect(cardLast4Of('6222 0000 0000 1234'), '1234');
+    expect(cardLast4Of('621226123456'), '3456');
+    expect(cardLast4Of('12'), '12');
+    expect(cardLast4Of(''), '');
+    expect(cardLast4Of('卡号1234'), '1234');
+  });
+
+  test('initialCardLast4Follows 由数据反推跟随开关初始态', () {
+    // 新账户：两者皆空 → 跟随（默认打开）。
+    expect(initialCardLast4Follows('', ''), isTrue);
+    // 仅手填后四位、无完整卡号 → 不跟随（保留手填值）。
+    expect(initialCardLast4Follows('', '8888'), isFalse);
+    // 完整卡号存在且后四位正是其末四位 → 跟随。
+    expect(initialCardLast4Follows('6222000000001234', '1234'), isTrue);
+    // 完整卡号存在但后四位是另设的值 → 不跟随。
+    expect(initialCardLast4Follows('6222000000001234', '9999'), isFalse);
+  });
 }

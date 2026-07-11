@@ -824,6 +824,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cardLast4Invalid => '请输入 1-4 位数字';
 
   @override
+  String get cardNumberLabel => '完整卡号（选填）';
+
+  @override
+  String get cardNumberTitle => '完整卡号';
+
+  @override
+  String get cardLast4Follow => '跟随卡号';
+
+  @override
+  String get cardCopyTooltip => '复制卡号';
+
+  @override
+  String get copiedToClipboard => '已复制到剪贴板';
+
+  @override
   String get accountBalanceLabel => '账户余额';
 
   @override

@@ -1628,6 +1628,36 @@ abstract class AppLocalizations {
   /// **'请输入 1-4 位数字'**
   String get cardLast4Invalid;
 
+  /// No description provided for @cardNumberLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'完整卡号（选填）'**
+  String get cardNumberLabel;
+
+  /// No description provided for @cardNumberTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'完整卡号'**
+  String get cardNumberTitle;
+
+  /// No description provided for @cardLast4Follow.
+  ///
+  /// In zh, this message translates to:
+  /// **'跟随卡号'**
+  String get cardLast4Follow;
+
+  /// No description provided for @cardCopyTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制卡号'**
+  String get cardCopyTooltip;
+
+  /// No description provided for @copiedToClipboard.
+  ///
+  /// In zh, this message translates to:
+  /// **'已复制到剪贴板'**
+  String get copiedToClipboard;
+
   /// No description provided for @accountBalanceLabel.
   ///
   /// In zh, this message translates to:

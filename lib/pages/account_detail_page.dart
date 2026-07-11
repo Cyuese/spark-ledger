@@ -1,6 +1,7 @@
 // 账户详情相关页面：从 assets_pages 拆出。账户详情/编辑、账户报表、
 // 信用卡还款日横幅与迷你分段切换控件。
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app/account_icon_assets.dart';
 import '../app/app_theme.dart';
@@ -297,9 +298,20 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                             ? AppLocalizations.of(context).notSet
                             : currentAccount.cardLast4,
                         trailingIcon: Icons.chevron_right,
-                        onTap: () => _editCardLast4(currentAccount),
+                        onTap: () => _editCard(currentAccount),
                       ),
                       const Divider(),
+                      if (currentAccount.cardNumber.isNotEmpty) ...<Widget>[
+                        SettingsRow(
+                          icon: Icons.numbers_outlined,
+                          title: AppLocalizations.of(context).cardNumberTitle,
+                          trailing: currentAccount.cardNumber,
+                          trailingIcon: Icons.copy_outlined,
+                          onTap: () =>
+                              _copyCardNumber(currentAccount.cardNumber),
+                        ),
+                        const Divider(),
+                      ],
                     ],
                     if (currentAccount.type ==
                         AccountType.creditCard) ...<Widget>[
@@ -504,6 +516,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
         account.copyWith(
           type: selected,
           cardLast4: selected.supportsCardLast4 ? account.cardLast4 : '',
+          cardNumber: selected.supportsCardLast4 ? account.cardNumber : '',
         ),
       );
     }
@@ -524,25 +537,27 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
     }
   }
 
-  Future<void> _editCardLast4(Account account) async {
-    final cardLast4 = await showTextInputDialog(
+  Future<void> _editCard(Account account) async {
+    final result = await showCardNumberDialog(
       context: context,
-      title: AppLocalizations.of(context).cardLast4EditTitle,
-      label: AppLocalizations.of(context).cardLast4Label,
-      initialValue: account.cardLast4,
-      allowEmpty: true,
-      keyboardType: TextInputType.number,
+      initialNumber: account.cardNumber,
+      initialLast4: account.cardLast4,
     );
-    if (cardLast4 == null || !mounted) {
+    if (result == null || !mounted) {
       return;
     }
-    final normalized = cardLast4.replaceAll(RegExp(r'\D'), '');
     VeriFinScope.of(context).updateAccount(
-      account.copyWith(
-        cardLast4: normalized.length > 4
-            ? normalized.substring(normalized.length - 4)
-            : normalized,
-      ),
+      account.copyWith(cardNumber: result.number, cardLast4: result.last4),
+    );
+  }
+
+  Future<void> _copyCardNumber(String cardNumber) async {
+    await Clipboard.setData(ClipboardData(text: cardNumber));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).copiedToClipboard)),
     );
   }
 
