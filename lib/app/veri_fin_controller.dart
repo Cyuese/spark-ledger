@@ -69,6 +69,7 @@ const String _fabActionKey = 'verifin.fab_action.v1';
 const String _defaultAccountKey = 'verifin.default_account.v1';
 const String _amountFormatKey = 'verifin.amount_format.v1';
 const String _aiSettingsKey = 'verifin.ai.v1';
+const String _aiChatHistoryKey = 'verifin.ai_chat.v1';
 const String _homeTrendKey = 'verifin.home_metrics.v1';
 const String _onboardingKey = 'verifin.onboarding.v1';
 
@@ -213,6 +214,31 @@ Map<String, List<String>> _decodeStringListMap(Object? value) {
     }
     return MapEntry(key, rawList.whereType<String>().toList());
   });
+}
+
+/// 解码 AI 聊天记录（`[{role, content}, …]`）；损坏数据回退空列表。
+List<Map<String, String>> _decodeChatHistory(String? raw) {
+  if (raw == null || raw.isEmpty) {
+    return <Map<String, String>>[];
+  }
+  try {
+    final decoded = jsonDecode(raw);
+    if (decoded is List) {
+      return decoded
+          .whereType<Map>()
+          .map(
+            (item) => <String, String>{
+              'role': item['role']?.toString() ?? 'user',
+              'content': item['content']?.toString() ?? '',
+            },
+          )
+          .where((m) => m['content']!.isNotEmpty)
+          .toList();
+    }
+  } catch (_) {
+    // 损坏记录忽略。
+  }
+  return <Map<String, String>>[];
 }
 
 String _categoryBudgetKey(String bookId, DateTime month, String categoryId) {

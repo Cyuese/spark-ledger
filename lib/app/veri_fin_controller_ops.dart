@@ -514,6 +514,25 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     notifyListeners();
   }
 
+  /// AI 对话查询的聊天记录（仅用户/助手文本消息 `{role, content}`）。
+  /// 设备本地、不进 JSON 备份、初始化保留。
+  List<Map<String, String>> get aiChatHistory =>
+      List<Map<String, String>>.unmodifiable(_aiChatHistory);
+
+  /// 覆盖保存聊天记录。不 notifyListeners——历史无响应式依赖，只由聊天页读写，
+  /// 避免每条消息触发全应用重建。
+  void setAiChatHistory(List<Map<String, String>> history) {
+    _aiChatHistory = List<Map<String, String>>.from(history);
+    if (_aiChatHistory.isEmpty) {
+      _store.delete(_aiChatHistoryKey);
+    } else {
+      _store.write(_aiChatHistoryKey, jsonEncode(_aiChatHistory));
+    }
+  }
+
+  /// 清空聊天记录。
+  void clearAiChatHistory() => setAiChatHistory(<Map<String, String>>[]);
+
   /// 用户是否已同意隐私政策与用户协议（首启动前为 false）。
   bool get onboardingCompleted => _onboardingCompleted;
 

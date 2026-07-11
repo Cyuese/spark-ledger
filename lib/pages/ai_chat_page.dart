@@ -52,12 +52,50 @@ class _AiChatPageState extends State<AiChatPage> {
   final ScrollController _scroll = ScrollController();
   final AiChatEngine _engine = AiChatEngine(tools: buildAiQueryTools());
   bool _streaming = false;
+  bool _restored = false;
+
+  /// 落库的历史消息上限（仅计文本消息），防止 KV 无限增长。
+  static const int _historyLimit = 40;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_restored) {
+      return;
+    }
+    _restored = true;
+    // 重开时恢复历史文字（结果卡片不落库，故只还原对话文本）。
+    for (final message in VeriFinScope.of(context).aiChatHistory) {
+      _messages.add(
+        _ChatMessage(
+          role: message['role'] == 'user' ? _Role.user : _Role.assistant,
+          text: message['content'] ?? '',
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
     _input.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  /// 把当前对话的文本消息落库（截断到最近 [_historyLimit] 条）。
+  void _saveHistory() {
+    final all = <Map<String, String>>[
+      for (final m in _messages)
+        if (m.status == _MsgStatus.done && m.text.trim().isNotEmpty)
+          <String, String>{
+            'role': m.role == _Role.user ? 'user' : 'assistant',
+            'content': m.text.trim(),
+          },
+    ];
+    final trimmed = all.length > _historyLimit
+        ? all.sublist(all.length - _historyLimit)
+        : all;
+    VeriFinScope.of(context).setAiChatHistory(trimmed);
   }
 
   void _scrollToBottom() {
@@ -161,6 +199,7 @@ class _AiChatPageState extends State<AiChatPage> {
             assistant.status = _MsgStatus.done;
           }
         });
+        _saveHistory();
       }
     }
   }
@@ -176,6 +215,7 @@ class _AiChatPageState extends State<AiChatPage> {
     );
     if (confirmed && mounted) {
       setState(_messages.clear);
+      VeriFinScope.of(context).clearAiChatHistory();
     }
   }
 

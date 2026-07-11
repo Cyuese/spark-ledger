@@ -82,6 +82,10 @@ mixin _ControllerState on ChangeNotifier {
   bool _amountForceTwoDecimals = false;
   AiSettings _aiSettings = const AiSettings();
 
+  /// AI 对话查询的聊天记录：只存用户/助手的文本消息（`{role, content}`），结果卡片
+  /// 不落库（重开时只恢复文字）。设备本地偏好，不进 JSON 备份、初始化保留。
+  List<Map<String, String>> _aiChatHistory = <Map<String, String>>[];
+
   void _loadDefaultAccounts() {
     final raw = _store.read(_defaultAccountKey);
     if (raw == null || raw.isEmpty) {
@@ -133,6 +137,7 @@ mixin _ControllerState on ChangeNotifier {
     _amountForceTwoDecimals = _store.read(_amountFormatKey) == 'true';
     amount_format.amountForceTwoDecimals = _amountForceTwoDecimals;
     _aiSettings = AiSettings.decode(_store.read(_aiSettingsKey));
+    _aiChatHistory = _decodeChatHistory(_store.read(_aiChatHistoryKey));
     _homeTrendConfig = HomeTrendConfig.decode(_store.read(_homeTrendKey));
   }
 
