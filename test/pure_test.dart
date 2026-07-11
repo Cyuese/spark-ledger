@@ -260,15 +260,35 @@ void main() {
     expect(cardLast4Of('卡号1234'), '1234');
   });
 
-  test('initialCardLast4Follows 由数据反推跟随开关初始态', () {
-    // 新账户：两者皆空 → 跟随（默认打开）。
-    expect(initialCardLast4Follows('', ''), isTrue);
-    // 仅手填后四位、无完整卡号 → 不跟随（保留手填值）。
-    expect(initialCardLast4Follows('', '8888'), isFalse);
-    // 完整卡号存在且后四位正是其末四位 → 跟随。
-    expect(initialCardLast4Follows('6222000000001234', '1234'), isTrue);
-    // 完整卡号存在但后四位是另设的值 → 不跟随。
-    expect(initialCardLast4Follows('6222000000001234', '9999'), isFalse);
+  test('Account 序列化保留完整卡号/信用额度/跟随开关', () {
+    Account build(bool follows) => Account(
+      id: 'a',
+      bookId: 'default',
+      name: '信用卡',
+      type: AccountType.creditCard,
+      groupId: null,
+      initialBalance: -100,
+      iconCode: 'credit',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+      cardLast4: '9999',
+      cardNumber: '6222000000001234',
+      cardLast4Follows: follows,
+      creditLimit: 5000,
+    );
+    // 关掉跟随（手填后四位 9999≠末四位）——往返后开关态保留、不被反推成打开。
+    final off = Account.fromJson(build(false).toJson());
+    expect(off.cardLast4Follows, isFalse);
+    expect(off.cardLast4, '9999');
+    expect(off.cardNumber, '6222000000001234');
+    expect(off.creditLimit, 5000);
+    // 打开跟随同样保留。
+    expect(Account.fromJson(build(true).toJson()).cardLast4Follows, isTrue);
+    // 旧备份缺该字段 → 默认 false（保留其手填后四位、不冲空）。
+    final legacy = Map<String, Object?>.from(build(true).toJson())
+      ..remove('cardLast4Follows');
+    expect(Account.fromJson(legacy).cardLast4Follows, isFalse);
   });
 
   test('信用额度：已用与可用', () {
@@ -297,7 +317,12 @@ void main() {
   });
 
   test('本期账单：只统计周期内本账户支出净额，退款冲抵、还款不计', () {
-    LedgerEntry expense(String id, double amount, DateTime at, {double refund = 0}) {
+    LedgerEntry expense(
+      String id,
+      double amount,
+      DateTime at, {
+      double refund = 0,
+    }) {
       return LedgerEntry(
         id: id,
         bookId: 'default',

@@ -1284,11 +1284,10 @@ class _AccountRow extends StatelessWidget {
                                         .onSurface
                                         .withValues(alpha: 0.42),
                                     fontSize:
-                                        (Theme.of(context)
-                                                    .textTheme
-                                                    .titleMedium
-                                                    ?.fontSize ??
-                                                16) *
+                                        (Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium?.fontSize ??
+                                            16) *
                                         0.82,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -1936,33 +1935,32 @@ Future<bool> showConfirmDialog(
 }
 
 /// 「完整卡号 + 后四位」输入组，含「后四位跟随完整卡号」开关（仅信用卡/储蓄卡使用）。
-/// 开关打开时后四位只读、自动取完整卡号末四位；关闭后可手填、独立于完整卡号。开关初始态
-/// 由 [initialCardLast4Follows] 从两控制器当前值反推，不额外持久化。调用方读两控制器取值，
-/// 后四位建议以 [cardLast4Of] 归一化后落库。
+/// 开关打开时后四位只读、自动取完整卡号末四位；关闭后可手填、独立于完整卡号。
+/// **受控组件**：开关状态由调用方以 [follows] 传入、经 [onFollowsChanged] 回传持久化
+/// （见 `Account.cardLast4Follows`），组件不自行反推。调用方读两控制器取值，后四位建议以
+/// [cardLast4Of] 归一化后落库。
 class CardNumberFields extends StatefulWidget {
   const CardNumberFields({
     super.key,
     required this.numberController,
     required this.last4Controller,
+    required this.follows,
+    required this.onFollowsChanged,
   });
 
   final TextEditingController numberController;
   final TextEditingController last4Controller;
+  final bool follows;
+  final ValueChanged<bool> onFollowsChanged;
 
   @override
   State<CardNumberFields> createState() => _CardNumberFieldsState();
 }
 
 class _CardNumberFieldsState extends State<CardNumberFields> {
-  late bool _follows;
-
   @override
   void initState() {
     super.initState();
-    _follows = initialCardLast4Follows(
-      widget.numberController.text,
-      widget.last4Controller.text,
-    );
     widget.numberController.addListener(_onNumberChanged);
   }
 
@@ -1973,7 +1971,7 @@ class _CardNumberFieldsState extends State<CardNumberFields> {
   }
 
   void _onNumberChanged() {
-    if (!_follows) {
+    if (!widget.follows) {
       return;
     }
     final derived = cardLast4Of(widget.numberController.text);
@@ -1983,7 +1981,7 @@ class _CardNumberFieldsState extends State<CardNumberFields> {
   }
 
   void _toggleFollows(bool value) {
-    setState(() => _follows = value);
+    widget.onFollowsChanged(value);
     if (value) {
       widget.last4Controller.text = cardLast4Of(widget.numberController.text);
     }
@@ -2011,7 +2009,7 @@ class _CardNumberFieldsState extends State<CardNumberFields> {
             Expanded(
               child: TextFormField(
                 controller: widget.last4Controller,
-                enabled: !_follows,
+                enabled: !widget.follows,
                 maxLength: 4,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
@@ -2035,7 +2033,7 @@ class _CardNumberFieldsState extends State<CardNumberFields> {
               l10n.cardLast4Follow,
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            Switch(value: _follows, onChanged: _toggleFollows),
+            Switch(value: widget.follows, onChanged: _toggleFollows),
           ],
         ),
       ],

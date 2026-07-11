@@ -577,12 +577,17 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       context: context,
       initialNumber: account.cardNumber,
       initialLast4: account.cardLast4,
+      initialFollows: account.cardLast4Follows,
     );
     if (result == null || !mounted) {
       return;
     }
     VeriFinScope.of(context).updateAccount(
-      account.copyWith(cardNumber: result.number, cardLast4: result.last4),
+      account.copyWith(
+        cardNumber: result.number,
+        cardLast4: result.last4,
+        cardLast4Follows: result.follows,
+      ),
     );
   }
 

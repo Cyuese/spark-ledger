@@ -106,6 +106,25 @@ void main() {
         cardLast4: '',
       ),
     );
+    // 信用卡：完整卡号 + 额度 + 关掉跟随（手填后四位）——验证经 SQLite 往返保留。
+    controller.addAccount(
+      const Account(
+        id: 'my-credit',
+        bookId: defaultLedgerBookId,
+        name: '信用卡',
+        type: AccountType.creditCard,
+        groupId: null,
+        initialBalance: -200,
+        iconCode: 'credit',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+        cardLast4: '9999',
+        cardNumber: '6222000000001234',
+        cardLast4Follows: false,
+        creditLimit: 5000,
+      ),
+    );
     await controller.waitForPendingWrites();
 
     final reloaded = await VeriFinController.create(
@@ -115,6 +134,11 @@ void main() {
     final restored = reloaded.accounts.firstWhere((a) => a.id == 'my-cash');
     expect(restored.name, '钱包');
     expect(restored.initialBalance, 66);
+    final credit = reloaded.accounts.firstWhere((a) => a.id == 'my-credit');
+    expect(credit.cardNumber, '6222000000001234');
+    expect(credit.cardLast4, '9999');
+    expect(credit.cardLast4Follows, isFalse);
+    expect(credit.creditLimit, 5000);
   });
 
   test('分类与预算写入 SQLite 并被新控制器读回', () async {
