@@ -68,3 +68,4 @@
 ## 变更记录
 
 - 初版：建立工具协议 + 注册表 + 通用交易筛选纯函数，首批工具 `summary` / `categoryRanking` / `tagRanking` / `queryTransactions` / `largestTransactions`。
+- 接入对话主循环与 UI：流式客户端 `aiChatStream`、对话引擎 `ai_chat_engine.dart`、聊天页 `ai_chat_page.dart` + 结果渲染 `ai_result_view.dart`（图表/列表/统计卡/表格），看板页头「问 AI」入口；聊天历史落 KV `verifin.ai_chat.v1`（仅文本、设备本地、不进备份、初始化保留）。
