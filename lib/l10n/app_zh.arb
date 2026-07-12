@@ -1534,6 +1534,7 @@
   "importBillFileHint": "支付宝 / 微信 / 薄荷",
   "selectBillSource": "选择账单来源",
   "selectBillSourceHint": "先选平台，再选对应导出的文件，避免格式识别出错",
+  "selectBillSourceNotice": "受各平台导出文件的字段所限，部分账户信息（如余额、类型、卡号）可能与原软件不完全一致，导入后可在预览页手动核对调整。",
   "platformAlipay": "支付宝",
   "platformAlipayHint": "交易明细 CSV",
   "platformWechat": "微信",

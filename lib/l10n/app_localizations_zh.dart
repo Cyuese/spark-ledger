@@ -2306,6 +2306,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectBillSourceHint => '先选平台，再选对应导出的文件，避免格式识别出错';
 
   @override
+  String get selectBillSourceNotice =>
+      '受各平台导出文件的字段所限，部分账户信息（如余额、类型、卡号）可能与原软件不完全一致，导入后可在预览页手动核对调整。';
+
+  @override
   String get platformAlipay => '支付宝';
 
   @override

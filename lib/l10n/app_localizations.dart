@@ -4274,6 +4274,12 @@ abstract class AppLocalizations {
   /// **'先选平台，再选对应导出的文件，避免格式识别出错'**
   String get selectBillSourceHint;
 
+  /// No description provided for @selectBillSourceNotice.
+  ///
+  /// In zh, this message translates to:
+  /// **'受各平台导出文件的字段所限，部分账户信息（如余额、类型、卡号）可能与原软件不完全一致，导入后可在预览页手动核对调整。'**
+  String get selectBillSourceNotice;
+
   /// No description provided for @platformAlipay.
   ///
   /// In zh, this message translates to:

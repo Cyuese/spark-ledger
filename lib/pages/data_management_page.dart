@@ -970,6 +970,36 @@ class DataManagementPage extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
+            // 温和提示：各平台导出字段有限，部分账户信息导入后可能与原软件不完全一致。
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: veriRoyal.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(veriRadiusMd),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Icon(Icons.info_outline, size: 16, color: veriRoyal),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.selectBillSourceNotice,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             Flexible(
               child: SingleChildScrollView(
                 child: Column(

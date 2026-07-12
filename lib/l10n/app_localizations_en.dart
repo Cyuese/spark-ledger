@@ -2345,6 +2345,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pick the platform first, then its exported file — avoids format mis-detection';
 
   @override
+  String get selectBillSourceNotice =>
+      'Limited by each platform\'s export fields, some account details (balance, type, card number) may not exactly match the original app. You can review and adjust them on the import preview page.';
+
+  @override
   String get platformAlipay => 'Alipay';
 
   @override
