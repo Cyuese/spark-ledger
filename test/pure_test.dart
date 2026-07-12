@@ -32,6 +32,32 @@ void main() {
     expect(reversed, isEmpty);
   });
 
+  test('formatEntryStamp 今天只给时间、今年带月日、往年带年份', () {
+    final now = DateTime(2026, 7, 12, 15, 30);
+    // 今天：只有时间，不带日期。
+    expect(formatEntryStamp(DateTime(2026, 7, 12, 9, 5), now: now), '09:05');
+    expect(formatEntryStamp(DateTime(2026, 7, 12, 23, 59), now: now), '23:59');
+    // 今年非今天：MM/dd HH:mm（月日补零）。
+    expect(
+      formatEntryStamp(DateTime(2026, 7, 8, 14, 30), now: now),
+      '07/08 14:30',
+    );
+    expect(
+      formatEntryStamp(DateTime(2026, 1, 3, 0, 0), now: now),
+      '01/03 00:00',
+    );
+    // 往年：yyyy/MM/dd HH:mm。
+    expect(
+      formatEntryStamp(DateTime(2024, 7, 8, 14, 30), now: now),
+      '2024/07/08 14:30',
+    );
+    // 同月同日但不同年，仍算往年（按年份判定，非「近一年」）。
+    expect(
+      formatEntryStamp(DateTime(2025, 7, 12, 15, 30), now: now),
+      '2025/07/12 15:30',
+    );
+  });
+
   test('weekWindowFor 覆盖周一至周日（含跨月的周）', () {
     // 2026-07-10 是周五，本周为 07-06(周一)~07-12(周日)。
     final w = weekWindowFor(DateTime(2026, 7, 10, 15));

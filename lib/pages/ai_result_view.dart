@@ -275,6 +275,7 @@ class _TransactionsCard extends StatelessWidget {
           entries: entries,
           accounts: controller.accounts,
           categories: controller.categories,
+          tags: controller.tags,
           onEntryTap: (entry) => openEntryDetail(context, entry),
         ),
       ],

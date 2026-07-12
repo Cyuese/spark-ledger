@@ -114,6 +114,8 @@ class HomePage extends StatelessWidget {
                       item.$2,
                       accounts: controller.accounts,
                       categories: controller.categories,
+                      tags: controller.tags,
+                      showDate: true,
                       onTap: () => openEntryDetail(context, item.$2),
                     ),
                     if (item.$1 != recentEntries.length - 1)

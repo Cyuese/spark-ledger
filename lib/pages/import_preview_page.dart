@@ -581,6 +581,8 @@ class _ImportPreviewPageState extends State<ImportPreviewPage> {
                         entries: group.entries,
                         accounts: accounts,
                         categories: categories,
+                        // 草稿交易可能引用「待新建标签」的临时 id，合并现有 + 候选才能显示名字。
+                        tags: <Tag>[...controller.tags, ...widget.plan.newTags],
                         selectionMode: true,
                         selectedIds: selectedIds,
                         onEntryTap: _toggle,

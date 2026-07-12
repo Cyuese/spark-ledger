@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../l10n/app_localizations.dart';
 import 'account_icon_assets.dart';
 import 'app_theme.dart';
+import 'category_tree.dart';
 import 'credit_card.dart';
 import 'demo_data.dart';
 import 'ledger_math.dart';
@@ -18,21 +19,52 @@ class TransactionTile extends StatelessWidget {
     super.key,
     required this.accounts,
     required this.categories,
+    this.tags = const <Tag>[],
     this.onTap,
     this.onLongPress,
     this.selectionMode = false,
     this.selected = false,
+    this.showDate = false,
   });
 
   final LedgerEntry entry;
   final List<Account> accounts;
   final List<Category> categories;
+
+  /// 用于把 [LedgerEntry.tagIds] 解析成标签名在副行展示；为空则不显示标签。
+  final List<Tag> tags;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
   /// 多选模式：行首展示勾选圈，命中项高亮。
   final bool selectionMode;
   final bool selected;
+
+  /// 副行时间是否按「今天只给时间、其余带日期」智能展示（[formatEntryStamp]）。
+  /// 仅平铺、无日期分组头的列表（如首页「最近交易」）需要开；带分组头的列表
+  /// 日期已在头部，保持关（默认）。
+  final bool showDate;
+
+  /// 把 [LedgerEntry.tagIds] 按顺序解析成标签名（跳过找不到的）。
+  List<String> _tagLabels() {
+    if (tags.isEmpty || entry.tagIds.isEmpty) {
+      return const <String>[];
+    }
+    final byId = <String, String>{for (final tag in tags) tag.id: tag.label};
+    return entry.tagIds
+        .map((id) => byId[id])
+        .whereType<String>()
+        .toList(growable: false);
+  }
+
+  /// 标签副行文案：最多展示前 2 个标签名（`#出差 #报销`），更多的收成 `+N`。
+  /// 备注太长时整段会被 [TextOverflow.ellipsis] 截断，避免撑爆一行。
+  static String _tagSuffix(List<String> labels) {
+    const maxShown = 2;
+    final shown = labels.take(maxShown).map((label) => '#$label').join(' ');
+    final extra = labels.length - maxShown;
+    return extra > 0 ? '$shown +$extra' : shown;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +79,20 @@ class TransactionTile extends StatelessWidget {
     final accountLabel = entry.type == EntryType.transfer
         ? '$fromName → ${accountDisplayName(accounts, entry.toAccountId ?? '', noneLabel)}'
         : fromName;
+    // 分类层级：父级链（由近及远反转成「祖 · 父」）作淡色前缀，末级加粗单独渲染。
+    // 无父（顶级 / 转账 / 悬空占位）时 ancestors 为空、不加前缀。
+    final parentPrefix = ancestorIds(
+      categories,
+      entry.categoryId,
+    ).reversed.map((id) => categoryById(id, categories).label).join(' · ');
+    // 副行时间：平铺列表（showDate）按今天/今年/往年智能展示，否则只给时分。
+    final stamp = showDate
+        ? formatEntryStamp(entry.occurredAt)
+        : formatTime(entry.occurredAt);
+    final tagLabels = _tagLabels();
+    final subStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.46),
+    );
 
     return Material(
       color: selected ? veriRoyal.withValues(alpha: 0.08) : Colors.transparent,
@@ -83,7 +129,38 @@ class TransactionTile extends StatelessWidget {
                   children: <Widget>[
                     Row(
                       children: <Widget>[
+                        if (parentPrefix.isNotEmpty) ...<Widget>[
+                          Flexible(
+                            flex: 3,
+                            child: Text(
+                              parentPrefix,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.42),
+                                  ),
+                            ),
+                          ),
+                          Text(
+                            ' · ',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.30),
+                                ),
+                          ),
+                        ],
                         Flexible(
+                          flex: 7,
                           child: Text(
                             category.label,
                             maxLines: 1,
@@ -110,16 +187,37 @@ class TransactionTile extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '${formatTime(entry.occurredAt)} · '
-                      '${entry.note.isEmpty ? fromName : entry.note}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.46),
-                      ),
+                    Row(
+                      children: <Widget>[
+                        Text(stamp, style: subStyle),
+                        if (entry.note.isNotEmpty) ...<Widget>[
+                          Text(' · ', style: subStyle),
+                          Flexible(
+                            child: Text(
+                              entry.note,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: subStyle,
+                            ),
+                          ),
+                        ],
+                        if (tagLabels.isNotEmpty)
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 6),
+                              child: Text(
+                                _tagSuffix(tagLabels),
+                                maxLines: 1,
+                                softWrap: false,
+                                overflow: TextOverflow.ellipsis,
+                                style: subStyle?.copyWith(
+                                  color: veriRoyal.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -288,6 +386,7 @@ class TransactionListCard extends StatelessWidget {
     required this.entries,
     required this.accounts,
     required this.categories,
+    this.tags = const <Tag>[],
     this.onEntryTap,
     this.onEntryLongPress,
     this.selectionMode = false,
@@ -297,6 +396,9 @@ class TransactionListCard extends StatelessWidget {
   final List<LedgerEntry> entries;
   final List<Account> accounts;
   final List<Category> categories;
+
+  /// 透传给 [TransactionTile] 解析标签名；为空则不显示标签。
+  final List<Tag> tags;
   final ValueChanged<LedgerEntry>? onEntryTap;
   final ValueChanged<LedgerEntry>? onEntryLongPress;
   final bool selectionMode;
@@ -312,6 +414,7 @@ class TransactionListCard extends StatelessWidget {
               item.$2,
               accounts: accounts,
               categories: categories,
+              tags: tags,
               selectionMode: selectionMode,
               selected: selectedIds.contains(item.$2.id),
               onTap: onEntryTap == null ? null : () => onEntryTap!(item.$2),

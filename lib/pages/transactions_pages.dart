@@ -498,6 +498,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                               entries: group.entries,
                               accounts: controller.accounts,
                               categories: controller.categories,
+                              tags: controller.tags,
                               selectionMode: _selectionMode,
                               selectedIds: _selectedIds,
                               onEntryTap: (entry) {
