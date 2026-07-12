@@ -323,10 +323,12 @@ class TrendLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant TrendLinePainter oldDelegate) {
+    // values/xLabels/yLabels 由调用方每帧新建，用 listEquals 做按元素比较，
+    // 避免内容不变时因列表实例不同而误判为「变了」触发无谓重绘。
     return oldDelegate.color != color ||
-        oldDelegate.values != values ||
-        oldDelegate.xLabels != xLabels ||
-        oldDelegate.yLabels != yLabels ||
+        !listEquals(oldDelegate.values, values) ||
+        !listEquals(oldDelegate.xLabels, xLabels) ||
+        !listEquals(oldDelegate.yLabels, yLabels) ||
         oldDelegate.labelColor != labelColor ||
         oldDelegate.glow != glow ||
         oldDelegate.selectedIndex != selectedIndex ||
@@ -431,9 +433,10 @@ class BarChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BarChartPainter oldDelegate) {
-    return oldDelegate.values != values ||
-        oldDelegate.xLabels != xLabels ||
-        oldDelegate.yLabels != yLabels ||
+    // 同 TrendLinePainter：列表按元素比较，内容不变则不重绘。
+    return !listEquals(oldDelegate.values, values) ||
+        !listEquals(oldDelegate.xLabels, xLabels) ||
+        !listEquals(oldDelegate.yLabels, yLabels) ||
         oldDelegate.labelColor != labelColor ||
         oldDelegate.selectedIndex != selectedIndex ||
         oldDelegate.tooltip != tooltip;
