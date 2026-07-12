@@ -2425,7 +2425,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get qianjiImportGuide =>
-      'In Qianji (钱迹): Me → Settings → Backup & export → Export bills → choose the \"CSV\" (detail) format with the \"All\" time range. You get a .csv file starting with \"QianJi\"; save it to your phone, then choose it here.\n\nExpense, income, transfer, credit-card repayment, refund, reimbursement and debts (lend/collect/borrow/repay) are all imported: refunds offset the original expense via their linked bill (net = original − refund); debts treat the other party as an account whose balance is the net amount owed (positive = they owe you). Categories restore the two-level hierarchy and tags are imported too. Menu paths may vary by app version.';
+      'In Qianji (钱迹): Me → Settings → Backup & export → Export bills → choose the \"CSV\" (detail) format with the \"All\" time range. You get a .csv file starting with \"QianJi\"; save it to your phone, then choose it here.\n\nExpense, income, transfer, credit-card repayment, refund and reimbursement are all imported: refunds offset the original expense via their linked bill (net = original − refund); categories restore the two-level hierarchy and tags are imported too. Qianji\'s debt/loan records (lend, collect, interest, etc.) are NOT imported — this app has no debt feature and can\'t represent them faithfully; they are mostly \"pay then get repaid\" round-trips, so skipping them doesn\'t affect your real income/expense. Menu paths may vary by app version.';
 
   @override
   String get tallyImportGuide =>

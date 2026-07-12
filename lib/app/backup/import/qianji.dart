@@ -13,9 +13,11 @@ import 'text_format.dart';
 /// | 收入 / 报销记录 / 债务-利息收入 | 收入 | 报销记录=报销款到账；债务利息=利息收入 |
 /// | 转账 / 还款 | 转账 | 账户1→账户2，手续费；还款=信用卡还款（资金账户→信用卡） |
 /// | 退款 | （折叠进原支出，净额=金额−退款）| 原单不在文件里的孤立退款回落记为收入，避免丢钱 |
-/// | 债务-借出/收款/借入/还款 | 转账 | 账户1「A->B」箭头拆 from→to（把「人」当账户，正=对方欠我）；无箭头按借贷方向补空账户 |
+/// | 债务-借出/收款/借入/还款/利息收入 | （跳过，不导入）| Veri Fin 无「债务/借贷」功能，无法忠实表达 |
 ///
-/// 币种（均 CNY）、优惠券（仅少量、金额已是实付净额故不加回）、账单图片、记账者不导入。
+/// 债务类（多为「垫钱→收回」的一进一出）跳过：硬记成收支会污染统计、凭空造「人/店」账户又
+/// 打乱资产列表，且不影响真实收支与余额。币种（均 CNY）、优惠券（金额已是实付净额故不加回）、
+/// 账单图片、记账者、0 元「心愿单」占位记录均不导入。
 ParsedImport parseQianji(Uint8List bytes) {
   final rows = parseCsv(decodeUtf8Bytes(bytes));
   final headerIndex = findHeaderRow(
@@ -85,7 +87,7 @@ ParsedImport parseQianji(Uint8List bytes) {
           sourceLine: line,
           onError: onError,
         );
-      case '收入' || '报销记录' || '债务-利息收入':
+      case '收入' || '报销记录':
         record = buildRecordFromStrings(
           date: cell(row, '时间'),
           type: '收入',
@@ -128,18 +130,11 @@ ParsedImport parseQianji(Uint8List bytes) {
           sourceLine: line,
           onError: onError,
         );
-      case '债务-借出' || '债务-收款' || '债务-借入' || '债务-还款':
-        final (from, to) = _debtAccounts(type, cell(row, '账户1'));
-        record = buildRecordFromStrings(
-          date: cell(row, '时间'),
-          type: '转账',
-          amount: cell(row, '金额'),
-          account: from,
-          toAccount: to,
-          note: cell(row, '备注'),
-          sourceLine: line,
-          onError: onError,
-        );
+      case '债务-借出' || '债务-收款' || '债务-借入' || '债务-还款' || '债务-利息收入':
+        // 债务/借贷类记录一律跳过：Veri Fin 没有「债务/借贷」功能，无法忠实表达（借出的
+        // 钱是应收、还没到账，硬记成收支会污染统计，凭空造「人/店」账户又打乱资产列表）。
+        // 钱迹债务多是「垫钱→收回」的一进一出，跳过不影响真实收支与余额。
+        continue;
       default:
         // 未知类型：跳过，不猜测（宁可漏、不记错）。
         continue;
@@ -149,22 +144,4 @@ ParsedImport parseQianji(Uint8List bytes) {
     }
   }
   return ParsedImport(records: records, errors: errors);
-}
-
-/// 拆解债务行的「账户1」为转账的 (转出, 转入)。钱迹债务用「转出->转入」编码方向：借出
-/// 「我的账户->对方」、收款「对方->我的账户」、还款「我的账户->对方」。无箭头时只给了对方
-/// 名字（钱迹未记真实资金账户），按借贷方向补一个空账户（不动真实余额），使「对方」账户余额
-/// 仍表净欠款：借出→对方 +（对方欠我）；收款/借入/还款→对方 −。
-(String, String) _debtAccounts(String type, String account1) {
-  final arrow = account1.indexOf('->');
-  if (arrow >= 0) {
-    return (
-      account1.substring(0, arrow).trim(),
-      account1.substring(arrow + 2).trim(),
-    );
-  }
-  return switch (type) {
-    '债务-借出' => ('', account1),
-    _ => (account1, ''),
-  };
 }

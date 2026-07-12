@@ -752,10 +752,21 @@ void main() {
     String? acctName(String? id) =>
         (id == null || id.isEmpty) ? null : idToName[id];
 
-    test('全类型导入、无错误行、退款折叠不单独成条', () {
+    test('导入收支/转账/报销、无错误行；退款折叠、债务跳过', () {
       expect(plan.errorCount, 0);
-      // 12 行数据里「退款(e1)」被折叠进原支出，故 11 条。
-      expect(plan.importedCount, 11);
+      // 12 行数据：退款(e1) 折叠进原支出、4 条债务(d1~d4) 跳过，余 7 条。
+      expect(plan.importedCount, 7);
+    });
+
+    test('债务/借贷类记录一律不导入（Veri Fin 无债务功能）', () {
+      // 借出/收款/利息等均不产生交易，也不凭空造「人/店」账户。
+      final notes = plan.entries.map((e) => e.note).toSet();
+      expect(notes, isNot(contains('借给张三')));
+      expect(notes, isNot(contains('张三还钱')));
+      expect(notes, isNot(contains('好评返款')));
+      expect(notes, isNot(contains('利息')));
+      expect(plan.newAccounts.any((a) => a.name == '张三'), isFalse);
+      expect(plan.newAccounts.any((a) => a.name == '幻隐旗舰店'), isFalse);
     });
 
     test('支出：关联退款折叠进 refundedAmount（净额=金额−退款）', () {
@@ -803,29 +814,6 @@ void main() {
       expect(br.type, EntryType.income);
       expect(br.amount, 114);
       expect(acctName(br.accountId), '工商银行');
-    });
-
-    test('债务箭头 A->B 拆成转账（对方当账户）', () {
-      final lend = byNote('借给张三');
-      expect(lend.type, EntryType.transfer);
-      expect(acctName(lend.accountId), '现金');
-      expect(acctName(lend.toAccountId), '张三');
-      final collect = byNote('张三还钱');
-      expect(acctName(collect.accountId), '张三');
-      expect(acctName(collect.toAccountId), '现金');
-    });
-
-    test('债务无箭头：对方当账户、真实资金账户留空', () {
-      final e = byNote('好评返款');
-      expect(e.type, EntryType.transfer);
-      expect(e.accountId, isEmpty);
-      expect(acctName(e.toAccountId), '幻隐旗舰店');
-    });
-
-    test('债务利息记为收入', () {
-      final e = byNote('利息');
-      expect(e.type, EntryType.income);
-      expect(e.amount, 2);
     });
   });
 }
