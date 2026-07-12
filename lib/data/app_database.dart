@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:sqflite_common/sqlite_api.dart';
 
 import 'database_factory.dart';
@@ -44,104 +45,162 @@ class AppDatabase {
     await batch.commit(noResult: true);
   }
 
+  /// 版本迁移注册表：键 N 表示「升到 vN」的迁移段（v(N-1) → vN）。[_onUpgrade]
+  /// 按 (oldVersion, newVersion] 升序逐段执行；段与段的顺序依赖（如 v10 去重
+  /// 依赖 v7 已建 recurring_rules 表）由升序执行天然保证。
+  ///
+  /// 修改表结构 = 提升 [schemaVersion] + 同步 [_schemaCurrent] + 在此注册新段。
+  /// **勿改动历史段**——存量用户升级时仍会按序经过它们。测试经 [migrations]
+  /// 访问本表构造任意中间版本库（见 test/migration_matrix_test.dart 的迁移矩阵）。
+  static final Map<int, Future<void> Function(Database db)> _migrations =
+      <int, Future<void> Function(Database db)>{
+        2: _migrateToV2,
+        3: _migrateToV3,
+        4: _migrateToV4,
+        5: _migrateToV5,
+        6: _migrateToV6,
+        7: _migrateToV7,
+        8: _migrateToV8,
+        9: _migrateToV9,
+        10: _migrateToV10,
+        11: _migrateToV11,
+        12: _migrateToV12,
+        13: _migrateToV13,
+      };
+
+  /// 只读暴露迁移注册表，供迁移矩阵测试把库推进到任意中间版本。生产代码勿用。
+  @visibleForTesting
+  static Map<int, Future<void> Function(Database db)> get migrations =>
+      Map<int, Future<void> Function(Database db)>.unmodifiable(_migrations);
+
   static Future<void> _onUpgrade(
     Database db,
     int oldVersion,
     int newVersion,
   ) async {
-    // v1 → v2：分类支持多级树形结构，新增可空的 parent_id 列（顶级为 NULL）。
-    if (oldVersion < 2) {
-      await db.execute('ALTER TABLE categories ADD COLUMN parent_id TEXT');
-    }
-    // v2 → v3：标签系统。新增 tags 表；交易新增可空 tag_ids 列（JSON 数组）。
-    if (oldVersion < 3) {
-      await db.execute('ALTER TABLE entries ADD COLUMN tag_ids TEXT');
-      await db.execute('''
-        CREATE TABLE tags (
-          id TEXT PRIMARY KEY,
-          label TEXT NOT NULL,
-          sort_order INTEGER NOT NULL
-        )
-      ''');
-    }
-    // v3 → v4：图片附件。独立表，按 entry_id 关联，data_url 存压缩 JPEG。
-    if (oldVersion < 4) {
-      await db.execute('''
-        CREATE TABLE attachments (
-          id TEXT PRIMARY KEY,
-          entry_id TEXT NOT NULL,
-          data_url TEXT NOT NULL,
-          sort_order INTEGER NOT NULL
-        )
-      ''');
-      await db.execute(
-        'CREATE INDEX idx_attachments_entry ON attachments (entry_id)',
-      );
-    }
-    // v4 → v5：转账手续费。交易新增 fee 列，默认 0。
-    if (oldVersion < 5) {
-      await db.execute(
-        'ALTER TABLE entries ADD COLUMN fee REAL NOT NULL DEFAULT 0',
-      );
-    }
-    // v5 → v6：报销/退款。交易新增待报销标记与已冲抵金额。
-    if (oldVersion < 6) {
-      await db.execute(
-        'ALTER TABLE entries ADD COLUMN reimbursable INTEGER NOT NULL DEFAULT 0',
-      );
-      await db.execute(
-        'ALTER TABLE entries ADD COLUMN refunded_amount REAL NOT NULL DEFAULT 0',
-      );
-    }
-    // v6 → v7：周期记账规则表。
-    if (oldVersion < 7) {
-      await db.execute(_recurringRulesTable);
-    }
-    // v7 → v8：信用卡账单日/还款日（可选）。
-    if (oldVersion < 8) {
-      await db.execute('ALTER TABLE accounts ADD COLUMN statement_day INTEGER');
-      await db.execute('ALTER TABLE accounts ADD COLUMN due_day INTEGER');
-    }
-    // v8 → v9：按日预算维度。键为 `bookId:yyyy-MM-dd`。
-    if (oldVersion < 9) {
-      await db.execute(_dailyBudgetsTable);
-    }
-    // v9 → v10：分类唯一性约束。历史/异构备份可能带入重复同名分类（「幽灵分类」根因），
-    // 先按 (label,type,IFNULL(parent_id,'')) 去重（交易/周期规则/子分类引用改指向保留者、
-    // 删掉重复），再建唯一索引。**必须先去重再建索引**，否则 CREATE UNIQUE INDEX 会因已有
-    // 重复行失败。悬空引用/孤儿 parentId 不违反唯一性、由 controller 载入时的 _healCategoryData
-    // 处理，此处只管重复行。
-    if (oldVersion < 10) {
-      // 真实库自 v1 起必有 categories/entries；recurring_rules 由上面 v7 块保证在前。
-      // 判存在只为兼容迁移测试的最小桩库，并顺带抵御异常损坏的安装。
-      if (await _tableExists(db, 'categories')) {
-        await _dedupeCategories(db);
-        await db.execute(_categoriesUniqueIndex);
+    for (var version = oldVersion + 1; version <= newVersion; version++) {
+      final migrate = _migrations[version];
+      if (migrate == null) {
+        // 提升了 schemaVersion 却忘了注册迁移段：宁可升级即刻失败，也不能
+        // 静默跳段留下残缺 schema（后续读写会以更隐蔽的方式坏）。
+        throw StateError('缺少升级到 v$version 的迁移段，需在 _migrations 注册');
       }
+      await migrate(db);
     }
-    // v10 → v11：完整卡号（信用卡/储蓄卡）与信用额度（信用卡/信用账户，可空）。
-    // 判 accounts 存在只为兼容迁移测试的最小桩库（真实库自 v1 起必有 accounts）。
-    if (oldVersion < 11 && await _tableExists(db, 'accounts')) {
-      await db.execute(
-        "ALTER TABLE accounts ADD COLUMN card_number TEXT NOT NULL DEFAULT ''",
-      );
-      await db.execute('ALTER TABLE accounts ADD COLUMN credit_limit REAL');
+  }
+
+  /// v1 → v2：分类支持多级树形结构，新增可空的 parent_id 列（顶级为 NULL）。
+  static Future<void> _migrateToV2(Database db) async {
+    await db.execute('ALTER TABLE categories ADD COLUMN parent_id TEXT');
+  }
+
+  /// v2 → v3：标签系统。新增 tags 表；交易新增可空 tag_ids 列（JSON 数组）。
+  static Future<void> _migrateToV3(Database db) async {
+    await db.execute('ALTER TABLE entries ADD COLUMN tag_ids TEXT');
+    await db.execute('''
+      CREATE TABLE tags (
+        id TEXT PRIMARY KEY,
+        label TEXT NOT NULL,
+        sort_order INTEGER NOT NULL
+      )
+    ''');
+  }
+
+  /// v3 → v4：图片附件。独立表，按 entry_id 关联，data_url 存压缩 JPEG。
+  static Future<void> _migrateToV4(Database db) async {
+    await db.execute('''
+      CREATE TABLE attachments (
+        id TEXT PRIMARY KEY,
+        entry_id TEXT NOT NULL,
+        data_url TEXT NOT NULL,
+        sort_order INTEGER NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_attachments_entry ON attachments (entry_id)',
+    );
+  }
+
+  /// v4 → v5：转账手续费。交易新增 fee 列，默认 0。
+  static Future<void> _migrateToV5(Database db) async {
+    await db.execute(
+      'ALTER TABLE entries ADD COLUMN fee REAL NOT NULL DEFAULT 0',
+    );
+  }
+
+  /// v5 → v6：报销/退款。交易新增待报销标记与已冲抵金额。
+  static Future<void> _migrateToV6(Database db) async {
+    await db.execute(
+      'ALTER TABLE entries ADD COLUMN reimbursable INTEGER NOT NULL DEFAULT 0',
+    );
+    await db.execute(
+      'ALTER TABLE entries ADD COLUMN refunded_amount REAL NOT NULL DEFAULT 0',
+    );
+  }
+
+  /// v6 → v7：周期记账规则表。
+  static Future<void> _migrateToV7(Database db) async {
+    await db.execute(_recurringRulesTable);
+  }
+
+  /// v7 → v8：信用卡账单日/还款日（可选）。
+  static Future<void> _migrateToV8(Database db) async {
+    await db.execute('ALTER TABLE accounts ADD COLUMN statement_day INTEGER');
+    await db.execute('ALTER TABLE accounts ADD COLUMN due_day INTEGER');
+  }
+
+  /// v8 → v9：按日预算维度。键为 `bookId:yyyy-MM-dd`。
+  static Future<void> _migrateToV9(Database db) async {
+    await db.execute(_dailyBudgetsTable);
+  }
+
+  /// v9 → v10：分类唯一性约束。历史/异构备份可能带入重复同名分类（「幽灵分类」根因），
+  /// 先按 (label,type,IFNULL(parent_id,'')) 去重（交易/周期规则/子分类引用改指向保留者、
+  /// 删掉重复），再建唯一索引。**必须先去重再建索引**，否则 CREATE UNIQUE INDEX 会因已有
+  /// 重复行失败。悬空引用/孤儿 parentId 不违反唯一性、由 controller 载入时的 _healCategoryData
+  /// 处理，此处只管重复行。
+  static Future<void> _migrateToV10(Database db) async {
+    // 真实库自 v1 起必有 categories/entries；recurring_rules 由 v7 段保证在前。
+    // 判存在只为兼容迁移测试的最小桩库，并顺带抵御异常损坏的安装。
+    if (await _tableExists(db, 'categories')) {
+      await _dedupeCategories(db);
+      await db.execute(_categoriesUniqueIndex);
     }
-    // v11 → v12：「后四位跟随完整卡号」开关持久化。旧账户默认 0（不跟随），
-    // 保留其可能手填的后四位、不因跟随空卡号被冲成空。
-    if (oldVersion < 12 && await _tableExists(db, 'accounts')) {
-      await db.execute(
-        'ALTER TABLE accounts ADD COLUMN card_last4_follows INTEGER NOT NULL DEFAULT 0',
-      );
+  }
+
+  /// v10 → v11：完整卡号（信用卡/储蓄卡）与信用额度（信用卡/信用账户，可空）。
+  /// 判 accounts 存在只为兼容迁移测试的最小桩库（真实库自 v1 起必有 accounts）。
+  static Future<void> _migrateToV11(Database db) async {
+    if (!await _tableExists(db, 'accounts')) {
+      return;
     }
-    // v12 → v13：退款独立条目。交易新增 refund_of（指向原支出，退款条目专用）与
-    // settled_at（到账日期毫秒，NULL=待到账）。历史 refunded_amount 标量在 controller
-    // 载入时的 _syncRefundData() 里合成为已到账退款条目并作缓存重算，此处只加列。
-    // 判 entries 存在只为兼容迁移测试的最小桩库（真实库自 v1 起必有 entries）。
-    if (oldVersion < 13 && await _tableExists(db, 'entries')) {
-      await db.execute('ALTER TABLE entries ADD COLUMN refund_of TEXT');
-      await db.execute('ALTER TABLE entries ADD COLUMN settled_at INTEGER');
+    await db.execute(
+      "ALTER TABLE accounts ADD COLUMN card_number TEXT NOT NULL DEFAULT ''",
+    );
+    await db.execute('ALTER TABLE accounts ADD COLUMN credit_limit REAL');
+  }
+
+  /// v11 → v12：「后四位跟随完整卡号」开关持久化。旧账户默认 0（不跟随），
+  /// 保留其可能手填的后四位、不因跟随空卡号被冲成空。
+  static Future<void> _migrateToV12(Database db) async {
+    if (!await _tableExists(db, 'accounts')) {
+      return;
     }
+    await db.execute(
+      'ALTER TABLE accounts ADD COLUMN card_last4_follows INTEGER NOT NULL DEFAULT 0',
+    );
+  }
+
+  /// v12 → v13：退款独立条目。交易新增 refund_of（指向原支出，退款条目专用）与
+  /// settled_at（到账日期毫秒，NULL=待到账）。历史 refunded_amount 标量在 controller
+  /// 载入时的 _syncRefundData() 里合成为已到账退款条目并作缓存重算，此处只加列。
+  /// 判 entries 存在只为兼容迁移测试的最小桩库（真实库自 v1 起必有 entries）。
+  static Future<void> _migrateToV13(Database db) async {
+    if (!await _tableExists(db, 'entries')) {
+      return;
+    }
+    await db.execute('ALTER TABLE entries ADD COLUMN refund_of TEXT');
+    await db.execute('ALTER TABLE entries ADD COLUMN settled_at INTEGER');
   }
 
   static Future<bool> _tableExists(Database db, String name) async {
