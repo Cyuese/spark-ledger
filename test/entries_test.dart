@@ -587,4 +587,45 @@ void main() {
     expect(controller.entries.last.id, 'backdated');
     controller.dispose();
   });
+
+  testWidgets('交易列表分页：初始只渲染一批、滚动预加载后可见更早的交易', (WidgetTester tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final bookId = controller.activeBook.id;
+    final now = DateTime(2026, 7, 12, 12);
+    // 40 笔、各自不同日期（40 个分组），超过单批 30 条，触发分页。
+    for (var i = 0; i < 40; i++) {
+      controller.addEntry(
+        LedgerEntry(
+          id: 'page-$i',
+          bookId: bookId,
+          type: EntryType.expense,
+          amount: (10 + i).toDouble(),
+          categoryId: 'dining',
+          accountId: 'cash',
+          note: 'note-$i',
+          occurredAt: now.subtract(Duration(days: i)),
+        ),
+      );
+    }
+    controller.dispose();
+
+    await pumpApp(tester, store);
+    await tester.tap(find.text('最近交易'));
+    await tester.pumpAndSettle();
+
+    // 汇总/计数基于完整列表：仍显示全部 40 笔。
+    expect(find.text('40 笔交易'), findsOneWidget);
+    // 最新的一批已渲染，最旧的一笔（note-39）尚未构建（分页在其之前截断）。
+    expect(find.textContaining('note-0'), findsOneWidget);
+    expect(find.textContaining('note-39'), findsNothing);
+
+    // 向下滚动：预加载逐批追加，最旧的一笔最终可见（无异步等待）。
+    await tester.scrollUntilVisible(
+      find.textContaining('note-39'),
+      400.0,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.textContaining('note-39'), findsOneWidget);
+  });
 }

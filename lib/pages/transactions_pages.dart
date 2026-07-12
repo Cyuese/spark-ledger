@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
+import '../app/amount_format.dart' as amount_format;
 import '../app/app_theme.dart';
 import '../app/category_tree.dart';
 import '../app/common_widgets.dart';
@@ -133,10 +135,87 @@ class _TransactionsPageState extends State<TransactionsPage> {
   bool _selectionMode = false;
   final Set<String> _selectedIds = <String>{};
 
+  // 分页显示：列表只渲染前 _visibleCount 条交易对应的日期分组，快滑到底部前
+  // （extentAfter 阈值）预加载下一批，避免一次性构建成百上千个 widget。汇总/
+  // 计数/全选仍基于完整派生列表，不受分页影响。
+  static const int _pageBatchSize = 30;
+
+  // 快滑到底部前多少像素就预取下一批：给一屏左右的余量，避免用户滑到底再等。
+  static const double _prefetchExtent = 800;
+  int _visibleCount = _pageBatchSize;
+
+  // 派生管线（过滤→排序→去退款→分组→汇总）缓存：签名不变则复用，避免无关
+  // notifyListeners 触发整条 O(n log n) 重算。签名覆盖全部输入——三个模型列表
+  // 引用（经派生缓存后变化即换实例）、金额格式开关、locale、以及所有筛选字段。
+  List<Object?>? _deriveSignature;
+  List<LedgerEntry> _derivedEntries = const <LedgerEntry>[];
+  List<DateEntryGroup> _derivedGroups = const <DateEntryGroup>[];
+  double _derivedExpense = 0;
+  double _derivedIncome = 0;
+
   @override
   void initState() {
     super.initState();
     _selectedAccountId = widget.accountId;
+  }
+
+  /// 按签名判断派生结果是否失效；失效才重跑过滤/排序/分组/汇总并重置分页。
+  void _ensureDerived(VeriFinController controller, BuildContext context) {
+    final signature = <Object?>[
+      controller.entries,
+      controller.accounts,
+      controller.categories,
+      amount_format.amountForceTwoDecimals,
+      Localizations.localeOf(context),
+      widget.accountId,
+      _dateMode,
+      _visibleDate,
+      _timeFilter,
+      _periodAnchor,
+      _query,
+      _selectedAccountId,
+      _selectedCategoryId,
+      _selectedTagId,
+      _reimbursementFilter,
+      _sortOrder,
+    ];
+    if (_deriveSignature != null && listEquals(_deriveSignature, signature)) {
+      return;
+    }
+    _deriveSignature = signature;
+    final entries = _sortedEntries(
+      _filteredEntries(controller.entries),
+    ).where((entry) => entry.type != EntryType.refund).toList();
+    _derivedEntries = entries;
+    _derivedExpense = sumByType(entries, EntryType.expense);
+    _derivedIncome = sumByType(entries, EntryType.income);
+    _derivedGroups = groupEntriesByDate(entries);
+    // 输入变化视为「重新浏览」：分页回到第一批，避免停留在上一次的深度。
+    _visibleCount = _pageBatchSize;
+  }
+
+  /// 当前应展示的日期分组：累计交易数达到 _visibleCount 即截断（含跨越该阈值的
+  /// 那一组，保证分组完整）。
+  List<DateEntryGroup> _visibleGroups() {
+    final result = <DateEntryGroup>[];
+    var shown = 0;
+    for (final group in _derivedGroups) {
+      result.add(group);
+      shown += group.entries.length;
+      if (shown >= _visibleCount) {
+        break;
+      }
+    }
+    return result;
+  }
+
+  /// 滚动到接近底部（预取余量内）且仍有未展示分组时，追加下一批。数据全在内存，
+  /// 追加只是多渲染几组、无异步等待，故「加载」瞬时完成、不会卡在底部。
+  bool _onScroll(ScrollNotification notification, bool hasMore) {
+    if (hasMore && notification.metrics.extentAfter < _prefetchExtent) {
+      setState(() => _visibleCount += _pageBatchSize);
+    }
+    return false;
   }
 
   @override
@@ -148,13 +227,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
-    // 退款条目在原支出上管理，不单独进交易列表（净额已体现在支出行）。
-    final entries = _sortedEntries(
-      _filteredEntries(controller.entries),
-    ).where((e) => e.type != EntryType.refund).toList();
-    final expense = sumByType(entries, EntryType.expense);
-    final income = sumByType(entries, EntryType.income);
-    final groupedEntries = groupEntriesByDate(entries);
+    // 派生管线（过滤→排序→去退款→分组→汇总）带签名缓存：输入不变则复用，避免
+    // 无关 notify 触发整条重算。退款条目在原支出上管理，不进列表（净额已体现在支出行）。
+    _ensureDerived(controller, context);
+    final entries = _derivedEntries;
+    final expense = _derivedExpense;
+    final income = _derivedIncome;
+    final visibleGroups = _visibleGroups();
+    final hasMore = visibleGroups.length < _derivedGroups.length;
 
     return Scaffold(
       bottomNavigationBar: _selectionMode
@@ -176,217 +256,272 @@ class _TransactionsPageState extends State<TransactionsPage> {
           : null,
       body: SafeArea(
         child: VeriPage(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
-            children: <Widget>[
-              VeriHeader(
-                title: _selectionMode
-                    ? AppLocalizations.of(
-                        context,
-                      ).selectedCount(_selectedIds.length)
-                    : (widget.title ??
-                          (_dateMode
-                              ? AppLocalizations.of(context).dayEntriesTitle
-                              : AppLocalizations.of(context).entriesListTitle)),
-                subtitle: _selectionMode
-                    ? null
-                    : (_dateMode
-                          ? '${_visibleDate.month}.${_visibleDate.day}'
-                          : null),
-                showBack: true,
-                actions: <Widget>[
-                  if (_selectionMode)
-                    HeaderAction(
-                      icon: Icons.close,
-                      tooltip: AppLocalizations.of(context).exitMultiSelect,
-                      onPressed: () => setState(() {
-                        _selectionMode = false;
-                        _selectedIds.clear();
-                      }),
-                    )
-                  else ...<Widget>[
-                    if (controller.pendingRefunds.isNotEmpty)
-                      HeaderAction(
-                        icon: Icons.schedule,
-                        tooltip: AppLocalizations.of(
-                          context,
-                        ).pendingRefundsTitle,
-                        onPressed: () => Navigator.of(context).push<void>(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const PendingRefundsPage(),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) => _onScroll(notification, hasMore),
+            child: CustomScrollView(
+              slivers: <Widget>[
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        VeriHeader(
+                          title: _selectionMode
+                              ? AppLocalizations.of(
+                                  context,
+                                ).selectedCount(_selectedIds.length)
+                              : (widget.title ??
+                                    (_dateMode
+                                        ? AppLocalizations.of(
+                                            context,
+                                          ).dayEntriesTitle
+                                        : AppLocalizations.of(
+                                            context,
+                                          ).entriesListTitle)),
+                          subtitle: _selectionMode
+                              ? null
+                              : (_dateMode
+                                    ? '${_visibleDate.month}.${_visibleDate.day}'
+                                    : null),
+                          showBack: true,
+                          actions: <Widget>[
+                            if (_selectionMode)
+                              HeaderAction(
+                                icon: Icons.close,
+                                tooltip: AppLocalizations.of(
+                                  context,
+                                ).exitMultiSelect,
+                                onPressed: () => setState(() {
+                                  _selectionMode = false;
+                                  _selectedIds.clear();
+                                }),
+                              )
+                            else ...<Widget>[
+                              if (controller.pendingRefunds.isNotEmpty)
+                                HeaderAction(
+                                  icon: Icons.schedule,
+                                  tooltip: AppLocalizations.of(
+                                    context,
+                                  ).pendingRefundsTitle,
+                                  onPressed: () =>
+                                      Navigator.of(context).push<void>(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) =>
+                                              const PendingRefundsPage(),
+                                        ),
+                                      ),
+                                ),
+                              if (entries.isNotEmpty)
+                                HeaderAction(
+                                  icon: Icons.checklist,
+                                  tooltip: AppLocalizations.of(
+                                    context,
+                                  ).multiSelect,
+                                  onPressed: () =>
+                                      setState(() => _selectionMode = true),
+                                ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (_dateMode)
+                          Row(
+                            children: <Widget>[
+                              _DateFilterBar(
+                                date: _visibleDate,
+                                onPrevious: () => setState(() {
+                                  _visibleDate = _visibleDate.subtract(
+                                    const Duration(days: 1),
+                                  );
+                                }),
+                                onNext: () => setState(() {
+                                  _visibleDate = _visibleDate.add(
+                                    const Duration(days: 1),
+                                  );
+                                }),
+                                onTap: _pickTimeFilter,
+                              ),
+                              const SizedBox(width: 10),
+                              FilterPill(
+                                label: _sortOrder.label(
+                                  AppLocalizations.of(context),
+                                ),
+                                onTap: _pickSortOrder,
+                              ),
+                            ],
+                          )
+                        else
+                          Row(
+                            children: <Widget>[
+                              _TransactionFilterBar(
+                                label: _periodLabel(),
+                                showNavigation:
+                                    _timeFilter != TransactionTimeFilter.all,
+                                onPrevious: () => _movePeriod(-1),
+                                onNext: () => _movePeriod(1),
+                                onTap: _pickTimeFilter,
+                              ),
+                              const SizedBox(width: 10),
+                              FilterPill(
+                                label: _sortOrder.label(
+                                  AppLocalizations.of(context),
+                                ),
+                                onTap: _pickSortOrder,
+                              ),
+                            ],
+                          ),
+                        const SizedBox(height: 10),
+                        _TransactionSearchFilters(
+                          controller: _searchController,
+                          accountLabel: _accountFilterLabel(controller),
+                          categoryLabel: _categoryFilterLabel(controller),
+                          accountLocked: widget.accountId != null,
+                          onChanged: (value) =>
+                              setState(() => _query = value.trim()),
+                          onPickAccount: widget.accountId == null
+                              ? () => _pickAccountFilter(controller)
+                              : null,
+                          onPickCategory: () => _pickCategoryFilter(controller),
+                          tagLabel: _tagFilterLabel(controller),
+                          tagSelected: _selectedTagId != null,
+                          onPickTag: controller.tags.isEmpty
+                              ? null
+                              : () => _pickTagFilter(controller),
+                          onClear: _hasSecondaryFilters
+                              ? () {
+                                  setState(() {
+                                    _searchController.clear();
+                                    _query = '';
+                                    if (widget.accountId == null) {
+                                      _selectedAccountId = null;
+                                    }
+                                    _selectedCategoryId = null;
+                                    _selectedTagId = null;
+                                    _reimbursementFilter =
+                                        ReimbursementFilter.all;
+                                  });
+                                }
+                              : null,
+                          reimbursementLabel: _reimbursementFilterLabel(),
+                          reimbursementActive:
+                              _reimbursementFilter != ReimbursementFilter.all,
+                          onPickReimbursement: _pickReimbursementFilter,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          AppLocalizations.of(
+                            context,
+                          ).entriesCountFull(entries.length),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.28),
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        VeriCard(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 16,
+                          ),
+                          child: Row(
+                            children: <Widget>[
+                              SummaryMetric(
+                                label: AppLocalizations.of(
+                                  context,
+                                ).entryTypeExpense,
+                                value: formatExpenseAmount(expense),
+                                color: isZeroAmount(expense)
+                                    ? Theme.of(context).colorScheme.onSurface
+                                          .withValues(alpha: 0.48)
+                                    : veriExpense,
+                              ),
+                              SummaryMetric(
+                                label: AppLocalizations.of(
+                                  context,
+                                ).entryTypeIncome,
+                                value: formatAmount(income),
+                                color: isZeroAmount(income)
+                                    ? Theme.of(context).colorScheme.onSurface
+                                          .withValues(alpha: 0.48)
+                                    : veriIncome,
+                              ),
+                              SummaryMetric(
+                                label: AppLocalizations.of(context).netLabel,
+                                value: formatSignedAmount(income - expense),
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    if (entries.isNotEmpty)
-                      HeaderAction(
-                        icon: Icons.checklist,
-                        tooltip: AppLocalizations.of(context).multiSelect,
-                        onPressed: () => setState(() => _selectionMode = true),
-                      ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (_dateMode)
-                Row(
-                  children: <Widget>[
-                    _DateFilterBar(
-                      date: _visibleDate,
-                      onPrevious: () => setState(() {
-                        _visibleDate = _visibleDate.subtract(
-                          const Duration(days: 1),
-                        );
-                      }),
-                      onNext: () => setState(() {
-                        _visibleDate = _visibleDate.add(
-                          const Duration(days: 1),
-                        );
-                      }),
-                      onTap: _pickTimeFilter,
+                        const SizedBox(height: 18),
+                      ],
                     ),
-                    const SizedBox(width: 10),
-                    FilterPill(
-                      label: _sortOrder.label(AppLocalizations.of(context)),
-                      onTap: _pickSortOrder,
-                    ),
-                  ],
-                )
-              else
-                Row(
-                  children: <Widget>[
-                    _TransactionFilterBar(
-                      label: _periodLabel(),
-                      showNavigation: _timeFilter != TransactionTimeFilter.all,
-                      onPrevious: () => _movePeriod(-1),
-                      onNext: () => _movePeriod(1),
-                      onTap: _pickTimeFilter,
-                    ),
-                    const SizedBox(width: 10),
-                    FilterPill(
-                      label: _sortOrder.label(AppLocalizations.of(context)),
-                      onTap: _pickSortOrder,
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 10),
-              _TransactionSearchFilters(
-                controller: _searchController,
-                accountLabel: _accountFilterLabel(controller),
-                categoryLabel: _categoryFilterLabel(controller),
-                accountLocked: widget.accountId != null,
-                onChanged: (value) => setState(() => _query = value.trim()),
-                onPickAccount: widget.accountId == null
-                    ? () => _pickAccountFilter(controller)
-                    : null,
-                onPickCategory: () => _pickCategoryFilter(controller),
-                tagLabel: _tagFilterLabel(controller),
-                tagSelected: _selectedTagId != null,
-                onPickTag: controller.tags.isEmpty
-                    ? null
-                    : () => _pickTagFilter(controller),
-                onClear: _hasSecondaryFilters
-                    ? () {
-                        setState(() {
-                          _searchController.clear();
-                          _query = '';
-                          if (widget.accountId == null) {
-                            _selectedAccountId = null;
-                          }
-                          _selectedCategoryId = null;
-                          _selectedTagId = null;
-                          _reimbursementFilter = ReimbursementFilter.all;
-                        });
-                      }
-                    : null,
-                reimbursementLabel: _reimbursementFilterLabel(),
-                reimbursementActive:
-                    _reimbursementFilter != ReimbursementFilter.all,
-                onPickReimbursement: _pickReimbursementFilter,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                AppLocalizations.of(context).entriesCountFull(entries.length),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.28),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 12),
-              VeriCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 16,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    SummaryMetric(
-                      label: AppLocalizations.of(context).entryTypeExpense,
-                      value: formatExpenseAmount(expense),
-                      color: isZeroAmount(expense)
-                          ? Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.48)
-                          : veriExpense,
-                    ),
-                    SummaryMetric(
-                      label: AppLocalizations.of(context).entryTypeIncome,
-                      value: formatAmount(income),
-                      color: isZeroAmount(income)
-                          ? Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.48)
-                          : veriIncome,
-                    ),
-                    SummaryMetric(
-                      label: AppLocalizations.of(context).netLabel,
-                      value: formatSignedAmount(income - expense),
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              if (entries.isEmpty)
-                VeriCard(
-                  child: EmptyState(
-                    icon: Icons.receipt_long_outlined,
-                    title: _hasSecondaryFilters
-                        ? AppLocalizations.of(context).noMatchTitle
-                        : AppLocalizations.of(context).noEntriesTitle,
-                    description: _hasSecondaryFilters
-                        ? AppLocalizations.of(context).noMatchDesc
-                        : AppLocalizations.of(context).emptyEntriesDesc,
                   ),
-                )
-              else
-                for (final group in groupedEntries) ...<Widget>[
-                  DateGroupHeader(entries: group.entries, date: group.date),
-                  const SizedBox(height: 8),
-                  TransactionListCard(
-                    entries: group.entries,
-                    accounts: controller.accounts,
-                    categories: controller.categories,
-                    selectionMode: _selectionMode,
-                    selectedIds: _selectedIds,
-                    onEntryTap: (entry) {
-                      if (_selectionMode) {
-                        _toggleSelected(entry.id);
-                      } else {
-                        openEntryDetail(context, entry);
-                      }
-                    },
-                    onEntryLongPress: (entry) {
-                      setState(() {
-                        _selectionMode = true;
-                        _selectedIds.add(entry.id);
-                      });
-                    },
+                ),
+                if (entries.isEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 28),
+                    sliver: SliverToBoxAdapter(
+                      child: VeriCard(
+                        child: EmptyState(
+                          icon: Icons.receipt_long_outlined,
+                          title: _hasSecondaryFilters
+                              ? AppLocalizations.of(context).noMatchTitle
+                              : AppLocalizations.of(context).noEntriesTitle,
+                          description: _hasSecondaryFilters
+                              ? AppLocalizations.of(context).noMatchDesc
+                              : AppLocalizations.of(context).emptyEntriesDesc,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 28),
+                    sliver: SliverList.builder(
+                      itemCount: visibleGroups.length,
+                      itemBuilder: (context, index) {
+                        final group = visibleGroups[index];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            DateGroupHeader(
+                              entries: group.entries,
+                              date: group.date,
+                            ),
+                            const SizedBox(height: 8),
+                            TransactionListCard(
+                              entries: group.entries,
+                              accounts: controller.accounts,
+                              categories: controller.categories,
+                              selectionMode: _selectionMode,
+                              selectedIds: _selectedIds,
+                              onEntryTap: (entry) {
+                                if (_selectionMode) {
+                                  _toggleSelected(entry.id);
+                                } else {
+                                  openEntryDetail(context, entry);
+                                }
+                              },
+                              onEntryLongPress: (entry) {
+                                setState(() {
+                                  _selectionMode = true;
+                                  _selectedIds.add(entry.id);
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 18),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                  const SizedBox(height: 18),
-                ],
-            ],
+              ],
+            ),
           ),
         ),
       ),
