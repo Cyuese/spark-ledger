@@ -686,4 +686,130 @@ void main() {
       expect(first.standaloneAccountIds, second.standaloneAccountIds);
     });
   });
+
+  group('账户名去空格与同名歧义', () {
+    test('来源名带首尾空格时复用唯一同名现有账户', () {
+      final plan = _build(
+        records: <RawImportRecord>[_record(account: ' 现金 ')],
+        existingAccounts: <Account>[_account('acc_cash', '现金')],
+      );
+      expect(plan.newAccounts, isEmpty);
+      expect(plan.entries.single.accountId, 'acc_cash');
+    });
+
+    test('现有账户名本身带空格（历史数据）也按去空格匹配', () {
+      final plan = _build(
+        records: <RawImportRecord>[_record(account: '现金')],
+        existingAccounts: <Account>[_account('acc_legacy', '现金 ')],
+      );
+      expect(plan.newAccounts, isEmpty);
+      expect(plan.entries.single.accountId, 'acc_legacy');
+    });
+
+    test('新建候选名去首尾空格，且与不带空格的同名行共用同一候选', () {
+      final plan = _build(
+        records: <RawImportRecord>[
+          _record(account: ' 招商银行 '),
+          _record(account: '招商银行', type: EntryType.income, amount: 5),
+        ],
+      );
+      final account = plan.newAccounts.single;
+      expect(account.name, '招商银行');
+      expect(plan.entries.map((e) => e.accountId).toSet(), <String>{
+        account.id,
+      });
+    });
+
+    test('全空白账户名视同无账户，不新建', () {
+      final plan = _build(records: <RawImportRecord>[_record(account: '   ')]);
+      expect(plan.newAccounts, isEmpty);
+      expect(plan.entries.single.accountId, '');
+    });
+
+    test('多个现有账户同名时不猜归属：转为待新建候选、跨行共用', () {
+      final plan = _build(
+        records: <RawImportRecord>[
+          _record(account: '现金', amount: 3),
+          _record(account: '现金', type: EntryType.income, amount: 7),
+        ],
+        existingAccounts: <Account>[
+          _account('acc_cash_1', '现金'),
+          _account('acc_cash_2', '现金'),
+        ],
+      );
+      // 账户名不唯一、id 才是身份：并入哪个现有「现金」无法从名字断定，
+      // 故进预览页「导入账户」映射区由用户显式决定。
+      final candidate = plan.newAccounts.single;
+      expect(candidate.name, '现金');
+      expect(candidate.id, isNot('acc_cash_1'));
+      expect(candidate.id, isNot('acc_cash_2'));
+      expect(plan.entries.map((e) => e.accountId).toSet(), <String>{
+        candidate.id,
+      });
+    });
+
+    test('转账两端去空格后同名报「转出与转入账户不能相同」', () {
+      final plan = _build(
+        records: <RawImportRecord>[
+          _record(type: EntryType.transfer, account: '现金', toAccount: '现金 '),
+        ],
+      );
+      expect(plan.entries, isEmpty);
+      expect(plan.errors.single.message, '转出与转入账户不能相同');
+    });
+
+    test('Tally 账户元数据按去空格名命中本次新建候选', () {
+      final plan = _build(
+        records: <RawImportRecord>[
+          _record(account: '现金', type: EntryType.income, amount: 100),
+        ],
+        accounts: const <RawImportAccount>[
+          RawImportAccount(
+            name: '现金 ',
+            signedBalance: 250,
+            type: AccountType.cash,
+            includeInAssets: true,
+          ),
+        ],
+      );
+      final account = plan.newAccounts.single;
+      // 目标余额 250 − 增量 100 = 回推初始余额 150。
+      expect(account.initialBalance, 150);
+      expect(plan.standaloneAccountIds, contains(account.id));
+    });
+  });
+
+  group('报错行不产生副作用', () {
+    test('两端全空的转账行带标签：报错且不注册候选标签', () {
+      final plan = _build(
+        records: <RawImportRecord>[
+          _record(
+            type: EntryType.transfer,
+            tags: const <String>['孤儿标签'],
+            sourceLine: 3,
+          ),
+        ],
+      );
+      expect(plan.errors.single.line, 3);
+      expect(plan.newTags, isEmpty);
+      expect(plan.entries, isEmpty);
+    });
+
+    test('转出=转入的转账行带标签：报错且不注册候选标签', () {
+      final plan = _build(
+        records: <RawImportRecord>[
+          _record(
+            type: EntryType.transfer,
+            account: '现金',
+            toAccount: '现金',
+            tags: const <String>['孤儿标签'],
+          ),
+        ],
+      );
+      expect(plan.errors, hasLength(1));
+      expect(plan.newTags, isEmpty);
+      // 报错行也不应新建账户。
+      expect(plan.newAccounts, isEmpty);
+    });
+  });
 }

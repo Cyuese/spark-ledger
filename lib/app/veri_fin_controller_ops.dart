@@ -949,7 +949,10 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
         )
         .toList();
 
-    _accounts.addAll(newAccounts);
+    // 名称去首尾空格：候选账户经预览页改名后可能带空格，与 addAccount 同规则。
+    _accounts.addAll(
+      newAccounts.map((account) => account.copyWith(name: account.name.trim())),
+    );
     if (newCategories.isNotEmpty) {
       // 首次导入前若仍是默认分类占位，先落地为真实列表再追加。
       if (_categories.isEmpty) {
@@ -1312,7 +1315,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   }
 
   void addAccount(Account account) {
-    _accounts.add(account);
+    // 名称统一去首尾空格（与 addAccountGroup、导入侧 plan_builder 同规则）。
+    _accounts.add(account.copyWith(name: account.name.trim()));
     _persistAccounts();
     notifyListeners();
   }
@@ -1322,7 +1326,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     if (index == -1) {
       return;
     }
-    _accounts[index] = account;
+    _accounts[index] = account.copyWith(name: account.name.trim());
     _persistAccounts();
     notifyListeners();
   }

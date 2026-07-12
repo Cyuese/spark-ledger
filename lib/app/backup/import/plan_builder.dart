@@ -47,7 +47,6 @@ ImportPlan buildImportPlanFromRecords({
   required DateTime now,
   List<Tag> existingTags = const <Tag>[],
 }) {
-  final workingAccounts = List<Account>.from(existingAccounts);
   final workingCategories = List<Category>.from(existingCategories);
   final workingTags = List<Tag>.from(existingTags);
   final newAccounts = <Account>[];
@@ -62,24 +61,22 @@ ImportPlan buildImportPlanFromRecords({
     return '${prefix}_${now.microsecondsSinceEpoch}_$idCounter';
   }
 
+  // 本次导入按名新建的账户候选：去空格名 → 候选 id。同一来源名跨行复用同一候选。
+  final accountCandidateIds = <String, String>{};
+
+  // 解析/新建单个账户。[name] 须已去首尾空格且非空。账户名不唯一（id 才是身份），
+  // 按名匹配只在**恰好一个**现有账户同名时复用；多个同名时不猜归属，转为待新建
+  // 候选进预览页「导入账户」映射区，由用户显式映射到目标账户或保留新建。
   String resolveAccount(String name) {
-    final match = workingAccounts.firstWhere(
-      (account) => account.name == name,
-      orElse: () => const Account(
-        id: '',
-        bookId: '',
-        name: '',
-        type: AccountType.cash,
-        groupId: null,
-        initialBalance: 0,
-        iconCode: 'wallet',
-        note: '',
-        includeInAssets: true,
-        hidden: false,
-      ),
-    );
-    if (match.id.isNotEmpty) {
-      return match.id;
+    final candidateId = accountCandidateIds[name];
+    if (candidateId != null) {
+      return candidateId;
+    }
+    final matches = existingAccounts
+        .where((account) => account.name.trim() == name)
+        .toList();
+    if (matches.length == 1) {
+      return matches.single.id;
     }
     final account = Account(
       id: nextId('account'),
@@ -93,8 +90,8 @@ ImportPlan buildImportPlanFromRecords({
       includeInAssets: true,
       hidden: false,
     );
-    workingAccounts.add(account);
     newAccounts.add(account);
+    accountCandidateIds[name] = account.id;
     return account.id;
   }
 
@@ -183,11 +180,12 @@ ImportPlan buildImportPlanFromRecords({
 
   for (final record in parsed.records) {
     final line = record.sourceLine ?? 0;
-    final tagIds = resolveTags(record.tags);
 
     if (record.type == EntryType.transfer) {
-      final fromName = record.account;
-      final toName = record.toAccount;
+      // 账户名按去首尾空格解析（与创建账户的 trim 规则一致），
+      // 「现金 」与「现金」视为同一账户。
+      final fromName = record.account.trim();
+      final toName = record.toAccount.trim();
       if (fromName.isEmpty && toName.isEmpty) {
         errors.add(ImportRowError(line: line, message: '转账缺少账户'));
         continue;
@@ -196,6 +194,8 @@ ImportPlan buildImportPlanFromRecords({
         errors.add(ImportRowError(line: line, message: '转出与转入账户不能相同'));
         continue;
       }
+      // 标签在报错检查之后才解析：被跳过的错误行不应留下无引用的候选标签。
+      final tagIds = resolveTags(record.tags);
       // 单边为空（如源账本转入/转出到未跟踪账户）仍按转账记，空的一端不计余额。
       final fromId = fromName.isEmpty ? '' : resolveAccount(fromName);
       final toId = toName.isEmpty ? null : resolveAccount(toName);
@@ -217,9 +217,9 @@ ImportPlan buildImportPlanFromRecords({
       continue;
     }
 
-    final accountId = record.account.isEmpty
-        ? ''
-        : resolveAccount(record.account);
+    final tagIds = resolveTags(record.tags);
+    final accountName = record.account.trim();
+    final accountId = accountName.isEmpty ? '' : resolveAccount(accountName);
     final categoryId = resolveCategoryHierarchy(
       record.category,
       record.subCategory,
@@ -300,7 +300,12 @@ Set<String> _applyAccountMetadata({
   final standalone = <String>{};
   var counter = 0;
   for (final asset in accounts) {
-    final newIndex = newAccounts.indexWhere((a) => a.name == asset.name);
+    // 与 resolveAccount 同一套去空格匹配规则。
+    final assetName = asset.name.trim();
+    if (assetName.isEmpty) {
+      continue;
+    }
+    final newIndex = newAccounts.indexWhere((a) => a.name == assetName);
     if (newIndex != -1) {
       // 本次导入新建的账户：回推初始余额，使显示余额对齐来源；标记为独立账户。
       final account = newAccounts[newIndex];
@@ -314,7 +319,7 @@ Set<String> _applyAccountMetadata({
       continue;
     }
     // 已存在的同名账户：不改动（尊重用户既有数据）。
-    if (existingAccounts.any((a) => a.name == asset.name)) {
+    if (existingAccounts.any((a) => a.name.trim() == assetName)) {
       continue;
     }
     // 没有任何流水的资产（零余额钱包、借出/负债对象等）：直接以当前余额新建。
@@ -324,7 +329,7 @@ Set<String> _applyAccountMetadata({
       Account(
         id: id,
         bookId: bookId,
-        name: asset.name,
+        name: assetName,
         type: asset.type,
         groupId: null,
         initialBalance: asset.signedBalance,

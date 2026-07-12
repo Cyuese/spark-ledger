@@ -28,6 +28,34 @@ void main() {
     expect(controller.categories.map((c) => c.label), contains('餐饮'));
   });
 
+  test('新增/编辑账户时名称去首尾空格', () async {
+    final controller = await makeController();
+    Account cash(String name) => Account(
+      id: 'trim-test',
+      bookId: controller.activeBook.id,
+      name: name,
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 0,
+      iconCode: 'wallet',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+    );
+
+    controller.addAccount(cash(' 现金 '));
+    expect(
+      controller.accounts.singleWhere((a) => a.id == 'trim-test').name,
+      '现金',
+    );
+
+    controller.updateAccount(cash('招商银行　'));
+    expect(
+      controller.accounts.singleWhere((a) => a.id == 'trim-test').name,
+      '招商银行',
+    );
+  });
+
   test(
     'deleting account with related entries removes touched transfers too',
     () async {
