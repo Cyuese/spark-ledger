@@ -870,7 +870,6 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       existingAccounts: accounts,
       existingCategories: categories,
       now: DateTime.now(),
-      existingTags: tags,
     );
   }
 

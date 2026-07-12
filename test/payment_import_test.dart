@@ -6,7 +6,6 @@ import 'package:archive/archive.dart';
 import 'package:charset/charset.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/backup/payment_import.dart';
-import 'package:verifin/app/backup/transaction_import.dart';
 import 'package:verifin/app/ledger_math.dart';
 import 'package:verifin/app/models.dart';
 

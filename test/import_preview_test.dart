@@ -5,7 +5,6 @@ import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/backup/payment_import.dart';
-import 'package:verifin/app/backup/transaction_import.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/app/veri_fin_scope.dart';
 import 'package:verifin/pages/entry_detail_page.dart';
