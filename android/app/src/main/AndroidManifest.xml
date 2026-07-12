@@ -3,9 +3,16 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- 应用锁指纹解锁（local_auth），仅调用系统能力，不保存生物特征数据。 -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
-    <!-- 记账提醒本地通知（flutter_local_notifications），使用 inexact 调度免精确闹钟权限。 -->
+    <!-- 记账提醒本地通知（flutter_local_notifications）。 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 记账提醒改用精确闹钟：Doze / 国产 ROM 后台限制下，inexact 调度常被系统无限
+         推迟、根本不显示（历史上「设了提醒却收不到」的根因）。USE_EXACT_ALARM 在
+         Android 13+ 自动授予（本应用自建分发、不上架 Google Play，不受其仅限闹钟/
+         日历类应用的政策限制）；SCHEDULE_EXACT_ALARM 覆盖 Android 12（需用户授权，
+         由 requestExactAlarmsPermission 引导，未授予则回退 inexact）。 -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"

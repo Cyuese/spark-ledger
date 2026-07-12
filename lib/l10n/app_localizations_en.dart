@@ -1867,7 +1867,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reminderDescSupported =>
-      'When enabled, a local notification arrives daily at the set time to remind you to record the day\'s spending. If it stops appearing, check that notifications are allowed in system settings.';
+      'When enabled, a local notification arrives daily at the set time to remind you to record the day\'s spending. Some phones (Xiaomi / Huawei / OPPO / vivo, etc.) restrict background apps; if it never arrives, allow notifications in system settings and add this app to the battery / autostart allowlists. Use \"Send a test notification\" below to check that notifications can appear.';
 
   @override
   String get reminderDescUnsupported =>
@@ -3345,6 +3345,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reminderChannelDesc => 'Daily bookkeeping reminder notifications';
+
+  @override
+  String get reminderTestButton => 'Send a test notification';
+
+  @override
+  String get reminderTestBody =>
+      'This is a test notification — if you can see it, notifications work.';
+
+  @override
+  String get reminderTestSent =>
+      'Test notification sent — check your notification shade. If daily reminders never arrive, it\'s usually background restrictions: allow notifications for this app and add it to battery / autostart allowlists in system settings.';
 
   @override
   String get backupFileTypeLabel => 'Backup file';

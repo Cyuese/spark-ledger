@@ -1834,7 +1834,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reminderDescSupported =>
-      '开启后每天到点会收到一条本地通知，提醒你记录当天收支。若长时间未收到，请在系统设置中确认已允许通知。';
+      '开启后每天到点会收到一条本地通知，提醒你记录当天收支。部分手机（小米 / 华为 / OPPO / vivo 等）会限制后台，若长时间收不到，请在系统设置里允许通知，并把本应用加入省电 / 自启动白名单。可先用下方「发送测试通知」确认通知能否显示。';
 
   @override
   String get reminderDescUnsupported =>
@@ -3270,6 +3270,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reminderChannelDesc => '每日记账提醒通知';
+
+  @override
+  String get reminderTestButton => '发送测试通知';
+
+  @override
+  String get reminderTestBody => '这是一条测试通知——能看到它就说明通知功能正常。';
+
+  @override
+  String get reminderTestSent =>
+      '已发送测试通知，请下拉通知栏查看。若收不到每日提醒，多为系统后台限制：请在系统设置里为本应用允许通知，并加入省电 / 自启动白名单。';
 
   @override
   String get backupFileTypeLabel => '备份文件';

@@ -104,10 +104,30 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> {
                   ).textTheme.bodySmall?.copyWith(color: muted, height: 1.5),
                 ),
               ),
+              if (_scheduler.supported) ...<Widget>[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _sendTest,
+                  icon: const Icon(Icons.notifications_outlined, size: 18),
+                  label: Text(AppLocalizations.of(context).reminderTestButton),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _sendTest() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    // 先确保有通知/精确闹钟权限（首次可能未申请过），再立即发一条测试通知。
+    await _scheduler.requestPermission();
+    await _scheduler.showTest(l10n: l10n);
+    if (!mounted) {
+      return;
+    }
+    messenger.showSnackBar(SnackBar(content: Text(l10n.reminderTestSent)));
   }
 }

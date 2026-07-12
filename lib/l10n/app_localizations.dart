@@ -3419,7 +3419,7 @@ abstract class AppLocalizations {
   /// No description provided for @reminderDescSupported.
   ///
   /// In zh, this message translates to:
-  /// **'开启后每天到点会收到一条本地通知，提醒你记录当天收支。若长时间未收到，请在系统设置中确认已允许通知。'**
+  /// **'开启后每天到点会收到一条本地通知，提醒你记录当天收支。部分手机（小米 / 华为 / OPPO / vivo 等）会限制后台，若长时间收不到，请在系统设置里允许通知，并把本应用加入省电 / 自启动白名单。可先用下方「发送测试通知」确认通知能否显示。'**
   String get reminderDescSupported;
 
   /// No description provided for @reminderDescUnsupported.
@@ -6037,6 +6037,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'每日记账提醒通知'**
   String get reminderChannelDesc;
+
+  /// No description provided for @reminderTestButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'发送测试通知'**
+  String get reminderTestButton;
+
+  /// No description provided for @reminderTestBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'这是一条测试通知——能看到它就说明通知功能正常。'**
+  String get reminderTestBody;
+
+  /// No description provided for @reminderTestSent.
+  ///
+  /// In zh, this message translates to:
+  /// **'已发送测试通知，请下拉通知栏查看。若收不到每日提醒，多为系统后台限制：请在系统设置里为本应用允许通知，并加入省电 / 自启动白名单。'**
+  String get reminderTestSent;
 
   /// No description provided for @backupFileTypeLabel.
   ///
