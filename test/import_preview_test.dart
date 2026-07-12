@@ -26,6 +26,11 @@ const _csv =
     '2026-02-01,支出,12.5,测试餐饮,测试钱包A,,午饭\n'
     '2026-02-02,支出,30,测试交通,测试钱包B,,打车\n';
 
+// 带「子分类」「标签」列的通用 CSV，验证层级分类与多标签落库（issue #11）。
+const _tagCsv =
+    '日期,类型,金额,分类,子分类,账户,备注,标签\n'
+    '2026-03-01,支出,99,购物消费,手机数码,测试钱包A,买配件,"客户, 代购"\n';
+
 // 两笔都引用同一个新账户「新钱包甲」，用于验证映射批量生效。
 const _mapCsv =
     '日期,类型,金额,分类,账户,转入账户,备注\n'
@@ -138,6 +143,66 @@ void main() {
       // 第二笔被排除：测试钱包B 与 测试交通 不应被创建。
       expect(controller.accounts.any((a) => a.name == '测试钱包B'), isFalse);
       expect(controller.categories.any((c) => c.label == '测试交通'), isFalse);
+    });
+
+    test('标签与子分类层级随交易落库（issue #11）', () async {
+      final controller = await makeController();
+      final beforeTags = controller.tags.length;
+      final plan = controller.parsePlatformImport(
+        ImportPlatform.genericCsv,
+        _csvBytes(_tagCsv),
+      );
+      controller.applyImportEntries(
+        entries: plan.entries,
+        candidateAccounts: plan.newAccounts,
+        candidateCategories: plan.newCategories,
+        candidateTags: plan.newTags,
+      );
+      // 标签落库、去重（客户 / 代购 共 2 个）。
+      expect(controller.tags.length, beforeTags + 2);
+      final tagLabels = controller.tags.map((t) => t.label).toSet();
+      expect(tagLabels, containsAll(<String>['客户', '代购']));
+      // 子分类挂在父分类下。
+      final child = controller.categories.firstWhere((c) => c.label == '手机数码');
+      expect(child.parentId, isNotNull);
+      final parent = controller.categories.firstWhere(
+        (c) => c.id == child.parentId,
+      );
+      expect(parent.label, '购物消费');
+      // 交易引用子分类叶子，并带上两个标签。
+      final entry = controller.entries.firstWhere((e) => e.amount == 99);
+      expect(entry.categoryId, child.id);
+      expect(entry.tagIds, hasLength(2));
+    });
+
+    test('标签映射到现有标签时不新建（引用改写为现有 id）', () async {
+      final controller = await makeController();
+      final existingTagId = controller.addTag('客户')!;
+      final beforeTags = controller.tags.length;
+      final plan = controller.parsePlatformImport(
+        ImportPlatform.genericCsv,
+        _csvBytes(_tagCsv),
+      );
+      final provisional = plan.newTags.firstWhere((t) => t.label == '客户');
+      // 模拟预览页把待建「客户」映射到现有标签：改写交易 tagIds、候选去引用。
+      final remapped = plan.entries
+          .map(
+            (e) => e.copyWith(
+              tagIds: e.tagIds
+                  .map((id) => id == provisional.id ? existingTagId : id)
+                  .toList(),
+            ),
+          )
+          .toList();
+      controller.applyImportEntries(
+        entries: remapped,
+        candidateAccounts: plan.newAccounts,
+        candidateCategories: plan.newCategories,
+        candidateTags: plan.newTags,
+      );
+      // 现有「客户」不重复新建，只多出「代购」。
+      expect(controller.tags.length, beforeTags + 1);
+      expect(controller.tags.where((t) => t.label == '客户'), hasLength(1));
     });
   });
 

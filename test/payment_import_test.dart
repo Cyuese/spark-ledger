@@ -300,6 +300,86 @@ void main() {
     });
   });
 
+  group('一木记账 账单 xls（子分类层级 + 多标签 + 备注，issue #11）', () {
+    // 真实一木导出（用户提供）：含二级分类、逗号分隔多标签、备注。验证：
+    // 一级「类别」→父分类、二级「二级分类」→子分类（挂在父下）；标签拆分建标签并归属；
+    // 备注原样导入。
+    late ImportPlan plan;
+    setUp(() {
+      final bytes = File(
+        'test/fixtures/yimu_subcategory_tags.xls',
+      ).readAsBytesSync();
+      plan = run(ImportPlatform.yimuBill, Uint8List.fromList(bytes));
+    });
+
+    Category? categoryOf(LedgerEntry e) =>
+        plan.newCategories.where((c) => c.id == e.categoryId).firstOrNull;
+
+    test('子分类挂在父分类下，还原两级层级', () {
+      // 「其他 / 理财支出」：叶子仍是二级分类，parentId 指向新建的一级「其他」。
+      final entry = plan.entries.firstWhere(
+        (e) => e.note == '这是备注信息，用户可以设置备注信息',
+      );
+      final leaf = categoryOf(entry)!;
+      expect(leaf.label, '理财支出');
+      expect(leaf.parentId, isNotNull);
+      final parent = plan.newCategories.firstWhere(
+        (c) => c.id == leaf.parentId,
+      );
+      expect(parent.label, '其他');
+      expect(parent.parentId, isNull);
+      expect(parent.type, EntryType.expense);
+    });
+
+    test('二级分类为空时按顶级分类处理', () {
+      // 「其他」无二级分类 → 顶级分类、无 parent。
+      final entry = plan.entries.firstWhere((e) => e.amount == 5);
+      final leaf = categoryOf(entry)!;
+      expect(leaf.label, '其他');
+      expect(leaf.parentId, isNull);
+    });
+
+    test('逗号分隔的多标签全部拆分并归属该笔', () {
+      final entry = plan.entries.firstWhere(
+        (e) => e.note == '这是备注信息，用户可以设置备注信息',
+      );
+      final labels = entry.tagIds
+          .map((id) => plan.newTags.firstWhere((t) => t.id == id).label)
+          .toList();
+      expect(labels, <String>['吃饭', '午饭', '休息', '多标签', '测试', '其他', '好多标签']);
+    });
+
+    test('单标签行只归属一个标签', () {
+      final income = plan.entries.firstWhere((e) => e.type == EntryType.income);
+      final labels = income.tagIds
+          .map((id) => plan.newTags.firstWhere((t) => t.id == id).label)
+          .toList();
+      expect(labels, <String>['标签a']);
+    });
+
+    test('标签去重：同名标签只新建一个（跨行共享）', () {
+      final labels = plan.newTags.map((t) => t.label).toList();
+      expect(labels.toSet().length, labels.length);
+      expect(labels, contains('标签a'));
+    });
+
+    test('备注原样导入', () {
+      expect(
+        plan.entries.map((e) => e.note),
+        containsAll(<String>['这是备注信息，用户可以设置备注信息', '备注测试', '测试备注']),
+      );
+    });
+
+    test('标签与分类命名空间独立（同名「其他」互不冲突）', () {
+      // 标签里有「其他」，分类里也有「其他」，二者是不同实体、不应相互合并。
+      expect(plan.newTags.any((t) => t.label == '其他'), isTrue);
+      expect(
+        plan.newCategories.any((c) => c.label == '其他' && c.parentId == null),
+        isTrue,
+      );
+    });
+  });
+
   group('一木记账 账单 xls（带「退款」列，真实导出）', () {
     // 真实一木导出（用户提供，issue #10）：5 条收支，含部分退款、全额退款。
     // 关键事实：一木「金额」列存的是【净额】（已扣退款），退款单列另计。归一化须把
