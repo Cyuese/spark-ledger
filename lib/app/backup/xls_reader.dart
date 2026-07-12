@@ -8,7 +8,8 @@ import 'dart:typed_data';
 /// 不引入原生依赖，纯 Dart 离线可用。
 ///
 /// 只实现读取账单所需的最小记录集：SST（含 CONTINUE 跨记录拆分）、LABELSST、
-/// NUMBER、RK、MULRK、BLANK/MULBLANK；数字单元格转文本，日期在一木导出里本就是
+/// LABEL、NUMBER、RK、MULRK；BLANK/MULBLANK 无需专门处理——未写入的单元格
+/// 在网格补齐时本就落成空串。数字单元格转文本，日期在一木导出里本就是
 /// 文本字符串，无需处理 Excel 日期序列号。解析失败抛 [FormatException]。
 List<List<String>> parseXls(Uint8List bytes) {
   final workbook = _extractWorkbookStream(bytes);
