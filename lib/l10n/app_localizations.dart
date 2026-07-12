@@ -4346,17 +4346,29 @@ abstract class AppLocalizations {
   /// **'备份 zip'**
   String get platformTallyHint;
 
-  /// No description provided for @platformGenericCsv.
+  /// No description provided for @platformCsvTemplate.
   ///
   /// In zh, this message translates to:
-  /// **'其他 CSV'**
-  String get platformGenericCsv;
+  /// **'CSV 模板'**
+  String get platformCsvTemplate;
 
-  /// No description provided for @platformGenericCsvHint.
+  /// No description provided for @platformCsvTemplateHint.
   ///
   /// In zh, this message translates to:
-  /// **'钱迹 / 随手记 / 模板'**
-  String get platformGenericCsvHint;
+  /// **'本应用 CSV 模板'**
+  String get platformCsvTemplateHint;
+
+  /// No description provided for @importGroupSoftware.
+  ///
+  /// In zh, this message translates to:
+  /// **'记账软件 / 支付平台'**
+  String get importGroupSoftware;
+
+  /// No description provided for @importGroupCsv.
+  ///
+  /// In zh, this message translates to:
+  /// **'CSV 文件'**
+  String get importGroupCsv;
 
   /// No description provided for @billImportGuideTitle.
   ///
@@ -4400,11 +4412,11 @@ abstract class AppLocalizations {
   /// **'Tally 记账 App →「设置」→ 数据备份与恢复 →「导出备份」，得到 Tally 开头的 .zip 文件，保存到本机后在此选择。\n\n请选「备份 zip」而非 CSV「账单」导出：备份保留精确到秒的交易时间，收入/支出/转账、一级/二级分类、账户与备注都会一并导入（分类按二级分类）。菜单以实际 App 版本为准。'**
   String get tallyImportGuide;
 
-  /// No description provided for @genericCsvImportGuide.
+  /// No description provided for @csvTemplateImportGuide.
   ///
   /// In zh, this message translates to:
-  /// **'支持钱迹、随手记等导出的 CSV，或本页「下载 CSV 模板」填好后导入。文件需含 日期、类型、金额、账户 列。'**
-  String get genericCsvImportGuide;
+  /// **'请先用本页「下载 CSV 模板」，按模板列填写后再导入。表头只能用模板列（日期、类型、金额、分类、账户、转入账户、备注，可选 子分类、标签），含其他软件的列会导入失败。其他记账软件请在上方选择对应入口。'**
+  String get csvTemplateImportGuide;
 
   /// No description provided for @billImportCommonNote.
   ///

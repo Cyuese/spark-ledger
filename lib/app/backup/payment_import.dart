@@ -21,7 +21,9 @@ import 'xls_reader.dart';
 /// - [tally] Tally 记账「备份」导出：zip 内含 `backup_data.json`（Gson 全量数据）。
 ///   相较其 CSV「账单」导出无损——交易时间精确到毫秒（epoch），故导 zip 而非 CSV。
 ///   转账（type=2、category「资产互转」）的转出/转入账户编码在 note（"转出 -> 转入"）里。
-/// - [genericCsv] 通用 CSV（Veri Fin 模板 / 钱迹 / 随手记）：UTF-8 逗号分隔，走别名识别。
+/// - [csvTemplate] Veri Fin 自家 CSV 模板：UTF-8 逗号分隔，**严格校验表头必须是模板列**
+///   （[validateCsvTemplateHeader]），不再兼容钱迹/随手记等第三方原生表头——第三方账单
+///   各走自己的解析入口。
 enum ImportPlatform {
   alipay,
   wechat,
@@ -29,7 +31,7 @@ enum ImportPlatform {
   yimuBill,
   yimuTransfer,
   tally,
-  genericCsv;
+  csvTemplate;
 
   /// 该来源可选择的文件扩展名（用于文件选择器过滤）。
   List<String> get fileExtensions => switch (this) {
@@ -100,8 +102,13 @@ ImportPlan buildPlatformImportPlan({
     ImportPlatform.yimuBill => _normalizeYimuBill(parseXls(bytes)),
     ImportPlatform.yimuTransfer => _normalizeYimuTransfer(parseXls(bytes)),
     ImportPlatform.tally => const <List<String>>[],
-    ImportPlatform.genericCsv => parseCsv(_decodeUtf8(bytes)),
+    ImportPlatform.csvTemplate => parseCsv(_decodeUtf8(bytes)),
   };
+  // 「CSV 模板」入口严格校验表头必须是本应用模板；第三方账单各走自己的归一化器、
+  // 归一化后已是规范列，无需（也不应）经此校验。
+  if (platform == ImportPlatform.csvTemplate) {
+    validateCsvTemplateHeader(rows);
+  }
   return buildImportPlan(
     rows: rows,
     bookId: bookId,
@@ -614,7 +621,6 @@ ImportPlan _applyTallyAssets({
     newAccounts: newAccounts,
     newCategories: plan.newCategories,
     errors: plan.errors,
-    source: plan.source,
     standaloneAccountIds: standalone,
   );
 }

@@ -17,7 +17,6 @@ class ImportPlan {
     required this.newCategories,
     required this.errors,
     this.newTags = const <Tag>[],
-    this.source,
     this.standaloneAccountIds = const <String>{},
   });
 
@@ -29,9 +28,6 @@ class ImportPlan {
   final List<Tag> newTags;
   final List<ImportRowError> errors;
 
-  /// 识别到的导入来源（钱迹 / 随手记 / 模板），未识别为 null。
-  final ImportSource? source;
-
   /// 待新建账户中「即使没有交易引用也要创建」的 id 集合。默认空——普通 CSV 导入的
   /// 账户都由交易派生、被排除后不应留下空账户；仅 Tally 这类携带账户余额/类型的来源，
   /// 会把源账本里的资产账户（含零余额、无流水的账户）标记为独立账户一并落库。
@@ -42,57 +38,69 @@ class ImportPlan {
   bool get isEmpty => entries.isEmpty && errors.isEmpty;
 }
 
-/// 模板/导入表头别名（中英文兼容，含钱迹 / 随手记等常见导出列名）。
+/// Veri Fin CSV 模板列：既是「下载 CSV 模板」的表头，也是「CSV 模板」导入入口
+/// 严格校验的唯一真源（[validateCsvTemplateHeader]）。改这里即同时改模板与校验。
+const List<String> csvTemplateColumns = <String>[
+  '日期',
+  '类型',
+  '金额',
+  '分类',
+  '账户',
+  '转入账户',
+  '备注',
+];
+
+/// 导入表头 → 列键的别名。各平台账单已在 payment_import 里各自归一成 Veri Fin
+/// **规范中文列名**（[_canonicalHeader]），CSV 模板亦为规范列子集，故这里只需登记
+/// 规范列名。**不再兼容第三方软件的原生表头**（钱迹「账户1/账户2」、随手记「交易类型」
+/// 等通用识别已下线，各软件应各走自己的解析入口）。
 const Map<String, List<String>> _headerAliases = <String, List<String>>{
-  'date': <String>['日期', 'date', '时间', 'time', '交易时间', '记账时间'],
-  'type': <String>['类型', 'type', '收支', '收支类型', '交易类型'],
-  'amount': <String>['金额', 'amount', '数额', '钱数', '金额（元）'],
-  'category': <String>['分类', 'category', '类别', '一级分类', '分类名称'],
-  'subcategory': <String>['子分类', '二级分类', '子类', 'subcategory'],
-  'account': <String>['账户', 'account', '账号', '转出账户', '账户1', '支付账户'],
-  'toAccount': <String>['转入账户', 'toaccount', 'to account', '目标账户', '账户2'],
-  'note': <String>['备注', 'note', 'memo', '说明', '描述', '备注信息'],
-  'fee': <String>['手续费', 'fee', '服务费'],
-  'refunded': <String>['退款', 'refund', '退款金额', 'refunded'],
-  'tags': <String>['标签', 'tags', 'tag'],
+  'date': <String>['日期'],
+  'type': <String>['类型'],
+  'amount': <String>['金额'],
+  'category': <String>['分类'],
+  'subcategory': <String>['子分类'],
+  'account': <String>['账户'],
+  'toAccount': <String>['转入账户'],
+  'note': <String>['备注'],
+  'fee': <String>['手续费'],
+  'refunded': <String>['退款'],
+  'tags': <String>['标签'],
 };
-
-/// 可识别的导入来源，用于给用户友好提示。
-enum ImportSource {
-  veriFin('Veri Fin 模板'),
-  qianji('钱迹'),
-  suishouji('随手记');
-
-  const ImportSource(this.label);
-
-  final String label;
-}
-
-/// 根据表头识别导入来源；无法识别返回 null（仍可能按通用别名解析）。
-ImportSource? detectImportSource(List<String> header) {
-  final cells = header.map((cell) => cell.trim()).toSet();
-  bool has(String name) => cells.contains(name);
-  final hasForeignAccounts = has('账户1') || has('账户2');
-  // 随手记导出以「交易类型」为列名。
-  if (has('交易类型') && (hasForeignAccounts || has('账户'))) {
-    return ImportSource.suishouji;
-  }
-  // 钱迹导出含「类型」+「账户1/账户2」+「一级分类/分类」。
-  if (has('类型') && hasForeignAccounts && (has('一级分类') || has('分类'))) {
-    return ImportSource.qianji;
-  }
-  if (has('类型') && has('账户') && has('金额') && has('日期')) {
-    return ImportSource.veriFin;
-  }
-  return null;
-}
 
 /// CSV 模板内容（带表头与示例行），用户下载后填写再导入。
 String transactionCsvTemplate() {
-  return '日期,类型,金额,分类,账户,转入账户,备注\n'
+  return '${csvTemplateColumns.join(',')}\n'
       '2026-01-05,支出,23.50,餐饮,现金,,午饭\n'
       '2026-01-05,收入,8000,工资,储蓄卡,,月薪\n'
       '2026-01-06,转账,500,,现金,储蓄卡,取现\n';
+}
+
+/// 校验 CSV 是否为 Veri Fin 模板：首行的每一列（去空白、忽略空列）都必须是模板认识的
+/// 列名（[_headerAliases] 的规范列——即模板列加上可选的 子分类/标签/手续费/退款）。
+/// 出现任何**外来列**（如钱迹「账户1/账户2/一级分类」、随手记「交易类型」）即抛
+/// [FormatException]，引导用户使用本应用下载的模板。必需列（日期/类型/金额/账户）是否
+/// 齐全交由 [buildImportPlan] 统一报错，不在此重复。
+///
+/// 用白名单而非「表头必须完全等于模板列」，是为了在严格拒绝第三方文件的同时，仍允许模板
+/// 省略可选列、或补上 子分类/标签 列（issue #11 的层级分类与多标签导入）。仅用于「CSV
+/// 模板」导入入口——第三方账单各走自己的解析器，不复用此校验、也不再靠通用表头猜测。
+void validateCsvTemplateHeader(List<List<String>> rows) {
+  if (rows.isEmpty) {
+    throw const FormatException('文件为空');
+  }
+  final allowed = _headerAliases.values.expand((names) => names).toSet();
+  final unknown = rows.first
+      .map((cell) => cell.trim())
+      .where((cell) => cell.isNotEmpty && !allowed.contains(cell))
+      .toList();
+  if (unknown.isNotEmpty) {
+    throw FormatException(
+      '表头包含非模板列：${unknown.join('、')}。'
+      '请使用本应用「下载 CSV 模板」的表头（日期、类型、金额、分类、账户、转入账户、备注，'
+      '可选 子分类、标签），其他记账软件请用对应的导入入口',
+    );
+  }
 }
 
 /// 解析 CSV（兼容引号包裹、字段内逗号与换行、双引号转义、CRLF）。
@@ -293,7 +301,6 @@ ImportPlan buildImportPlan({
   if (columns == null) {
     throw const FormatException('缺少必需的列：日期、类型、金额、账户');
   }
-  final source = detectImportSource(rows.first);
 
   final workingAccounts = List<Account>.from(existingAccounts);
   final workingCategories = List<Category>.from(existingCategories);
@@ -528,6 +535,5 @@ ImportPlan buildImportPlan({
     newCategories: newCategories,
     newTags: newTags,
     errors: errors,
-    source: source,
   );
 }

@@ -845,7 +845,8 @@ class DataManagementPage extends StatelessWidget {
 
   Future<ImportPlatform?> _pickImportPlatform(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final items = <_PlatformOption>[
+    // 第三方记账软件 / 支付平台各有独立入口，成组展示在上；本应用 CSV 模板单独一组在下。
+    final softwareItems = <_PlatformOption>[
       _PlatformOption(
         ImportPlatform.alipay,
         Icons.account_balance_wallet_outlined,
@@ -888,13 +889,55 @@ class DataManagementPage extends StatelessWidget {
         l10n.platformTallyHint,
         assetPath: 'assets/import_icons/tally.png',
       ),
-      _PlatformOption(
-        ImportPlatform.genericCsv,
-        Icons.table_chart_outlined,
-        l10n.platformGenericCsv,
-        l10n.platformGenericCsvHint,
-      ),
     ];
+    final csvTemplateItem = _PlatformOption(
+      ImportPlatform.csvTemplate,
+      Icons.table_chart_outlined,
+      l10n.platformCsvTemplate,
+      l10n.platformCsvTemplateHint,
+    );
+    Widget optionTile(_PlatformOption item) => InkWell(
+      onTap: () => Navigator.of(context).pop(item.platform),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        // 图标与「标题+副标题」整体垂直居中（Row 默认 center 对齐），
+        // 不依赖 ListTile 带副标题时的内部对齐规则。
+        child: Row(
+          children: <Widget>[
+            _platformLeading(item),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    item.title,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    Widget groupLabel(String text) => Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
     return showModalBottomSheet<ImportPlatform>(
       context: context,
       showDragHandle: true,
@@ -926,50 +969,11 @@ class DataManagementPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    for (final item in items)
-                      InkWell(
-                        onTap: () => Navigator.of(context).pop(item.platform),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          // 图标与「标题+副标题」整体垂直居中（Row 默认 center 对齐），
-                          // 不依赖 ListTile 带副标题时的内部对齐规则。
-                          child: Row(
-                            children: <Widget>[
-                              _platformLeading(item),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Text(
-                                      item.title,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      item.subtitle,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    groupLabel(l10n.importGroupSoftware),
+                    for (final item in softwareItems) optionTile(item),
+                    const Divider(height: 16),
+                    groupLabel(l10n.importGroupCsv),
+                    optionTile(csvTemplateItem),
                     const SizedBox(height: 8),
                   ],
                 ),
@@ -1008,7 +1012,7 @@ class DataManagementPage extends StatelessWidget {
       ImportPlatform.yimuBill => l10n.platformYimuBill,
       ImportPlatform.yimuTransfer => l10n.platformYimuTransfer,
       ImportPlatform.tally => l10n.platformTally,
-      ImportPlatform.genericCsv => l10n.platformGenericCsv,
+      ImportPlatform.csvTemplate => l10n.platformCsvTemplate,
     };
   }
 
@@ -1021,7 +1025,7 @@ class DataManagementPage extends StatelessWidget {
       ImportPlatform.yimuBill => l10n.yimuBillImportGuide,
       ImportPlatform.yimuTransfer => l10n.yimuTransferImportGuide,
       ImportPlatform.tally => l10n.tallyImportGuide,
-      ImportPlatform.genericCsv => l10n.genericCsvImportGuide,
+      ImportPlatform.csvTemplate => l10n.csvTemplateImportGuide,
     };
   }
 

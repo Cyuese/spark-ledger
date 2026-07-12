@@ -38,7 +38,7 @@ void main() {
     expect(find.byType(SingleChildScrollView), findsOneWidget);
 
     // 最后一项默认在可视区外；滚动后应可见（证明能上下滑动，且开屏未溢出）。
-    final lastItem = find.text('其他 CSV');
+    final lastItem = find.text('CSV 模板');
     await tester.scrollUntilVisible(
       lastItem,
       120,

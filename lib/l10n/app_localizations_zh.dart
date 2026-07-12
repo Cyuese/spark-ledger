@@ -2342,10 +2342,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get platformTallyHint => '备份 zip';
 
   @override
-  String get platformGenericCsv => '其他 CSV';
+  String get platformCsvTemplate => 'CSV 模板';
 
   @override
-  String get platformGenericCsvHint => '钱迹 / 随手记 / 模板';
+  String get platformCsvTemplateHint => '本应用 CSV 模板';
+
+  @override
+  String get importGroupSoftware => '记账软件 / 支付平台';
+
+  @override
+  String get importGroupCsv => 'CSV 文件';
 
   @override
   String billImportGuideTitle(String source) {
@@ -2377,8 +2383,8 @@ class AppLocalizationsZh extends AppLocalizations {
       'Tally 记账 App →「设置」→ 数据备份与恢复 →「导出备份」，得到 Tally 开头的 .zip 文件，保存到本机后在此选择。\n\n请选「备份 zip」而非 CSV「账单」导出：备份保留精确到秒的交易时间，收入/支出/转账、一级/二级分类、账户与备注都会一并导入（分类按二级分类）。菜单以实际 App 版本为准。';
 
   @override
-  String get genericCsvImportGuide =>
-      '支持钱迹、随手记等导出的 CSV，或本页「下载 CSV 模板」填好后导入。文件需含 日期、类型、金额、账户 列。';
+  String get csvTemplateImportGuide =>
+      '请先用本页「下载 CSV 模板」，按模板列填写后再导入。表头只能用模板列（日期、类型、金额、分类、账户、转入账户、备注，可选 子分类、标签），含其他软件的列会导入失败。其他记账软件请在上方选择对应入口。';
 
   @override
   String get billImportCommonNote => '交易会追加到当前账本，匹配不到的账户与分类按名称自动新建，不会删除现有数据。';

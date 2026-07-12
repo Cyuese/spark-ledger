@@ -250,7 +250,7 @@ void main() {
     test('走别名识别导入', () {
       const content = '日期,类型,金额,分类,账户,转入账户,备注\n2026-07-01,支出,23.5,餐饮,现金,,午饭\n';
       final plan = run(
-        ImportPlatform.genericCsv,
+        ImportPlatform.csvTemplate,
         Uint8List.fromList(<int>[0xEF, 0xBB, 0xBF, ...utf8.encode(content)]),
       );
       expect(plan.importedCount, 1);

@@ -88,7 +88,7 @@ void main() {
       final beforeEntries = controller.entries.length;
       final beforeAccounts = controller.accounts.length;
       final plan = controller.parsePlatformImport(
-        ImportPlatform.genericCsv,
+        ImportPlatform.csvTemplate,
         _csvBytes(_csv),
       );
       expect(plan.importedCount, 2);
@@ -107,7 +107,7 @@ void main() {
       final controller = await makeController();
       final beforeEntries = controller.entries.length;
       final plan = controller.parsePlatformImport(
-        ImportPlatform.genericCsv,
+        ImportPlatform.csvTemplate,
         _csvBytes(_csv),
       );
       controller.applyImportEntries(
@@ -124,7 +124,7 @@ void main() {
     test('排除某笔后：只创建被保留交易引用到的账户/分类', () async {
       final controller = await makeController();
       final plan = controller.parsePlatformImport(
-        ImportPlatform.genericCsv,
+        ImportPlatform.csvTemplate,
         _csvBytes(_csv),
       );
       final walletAId = plan.newAccounts
@@ -149,7 +149,7 @@ void main() {
       final controller = await makeController();
       final beforeTags = controller.tags.length;
       final plan = controller.parsePlatformImport(
-        ImportPlatform.genericCsv,
+        ImportPlatform.csvTemplate,
         _csvBytes(_tagCsv),
       );
       controller.applyImportEntries(
@@ -180,7 +180,7 @@ void main() {
       final existingTagId = controller.addTag('客户')!;
       final beforeTags = controller.tags.length;
       final plan = controller.parsePlatformImport(
-        ImportPlatform.genericCsv,
+        ImportPlatform.csvTemplate,
         _csvBytes(_tagCsv),
       );
       final provisional = plan.newTags.firstWhere((t) => t.label == '客户');
@@ -210,7 +210,7 @@ void main() {
     testWidgets('渲染待导入交易，可排除后确认返回子集', (tester) async {
       final controller = await makeController();
       final plan = controller.parsePlatformImport(
-        ImportPlatform.genericCsv,
+        ImportPlatform.csvTemplate,
         _csvBytes(_csv),
       );
       final holder = await _openPreview(tester, controller, plan);
@@ -275,7 +275,7 @@ void main() {
       );
       controller.addAccount(cash);
       final plan = controller.parsePlatformImport(
-        ImportPlatform.genericCsv,
+        ImportPlatform.csvTemplate,
         _csvBytes(_mapCsv),
       );
       // 两笔都引用同一个新账户「新钱包甲」。
@@ -305,7 +305,7 @@ void main() {
     testWidgets('映射区可给新账户改名', (tester) async {
       final controller = await makeController();
       final plan = controller.parsePlatformImport(
-        ImportPlatform.genericCsv,
+        ImportPlatform.csvTemplate,
         _csvBytes(_mapCsv),
       );
       final provisionalId = plan.newAccounts

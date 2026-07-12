@@ -2381,10 +2381,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get platformTallyHint => 'Backup zip';
 
   @override
-  String get platformGenericCsv => 'Other CSV';
+  String get platformCsvTemplate => 'CSV template';
 
   @override
-  String get platformGenericCsvHint => 'Qianji / Suishouji / template';
+  String get platformCsvTemplateHint => 'Veri Fin CSV template';
+
+  @override
+  String get importGroupSoftware => 'Apps / payment platforms';
+
+  @override
+  String get importGroupCsv => 'CSV file';
 
   @override
   String billImportGuideTitle(String source) {
@@ -2416,8 +2422,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'In Tally (记账): Settings → Data backup & restore → Export backup, which produces a .zip file starting with \"Tally\". Save it to your phone, then choose it here.\n\nPick the backup zip rather than the CSV bill export: the backup keeps exact transaction times, and income/expense/transfers, first- and second-level categories, accounts and notes are all imported (categories use the second-level category). Menu paths may vary by app version.';
 
   @override
-  String get genericCsvImportGuide =>
-      'Supports CSV exported from Qianji, Suishouji, etc., or the Veri Fin template downloaded on this page. The file must include Date, Type, Amount and Account columns.';
+  String get csvTemplateImportGuide =>
+      'First use \"Download CSV template\" on this page, fill it in following the template columns, then import. The header may only use template columns (Date, Type, Amount, Category, Account, Transfer-in account, Note; optional Subcategory, Tags); columns from other apps will fail the import. For other apps, pick the matching entry above.';
 
   @override
   String get billImportCommonNote =>
