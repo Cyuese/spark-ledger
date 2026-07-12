@@ -99,6 +99,58 @@ void main() {
     expect(loaded.map((e) => e.id).toList(), <String>['c']);
   });
 
+  test('增量写：未改动行不重写、改动行才写、删除行才删', () async {
+    final repo = await openRepo();
+    final db = opened.last.db;
+    LedgerEntry entry(String id, String note) => LedgerEntry(
+      id: id,
+      bookId: defaultLedgerBookId,
+      type: EntryType.expense,
+      amount: 1,
+      categoryId: 'dining',
+      accountId: 'alipay',
+      note: note,
+      occurredAt: DateTime(2026, 4, 1),
+    );
+
+    // 直接查库读某行备注（不经 loadEntries，以免重置内存基线快照）。
+    Future<String?> noteOf(String id) async {
+      final rows = await db.query(
+        'entries',
+        columns: <String>['note'],
+        where: 'id = ?',
+        whereArgs: <Object>[id],
+      );
+      return rows.isEmpty ? null : rows.first['note'] as String?;
+    }
+
+    // 首次保存建立内存基线快照 {a:a0, b:b0}。
+    await repo.saveEntries(<LedgerEntry>[entry('a', 'a0'), entry('b', 'b0')]);
+    // 绕过仓储直接改库里两行的备注为哨兵，代表这些行的「物理存储」。
+    await db.update(
+      'entries',
+      <String, Object?>{'note': 'SENT_A'},
+      where: 'id = ?',
+      whereArgs: <Object>['a'],
+    );
+    await db.update(
+      'entries',
+      <String, Object?>{'note': 'SENT_B'},
+      where: 'id = ?',
+      whereArgs: <Object>['b'],
+    );
+
+    // 只把 a 改成新值、b 保持基线值再保存：差分应只重写 a，b 不被触碰。
+    await repo.saveEntries(<LedgerEntry>[entry('a', 'a1'), entry('b', 'b0')]);
+    expect(await noteOf('a'), 'a1', reason: 'a 有改动，应被写入（覆盖哨兵）');
+    expect(await noteOf('b'), 'SENT_B', reason: 'b 未改动，不应被重写，物理哨兵值幸存');
+
+    // 删除 a（b 仍传基线值，不变）：只应删掉 a，b 物理行仍在、未被重写。
+    await repo.saveEntries(<LedgerEntry>[entry('b', 'b0')]);
+    expect(await noteOf('a'), isNull, reason: 'a 被删除');
+    expect(await noteOf('b'), 'SENT_B', reason: 'b 始终未被重写');
+  });
+
   test('replaceAllLedgerData 一次性原子替换全部表', () async {
     final repo = await openRepo();
     // 先放入一批旧数据。

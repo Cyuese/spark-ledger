@@ -81,8 +81,13 @@ abstract interface class LedgerRepository {
   Future<bool> hasAnyData();
 }
 
-/// 基于 SQLite 的仓储实现。每次写入以事务批量清空并重建对应表；列表顺序通过
-/// sort_order 列保留（entries 除外，其顺序由 occurred_at 决定）。
+/// 基于 SQLite 的仓储实现。列表顺序通过 sort_order 列保留（entries 除外，其顺序
+/// 由 occurred_at 决定）。
+///
+/// 写入策略：交易/账本/账户/分组/分类/标签/周期规则走**行级差分**（[_incrementalReplace]）
+/// ——只写与内存基线快照不同的行，避免单条改动就重写整表（entries 随交易量无限增长，
+/// 是写放大主因）。附件（含大 blob）与预算（极小）仍整表覆盖。saveX 的对外语义不变：
+/// 落库后该表内容 == 传入列表。导入/恢复/重置走 [replaceAllLedgerData] 多表原子整替。
 class SqliteLedgerRepository implements LedgerRepository {
   SqliteLedgerRepository(this._database);
 
@@ -97,12 +102,14 @@ class SqliteLedgerRepository implements LedgerRepository {
       'entries',
       orderBy: 'occurred_at DESC, id DESC',
     );
-    return rows.map(_entryFromRow).toList();
+    final entries = rows.map(_entryFromRow).toList();
+    _seedSnapshot('entries', entries.map(_entryToRow));
+    return entries;
   }
 
   @override
   Future<void> saveEntries(List<LedgerEntry> entries) async {
-    await _replaceAll('entries', entries.map(_entryToRow));
+    await _incrementalReplace('entries', entries.map(_entryToRow));
   }
 
   // ---- 账本 ----
@@ -110,12 +117,14 @@ class SqliteLedgerRepository implements LedgerRepository {
   @override
   Future<List<LedgerBook>> loadBooks() async {
     final rows = await _db.query('ledger_books', orderBy: 'sort_order ASC');
-    return rows.map(_bookFromRow).toList();
+    final books = rows.map(_bookFromRow).toList();
+    _seedSnapshot('ledger_books', _indexed(books, _bookToRow));
+    return books;
   }
 
   @override
   Future<void> saveBooks(List<LedgerBook> books) async {
-    await _replaceAll('ledger_books', _indexed(books, _bookToRow));
+    await _incrementalReplace('ledger_books', _indexed(books, _bookToRow));
   }
 
   // ---- 账户 ----
@@ -123,12 +132,14 @@ class SqliteLedgerRepository implements LedgerRepository {
   @override
   Future<List<Account>> loadAccounts() async {
     final rows = await _db.query('accounts', orderBy: 'sort_order ASC');
-    return rows.map(_accountFromRow).toList();
+    final accounts = rows.map(_accountFromRow).toList();
+    _seedSnapshot('accounts', _indexed(accounts, _accountToRow));
+    return accounts;
   }
 
   @override
   Future<void> saveAccounts(List<Account> accounts) async {
-    await _replaceAll('accounts', _indexed(accounts, _accountToRow));
+    await _incrementalReplace('accounts', _indexed(accounts, _accountToRow));
   }
 
   // ---- 账户分组 ----
@@ -136,12 +147,14 @@ class SqliteLedgerRepository implements LedgerRepository {
   @override
   Future<List<AccountGroup>> loadAccountGroups() async {
     final rows = await _db.query('account_groups', orderBy: 'sort_order ASC');
-    return rows.map(_groupFromRow).toList();
+    final groups = rows.map(_groupFromRow).toList();
+    _seedSnapshot('account_groups', groups.map(_groupToRow));
+    return groups;
   }
 
   @override
   Future<void> saveAccountGroups(List<AccountGroup> groups) async {
-    await _replaceAll('account_groups', groups.map(_groupToRow));
+    await _incrementalReplace('account_groups', groups.map(_groupToRow));
   }
 
   // ---- 分类 ----
@@ -149,12 +162,17 @@ class SqliteLedgerRepository implements LedgerRepository {
   @override
   Future<List<Category>> loadCategories() async {
     final rows = await _db.query('categories', orderBy: 'sort_order ASC');
-    return rows.map(_categoryFromRow).toList();
+    final categories = rows.map(_categoryFromRow).toList();
+    _seedSnapshot('categories', _indexed(categories, _categoryToRow));
+    return categories;
   }
 
   @override
   Future<void> saveCategories(List<Category> categories) async {
-    await _replaceAll('categories', _indexed(categories, _categoryToRow));
+    await _incrementalReplace(
+      'categories',
+      _indexed(categories, _categoryToRow),
+    );
   }
 
   // ---- 标签 ----
@@ -162,12 +180,14 @@ class SqliteLedgerRepository implements LedgerRepository {
   @override
   Future<List<Tag>> loadTags() async {
     final rows = await _db.query('tags', orderBy: 'sort_order ASC');
-    return rows.map(_tagFromRow).toList();
+    final tags = rows.map(_tagFromRow).toList();
+    _seedSnapshot('tags', _indexed(tags, _tagToRow));
+    return tags;
   }
 
   @override
   Future<void> saveTags(List<Tag> tags) async {
-    await _replaceAll('tags', _indexed(tags, _tagToRow));
+    await _incrementalReplace('tags', _indexed(tags, _tagToRow));
   }
 
   // ---- 图片附件 ----
@@ -188,12 +208,17 @@ class SqliteLedgerRepository implements LedgerRepository {
   @override
   Future<List<RecurringRule>> loadRecurringRules() async {
     final rows = await _db.query('recurring_rules', orderBy: 'sort_order ASC');
-    return rows.map(_recurringFromRow).toList();
+    final rules = rows.map(_recurringFromRow).toList();
+    _seedSnapshot('recurring_rules', _indexed(rules, _recurringToRow));
+    return rules;
   }
 
   @override
   Future<void> saveRecurringRules(List<RecurringRule> rules) async {
-    await _replaceAll('recurring_rules', _indexed(rules, _recurringToRow));
+    await _incrementalReplace(
+      'recurring_rules',
+      _indexed(rules, _recurringToRow),
+    );
   }
 
   // ---- 预算（键值对：月度 / 分类）----
@@ -274,6 +299,18 @@ class SqliteLedgerRepository implements LedgerRepository {
         _budgetRows(snapshot.dailyBudgets),
       );
     });
+    // 整替后重建各增量表基线，使后续单条 saveX 的差分有正确起点（否则会拿导入前
+    // 的旧快照去 diff、误删或漏写）。附件/预算不走增量、无需重置。
+    _seedSnapshot('ledger_books', _indexed(snapshot.books, _bookToRow));
+    _seedSnapshot('accounts', _indexed(snapshot.accounts, _accountToRow));
+    _seedSnapshot('account_groups', snapshot.accountGroups.map(_groupToRow));
+    _seedSnapshot('categories', _indexed(snapshot.categories, _categoryToRow));
+    _seedSnapshot('tags', _indexed(snapshot.tags, _tagToRow));
+    _seedSnapshot('entries', snapshot.entries.map(_entryToRow));
+    _seedSnapshot(
+      'recurring_rules',
+      _indexed(snapshot.recurringRules, _recurringToRow),
+    );
   }
 
   /// 是否已存在任何账目数据（用于判断迁移是否有内容写入）。
@@ -293,6 +330,81 @@ class SqliteLedgerRepository implements LedgerRepository {
       }
     }
     return false;
+  }
+
+  // ---- 增量写：按主键 id 的行级差分 ----
+
+  /// 每张「增量表」在内存里保留上次落库的行快照（id → 规范化行）。saveX 时据此
+  /// 算出真正变化的行（新增/改动/删除），只写这些行，避免每次单条改动就 DELETE
+  /// 整表再全量 INSERT（entries 表随交易量无限增长，是写放大的主因）。
+  ///
+  /// 语义与整表覆盖完全一致——落库后 DB 内容 == 传入列表；只是实现为「差分应用」。
+  /// 附件表（含大 JPEG blob，缓存整行会成倍占内存）与预算表（极小、少写）不走此路，
+  /// 仍用整表覆盖。导入/恢复/重置走 [replaceAllLedgerData]（多表原子整替）。
+  final Map<String, Map<Object, Map<String, Object?>>> _rowSnapshots =
+      <String, Map<Object, Map<String, Object?>>>{};
+
+  /// 记录某表当前 DB 内容为基线快照（键为行的 id 列）。loadX 载入后、
+  /// replaceAllLedgerData 整替后调用，使后续差分有正确基线。
+  void _seedSnapshot(String table, Iterable<Map<String, Object?>> rows) {
+    _rowSnapshots[table] = <Object, Map<String, Object?>>{
+      for (final row in rows) row['id'] as Object: row,
+    };
+  }
+
+  /// 以 [rows] 差分更新 [table]：只写与基线快照不同的行。无基线（未 load 过）时
+  /// 退化为一次整表覆盖并建立基线；无任何变化则不发生写入。
+  Future<void> _incrementalReplace(
+    String table,
+    Iterable<Map<String, Object?>> rows,
+  ) async {
+    final next = <Object, Map<String, Object?>>{
+      for (final row in rows) row['id'] as Object: row,
+    };
+    final prev = _rowSnapshots[table];
+    if (prev == null) {
+      await _replaceAll(table, next.values);
+      _rowSnapshots[table] = next;
+      return;
+    }
+    final toUpsert = <Map<String, Object?>>[];
+    next.forEach((id, row) {
+      final old = prev[id];
+      if (old == null || !_sameRow(old, row)) {
+        toUpsert.add(row);
+      }
+    });
+    final toDelete = <Object>[
+      for (final id in prev.keys)
+        if (!next.containsKey(id)) id,
+    ];
+    if (toUpsert.isEmpty && toDelete.isEmpty) {
+      return;
+    }
+    await _db.transaction((txn) async {
+      final batch = txn.batch();
+      for (final row in toUpsert) {
+        batch.insert(table, row, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      for (final id in toDelete) {
+        batch.delete(table, where: 'id = ?', whereArgs: <Object>[id]);
+      }
+      await batch.commit(noResult: true);
+    });
+    _rowSnapshots[table] = next;
+  }
+
+  /// 行相等：列数与每列值都相等（列值均为 String/int/double/null，`!=` 即可）。
+  static bool _sameRow(Map<String, Object?> a, Map<String, Object?> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final entry in a.entries) {
+      if (!b.containsKey(entry.key) || b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // ---- 内部工具 ----
