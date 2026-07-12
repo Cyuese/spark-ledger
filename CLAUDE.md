@@ -21,7 +21,8 @@ dart format .                          # 提交前格式化
 ## 发布与 CI
 
 - **不要在本机构建 APK 作为交付物**。Android 安装包只由 GitHub Actions 生成。
-- CI（`.github/workflows/flutter.yml`）只在推送 `vX.Y.Z` 标签时触发：analyze → test → build apk --release → 发布 GitHub **预发布**（`prerelease`、不标记 Latest）。普通 `main` 推送不触发。**真机验收通过后，在 GitHub 手动把该 release 改为正式版（取消预发布、设为 Latest）**——CI 默认只出预发布，不直接出正式版。
+- CI（`.github/workflows/flutter.yml`）只在推送 `vX.Y.Z` 标签时触发：analyze → test → `build apk --release --target-platform android-arm64` → 发布 GitHub **预发布**（`prerelease`、不标记 Latest）。普通 `main` 推送不触发。**真机验收通过后，在 GitHub 手动把该 release 改为正式版（取消预发布、设为 Latest）**——CI 默认只出预发布，不直接出正式版。
+- **只出 arm64-v8a 单架构包**（覆盖 2019 年后绝大多数机型、比 universal 约减半，实测 ~101MB→~55MB；极老 32 位设备装不了，已在 Release 说明注明并附「更新前先备份」）。release 开启 R8 `isMinifyEnabled`+`isShrinkResources`（`android/app/build.gradle.kts`），裁掉未用插件代码与未引用资源；**反射依赖点由 `android/app/proguard-rules.pro` 的 keep 规则保护**（ML Kit 识别器 + `flutter_local_notifications` 的 Gson 序列化 `com.dexterous.**`）——minify 开启后新增依赖若用反射，必须补 keep 规则，否则仅 release/CI 崩溃或功能静默失效。
 - 发版用 `scripts/publish.sh patch`（也支持 `minor`、`major` 或显式版本号）；脚本会更新 `pubspec.yaml` 和 `lib/app/app_version.dart` 里的 `appVersionLabel`、提交、打标签并推送。**Windows 上用等价的 `scripts/publish.ps1 patch`（PowerShell）**，两脚本逻辑一致；改动发布流程时须同步维护这两个。
 - **发版必须经用户明确同意**：只有用户明说「发布 patch/minor/major 版本」之类时才执行发版流程，绝不擅自发版；打标签会触发 CI 构建，不可逆。
 - 发版前先把 `CHANGELOG.md` 顶部的 `## [Unreleased]` 段落改名为本次版本号并加日期（如 `## [1.8.2] - 2026-07-08`），再在其上新开一个空的 `## [Unreleased]`，随发版提交一起提交，然后再跑 `scripts/publish.sh`。

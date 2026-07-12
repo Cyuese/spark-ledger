@@ -110,7 +110,7 @@ Android 包名 `top.talyra42.verifin`。本地不构建交付 APK——正式安
 
 ## 📦 构建与发布
 
-- CI（`.github/workflows/flutter.yml`）只在推送 `vX.Y.Z` 标签时触发：analyze → test → `flutter build apk --release` → 创建 GitHub Release（APK 命名 `verifin-vX.Y.Z-短提交号.apk`）。
+- CI（`.github/workflows/flutter.yml`）只在推送 `vX.Y.Z` 标签时触发：analyze → test → `flutter build apk --release --target-platform android-arm64` → 创建 GitHub Release（APK 命名 `verifin-vX.Y.Z-arm64-短提交号.apk`）。**只出 arm64-v8a 单架构包**（覆盖 2019 年后绝大多数机型、比 universal 约减半；极老 32 位设备装不了）；release 开启 R8 代码/资源裁剪，反射依赖点由 `android/app/proguard-rules.pro` 的 keep 规则保护。
 - 发版一条命令：
 
   ```bash
