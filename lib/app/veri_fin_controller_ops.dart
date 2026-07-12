@@ -3,9 +3,10 @@ part of 'veri_fin_controller.dart';
 /// 控制器的「领域操作」层：交易/账户/分组/账本/分类/标签/预算/偏好/备份/
 /// 导入导出等所有对外方法。字段与持久化在 [_ControllerState]。
 mixin _ControllerOps on ChangeNotifier, _ControllerState {
-  List<LedgerEntry> get entries => List<LedgerEntry>.unmodifiable(
-    _entries.where((entry) => entry.bookId == _activeBookId),
-  );
+  List<LedgerEntry> get entries =>
+      _entriesView ??= List<LedgerEntry>.unmodifiable(
+        _entries.where((entry) => entry.bookId == _activeBookId),
+      );
 
   List<LedgerBook> get ledgerBooks => List<LedgerBook>.unmodifiable(
     _ledgerBooks.isEmpty ? _seedLedgerBooks : _ledgerBooks,
@@ -16,20 +17,21 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     orElse: () => ledgerBooks.first,
   );
 
-  List<Account> get accounts => List<Account>.unmodifiable(
+  List<Account> get accounts => _accountsView ??= List<Account>.unmodifiable(
     _accounts.where((account) => account.bookId == _activeBookId),
   );
 
   List<AccountGroup> get accountGroups {
-    final groups =
-        _accountGroups.where((group) => group.bookId == _activeBookId).toList()
-          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    return List<AccountGroup>.unmodifiable(groups);
+    return _accountGroupsView ??= List<AccountGroup>.unmodifiable(
+      _accountGroups.where((group) => group.bookId == _activeBookId).toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)),
+    );
   }
 
-  List<Category> get categories => List<Category>.unmodifiable(
-    _categories.isEmpty ? _seedCategories : _categories,
-  );
+  List<Category> get categories =>
+      _categoriesView ??= List<Category>.unmodifiable(
+        _categories.isEmpty ? _seedCategories : _categories,
+      );
 
   /// 全部标签（按创建/排序顺序）。标签与账本无关，全局共享。
   List<Tag> get tags => List<Tag>.unmodifiable(_tags);
