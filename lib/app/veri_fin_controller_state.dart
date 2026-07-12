@@ -255,7 +255,9 @@ mixin _ControllerState on ChangeNotifier {
   /// 2) 重复分类（同 type+parentId+label 的多条）→ 保留一条（系统分类优先），其余的交易 /
   ///    周期规则 / 子分类 parentId 改指向保留者后删除；
   /// 3) 悬空交易 / 周期规则引用（categoryId 指向不存在的分类）→ 归入按类型惰性创建的
-  ///    「未分类」分类（固定 id，保证幂等、重跑复用同一条）。
+  ///    「未分类」分类（固定 id，保证幂等、重跑复用同一条）；
+  /// 4) 空分类的转账（早期导入把转账 categoryId 存成空串，issue #14）→ 归到「转账」分类，
+  ///    与 App 内记账/还款口径一致，避免被交易列表回退成「已删除分类」。
   bool _healCategoryData() {
     var everChanged = false;
     // 8 次足以让「重挂→合并→再合并」收敛；纯防御上限，正常一两轮即稳定。
@@ -377,6 +379,29 @@ mixin _ControllerState on ChangeNotifier {
           categoryId: uncategorizedIdFor(_recurringRules[i].type),
         );
         changed = true;
+      }
+    }
+
+    // ---- 4) 空分类的转账 → 归到「转账」分类（默认「转出」）----
+    // App 内记账/信用卡还款的转账都带「转出」类分类；早期导入曾把转账 categoryId 存成
+    // 空串（issue #14），空 categoryId 会被交易列表回退成「已删除分类」占位、也不计入
+    // 分类管理的转账分类下。这里把遗留的空分类转账补齐，与之对齐（幂等：补齐后不再为空）。
+    final transferCategory = _categories.firstWhere(
+      (c) => c.type == EntryType.transfer,
+      orElse: () => const Category(
+        id: '',
+        label: '',
+        type: EntryType.transfer,
+        iconCode: '',
+      ),
+    );
+    if (transferCategory.id.isNotEmpty) {
+      for (var i = 0; i < _entries.length; i++) {
+        if (_entries[i].type == EntryType.transfer &&
+            _entries[i].categoryId.isEmpty) {
+          _entries[i] = _entries[i].copyWith(categoryId: transferCategory.id);
+          changed = true;
+        }
       }
     }
 

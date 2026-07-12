@@ -810,8 +810,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           bookId: original.bookId,
           type: _type,
           amount: _amount,
-          // 转账不带分类，与导入/记账口径一致。
-          categoryId: _type == EntryType.transfer ? '' : _categoryId,
+          // 转账也带分类（已归一化到「转出」类），与正式落库路径（_save 非草稿分支）、
+          // 导入口径一致——空 categoryId 会被交易列表回退成「已删除分类」（issue #14）。
+          categoryId: _categoryId,
           accountId: noAccount ? '' : _accountId,
           toAccountId: _type == EntryType.transfer ? _toAccountId : null,
           note: _noteController.text.trim(),

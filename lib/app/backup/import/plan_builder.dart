@@ -178,6 +178,23 @@ ImportPlan buildImportPlanFromRecords({
     return ids;
   }
 
+  // 转账落到一个「转账」分类（默认「转出」），与 App 内记账、信用卡还款口径一致
+  // （见 credit_repayment_page）。空 categoryId 会被交易列表按 categoryById 回退成
+  // 「已删除分类」占位、且不计入分类管理的转账分类下（issue #14），故复用现有转账分类
+  // 而非留空。转账分类是系统种子（transfer_out/transfer_in/repayment），不在此新建；
+  // 极端情况下（用户删光了转账分类）退回空串。
+  final transferCategoryId = existingCategories
+      .firstWhere(
+        (category) => category.type == EntryType.transfer,
+        orElse: () => const Category(
+          id: '',
+          label: '',
+          type: EntryType.transfer,
+          iconCode: '',
+        ),
+      )
+      .id;
+
   for (final record in parsed.records) {
     final line = record.sourceLine ?? 0;
 
@@ -205,7 +222,7 @@ ImportPlan buildImportPlanFromRecords({
           bookId: bookId,
           type: EntryType.transfer,
           amount: record.amount,
-          categoryId: '',
+          categoryId: transferCategoryId,
           accountId: fromId,
           toAccountId: toId,
           note: record.note,

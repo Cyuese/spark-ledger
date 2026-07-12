@@ -241,6 +241,36 @@ void main() {
         reason: '没有悬空引用就不该凭空创建「未分类」',
       );
     });
+
+    test('空分类的转账载入时归到「转账」分类（issue #14）', () async {
+      final controller = await _controllerWith(
+        categories: <Category>[
+          const Category(
+            id: 'transfer_out',
+            label: '转出',
+            type: EntryType.transfer,
+            iconCode: 'transfer_out',
+          ),
+        ],
+        entries: <LedgerEntry>[
+          // 早期一木转账导入遗留：转账 categoryId 存成空串，会被交易列表回退成
+          // 「已删除分类」。自愈应把它补齐到「转出」。
+          LedgerEntry(
+            id: 't1',
+            bookId: defaultLedgerBookId,
+            type: EntryType.transfer,
+            amount: 100,
+            categoryId: '',
+            accountId: 'cash',
+            toAccountId: '',
+            note: '转账',
+            occurredAt: DateTime(2026, 7, 1),
+          ),
+        ],
+      );
+      final transfer = controller.entries.firstWhere((e) => e.id == 't1');
+      expect(transfer.categoryId, 'transfer_out');
+    });
   });
 
   group('创建分类的查重防再生', () {

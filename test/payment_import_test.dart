@@ -463,10 +463,32 @@ void main() {
   });
 
   group('一木记账 转账 xls（独立文件，转出/转入账户 + 手续费）', () {
+    // 转账分类是系统种子（真实导入时一定存在）；传入以验证转账落到「转出」而非留空。
+    const transferCategories = <Category>[
+      Category(
+        id: 'transfer_out',
+        label: '转出',
+        type: EntryType.transfer,
+        iconCode: 'transfer_out',
+      ),
+      Category(
+        id: 'transfer_in',
+        label: '转入',
+        type: EntryType.transfer,
+        iconCode: 'transfer_in',
+      ),
+    ];
     late ImportPlan plan;
     setUp(() {
       final bytes = File('test/fixtures/yimu_transfers.xls').readAsBytesSync();
-      plan = run(ImportPlatform.yimuTransfer, Uint8List.fromList(bytes));
+      plan = buildPlatformImportPlan(
+        platform: ImportPlatform.yimuTransfer,
+        bytes: Uint8List.fromList(bytes),
+        bookId: 'book_default',
+        existingAccounts: const <Account>[],
+        existingCategories: transferCategories,
+        now: DateTime(2026, 7, 5, 12),
+      );
     });
 
     test('识别为转账并建立转出/转入账户', () {
@@ -476,6 +498,9 @@ void main() {
       expect(transfer.type, EntryType.transfer);
       expect(transfer.amount, 20);
       expect(transfer.fee, 0);
+      // 转账须落到转账分类（默认「转出」），不能留空——空 categoryId 会被交易列表
+      // 回退成「已删除分类」占位（issue #14）。
+      expect(transfer.categoryId, 'transfer_out');
       final from = plan.newAccounts.firstWhere(
         (a) => a.id == transfer.accountId,
       );
