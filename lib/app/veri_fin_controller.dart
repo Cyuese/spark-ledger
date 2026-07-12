@@ -46,7 +46,10 @@ const Set<String> _knownBackupDataKeys = <String>{
   'reportPanels',
 };
 
-// 偏好类 KV 键（原为 VeriFinController 静态常量，改为库级私有以便各 part 共享）。
+// 偏好类 KV 键（库级私有以便各 part 共享）。全部 `verifin.*.v1` 键集中在此，
+// 仅两处例外：软件日志 `verifin.logs.v1`（logging/app_logger.dart，自管读写）；
+// 应用锁 `verifin.app_lock.v1` 的哈希格式在 app_lock.dart、键仍在下表。
+// 新增偏好键一律加进本表，并确认「初始化清除/备份豁免」清单是否需要覆盖它。
 const String _themeKey = 'verifin.theme.v1';
 const String _localeKey = 'verifin.locale.v1';
 const String _profileKey = 'verifin.profile.v1';

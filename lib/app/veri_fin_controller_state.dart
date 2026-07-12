@@ -45,6 +45,8 @@ mixin _ControllerState on ChangeNotifier {
   // 成多次全量拷贝。改为惰性计算并缓存，任一状态变更经 notifyListeners 统一置空
   // 重算——内部逻辑始终读私有列表（_entries/_accounts/…），UI 只在 notify 后
   // 重建，故这里以 notifyListeners 为唯一失效点是安全的。
+  // **新增派生视图字段必须同步在 [_invalidateDerivedViews] 置空**，
+  // 漏加不会报错、只会返回过期缓存。
   List<LedgerEntry>? _entriesView;
   List<Account>? _accountsView;
   List<AccountGroup>? _accountGroupsView;

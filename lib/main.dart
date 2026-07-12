@@ -232,6 +232,8 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // 顺序约束：先补记到期的周期交易，再备份 / 推送小组件——顺序颠倒会把
+      // 补记前的旧数据备份出去、推到桌面小组件上。
       _controller.applyDueRecurring(DateTime.now());
       BackupCoordinator.maybeBackupOnOpen(_controller);
       pushWidgetData(_controller);

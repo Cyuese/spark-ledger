@@ -24,6 +24,11 @@ class Category {
   /// 是否为顶级分类。
   bool get isRoot => parentId == null;
 
+  /// 规范化父分类 id：空串归一为 null（顶级）。JSON 与 SQLite 两条反序列化
+  /// 路径共用，防止「parentId=''」被当成指向空串 id 的父分类而变成孤儿。
+  static String? normalizeParentId(String? raw) =>
+      (raw != null && raw.isEmpty) ? null : raw;
+
   Category copyWith({
     String? id,
     String? label,
@@ -54,13 +59,12 @@ class Category {
   }
 
   static Category fromJson(Map<String, Object?> json) {
-    final rawParent = json['parentId'] as String?;
     return Category(
       id: json['id'] as String,
       label: json['label'] as String? ?? '未命名分类',
       type: EntryType.fromStorage(json['type'] as String? ?? 'expense'),
       iconCode: json['iconCode'] as String? ?? 'category',
-      parentId: (rawParent != null && rawParent.isEmpty) ? null : rawParent,
+      parentId: normalizeParentId(json['parentId'] as String?),
     );
   }
 }

@@ -9,6 +9,8 @@ import 'ledger_math.dart';
 import 'models.dart';
 import '../l10n/app_localizations.dart';
 
+/// 数字键盘弹层组件体。**勿直接实例化**——统一走 `pages/sheets.dart` 的
+/// `showNumberPadSheet`（包装了 showModalBottomSheet 与样式约定）。
 class NumberPadSheet extends StatefulWidget {
   const NumberPadSheet({
     super.key,
@@ -408,6 +410,8 @@ const String categoryPickerTopLevel = '__category_picker_top_level__';
 /// [CategoryPickerSheet] 选择「全部分类」时返回的哨兵值（筛选场景用）。
 const String categoryPickerAll = '__category_picker_all__';
 
+/// 分类选择弹层组件体。**勿直接实例化**——统一走 `pages/sheets.dart` 的
+/// `showCategoryPickerSheet`。
 class CategoryPickerSheet extends StatefulWidget {
   const CategoryPickerSheet({
     super.key,
@@ -609,6 +613,8 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
 
 /// 记账时给交易多选标签的底部弹窗。展示已有标签的 FilterChip 供多选，
 /// 并可即时新建标签。点「完成」返回选中的标签 id 列表（取消返回 null）。
+/// 标签选择弹层组件体。**勿直接实例化**——统一走 `pages/sheets.dart` 的
+/// `showTagSelectorSheet`。
 class TagSelectorSheet extends StatefulWidget {
   const TagSelectorSheet({
     super.key,
