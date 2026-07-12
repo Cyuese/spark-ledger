@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/ai/ai_entry_parser.dart';
 import '../app/app_theme.dart';
 import '../app/category_suggest.dart';
+import '../app/category_tree.dart';
 import '../app/common_widgets.dart';
 import '../app/demo_data.dart';
 import '../app/ledger_math.dart';
@@ -84,6 +85,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   bool _categoryTouched = false;
   bool _tagsTouched = false;
   bool _noteTouched = false;
+  // 分类快捷区内联展开的顶级分类 id：非空时其子分类面板展开。null 表示「跟随选中」——
+  // 选中的是子分类时自动展开其顶级祖先（保证已选子分类可见）；选中顶级则不展开。
+  String? _expandedTopId;
   // 防重复提交：极快双击「保存」可能在 pop 生效前触发两次、落两条交易。
   bool _saving = false;
   // 程序化写入备注时置真，令备注监听忽略这次（不误判为用户输入）。
@@ -236,14 +240,14 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     ];
   }
 
-  /// 分类快捷区展示的前若干个分类；若当前选中项（含自动推荐）不在前 8 个里，则把它
-  /// 置顶插入，保证被选中/推荐的分类始终可见。
-  List<Category> _visibleCategoryChips(List<Category> categories) {
-    final shown = categories.take(8).toList();
-    if (!shown.any((c) => c.id == _categoryId)) {
-      final idx = categories.indexWhere((c) => c.id == _categoryId);
+  /// 分类快捷区展示的前若干个顶级分类；若当前选中项所属的顶级分类不在前 8 个里，则把它
+  /// 置顶插入，保证被选中/推荐分类所在的分支始终可见（可展开选到具体子分类）。
+  List<Category> _visibleTopChips(List<Category> roots, String selectedTopId) {
+    final shown = roots.take(8).toList();
+    if (!shown.any((c) => c.id == selectedTopId)) {
+      final idx = roots.indexWhere((c) => c.id == selectedTopId);
       if (idx >= 0) {
-        shown.insert(0, categories[idx]);
+        shown.insert(0, roots[idx]);
         if (shown.length > 8) {
           shown.removeLast();
         }
@@ -275,6 +279,17 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     if (!categories.any((category) => category.id == _categoryId)) {
       _categoryId = categories.first.id;
     }
+    // 分类快捷区：顶级分类作 chip，点有子分类的会就地展开子分类面板。
+    final rootCategoriesForType = categories
+        .where((category) => category.parentId == null)
+        .toList();
+    final selectedAncestors = ancestorIds(categories, _categoryId);
+    final selectedTopId = selectedAncestors.isEmpty
+        ? _categoryId
+        : selectedAncestors.last;
+    // 展开的顶级：用户显式展开优先；否则选中的是子分类时自动展开其顶级祖先。
+    final expandedTopId =
+        _expandedTopId ?? (selectedAncestors.isNotEmpty ? selectedTopId : null);
     // 大金额颜色跟随类型:支出红、收入青绿、转账保持蓝色。
     final amountColor = switch (_type) {
       EntryType.expense => veriExpense,
@@ -357,22 +372,47 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     spacing: 8,
                     runSpacing: 8,
                     children: <Widget>[
-                      ..._visibleCategoryChips(categories).map(
-                        (category) => ChoiceChip(
+                      ..._visibleTopChips(
+                        rootCategoriesForType,
+                        selectedTopId,
+                      ).map((top) {
+                        final hasKids = categories.any(
+                          (c) => c.parentId == top.id,
+                        );
+                        final isExpanded = expandedTopId == top.id;
+                        return ChoiceChip(
                           avatar: CategoryGlyph(
-                            iconCode: category.iconCode,
+                            iconCode: top.iconCode,
                             size: 18,
                           ),
-                          label: Text(category.label),
-                          selected: _categoryId == category.id,
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(top.label),
+                              if (hasKids) ...<Widget>[
+                                const SizedBox(width: 2),
+                                Icon(
+                                  isExpanded
+                                      ? Icons.expand_more
+                                      : Icons.chevron_right,
+                                  size: 16,
+                                ),
+                              ],
+                            ],
+                          ),
+                          selected: _categoryId == top.id,
                           onSelected: (_) {
                             setState(() {
-                              _categoryId = category.id;
+                              _categoryId = top.id;
                               _categoryTouched = true;
+                              // 有子分类：点一下展开、再点收起；无子分类：选中并收起面板。
+                              _expandedTopId = hasKids && !isExpanded
+                                  ? top.id
+                                  : null;
                             });
                           },
-                        ),
-                      ),
+                        );
+                      }),
                       ActionChip(
                         avatar: const Icon(Icons.more_horiz, size: 18),
                         label: Text(AppLocalizations.of(context).allLabel),
@@ -380,6 +420,23 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       ),
                     ],
                   ),
+                  if (expandedTopId != null)
+                    _SubcategoryPanel(
+                      parent: categories.firstWhere(
+                        (c) => c.id == expandedTopId,
+                        orElse: () => categories.first,
+                      ),
+                      children: categories
+                          .where((c) => c.parentId == expandedTopId)
+                          .toList(),
+                      selectedId: _categoryId,
+                      onSelected: (id) {
+                        setState(() {
+                          _categoryId = id;
+                          _categoryTouched = true;
+                        });
+                      },
+                    ),
                   const SizedBox(height: 18),
                   if (hasAccounts && _type == EntryType.transfer) ...<Widget>[
                     SelectField(
@@ -859,5 +916,72 @@ String aiDraftWarningLabel(AppLocalizations l10n, AiDraftWarning warning) {
       return l10n.aiWarningCategoryUnmatched;
     case AiDraftWarning.accountUnmatched:
       return l10n.aiWarningAccountUnmatched;
+  }
+}
+
+/// 记账页分类快捷区里，某个顶级分类展开后的子分类面板：淡色卡片 + 父级名 + 子分类 chip。
+class _SubcategoryPanel extends StatelessWidget {
+  const _SubcategoryPanel({
+    required this.parent,
+    required this.children,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  final Category parent;
+  final List<Category> children;
+  final String selectedId;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : veriRoyal.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(veriRadiusMd),
+        border: Border.all(
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.06),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            parent.label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.5),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: children
+                .map(
+                  (child) => ChoiceChip(
+                    avatar: CategoryGlyph(iconCode: child.iconCode, size: 18),
+                    label: Text(child.label),
+                    selected: selectedId == child.id,
+                    onSelected: (_) => onSelected(child.id),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
+    );
   }
 }
