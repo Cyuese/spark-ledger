@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:verifin/app/backup/backup_service.dart';
 import 'package:verifin/app/models.dart';
 
 import 'support/test_harness.dart';
@@ -43,7 +44,13 @@ void main() {
           'data:image/jpeg;base64,${base64Encode(List<int>.generate(2048, (i) => i % 256))}';
       source.addAttachment('entry-att', dataUrl);
 
-      final archiveBytes = source.exportBackupArchiveBytes();
+      final prepared = await BackupService.prepare(
+        json: source.exportDataJson(),
+        passphrase: '',
+        now: DateTime(2026, 7, 4, 9),
+        auto: false,
+      );
+      final archiveBytes = prepared.bytes;
       // 备份产物应为 zip（PK 头），且体积小于内嵌 base64 的 JSON。
       expect(archiveBytes.sublist(0, 2), <int>[0x50, 0x4B]);
       expect(
@@ -52,7 +59,9 @@ void main() {
       );
 
       final target = await makeController();
-      target.importBackupBytes(archiveBytes);
+      final decoded =
+          BackupService.decodeBackupBytes(archiveBytes) as PlainBackupJson;
+      target.importDataJson(decoded.json);
 
       expect(target.entries.single.note, '带票据的午餐');
       final restored = target.attachmentsForEntry('entry-att');
@@ -63,7 +72,7 @@ void main() {
     },
   );
 
-  test('importBackupBytes 也兼容旧版纯 JSON 备份字节', () async {
+  test('decodeBackupBytes 也兼容旧版纯 JSON 备份字节', () async {
     final source = await makeController();
     source.addAccount(
       Account(
@@ -82,7 +91,9 @@ void main() {
     final jsonBytes = utf8.encode(source.exportDataJson());
 
     final target = await makeController();
-    target.importBackupBytes(jsonBytes);
+    final decoded =
+        BackupService.decodeBackupBytes(jsonBytes) as PlainBackupJson;
+    target.importDataJson(decoded.json);
 
     expect(target.accounts.single.name, '旧备份账户');
     source.dispose();

@@ -220,7 +220,9 @@ void main() {
         expect(looksLikeZipBytes(bytes!), isTrue);
 
         final target = await makeController();
-        target.importBackupBytes(bytes);
+        final decoded =
+            BackupService.decodeBackupBytes(bytes) as PlainBackupJson;
+        target.importDataJson(decoded.json);
         expect(target.entries.single.note, '带票据');
         expect(target.attachmentsForEntry('e-e2e').single.dataUrl, dataUrl);
 

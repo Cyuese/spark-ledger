@@ -6,6 +6,32 @@ import 'backup_crypto.dart';
 import 'backup_settings.dart';
 import 'backup_storage.dart';
 
+// 调用方（页面/controller）只 import 本文件即可完成备份的编解码全流程，
+// 不必触达 archive/crypto 实现细节；解密错误类型一并从这里透出。
+export 'backup_crypto.dart' show BackupCryptoException;
+
+/// 备份字节的解码结果：明文导出 JSON，或需口令解密的加密信封。
+/// 由 [BackupService.decodeBackupBytes] 产出。
+sealed class DecodedBackup {
+  const DecodedBackup();
+}
+
+/// 已还原成明文导出 JSON（zip 已解包拼回附件 / 本就是明文 JSON 文本），
+/// 可直接交给 `VeriFinController.importDataJson`。
+class PlainBackupJson extends DecodedBackup {
+  const PlainBackupJson(this.json);
+
+  final String json;
+}
+
+/// 加密文本信封：需向用户索要口令，经 [BackupService.decryptEnvelope] 解密
+/// 得到明文 JSON 后再导入。
+class EncryptedBackupEnvelope extends DecodedBackup {
+  const EncryptedBackupEnvelope(this.envelope);
+
+  final String envelope;
+}
+
 /// 一次备份写入的结果。
 class BackupWriteResult {
   const BackupWriteResult({required this.filename, required this.fileUri});
@@ -67,6 +93,32 @@ class BackupService {
       return Future<String>.value(content);
     }
     return encryptBackup(content, passphrase);
+  }
+
+  /// 备份字节的**唯一解码入口**：zip（新版精简备份）→ 解包把附件字节拼回内嵌
+  /// JSON；加密文本信封 → 原样返回待解密；其余按旧版明文 JSON 文本处理。
+  /// 空文件抛 [FormatException]。手动导入文件与备份目录恢复都必须走这里，
+  /// 「zip 还是加密 JSON」的判定只此一份——与写出侧的 [prepare] 互为镜像。
+  static DecodedBackup decodeBackupBytes(List<int> bytes) {
+    if (bytes.isEmpty) {
+      throw const FormatException('空备份文件');
+    }
+    if (looksLikeZipBytes(bytes)) {
+      return PlainBackupJson(unpackBackupArchive(bytes));
+    }
+    final text = utf8.decode(bytes);
+    if (text.trim().isEmpty) {
+      throw const FormatException('空备份文件');
+    }
+    if (isEncryptedBackup(text)) {
+      return EncryptedBackupEnvelope(text);
+    }
+    return PlainBackupJson(text);
+  }
+
+  /// 解密加密信封，返回明文导出 JSON。口令错误/密文损坏抛 [BackupCryptoException]。
+  static Future<String> decryptEnvelope(String envelope, String passphrase) {
+    return decryptBackup(envelope, passphrase);
   }
 
   /// 把导出 JSON 准备成待写入的备份：无口令→zip 字节（附件不膨胀）、`.zip`；

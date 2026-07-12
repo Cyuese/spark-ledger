@@ -1,13 +1,10 @@
 // 数据管理页：从 profile_pages 拆出。集中导出/导入/初始化与备份子系统
 // （本地目录 SAF、加密、WebDAV、账单导入）的入口与流程。
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
-import '../app/backup/backup_archive.dart';
-import '../app/backup/backup_crypto.dart';
 import '../app/backup/backup_service.dart';
 import '../app/backup/backup_settings.dart';
 import '../app/backup/payment_import.dart';
@@ -514,37 +511,34 @@ class DataManagementPage extends StatelessWidget {
     }
   }
 
-  /// 从备份字节导入：zip（新版精简备份）直接解包导入；否则按文本处理，加密的先
-  /// 解密再导入。返回是否成功导入；用户取消解密返回 false。空/坏文件抛
-  /// FormatException 由调用方提示。
+  /// 从备份字节导入：格式判定（zip/加密信封/明文）统一走
+  /// [BackupService.decodeBackupBytes]，加密信封在此弹窗索要口令解密后导入。
+  /// 返回是否成功导入；用户取消解密返回 false。空/坏文件抛 FormatException
+  /// 由调用方提示。
   Future<bool> _importBackupBytes(
     BuildContext context,
     VeriFinController controller,
     List<int> bytes,
   ) async {
-    if (bytes.isEmpty) {
-      throw const FormatException('空备份文件');
+    switch (BackupService.decodeBackupBytes(bytes)) {
+      case PlainBackupJson(:final json):
+        controller.importDataJson(json);
+        return true;
+      case EncryptedBackupEnvelope(:final envelope):
+        if (!context.mounted) {
+          return false;
+        }
+        final decrypted = await _decryptForImport(
+          context,
+          controller,
+          envelope,
+        );
+        if (decrypted == null) {
+          return false;
+        }
+        controller.importDataJson(decrypted);
+        return true;
     }
-    if (looksLikeZipBytes(bytes)) {
-      controller.importBackupBytes(bytes);
-      return true;
-    }
-    var text = utf8.decode(bytes);
-    if (text.trim().isEmpty) {
-      throw const FormatException('空备份文件');
-    }
-    if (isEncryptedBackup(text)) {
-      if (!context.mounted) {
-        return false;
-      }
-      final decrypted = await _decryptForImport(context, controller, text);
-      if (decrypted == null) {
-        return false;
-      }
-      text = decrypted;
-    }
-    controller.importDataJson(text);
-    return true;
   }
 
   /// 处理加密备份的解密：先尝试已保存口令，失败或未设置则弹窗要求输入，
@@ -557,7 +551,7 @@ class DataManagementPage extends StatelessWidget {
     final saved = controller.backupPassphrase;
     if (saved.isNotEmpty) {
       try {
-        return await decryptBackup(content, saved);
+        return await BackupService.decryptEnvelope(content, saved);
       } on BackupCryptoException {
         // 已保存口令不匹配（可能来自其他设备/旧口令），改为手动输入。
       }
@@ -577,7 +571,7 @@ class DataManagementPage extends StatelessWidget {
         return null;
       }
       try {
-        return await decryptBackup(content, passphrase);
+        return await BackupService.decryptEnvelope(content, passphrase);
       } on BackupCryptoException catch (error) {
         errorText = error.message;
       }
