@@ -113,17 +113,23 @@ void main() {
       restarted.dispose();
     });
 
-    test('ai settings and fab mode are not part of JSON backup', () async {
-      final controller = await makeController();
-      controller.setFabActionMode(FabActionMode.ai);
-      controller.setAiSettings(
-        const AiSettings(baseUrl: 'https://x/v1', apiKey: 'k', model: 'm'),
-      );
-      final json = controller.exportDataJson();
-      expect(json, isNot(contains('fabActionMode')));
-      expect(json, isNot(contains('apiKey')));
-      controller.dispose();
-    });
+    test(
+      'ai settings stay out of JSON backup, but fab mode is included',
+      () async {
+        final controller = await makeController();
+        controller.setFabActionMode(FabActionMode.ai);
+        controller.setAiSettings(
+          const AiSettings(baseUrl: 'https://x/v1', apiKey: 'k', model: 'm'),
+        );
+        final json = controller.exportDataJson();
+        // FAB 行为已纳入备份（2026-07-12 起）。
+        expect(json, contains('fabActionMode'));
+        // AI 设置（含明文密钥）仍是设备本地、不进备份。
+        expect(json, isNot(contains('apiKey')));
+        expect(json, isNot(contains('https://x/v1')));
+        controller.dispose();
+      },
+    );
 
     test('clearing ai settings removes the key', () async {
       final store = LocalKeyValueStore();

@@ -1923,6 +1923,10 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
         'reportPanels': _pagePanels[PanelPageKind.reports]!
             .map((item) => item.toJson())
             .toList(),
+        'defaultAccountIds': Map<String, String>.from(_defaultAccountIds),
+        'fabActionMode': _fabActionMode.name,
+        'amountForceTwoDecimals': _amountForceTwoDecimals,
+        'homeTrendConfig': _homeTrendConfig.toJson(),
       },
     };
     return const JsonEncoder.withIndent('  ').convert(payload);
@@ -2048,6 +2052,22 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       ),
       reportPanelSpecs,
     );
+    // 以下 4 项是设备偏好，缺键（旧备份）回落默认，与 theme/haptics 等同一套「整替」语义。
+    final rawDefaultAccounts = data['defaultAccountIds'];
+    final nextDefaultAccountIds = <String, String>{
+      if (rawDefaultAccounts is Map)
+        for (final entry in rawDefaultAccounts.entries)
+          entry.key.toString(): entry.value.toString(),
+    };
+    final nextFabActionMode = FabActionMode.fromStorage(
+      data['fabActionMode'] as String?,
+    );
+    final nextAmountForceTwoDecimals =
+        data['amountForceTwoDecimals'] as bool? ?? false;
+    final homeTrendValue = data['homeTrendConfig'];
+    final nextHomeTrendConfig = homeTrendValue is Map
+        ? HomeTrendConfig.fromJson(Map<String, dynamic>.from(homeTrendValue))
+        : HomeTrendConfig.defaults;
 
     _ledgerBooks
       ..clear()
@@ -2100,6 +2120,13 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       ..addAll(nextAssetSectionOrders);
     _pagePanels[PanelPageKind.home] = nextHomePanels;
     _pagePanels[PanelPageKind.reports] = nextReportPanels;
+    _defaultAccountIds
+      ..clear()
+      ..addAll(nextDefaultAccountIds);
+    _fabActionMode = nextFabActionMode;
+    _amountForceTwoDecimals = nextAmountForceTwoDecimals;
+    amount_format.amountForceTwoDecimals = nextAmountForceTwoDecimals;
+    _homeTrendConfig = nextHomeTrendConfig;
 
     // 备份恢复零参照完整性校验，是「幽灵同名分类」的唯一现实入口（内部不一致的外部/
     // 异构/手改备份）；覆盖后跑一遍自愈，堵住这个入口。落库统一由下方 _persistAllLedgerData。
@@ -2118,6 +2145,10 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     for (final page in PanelPageKind.values) {
       _persistPagePanels(page);
     }
+    _persistDefaultAccounts();
+    _store.write(_fabActionKey, _fabActionMode.name);
+    _store.write(_amountFormatKey, _amountForceTwoDecimals.toString());
+    _store.write(_homeTrendKey, _homeTrendConfig.encode());
     if (_assetCoverUrl.isEmpty) {
       _store.delete(_assetCoverKey);
     } else {

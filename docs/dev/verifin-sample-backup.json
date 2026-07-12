@@ -763,6 +763,20 @@
         "id": "monthly_structure",
         "enabled": true
       }
-    ]
+    ],
+    "defaultAccountIds": {
+      "default": "acc_alipay"
+    },
+    "fabActionMode": "manualTapAiLongPress",
+    "amountForceTwoDecimals": true,
+    "homeTrendConfig": {
+      "title": "本月概览",
+      "big": "monthExpense",
+      "pill": "monthNet",
+      "card1": "monthIncome",
+      "card2": "yearExpense",
+      "card3": "todayExpense",
+      "series": "net"
+    }
   }
 }
