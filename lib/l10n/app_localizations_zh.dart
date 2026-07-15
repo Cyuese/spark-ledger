@@ -1226,6 +1226,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get allTags => '全部标签';
 
   @override
+  String get noTagFilter => '无标签';
+
+  @override
+  String get hasTagFilter => '有标签';
+
+  @override
+  String get tagFilterQuickSection => '快捷筛选';
+
+  @override
+  String get tagFilterTagSection => '标签';
+
+  @override
   String get unknownTag => '未知标签';
 
   @override

@@ -1246,6 +1246,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allTags => 'All tags';
 
   @override
+  String get noTagFilter => 'No tags';
+
+  @override
+  String get hasTagFilter => 'Has tags';
+
+  @override
+  String get tagFilterQuickSection => 'Quick filters';
+
+  @override
+  String get tagFilterTagSection => 'Tags';
+
+  @override
   String get unknownTag => 'Unknown tag';
 
   @override

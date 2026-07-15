@@ -126,6 +126,9 @@ class TransactionsPage extends StatefulWidget {
 
 class _TransactionsPageState extends State<TransactionsPage> {
   static const String _allFilterValue = '__all__';
+  // 标签筛选的两个哨兵值（与真实标签 id 区分）：筛出「没有任何标签」/「至少有一个标签」的交易。
+  static const String _noTagFilterValue = '__no_tag__';
+  static const String _hasTagFilterValue = '__has_tag__';
 
   TransactionTimeFilter _timeFilter = TransactionTimeFilter.all;
   TransactionSortOrder _sortOrder = TransactionSortOrder.dateDesc;
@@ -601,7 +604,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
         return false;
       }
     }
-    if (_selectedTagId != null && !entry.tagIds.contains(_selectedTagId)) {
+    final tagFilter = _selectedTagId;
+    if (tagFilter == _noTagFilterValue) {
+      if (entry.tagIds.isNotEmpty) {
+        return false;
+      }
+    } else if (tagFilter == _hasTagFilterValue) {
+      if (entry.tagIds.isEmpty) {
+        return false;
+      }
+    } else if (tagFilter != null && !entry.tagIds.contains(tagFilter)) {
       return false;
     }
     // 报销状态：全部 / 待报销（未完全冲抵）/ 已报销（已有回款冲抵）。
@@ -736,19 +748,30 @@ class _TransactionsPageState extends State<TransactionsPage> {
   }
 
   Future<void> _pickTagFilter(VeriFinController controller) async {
+    final l10n = AppLocalizations.of(context);
     final values = <String>[
       _allFilterValue,
+      _noTagFilterValue,
+      _hasTagFilterValue,
       for (final tag in controller.tags) tag.id,
     ];
     final selected = await showOptionSheet<String>(
       context: context,
-      title: AppLocalizations.of(context).filterTagTitle,
+      title: l10n.filterTagTitle,
       values: values,
       selected: _selectedTagId ?? _allFilterValue,
-      labelOf: (value) => value == _allFilterValue
-          ? AppLocalizations.of(context).allTags
-          : (controller.tagById(value)?.label ??
-                AppLocalizations.of(context).unknownTag),
+      sectionOf: (value) =>
+          (value == _allFilterValue ||
+              value == _noTagFilterValue ||
+              value == _hasTagFilterValue)
+          ? l10n.tagFilterQuickSection
+          : l10n.tagFilterTagSection,
+      labelOf: (value) => switch (value) {
+        _allFilterValue => l10n.allTags,
+        _noTagFilterValue => l10n.noTagFilter,
+        _hasTagFilterValue => l10n.hasTagFilter,
+        _ => controller.tagById(value)?.label ?? l10n.unknownTag,
+      },
     );
     if (selected != null) {
       setState(() {
@@ -758,12 +781,18 @@ class _TransactionsPageState extends State<TransactionsPage> {
   }
 
   String _tagFilterLabel(VeriFinController controller) {
+    final l10n = AppLocalizations.of(context);
     final tagId = _selectedTagId;
-    if (tagId == null) {
-      return AppLocalizations.of(context).tagLabel;
+    switch (tagId) {
+      case null:
+        return l10n.tagLabel;
+      case _noTagFilterValue:
+        return l10n.noTagFilter;
+      case _hasTagFilterValue:
+        return l10n.hasTagFilter;
+      default:
+        return controller.tagById(tagId)?.label ?? l10n.tagLabel;
     }
-    return controller.tagById(tagId)?.label ??
-        AppLocalizations.of(context).tagLabel;
   }
 
   /// 报销筛选胶囊的文案：未筛选时显示维度名「报销」，否则显示所选状态。

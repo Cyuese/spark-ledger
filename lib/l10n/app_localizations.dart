@@ -2396,6 +2396,30 @@ abstract class AppLocalizations {
   /// **'全部标签'**
   String get allTags;
 
+  /// No description provided for @noTagFilter.
+  ///
+  /// In zh, this message translates to:
+  /// **'无标签'**
+  String get noTagFilter;
+
+  /// No description provided for @hasTagFilter.
+  ///
+  /// In zh, this message translates to:
+  /// **'有标签'**
+  String get hasTagFilter;
+
+  /// No description provided for @tagFilterQuickSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'快捷筛选'**
+  String get tagFilterQuickSection;
+
+  /// No description provided for @tagFilterTagSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'标签'**
+  String get tagFilterTagSection;
+
   /// No description provided for @unknownTag.
   ///
   /// In zh, this message translates to:

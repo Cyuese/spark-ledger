@@ -37,6 +37,9 @@ Future<bool> confirmCleartextIfRisky(BuildContext context, String url) async {
   return confirmed == true;
 }
 
+/// 通用单选底部弹窗。[sectionOf] 非空时按其返回的分区标题给选项加小标题分组
+/// （相邻同分区归为一组、分区变化处插入小标题），供筛选场景把「快捷项」与
+/// 「具体项」分区展示（如标签筛选的「快捷筛选 / 标签」两组）。
 Future<T?> showOptionSheet<T>({
   required BuildContext context,
   required String title,
@@ -44,6 +47,7 @@ Future<T?> showOptionSheet<T>({
   required T selected,
   required String Function(T value) labelOf,
   bool showSelectedMarker = true,
+  String Function(T value)? sectionOf,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -54,6 +58,66 @@ Future<T?> showOptionSheet<T>({
     ),
     builder: (context) {
       final maxHeight = MediaQuery.sizeOf(context).height * 0.72;
+      final headerColor = Theme.of(context).colorScheme.onSurfaceVariant;
+      final children = <Widget>[];
+      String? currentSection;
+      for (final value in values) {
+        if (sectionOf != null) {
+          final section = sectionOf(value);
+          if (section != currentSection) {
+            currentSection = section;
+            children.add(
+              Padding(
+                padding: EdgeInsets.only(
+                  left: 10,
+                  right: 10,
+                  top: children.isEmpty ? 2 : 12,
+                  bottom: 4,
+                ),
+                child: Text(
+                  section,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: headerColor,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            );
+          }
+        }
+        children.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Material(
+              color: showSelectedMarker && value == selected
+                  ? veriRoyal.withValues(alpha: 0.12)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(veriRadiusSm),
+              child: ListTile(
+                minTileHeight: 44,
+                dense: true,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(veriRadiusSm),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                title: Text(
+                  labelOf(value),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: showSelectedMarker && value == selected
+                        ? FontWeight.w800
+                        : FontWeight.w600,
+                  ),
+                ),
+                trailing: showSelectedMarker && value == selected
+                    ? const Icon(Icons.check, color: veriRoyal, size: 18)
+                    : null,
+                onTap: () => Navigator.of(context).pop(value),
+              ),
+            ),
+          ),
+        );
+      }
       return SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
@@ -70,54 +134,7 @@ Future<T?> showOptionSheet<T>({
                   ),
                 ),
                 const SizedBox(height: 10),
-                Flexible(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: <Widget>[
-                      for (final value in values)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Material(
-                            color: showSelectedMarker && value == selected
-                                ? veriRoyal.withValues(alpha: 0.12)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(veriRadiusSm),
-                            child: ListTile(
-                              minTileHeight: 44,
-                              dense: true,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  veriRadiusSm,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                              ),
-                              title: Text(
-                                labelOf(value),
-                                style: Theme.of(context).textTheme.titleSmall
-                                    ?.copyWith(
-                                      fontWeight:
-                                          showSelectedMarker &&
-                                              value == selected
-                                          ? FontWeight.w800
-                                          : FontWeight.w600,
-                                    ),
-                              ),
-                              trailing: showSelectedMarker && value == selected
-                                  ? const Icon(
-                                      Icons.check,
-                                      color: veriRoyal,
-                                      size: 18,
-                                    )
-                                  : null,
-                              onTap: () => Navigator.of(context).pop(value),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+                Flexible(child: ListView(shrinkWrap: true, children: children)),
               ],
             ),
           ),
