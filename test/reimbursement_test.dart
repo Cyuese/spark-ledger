@@ -195,6 +195,28 @@ void main() {
         isFalse,
       );
     });
+
+    test('notReimbursable 只匹配从未标记待报销的交易', () {
+      // 未标记待报销：命中（真实花销）。
+      expect(
+        ReimbursementFilter.notReimbursable.matches(_expense(amount: 100)),
+        isTrue,
+      );
+      // 未标记、但退过货（有冲抵）：仍命中，净额已扣退款。
+      expect(
+        ReimbursementFilter.notReimbursable.matches(
+          _expense(amount: 100, refunded: 30),
+        ),
+        isTrue,
+      );
+      // 已标记待报销（如囤券）：排除。
+      expect(
+        ReimbursementFilter.notReimbursable.matches(
+          _expense(amount: 100, reimbursable: true),
+        ),
+        isFalse,
+      );
+    });
   });
 
   test('退款作为关联条目随导出导入往返（净额与到账保留）', () async {

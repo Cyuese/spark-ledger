@@ -87,6 +87,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reimbursementStatusAll => '全部';
 
   @override
+  String get reimbursementNotReimbursable => '无需报销';
+
+  @override
   String get reimbursementReimbursed => '已报销';
 
   @override

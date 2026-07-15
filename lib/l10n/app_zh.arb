@@ -86,6 +86,7 @@
   "reimbursementFilterName": "报销",
   "reimbursementFilterTitle": "报销状态",
   "reimbursementStatusAll": "全部",
+  "reimbursementNotReimbursable": "无需报销",
   "reimbursementReimbursed": "已报销",
   "calendarTitle": "日历",
   "calendarPrevMonth": "上个月",

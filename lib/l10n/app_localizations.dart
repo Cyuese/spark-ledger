@@ -254,6 +254,12 @@ abstract class AppLocalizations {
   /// **'全部'**
   String get reimbursementStatusAll;
 
+  /// No description provided for @reimbursementNotReimbursable.
+  ///
+  /// In zh, this message translates to:
+  /// **'无需报销'**
+  String get reimbursementNotReimbursable;
+
   /// No description provided for @reimbursementReimbursed.
   ///
   /// In zh, this message translates to:

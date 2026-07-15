@@ -26,6 +26,7 @@
   "reimbursementFilterName": "Reimbursement",
   "reimbursementFilterTitle": "Reimbursement status",
   "reimbursementStatusAll": "All",
+  "reimbursementNotReimbursable": "Not reimbursable",
   "reimbursementReimbursed": "Reimbursed",
   "calendarTitle": "Calendar",
   "calendarPrevMonth": "Previous month",

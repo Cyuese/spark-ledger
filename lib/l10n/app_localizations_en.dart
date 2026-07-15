@@ -89,6 +89,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reimbursementStatusAll => 'All';
 
   @override
+  String get reimbursementNotReimbursable => 'Not reimbursable';
+
+  @override
   String get reimbursementReimbursed => 'Reimbursed';
 
   @override

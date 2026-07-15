@@ -74,6 +74,7 @@ enum TransactionSortOrder {
 /// 报销状态筛选：全部 / 待报销（已标记且未完全冲抵）/ 已报销（已有回款冲抵）。
 enum ReimbursementFilter {
   all,
+  notReimbursable,
   pending,
   reimbursed;
 
@@ -81,6 +82,8 @@ enum ReimbursementFilter {
     switch (this) {
       case ReimbursementFilter.all:
         return l10n.reimbursementStatusAll;
+      case ReimbursementFilter.notReimbursable:
+        return l10n.reimbursementNotReimbursable;
       case ReimbursementFilter.pending:
         return l10n.badgeReimbursable;
       case ReimbursementFilter.reimbursed:
@@ -92,6 +95,9 @@ enum ReimbursementFilter {
     switch (this) {
       case ReimbursementFilter.all:
         return true;
+      case ReimbursementFilter.notReimbursable:
+        // 从未标记待报销的交易：把囤券等标了待报销的排除掉，只看真实花销。
+        return !entry.reimbursable;
       case ReimbursementFilter.pending:
         // 已标记待报销、且尚未完全冲抵的支出（还有钱没报回来）。
         return entry.reimbursable && entry.refundedAmount < entry.amount;
