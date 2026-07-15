@@ -10,6 +10,7 @@ import '../app/models.dart';
 import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import 'sheets.dart';
+import 'transactions_pages.dart';
 
 class CategoryManagementPage extends StatefulWidget {
   const CategoryManagementPage({super.key});
@@ -160,6 +161,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       context: context,
       title: category.label,
       values: <String>[
+        'view_entries',
         'rename',
         'icon',
         'add_sub',
@@ -167,9 +169,10 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
         if (!protected) 'merge',
         if (!protected) 'delete',
       ],
-      selected: 'rename',
+      selected: 'view_entries',
       showSelectedMarker: false,
       labelOf: (value) => switch (value) {
+        'view_entries' => AppLocalizations.of(context).viewCategoryEntries,
         'rename' => AppLocalizations.of(context).commonRename,
         'icon' => AppLocalizations.of(context).changeIcon,
         'add_sub' => AppLocalizations.of(context).addSubCategory,
@@ -183,6 +186,13 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       return;
     }
     switch (selected) {
+      case 'view_entries':
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (context) =>
+                TransactionsPage(initialCategoryId: category.id),
+          ),
+        );
       case 'rename':
         await _renameCategory(category);
       case 'icon':

@@ -2062,6 +2062,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryNameLabel => '分类名称';
 
   @override
+  String get viewCategoryEntries => '查看交易';
+
+  @override
   String get changeIcon => '更换图标';
 
   @override

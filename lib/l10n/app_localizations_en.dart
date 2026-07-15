@@ -2098,6 +2098,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryNameLabel => 'Category name';
 
   @override
+  String get viewCategoryEntries => 'View transactions';
+
+  @override
   String get changeIcon => 'Change icon';
 
   @override

@@ -404,8 +404,14 @@ void main() {
     await tester.tap(find.text('分类管理'));
     await tester.pumpAndSettle();
 
-    // 点「交通」→「合并到其他分类」。
+    // 点「交通」→「合并到其他分类」。菜单项较多、在小屏测试视口里靠下的项需先滚动到可见。
     await tester.tap(find.text('交通').first);
+    await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.text('合并到其他分类'),
+      find.byType(ListView).last,
+      const Offset(0, -60),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('合并到其他分类'));
     await tester.pumpAndSettle();
@@ -531,6 +537,67 @@ void main() {
 
     expect(find.text('餐饮'), findsOneWidget);
     expect(find.text('交通'), findsNothing);
+  });
+
+  testWidgets('分类管理「查看交易」跳转到按该分类预筛的交易列表', (WidgetTester tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    controller
+      ..addAccount(
+        Account(
+          id: 'cash-view-test',
+          bookId: controller.activeBook.id,
+          name: '现金账户',
+          type: AccountType.cash,
+          groupId: null,
+          initialBalance: 0,
+          iconCode: 'cash',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'view-dining',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 30,
+          categoryId: 'dining',
+          accountId: 'cash-view-test',
+          note: '午餐',
+          occurredAt: now,
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'view-transport',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 12,
+          categoryId: 'transport',
+          accountId: 'cash-view-test',
+          note: '公交',
+          occurredAt: now,
+        ),
+      )
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 3);
+    await tester.tap(find.text('分类管理'));
+    await tester.pumpAndSettle();
+
+    // 点「餐饮」→ 菜单「查看交易」。
+    await tester.tap(find.text('餐饮').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('查看交易'));
+    await tester.pumpAndSettle();
+
+    // 跳到交易列表，且已按「餐饮」预筛：只见餐饮那笔（午餐），不见交通那笔（公交）。
+    expect(find.text('午餐'), findsOneWidget);
+    expect(find.text('公交'), findsNothing);
   });
 
   testWidgets('transfer entry shows a fee field and records it', (

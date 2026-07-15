@@ -3830,6 +3830,12 @@ abstract class AppLocalizations {
   /// **'分类名称'**
   String get categoryNameLabel;
 
+  /// No description provided for @viewCategoryEntries.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看交易'**
+  String get viewCategoryEntries;
+
   /// No description provided for @changeIcon.
   ///
   /// In zh, this message translates to:

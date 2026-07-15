@@ -1356,6 +1356,7 @@
     }
   },
   "categoryNameLabel": "分类名称",
+  "viewCategoryEntries": "查看交易",
   "changeIcon": "更换图标",
   "addSubCategory": "新增子分类",
   "moveTo": "移动到…",

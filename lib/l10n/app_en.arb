@@ -673,6 +673,7 @@
   "addCategoryTitle": "New {type} category",
   "addSubCategoryTitle": "New subcategory under \"{parent}\"",
   "categoryNameLabel": "Category name",
+  "viewCategoryEntries": "View transactions",
   "changeIcon": "Change icon",
   "addSubCategory": "New subcategory",
   "moveTo": "Move to…",

@@ -113,11 +113,13 @@ class TransactionsPage extends StatefulWidget {
     super.key,
     this.initialDate,
     this.accountId,
+    this.initialCategoryId,
     this.title,
   });
 
   final DateTime? initialDate;
   final String? accountId;
+  final String? initialCategoryId;
   final String? title;
 
   @override
@@ -166,6 +168,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   void initState() {
     super.initState();
     _selectedAccountId = widget.accountId;
+    _selectedCategoryId = widget.initialCategoryId;
   }
 
   /// 按签名判断派生结果是否失效；失效才重跑过滤/排序/分组/汇总并重置分页。
