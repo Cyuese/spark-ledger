@@ -136,7 +136,7 @@ class ReportsPage extends StatelessWidget {
                           ).colorScheme.onSurface.withValues(alpha: 0.42)
                         : veriExpense,
                     values: trendValues,
-                    xLabels: labelsForWindow(trendWindow),
+                    xLabels: sparseLabelsForWindow(trendWindow),
                     yLabels: reportAxisLabels(trendMax),
                     labelColor: Theme.of(
                       context,
