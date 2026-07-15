@@ -1613,6 +1613,16 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return _entries.where((entry) => entry.categoryId == categoryId).length;
   }
 
+  /// 该分类及其全部子分类合计引用的交易笔数。用于分类管理列表展示笔数，
+  /// 使「大类」也能反映记在子类下的消费（避免只记子类时大类恒显示 0 笔的困惑）。
+  int categoryUsageCountInTree(String categoryId) {
+    final ids = <String>{
+      categoryId,
+      ...descendantIds(categories, categoryId),
+    };
+    return _entries.where((entry) => ids.contains(entry.categoryId)).length;
+  }
+
   /// 是否有周期规则正引用该分类（含尚未生成过任何交易的规则）。
   bool categoryUsedByRecurringRule(String categoryId) {
     return _recurringRules.any((rule) => rule.categoryId == categoryId);

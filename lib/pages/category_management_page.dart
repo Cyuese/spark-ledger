@@ -104,7 +104,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
               depth: depth,
               category: category,
               childCount: children.length,
-              usageCount: controller.categoryUsageCount(category.id),
+              usageCount: controller.categoryUsageCountInTree(category.id),
               collapsed: collapsed,
               onToggle: children.isEmpty
                   ? null
