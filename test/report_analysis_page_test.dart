@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/models.dart';
+import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 
 import 'support/test_harness.dart';
@@ -155,5 +156,96 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('的子分类'), findsOneWidget);
     expect(find.text('午餐'), findsWidgets);
+  });
+
+  /// 造两笔不同分类的支出（「餐饮/午餐」子分类 + 「交通」），供跳转筛选断言：
+  /// 跳到餐饮时应只见「工作餐」、不见「公交」。
+  Future<void> seedDrillEntries(VeriFinController controller) async {
+    final now = DateTime.now();
+    controller.addCategory(
+      type: EntryType.expense,
+      label: '午餐',
+      iconCode: 'dining',
+      parentId: 'dining',
+    );
+    final lunchId = controller.categories.firstWhere((c) => c.label == '午餐').id;
+    controller
+      ..addEntry(
+        LedgerEntry(
+          id: 'drill-lunch',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 60,
+          categoryId: lunchId,
+          accountId: '',
+          note: '工作餐',
+          occurredAt: now,
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'drill-bus',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 12,
+          categoryId: 'transport',
+          accountId: '',
+          note: '公交',
+          occurredAt: now,
+        ),
+      )
+      ..dispose();
+  }
+
+  testWidgets('统计分析页分类下钻可「查看交易」跳到按该分类预筛的交易列表', (WidgetTester tester) async {
+    final store = LocalKeyValueStore();
+    await seedDrillEntries(await makeController(store));
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('统计分析'));
+    await tester.pumpAndSettle();
+
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('餐饮'),
+      250,
+      scrollable: scrollable,
+    );
+    await tester.tap(find.text('餐饮').last);
+    await tester.pumpAndSettle();
+
+    // 弹层底部「查看交易」→ 跳到交易列表，已按「餐饮」（含子分类）预筛。
+    await tester.tap(find.text('查看交易'));
+    await tester.pumpAndSettle();
+    expect(find.text('工作餐'), findsOneWidget);
+    expect(find.text('公交'), findsNothing);
+  });
+
+  testWidgets('统计分析页子分类维度点行直接跳到该分类的交易列表', (WidgetTester tester) async {
+    final store = LocalKeyValueStore();
+    await seedDrillEntries(await makeController(store));
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('统计分析'));
+    await tester.pumpAndSettle();
+
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('子分类'),
+      250,
+      scrollable: scrollable,
+    );
+    await tester.tap(find.text('子分类'));
+    await tester.pumpAndSettle();
+
+    // 点「午餐」排行行 → 直接跳到按「午餐」预筛的交易列表。
+    await tester.tap(find.text('午餐').last);
+    await tester.pumpAndSettle();
+    expect(find.text('工作餐'), findsOneWidget);
+    expect(find.text('公交'), findsNothing);
   });
 }

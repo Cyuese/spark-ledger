@@ -9,6 +9,7 @@ import '../app/report_analysis.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
+import 'transactions_pages.dart';
 
 /// 排行分组维度：顶级分类 / 子分类（按记账所选分类）/ 标签。
 enum _ReportGrouping { topCategory, subCategory, tag }
@@ -127,7 +128,9 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
                   stats: categoryStats,
                   color: dimensionColor,
                   dimension: _dimension,
-                  // 仅顶级分类模式下可点行下钻看子分类拆分。
+                  // 顶级分类模式点行下钻看子分类拆分；子分类模式点行直接跳到
+                  // 按该分类筛选的交易列表（与分类管理「查看交易」同一路径，
+                  // 「未分类」等也能一键定位到交易去批量归类，issue #16）。
                   onTapCategory: _grouping == _ReportGrouping.topCategory
                       ? (stat) => _showCategoryDrill(
                           context,
@@ -135,7 +138,7 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
                           categories,
                           stat,
                         )
-                      : null,
+                      : (stat) => _openCategoryEntries(stat.categoryId),
                 ),
             ],
           ),
@@ -144,7 +147,18 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
     );
   }
 
-  /// 顶级分类下钻：底部弹层展示该分类下按子分类（记账所选分类）的拆分。
+  /// 跳到按 [categoryId]（含其子分类）筛选的交易列表——与分类管理「查看交易」
+  /// 同一入口，便于从统计发现问题后直接去多选批量改分类。
+  void _openCategoryEntries(String categoryId) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => TransactionsPage(initialCategoryId: categoryId),
+      ),
+    );
+  }
+
+  /// 顶级分类下钻：底部弹层展示该分类下按子分类（记账所选分类）的拆分，
+  /// 子分类行与底部「查看交易」都可跳到对应交易列表。
   Future<void> _showCategoryDrill(
     BuildContext context,
     List<LedgerEntry> entries,
@@ -167,8 +181,10 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
       ),
-      builder: (context) {
-        final maxHeight = MediaQuery.sizeOf(context).height * 0.72;
+      // 命名为 sheetContext 与外层页面 context 区分：跳转前先 pop 弹层（用
+      // sheetContext），再用页面 context push 交易列表。
+      builder: (sheetContext) {
+        final maxHeight = MediaQuery.sizeOf(sheetContext).height * 0.72;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -189,15 +205,15 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
                       Expanded(
                         child: Text(
                           AppLocalizations.of(
-                            context,
+                            sheetContext,
                           ).subCategoryOf(stat.category.label),
-                          style: Theme.of(context).textTheme.titleMedium
+                          style: Theme.of(sheetContext).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                       ),
                       Text(
                         formatAmount(stat.amount),
-                        style: Theme.of(context).textTheme.titleMedium
+                        style: Theme.of(sheetContext).textTheme.titleMedium
                             ?.copyWith(
                               color: color,
                               fontWeight: FontWeight.w800,
@@ -211,8 +227,29 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
                       shrinkWrap: true,
                       children: <Widget>[
                         for (final child in children)
-                          _CategoryRankTile(stat: child, color: color),
+                          _CategoryRankTile(
+                            stat: child,
+                            color: color,
+                            onTap: () {
+                              Navigator.of(sheetContext).pop();
+                              _openCategoryEntries(child.categoryId);
+                            },
+                          ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                      label: Text(
+                        AppLocalizations.of(sheetContext).viewCategoryEntries,
+                      ),
+                      onPressed: () {
+                        Navigator.of(sheetContext).pop();
+                        _openCategoryEntries(stat.categoryId);
+                      },
                     ),
                   ),
                 ],
