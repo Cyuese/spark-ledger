@@ -26,11 +26,15 @@ object WidgetData {
     const val KEY_NET_WORTH_AMOUNT = "net_worth"
     const val KEY_NET_WORTH_LABEL = "net_worth_label"
 
-    // ── 跨天/跨月自愈锚点（Flutter 每次推送时写入）──────────────────────
+    // ── 跨天/跨期自愈锚点（Flutter 每次推送时写入）──────────────────────
     // 今日支出所对应的日期（yyyy-MM-dd）；若与当前日期不同，说明已跨天，展示归零值。
     const val KEY_TODAY_DATE = "today_date"
     const val KEY_TODAY_ZERO = "today_zero"
-    // 本月预算所对应的月份（yyyy-MM）；跨月后展示整月预算（新月尚无支出）。
+    // 预算所属周期的截止日（yyyy-MM-dd，含当天）；过期后展示整期预算（新周期尚无支出）。
+    // 支持应用内自定义预算周期起始日，截止日不再一定是自然月末。
+    const val KEY_BUDGET_EXPIRY = "month_budget_expiry"
+    // 旧锚点（yyyy-MM，v1.10.32 及之前写入）：仅在新锚点缺失时兜底按月判断，
+    // 覆盖「已更新 App 但尚未打开、推送过一次旧数据」的过渡窗口。
     const val KEY_BUDGET_MONTH = "month_budget_month"
     const val KEY_BUDGET_FULL = "month_budget_full"
     const val KEY_BUDGET_FULL_LABEL = "month_budget_full_label"
@@ -61,11 +65,21 @@ object WidgetData {
         return read(context, KEY_TODAY_ZERO, "0")
     }
 
-    /// 本月可用预算的展示值 / 标签：跨月后回到整月预算与「可用」文案。
+    /// 可用预算的展示值 / 标签：过了周期截止日后回到整期预算与「可用」文案。
     fun budgetForMonth(context: Context): Pair<String, String> {
-        val stamp = read(context, KEY_BUDGET_MONTH, "")
         val amount = read(context, KEY_BUDGET_AMOUNT, "0")
         val label = read(context, KEY_BUDGET_LABEL, "本月可用预算")
+        val expiry = read(context, KEY_BUDGET_EXPIRY, "")
+        if (expiry.isNotEmpty()) {
+            // ISO 日期字符串可直接字典序比较：今天 <= 截止日则周期内。
+            if (currentDate() <= expiry) {
+                return amount to label
+            }
+            return read(context, KEY_BUDGET_FULL, amount) to
+                read(context, KEY_BUDGET_FULL_LABEL, label)
+        }
+        // 旧锚点兜底（更新 App 后尚未打开过的过渡窗口）：按自然月判断。
+        val stamp = read(context, KEY_BUDGET_MONTH, "")
         if (stamp.isEmpty() || stamp == currentMonth()) {
             return amount to label
         }

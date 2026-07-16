@@ -15,7 +15,7 @@ class AppWidgetBridge {
     required String netWorthLabel,
     required String todayDate,
     required String todayZeroAmount,
-    required String budgetMonth,
+    required String budgetExpiry,
     required String budgetFullAmount,
     required String budgetFullLabel,
   }) async {
@@ -27,11 +27,12 @@ class AppWidgetBridge {
         'budgetLabel': budgetLabel,
         'netWorthAmount': netWorthAmount,
         'netWorthLabel': netWorthLabel,
-        // 跨天/跨月自愈用的锚点：原生按当前日期/月份判断推送值是否过期，
-        // 过期则展示归零/满额值，不必等应用打开重新推送。
+        // 跨天/跨期自愈用的锚点：原生按当前日期判断推送值是否过期，过期则展示
+        // 归零/满额值，不必等应用打开重新推送。budgetExpiry 为预算周期截止日
+        // （yyyy-MM-dd，含当天；自定义预算周期起始日后不再是自然月末）。
         'todayDate': todayDate,
         'todayZeroAmount': todayZeroAmount,
-        'budgetMonth': budgetMonth,
+        'budgetExpiry': budgetExpiry,
         'budgetFullAmount': budgetFullAmount,
         'budgetFullLabel': budgetFullLabel,
       });

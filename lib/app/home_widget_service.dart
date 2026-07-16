@@ -2,7 +2,6 @@ import 'l10n_outside_context.dart';
 import 'ledger_math.dart';
 import 'models.dart';
 import 'platform_bridge.dart';
-import 'series_math.dart';
 import 'veri_fin_controller.dart';
 
 /// 把当前账本的桌面小组件数据（今日支出 / 本月可用预算 / 资产总额）推送到 Android。
@@ -14,12 +13,22 @@ Future<void> pushWidgetData(VeriFinController controller) async {
 
   final todayTotal = dayExpenseTotal(entries, dateOnly(now));
 
-  final monthBudget = controller.monthlyBudget(now);
-  final monthExpense = sumByType(
-    entries.where((entry) => isInMonth(entry, now)),
+  // 预算按周期取数（键月 + 周期窗口）；自定义周期时标签用「本期」措辞。
+  final budgetKeyMonth = controller.budgetKeyMonthFor(now);
+  final budgetWindow = controller.budgetWindow(budgetKeyMonth);
+  final monthBudget = controller.monthlyBudget(budgetKeyMonth);
+  final cycleExpense = sumByType(
+    entriesInWindow(entries, budgetWindow),
     EntryType.expense,
   );
-  final remaining = monthBudget - monthExpense;
+  final remaining = monthBudget - cycleExpense;
+  final cyclic = controller.budgetCycleIsCustom;
+  final availableLabel = cyclic
+      ? l10n.widgetPeriodBudgetAvailable
+      : l10n.widgetBudgetAvailable;
+  final overspentLabel = cyclic
+      ? l10n.widgetPeriodBudgetOverspent
+      : l10n.widgetBudgetOverspent;
 
   final netWorth = controller.accounts
       .where((account) => !account.hidden)
@@ -34,17 +43,16 @@ Future<void> pushWidgetData(VeriFinController controller) async {
     todayAmount: formatAmount(todayTotal),
     todayLabel: l10n.widgetTodayExpense,
     budgetAmount: formatAmount(remaining.abs()),
-    budgetLabel: remaining < 0
-        ? l10n.widgetBudgetOverspent
-        : l10n.widgetBudgetAvailable,
+    budgetLabel: remaining < 0 ? overspentLabel : availableLabel,
     netWorthAmount: formatAmount(netWorth),
     netWorthLabel: l10n.widgetNetWorth,
-    // 跨天/跨月锚点：原生据此判断展示值是否过期。跨天后「今日支出」归零，
-    // 跨月后「本月可用」回到整月预算（新月尚无支出）。
+    // 跨天/跨期锚点：原生据此判断展示值是否过期。跨天后「今日支出」归零，
+    // 过了预算周期截止日后「可用预算」回到整期预算（新周期尚无支出）。
     todayDate: '${now.year}-${two(now.month)}-${two(now.day)}',
     todayZeroAmount: formatAmount(0),
-    budgetMonth: '${now.year}-${two(now.month)}',
+    budgetExpiry:
+        '${budgetWindow.end.year}-${two(budgetWindow.end.month)}-${two(budgetWindow.end.day)}',
     budgetFullAmount: formatAmount(monthBudget),
-    budgetFullLabel: l10n.widgetBudgetAvailable,
+    budgetFullLabel: availableLabel,
   );
 }
