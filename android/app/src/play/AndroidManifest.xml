@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <!-- Google Play 版：移除 REQUEST_INSTALL_PACKAGES。
-         Play 负责应用更新，政策禁止应用自行下载 APK 更新；应用内自更新入口由
-         --dart-define=SELF_UPDATE=false 一并隐藏（见 lib/app/build_config.dart）。 -->
+         Play 负责应用更新，政策禁止应用自行下载 APK 更新；应用内自更新入口由构建参数
+         SELF_UPDATE=false（dart-define）一并隐藏，见 lib/app/build_config.dart。 -->
     <uses-permission
         android:name="android.permission.REQUEST_INSTALL_PACKAGES"
         tools:node="remove" />
