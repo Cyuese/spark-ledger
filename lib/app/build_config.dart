@@ -6,5 +6,7 @@
 ///
 /// CI 构建 Play 版（play flavor 的 AAB）时传 `--dart-define=SELF_UPDATE=false`；
 /// GitHub 版（github flavor 的 APK）默认 `true`，保留自更新。
-const bool kSelfUpdateEnabled =
-    bool.fromEnvironment('SELF_UPDATE', defaultValue: true);
+const bool kSelfUpdateEnabled = bool.fromEnvironment(
+  'SELF_UPDATE',
+  defaultValue: true,
+);
