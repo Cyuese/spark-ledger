@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
 import '../app/app_version.dart';
+import '../app/build_config.dart';
 import '../app/common_widgets.dart';
 import '../app/legal_content.dart';
 import '../l10n/app_localizations.dart';
@@ -167,16 +168,19 @@ class SettingsPage extends StatelessWidget {
               VeriCard(
                 child: Column(
                   children: <Widget>[
-                    SettingsRow(
-                      icon: Icons.system_update_alt_outlined,
-                      title: AppLocalizations.of(context).checkUpdate,
-                      trailing: 'GitHub Release',
-                      trailingIcon: Icons.chevron_right,
-                      onTap: () => _checkForUpdate(context),
-                    ),
+                    // 应用内自更新仅 GitHub 自分发版提供；Play 版关闭（见 build_config.dart）。
+                    if (kSelfUpdateEnabled)
+                      SettingsRow(
+                        icon: Icons.system_update_alt_outlined,
+                        title: AppLocalizations.of(context).checkUpdate,
+                        trailing: 'GitHub Release',
+                        trailingIcon: Icons.chevron_right,
+                        onTap: () => _checkForUpdate(context),
+                      ),
                     for (final entry
                         in LegalDocument.values.indexed) ...<Widget>[
-                      const Divider(height: 1),
+                      if (kSelfUpdateEnabled || entry.$1 > 0)
+                        const Divider(height: 1),
                       SettingsRow(
                         icon: entry.$2 == LegalDocument.privacyPolicy
                             ? Icons.privacy_tip_outlined

@@ -41,6 +41,23 @@ android {
         }
     }
 
+    // 分发渠道 flavor：区分 GitHub 自分发与 Google Play。
+    // - github：保留应用内一键自更新（下载 Release APK 并拉起安装），需要
+    //   REQUEST_INSTALL_PACKAGES（在 src/main 清单声明）。
+    // - play：Play 负责更新、禁止应用自下载 APK 更新（撞政策），故 src/play 清单用
+    //   tools:node="remove" 去掉 REQUEST_INSTALL_PACKAGES；并由构建时
+    //   --dart-define=SELF_UPDATE=false 在 Dart 层隐藏自更新入口。
+    // 定义 flavor 后所有构建都必须带 --flavor（本地 flutter run 用 --flavor github）。
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("github") {
+            dimension = "distribution"
+        }
+        create("play") {
+            dimension = "distribution"
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("verifinRelease")

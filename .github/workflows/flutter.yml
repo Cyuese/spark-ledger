@@ -60,17 +60,18 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build release APK
+      - name: Build release APK (github flavor)
+        # GitHub 自分发包：github flavor，保留应用内一键自更新（REQUEST_INSTALL_PACKAGES）。
         # 只构建 arm64-v8a：2019 年后的安卓机几乎全是 arm64，一个包覆盖 99%+ 设备，
         # 相比 universal（打包 armeabi-v7a/arm64/x86_64 三套原生库）体积约减半。
         # 极老的 32 位机型装不了——已在 Release 说明中告知。
-        run: flutter build apk --release --target-platform android-arm64
+        run: flutter build apk --release --target-platform android-arm64 --flavor github
 
-      - name: Build release App Bundle
-        # Google Play 上架 / 所有权验证需要 AAB（.aab）。与 APK 同用 verifinRelease
-        # 签名配置签名；AAB 内含全部 ABI，由 Play 按设备分发（自建 APK 分发仍走上面的
-        # arm64 APK）。
-        run: flutter build appbundle --release
+      - name: Build release App Bundle (play flavor)
+        # Google Play 上架用 AAB：play flavor 移除 REQUEST_INSTALL_PACKAGES（Play 政策禁止
+        # 应用自更新），并 --dart-define=SELF_UPDATE=false 隐藏应用内自更新入口。
+        # 与 APK 同用 verifinRelease 签名；AAB 含全部 ABI，由 Play 按设备分发。
+        run: flutter build appbundle --release --flavor play --dart-define=SELF_UPDATE=false
 
       - name: Prepare release artifacts
         shell: bash
@@ -78,8 +79,8 @@ jobs:
           mkdir -p release-artifacts
           short_sha="${GITHUB_SHA::7}"
           version_name="${GITHUB_REF_NAME}"
-          cp build/app/outputs/flutter-apk/app-release.apk "release-artifacts/verifin-${version_name}-arm64-${short_sha}.apk"
-          cp build/app/outputs/bundle/release/app-release.aab "release-artifacts/verifin-${version_name}-${short_sha}.aab"
+          cp build/app/outputs/flutter-apk/app-github-release.apk "release-artifacts/verifin-${version_name}-arm64-${short_sha}.apk"
+          cp build/app/outputs/bundle/playRelease/app-play-release.aab "release-artifacts/verifin-${version_name}-${short_sha}.aab"
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
