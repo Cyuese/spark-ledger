@@ -5,10 +5,10 @@ import 'raw_import.dart';
 import 'text_format.dart';
 import 'xlsx_reader.dart';
 
-/// 微信「支付账单」xlsx：二进制表格，日期为 Excel 序列号，表头含「交易时间 / 收/支 /
-/// 金额(元) / 支付方式 / 交易对方 / 商品」。「中性交易」（提现、理财通、零钱通存取、信用卡
-/// 还款等资金流转）跳过。日期由 [excelSerialToDateTime] 直接转 [DateTime]，不经字符串中转。
-/// 基于用户真实导出样例。
+/// 微信「支付账单」xlsx：二进制表格，日期为 Excel 序列号，表头含「交易时间 / 交易类型 /
+/// 收/支 / 金额(元) / 支付方式 / 交易对方 / 商品」。「中性交易」（提现、理财通、零钱通存取、
+/// 信用卡还款等资金流转）跳过。日期由 [excelSerialToDateTime] 直接转 [DateTime]，不经字符串
+/// 中转。基于用户真实导出样例。
 ParsedImport parseWechat(Uint8List bytes) {
   final rows = parseXlsx(bytes);
   final headerIndex = findHeaderRow(
@@ -50,6 +50,10 @@ ParsedImport parseWechat(Uint8List bytes) {
         date: date,
         type: direction == '收入' ? EntryType.income : EntryType.expense,
         amount: amount,
+        // 微信没有用户自定义分类，「交易类型」（商户消费/微信红包/转账…）是最接近
+        // 分类语义的列：作为分类候选导入，交预览页映射区归到用户自己的分类体系。
+        // 此前该列被丢弃，交易落成空分类、显示「已删除分类」（issue #16）。
+        category: cellAt(row, cols['交易类型']),
         account: account,
         note: joinNote(<String>[cellAt(row, cols['交易对方']), usefulProduct]),
         sourceLine: line,

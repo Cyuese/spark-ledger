@@ -827,6 +827,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       existingCategories: categories,
       now: DateTime.now(),
       existingTags: tags,
+      seedEnglish: _seedEnglish,
     );
     _applyImportPlan(plan);
     return plan;
@@ -870,6 +871,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       existingAccounts: accounts,
       existingCategories: categories,
       now: DateTime.now(),
+      seedEnglish: _seedEnglish,
     );
   }
 

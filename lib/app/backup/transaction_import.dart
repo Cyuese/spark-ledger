@@ -21,6 +21,7 @@ ImportPlan buildImportPlan({
   required List<Category> existingCategories,
   required DateTime now,
   List<Tag> existingTags = const <Tag>[],
+  bool seedEnglish = false,
 }) {
   return buildImportPlanFromRecords(
     parsed: parseCsvTemplateRows(rows),
@@ -29,5 +30,6 @@ ImportPlan buildImportPlan({
     existingCategories: existingCategories,
     now: now,
     existingTags: existingTags,
+    seedEnglish: seedEnglish,
   );
 }

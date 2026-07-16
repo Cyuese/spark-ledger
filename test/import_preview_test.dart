@@ -36,6 +36,12 @@ const _mapCsv =
     '2026-02-01,支出,10,测试餐饮,新钱包甲,,a\n'
     '2026-02-02,支出,20,测试餐饮,新钱包甲,,b\n';
 
+// 分类列为空：兜底进「未分类」候选（issue #16），验证预览页默认展开分类映射区并可整体映射。
+const _noCategoryCsv =
+    '日期,类型,金额,分类,账户,转入账户,备注\n'
+    '2026-02-01,支出,15,,测试钱包A,,早饭\n'
+    '2026-02-02,支出,25,,测试钱包A,,晚饭\n';
+
 class _Holder {
   ImportPreviewResult? result;
 }
@@ -297,6 +303,41 @@ void main() {
       // 两笔都被整体改到现有「现金」账户。
       expect(
         holder.result!.entries.every((e) => e.accountId == 'cash1'),
+        isTrue,
+      );
+    });
+
+    testWidgets('缺失分类兜底「未分类」：分类映射区默认展开、可整体映射到现有分类', (tester) async {
+      final controller = await makeController();
+      final plan = controller.parsePlatformImport(
+        ImportPlatform.csvTemplate,
+        _csvBytes(_noCategoryCsv),
+      );
+      expect(
+        plan.newCategories.single.id,
+        uncategorizedCategoryId(EntryType.expense),
+      );
+
+      final holder = await _openPreview(tester, controller, plan);
+
+      // 分类映射区默认展开：无需点开卡片即可见「未分类」映射行的选择控件
+      // （账户映射卡此时是折叠的，页面上仅这一处 unfold_more）。
+      expect(find.text('导入分类'), findsOneWidget);
+      expect(find.byIcon(Icons.unfold_more), findsOneWidget);
+
+      // 点开「未分类」映射行，整体映射到现有「餐饮」分类。
+      await tester.tap(find.byIcon(Icons.unfold_more));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('餐饮'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('确认导入（2）'));
+      await tester.pumpAndSettle();
+
+      final food = controller.categories.firstWhere((c) => c.label == '餐饮');
+      expect(holder.result, isNotNull);
+      expect(
+        holder.result!.entries.every((e) => e.categoryId == food.id),
         isTrue,
       );
     });

@@ -70,3 +70,23 @@ class Category {
 }
 
 const Object _copyWithSentinel = Object();
+
+/// 「未分类」兜底分类的固定 id（按类型各一）。导入缺失分类的兜底（plan_builder）与
+/// 载入自愈（`_healCategoryData`）共用此约定——固定 id 保证两条路径幂等落到同一条分类，
+/// 重复导入 / 反复自愈都复用而不再生。
+String uncategorizedCategoryId(EntryType type) =>
+    'uncategorized_${type.storageValue}';
+
+/// [id] 是否为某类型「未分类」的固定 id。
+bool isUncategorizedCategoryId(String id) =>
+    EntryType.values.any((type) => uncategorizedCategoryId(type) == id);
+
+/// 构造「未分类」分类。[english] 与种子数据同规则：按首启动语言取文案，播种后属
+/// 用户数据、不随语言切换。
+Category buildUncategorizedCategory(EntryType type, {required bool english}) =>
+    Category(
+      id: uncategorizedCategoryId(type),
+      label: english ? 'Uncategorized' : '未分类',
+      type: type,
+      iconCode: 'category',
+    );

@@ -88,6 +88,21 @@ void main() {
       final cats = plan.newCategories.map((c) => c.label).toSet();
       expect(cats, containsAll(<String>['商业服务', '餐饮美食']));
     });
+
+    test('交易分类为空的行兜底到「未分类」，不再落空分类（issue #16）', () {
+      const noCategory =
+          '交易时间,交易分类,交易对方,对方账号,商品说明,收/支,金额,收/付款方式,交易状态,交易订单号,商家订单号,备注,\n'
+          '2026-07-05 18:04:49,,某商家,a***@qq.com,扫码付款,支出,5.00,余额,交易成功,555,,,\n';
+      final fallback = run(
+        ImportPlatform.alipay,
+        Uint8List.fromList(gbk.encode(noCategory)),
+      );
+      expect(
+        fallback.entries.single.categoryId,
+        uncategorizedCategoryId(EntryType.expense),
+      );
+      expect(fallback.newCategories.single.label, '未分类');
+    });
   });
 
   group('微信 xlsx（Excel 序列号日期，含中性交易）', () {
@@ -161,6 +176,20 @@ void main() {
       expect(expense.occurredAt.month, 7);
       expect(expense.occurredAt.day, 3);
       expect(expense.amount, 15);
+    });
+
+    test('「交易类型」映射为分类候选，交易引用对应类型的候选（issue #16）', () {
+      final byId = <String, Category>{
+        for (final category in plan.newCategories) category.id: category,
+      };
+      final expense = plan.entries.firstWhere(
+        (e) => e.type == EntryType.expense,
+      );
+      expect(byId[expense.categoryId]?.label, '商户消费');
+      expect(byId[expense.categoryId]?.type, EntryType.expense);
+      final income = plan.entries.firstWhere((e) => e.type == EntryType.income);
+      expect(byId[income.categoryId]?.label, '微信红包');
+      expect(byId[income.categoryId]?.type, EntryType.income);
     });
 
     test('支付方式为 / 时账户回落为微信；备注剔除商户订单号', () {

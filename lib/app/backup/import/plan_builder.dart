@@ -34,8 +34,9 @@ class ImportPlan {
 
 /// 所有来源的**唯一共享落库计划生成器**：把各平台 parser 产出的强类型 [ParsedImport]
 /// 变成 [ImportPlan]——按名建/复用账户、还原分类父子层级、标签去重、构造 [LedgerEntry]，
-/// 并把 parser 收集的逐行错误透传。纯函数：不修改传入集合，id 由 [now] 与记录序派生
-/// （保证同输入可复现）。
+/// 并把 parser 收集的逐行错误透传。缺失分类的收支记录兜底到固定 id 的「未分类」
+/// （[seedEnglish] 决定其文案语言，与种子数据同规则），绝不落空 categoryId。
+/// 纯函数：不修改传入集合，id 由 [now] 与记录序派生（保证同输入可复现）。
 ///
 /// 「不同软件解析逻辑各自独立」的边界只到 parser 为止——账户/分类/标签解析是通用领域
 /// 逻辑，只应有这一份实现（复制成每平台一份必然漂移、是 bug 温床）。
@@ -46,6 +47,7 @@ ImportPlan buildImportPlanFromRecords({
   required List<Category> existingCategories,
   required DateTime now,
   List<Tag> existingTags = const <Tag>[],
+  bool seedEnglish = false,
 }) {
   final workingCategories = List<Category>.from(existingCategories);
   final workingTags = List<Tag>.from(existingTags);
@@ -95,12 +97,45 @@ ImportPlan buildImportPlanFromRecords({
     return account.id;
   }
 
+  // 空分类名兜底：解析到固定 id 的「未分类」（与载入自愈同一约定，见
+  // [uncategorizedCategoryId]）。绝不落空 categoryId——空 id 会被展示层回退成
+  // 「已删除分类」占位、且无法筛选与批量处理（issue #16，微信账单曾全量中招）。
+  // 「未分类」作为待新建候选进预览页映射区，用户可整体映射到具体分类或保留。
+  String resolveUncategorized(EntryType type) {
+    final id = uncategorizedCategoryId(type);
+    if (workingCategories.any((category) => category.id == id)) {
+      return id;
+    }
+    final seed = buildUncategorizedCategory(type, english: seedEnglish);
+    // 用户手建过同名顶级分类（id 不同）时直接复用，避免建出与唯一索引
+    // (label,type,IFNULL(parent_id,'')) 冲突的重复同名分类。
+    final normalized = normalizedCategoryLabel(seed.label);
+    final byLabel = workingCategories.firstWhere(
+      (category) =>
+          category.type == type &&
+          category.parentId == null &&
+          normalizedCategoryLabel(category.label) == normalized,
+      orElse: () => const Category(
+        id: '',
+        label: '',
+        type: EntryType.expense,
+        iconCode: '',
+      ),
+    );
+    if (byLabel.id.isNotEmpty) {
+      return byLabel.id;
+    }
+    workingCategories.add(seed);
+    newCategories.add(seed);
+    return seed.id;
+  }
+
   // 解析/新建单个分类；[parentId] 限定层级（顶级传 null）。名称按归一化比较（容忍
   // 大小写/首尾空白/全半角差异），且**同一父级下**同名才复用——顶级与子级同名互不误合，
-  // 与唯一索引 (label,type,IFNULL(parent_id,'')) 对齐。
+  // 与唯一索引 (label,type,IFNULL(parent_id,'')) 对齐。空名兜底到「未分类」。
   String resolveCategory(String name, EntryType type, {String? parentId}) {
     if (name.isEmpty) {
-      return '';
+      return resolveUncategorized(type);
     }
     final normalized = normalizedCategoryLabel(name);
     final match = workingCategories.firstWhere(

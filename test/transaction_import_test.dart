@@ -87,6 +87,86 @@ void main() {
       expect(plan.entries.single.categoryId, plan.newCategories.single.id);
     });
 
+    test('分类为空的收支兜底到「未分类」固定 id，不再落空分类（issue #16）', () {
+      final plan = build(
+        '日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,支出,23.5,,现金,,没写分类',
+      );
+      expect(plan.importedCount, 1);
+      expect(
+        plan.entries.single.categoryId,
+        uncategorizedCategoryId(EntryType.expense),
+      );
+      final candidate = plan.newCategories.single;
+      expect(candidate.id, uncategorizedCategoryId(EntryType.expense));
+      expect(candidate.label, '未分类');
+      expect(candidate.type, EntryType.expense);
+    });
+
+    test('「未分类」候选按类型各一：多行复用、收支分开', () {
+      final plan = build(
+        '日期,类型,金额,分类,账户,转入账户,备注\n'
+        '2026-01-05,支出,10,,现金,,a\n'
+        '2026-01-05,支出,20,,现金,,b\n'
+        '2026-01-05,收入,30,,现金,,c',
+      );
+      expect(plan.importedCount, 3);
+      expect(plan.newCategories.map((c) => c.id).toSet(), <String>{
+        uncategorizedCategoryId(EntryType.expense),
+        uncategorizedCategoryId(EntryType.income),
+      });
+    });
+
+    test('现有「未分类」（固定 id 或用户手建同名）直接复用、不进候选', () {
+      const rows = '日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,支出,10,,现金,,x';
+      // 固定 id 已存在（此前导入 / 自愈建出）→ 复用。
+      final withFixed = buildImportPlan(
+        rows: parseCsv(rows),
+        bookId: 'book_default',
+        existingAccounts: baseAccounts(),
+        existingCategories: <Category>[
+          ...baseCategories(),
+          buildUncategorizedCategory(EntryType.expense, english: false),
+        ],
+        now: DateTime(2026, 1, 5, 12),
+      );
+      expect(withFixed.newCategories, isEmpty);
+      expect(
+        withFixed.entries.single.categoryId,
+        uncategorizedCategoryId(EntryType.expense),
+      );
+
+      // 用户手建的同名顶级分类（id 不同）→ 复用它，避免与
+      // (label,type,parent) 唯一索引冲突建出重复同名分类。
+      final manual = buildImportPlan(
+        rows: parseCsv(rows),
+        bookId: 'book_default',
+        existingAccounts: baseAccounts(),
+        existingCategories: const <Category>[
+          Category(
+            id: 'cat_manual',
+            label: '未分类',
+            type: EntryType.expense,
+            iconCode: 'category',
+          ),
+        ],
+        now: DateTime(2026, 1, 5, 12),
+      );
+      expect(manual.newCategories, isEmpty);
+      expect(manual.entries.single.categoryId, 'cat_manual');
+    });
+
+    test('seedEnglish 时「未分类」候选取英文文案', () {
+      final plan = buildImportPlan(
+        rows: parseCsv('日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,支出,10,,现金,,x'),
+        bookId: 'book_default',
+        existingAccounts: baseAccounts(),
+        existingCategories: baseCategories(),
+        now: DateTime(2026, 1, 5, 12),
+        seedEnglish: true,
+      );
+      expect(plan.newCategories.single.label, 'Uncategorized');
+    });
+
     test('转账：双账户正常、单边允许、双空报错、相同报错', () {
       final ok = build('日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,转账,500,,现金,储蓄卡,取现');
       expect(ok.importedCount, 1);

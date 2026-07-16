@@ -67,6 +67,7 @@ ImportPlan buildPlatformImportPlan({
   required List<Account> existingAccounts,
   required List<Category> existingCategories,
   required DateTime now,
+  bool seedEnglish = false,
 }) {
   return buildImportPlanFromRecords(
     parsed: parsePlatformBytes(platform, bytes),
@@ -74,5 +75,6 @@ ImportPlan buildPlatformImportPlan({
     existingAccounts: existingAccounts,
     existingCategories: existingCategories,
     now: now,
+    seedEnglish: seedEnglish,
   );
 }

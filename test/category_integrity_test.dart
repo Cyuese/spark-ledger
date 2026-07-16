@@ -271,6 +271,81 @@ void main() {
       final transfer = controller.entries.firstWhere((e) => e.id == 't1');
       expect(transfer.categoryId, 'transfer_out');
     });
+
+    test('空分类的收/支交易载入时归入「未分类」（issue #16）', () async {
+      final controller = await _controllerWith(
+        categories: <Category>[
+          const Category(
+            id: 'dining',
+            label: '餐饮',
+            type: EntryType.expense,
+            iconCode: 'restaurant',
+          ),
+        ],
+        entries: <LedgerEntry>[
+          // 历史微信/支付宝导入遗留：缺失分类被落成空串，会被交易列表回退成
+          // 「已删除分类」且无法筛选。自愈应按类型归入「未分类」。
+          _expense('a', '', 10),
+          LedgerEntry(
+            id: 'b',
+            bookId: defaultLedgerBookId,
+            type: EntryType.income,
+            amount: 20,
+            categoryId: '',
+            accountId: 'cash',
+            note: '',
+            occurredAt: DateTime(2026, 7, 2),
+          ),
+          _expense('c', 'dining', 30),
+        ],
+      );
+      final expense = controller.entries.firstWhere((e) => e.id == 'a');
+      expect(expense.categoryId, uncategorizedCategoryId(EntryType.expense));
+      final income = controller.entries.firstWhere((e) => e.id == 'b');
+      expect(income.categoryId, uncategorizedCategoryId(EntryType.income));
+      // 分类正常的交易不动。
+      final untouched = controller.entries.firstWhere((e) => e.id == 'c');
+      expect(untouched.categoryId, 'dining');
+      // 「未分类」按类型各建一条、可在分类列表中管理。
+      final labels = controller.categories
+          .where((c) => c.label == '未分类')
+          .toList();
+      expect(labels, hasLength(2));
+    });
+
+    test('空分类只治收/支：转账缺「转账」分类时保持空串、不误入「未分类」', () async {
+      final controller = await _controllerWith(
+        // 只有支出分类、没有任何转账分类（非空列表避免触发默认分类播种）。
+        categories: <Category>[
+          const Category(
+            id: 'dining',
+            label: '餐饮',
+            type: EntryType.expense,
+            iconCode: 'restaurant',
+          ),
+        ],
+        entries: <LedgerEntry>[
+          LedgerEntry(
+            id: 't2',
+            bookId: defaultLedgerBookId,
+            type: EntryType.transfer,
+            amount: 50,
+            categoryId: '',
+            accountId: 'cash',
+            toAccountId: '',
+            note: '',
+            occurredAt: DateTime(2026, 7, 3),
+          ),
+        ],
+      );
+      final transfer = controller.entries.firstWhere((e) => e.id == 't2');
+      expect(transfer.categoryId, isEmpty);
+      expect(
+        controller.categories.any((c) => c.type == EntryType.transfer),
+        isFalse,
+        reason: '不该为转账凭空创建「未分类」或转账分类',
+      );
+    });
   });
 
   group('创建分类的查重防再生', () {

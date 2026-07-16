@@ -235,10 +235,12 @@ void main() {
       expect(plan.entries[0].categoryId, isNot(plan.entries[1].categoryId));
     });
 
-    test('分类名为空时 categoryId 为空、不新建', () {
+    test('分类名为空时兜底到固定 id 的「未分类」候选，不再落空分类（issue #16）', () {
       final plan = _build(records: <RawImportRecord>[_record()]);
-      expect(plan.newCategories, isEmpty);
-      expect(plan.entries.single.categoryId, isEmpty);
+      final candidate = plan.newCategories.single;
+      expect(candidate.id, uncategorizedCategoryId(EntryType.expense));
+      expect(candidate.label, '未分类');
+      expect(plan.entries.single.categoryId, candidate.id);
     });
   });
 

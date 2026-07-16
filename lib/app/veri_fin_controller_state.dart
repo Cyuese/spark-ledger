@@ -254,8 +254,9 @@ mixin _ControllerState on ChangeNotifier {
   /// 1) 孤儿 / 空串 parentId（指向不存在的父分类）→ 重挂为顶级（parentId=null）；
   /// 2) 重复分类（同 type+parentId+label 的多条）→ 保留一条（系统分类优先），其余的交易 /
   ///    周期规则 / 子分类 parentId 改指向保留者后删除；
-  /// 3) 悬空交易 / 周期规则引用（categoryId 指向不存在的分类）→ 归入按类型惰性创建的
-  ///    「未分类」分类（固定 id，保证幂等、重跑复用同一条）；
+  /// 3) 悬空交易 / 周期规则引用（categoryId 指向不存在的分类），以及**空分类的收/支交易**
+  ///    （历史导入把缺失分类落成空串，issue #16）→ 归入按类型惰性创建的「未分类」分类
+  ///    （固定 id，保证幂等、重跑复用同一条）；
   /// 4) 空分类的转账（早期导入把转账 categoryId 存成空串，issue #14）→ 归到「转账」分类，
   ///    与 App 内记账/还款口径一致，避免被交易列表回退成「已删除分类」。
   bool _healCategoryData() {
@@ -342,15 +343,10 @@ mixin _ControllerState on ChangeNotifier {
     // ---- 3) 悬空交易 / 周期规则引用 → 「未分类」（按类型惰性创建，固定 id 幂等）----
     final liveIds = <String>{for (final c in _categories) c.id};
     String uncategorizedIdFor(EntryType type) {
-      final id = 'uncategorized_${type.storageValue}';
+      final id = uncategorizedCategoryId(type);
       if (!liveIds.contains(id)) {
         _categories.add(
-          Category(
-            id: id,
-            label: _seedEnglish ? 'Uncategorized' : '未分类',
-            type: type,
-            iconCode: 'category',
-          ),
+          buildUncategorizedCategory(type, english: _seedEnglish),
         );
         liveIds.add(id);
         changed = true;
@@ -363,9 +359,18 @@ mixin _ControllerState on ChangeNotifier {
         !_isProtectedCategory(categoryId) &&
         !liveIds.contains(categoryId);
 
+    // 空分类的收/支交易同样归入「未分类」：历史导入曾把缺失分类落成空串（issue #16，
+    // 微信账单未映射分类列），空 categoryId 会被展示层回退成「已删除分类」占位、且无法
+    // 在分类筛选 / 批量编辑中触达。转账的空分类由下方第 4 步归入「转账」分类；退款等
+    // 衍生条目本就不带分类，保持不动。
+    bool needsUncategorized(LedgerEntry entry) =>
+        isDangling(entry.categoryId) ||
+        (entry.categoryId.isEmpty &&
+            (entry.type == EntryType.expense ||
+                entry.type == EntryType.income));
+
     for (var i = 0; i < _entries.length; i++) {
-      final categoryId = _entries[i].categoryId;
-      if (isDangling(categoryId)) {
+      if (needsUncategorized(_entries[i])) {
         _entries[i] = _entries[i].copyWith(
           categoryId: uncategorizedIdFor(_entries[i].type),
         );

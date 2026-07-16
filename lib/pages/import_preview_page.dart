@@ -76,7 +76,11 @@ class _ImportPreviewPageState extends State<ImportPreviewPage> {
 
   // 携带余额的来源（Tally）默认展开账户区，便于核对账户与余额；其余默认折叠。
   late bool _accountsExpanded = widget.plan.standaloneAccountIds.isNotEmpty;
-  bool _categoriesExpanded = false;
+  // 有「未分类」兜底候选（来源缺失分类的交易归入它）时默认展开分类映射区，
+  // 提醒用户可把这批交易整体映射到具体分类，而不是导入后才发现一堆「未分类」。
+  late bool _categoriesExpanded = widget.plan.newCategories.any(
+    (category) => isUncategorizedCategoryId(category.id),
+  );
   bool _tagsExpanded = false;
 
   bool _isIncluded(LedgerEntry entry) => !_excluded.contains(entry.id);
