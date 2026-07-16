@@ -1496,6 +1496,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetMonthExpense => 'This month\'s spending';
 
   @override
+  String get budgetOverspentThisPeriod => 'Over budget this period';
+
+  @override
+  String get budgetAvailableThisPeriod => 'Available this period';
+
+  @override
+  String get budgetPeriodExpense => 'This period\'s spending';
+
+  @override
+  String get budgetCycleStartDayTitle => 'Budget cycle start day';
+
+  @override
+  String budgetCycleStartDayOption(int day) {
+    return 'Day $day of each month';
+  }
+
+  @override
+  String get budgetCycleNaturalMonth => 'Day 1 (calendar month)';
+
+  @override
+  String budgetCycleRange(DateTime start, DateTime end) {
+    final intl.DateFormat startDateFormat = intl.DateFormat.MMMd(localeName);
+    final String startString = startDateFormat.format(start);
+    final intl.DateFormat endDateFormat = intl.DateFormat.MMMd(localeName);
+    final String endString = endDateFormat.format(end);
+
+    return '$startString – $endString';
+  }
+
+  @override
+  String get periodExpenseCategories => 'This period\'s expense categories';
+
+  @override
+  String get periodEnded => 'Period ended';
+
+  @override
+  String periodTotalDays(int days) {
+    return '$days days this period';
+  }
+
+  @override
+  String get lastPeriodExpense => 'Last period\'s spending';
+
+  @override
+  String budgetUsageLinePeriod(String percent, String delta) {
+    return 'Budget usage $percent%, $delta vs last period';
+  }
+
+  @override
+  String get deltaFlatVsLastPeriod => 'Same as last period';
+
+  @override
+  String deltaMoreVsLastPeriod(String amount) {
+    return '$amount more than last period';
+  }
+
+  @override
+  String deltaLessVsLastPeriod(String amount) {
+    return '$amount less than last period';
+  }
+
+  @override
+  String get widgetPeriodBudgetAvailable => 'Budget left this period';
+
+  @override
+  String get widgetPeriodBudgetOverspent => 'Over budget this period';
+
+  @override
   String get budgetOverAmountLabel => 'Over budget';
 
   @override

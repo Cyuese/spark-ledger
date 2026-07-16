@@ -29,11 +29,18 @@ class ReportsPage extends StatelessWidget {
         .where((entry) => isInMonth(entry, now))
         .toList(growable: false);
     final monthExpense = sumByType(monthEntries, EntryType.expense);
-    final monthlyBudget = controller.monthlyBudget(now);
+    // 预算执行卡按预算周期取数（键月 + 周期窗口）；看板其余统计仍按自然月。
+    final budgetKeyMonth = controller.budgetKeyMonthFor(now);
+    final budgetEntries = entriesInWindow(
+      entries,
+      controller.budgetWindow(budgetKeyMonth),
+    );
+    final budgetExpense = sumByType(budgetEntries, EntryType.expense);
+    final monthlyBudget = controller.monthlyBudget(budgetKeyMonth);
     final categoryBudgetSnapshots = computeCategoryBudgetSnapshots(
       controller: controller,
-      month: now,
-      monthEntries: monthEntries,
+      month: budgetKeyMonth,
+      monthEntries: budgetEntries,
     );
     final expenseEntries = monthEntries
         .where((entry) => entry.type == EntryType.expense)
@@ -67,7 +74,8 @@ class ReportsPage extends StatelessWidget {
         case 'budget_execution':
           return _BudgetExecutionCard(
             budget: monthlyBudget,
-            expense: monthExpense,
+            expense: budgetExpense,
+            keyMonth: budgetKeyMonth,
             snapshots: categoryBudgetSnapshots,
           );
         case 'category_ring':
@@ -282,15 +290,28 @@ class _BudgetExecutionCard extends StatelessWidget {
   const _BudgetExecutionCard({
     required this.budget,
     required this.expense,
+    required this.keyMonth,
     required this.snapshots,
   });
 
   final double budget;
   final double expense;
+
+  /// 当期预算周期的键月（预算存储键）。角标据此展示所属周期。
+  final DateTime keyMonth;
+
   final List<CategoryBudgetSnapshot> snapshots;
 
   @override
   Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    // 自定义预算周期时角标展示周期日期范围，自然月展示「N月」。
+    final periodBadge = controller.budgetCycleIsCustom
+        ? AppLocalizations.of(context).budgetCycleRange(
+            controller.budgetWindow(keyMonth).start,
+            controller.budgetWindow(keyMonth).end,
+          )
+        : AppLocalizations.of(context).monthNumber(keyMonth.month);
     final ratio = budget <= 0 ? 0.0 : expense / budget;
     final remaining = budget - expense;
     final budgetedCount = snapshots
@@ -323,7 +344,7 @@ class _BudgetExecutionCard extends StatelessWidget {
                 ),
               ),
               Text(
-                AppLocalizations.of(context).monthNumber(DateTime.now().month),
+                periodBadge,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Theme.of(
                     context,

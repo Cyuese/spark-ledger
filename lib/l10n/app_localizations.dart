@@ -2816,6 +2816,108 @@ abstract class AppLocalizations {
   /// **'本月支出'**
   String get budgetMonthExpense;
 
+  /// No description provided for @budgetOverspentThisPeriod.
+  ///
+  /// In zh, this message translates to:
+  /// **'本期已超支'**
+  String get budgetOverspentThisPeriod;
+
+  /// No description provided for @budgetAvailableThisPeriod.
+  ///
+  /// In zh, this message translates to:
+  /// **'本期可用预算'**
+  String get budgetAvailableThisPeriod;
+
+  /// No description provided for @budgetPeriodExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'本期支出'**
+  String get budgetPeriodExpense;
+
+  /// No description provided for @budgetCycleStartDayTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'预算周期起始日'**
+  String get budgetCycleStartDayTitle;
+
+  /// No description provided for @budgetCycleStartDayOption.
+  ///
+  /// In zh, this message translates to:
+  /// **'每月 {day} 日'**
+  String budgetCycleStartDayOption(int day);
+
+  /// No description provided for @budgetCycleNaturalMonth.
+  ///
+  /// In zh, this message translates to:
+  /// **'每月 1 日（自然月）'**
+  String get budgetCycleNaturalMonth;
+
+  /// 自定义预算周期的日期范围标签(如 7月22日 至 8月21日)
+  ///
+  /// In zh, this message translates to:
+  /// **'{start} 至 {end}'**
+  String budgetCycleRange(DateTime start, DateTime end);
+
+  /// No description provided for @periodExpenseCategories.
+  ///
+  /// In zh, this message translates to:
+  /// **'本期支出分类'**
+  String get periodExpenseCategories;
+
+  /// No description provided for @periodEnded.
+  ///
+  /// In zh, this message translates to:
+  /// **'本期已结束'**
+  String get periodEnded;
+
+  /// No description provided for @periodTotalDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'本期共 {days} 天'**
+  String periodTotalDays(int days);
+
+  /// No description provided for @lastPeriodExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'上期支出'**
+  String get lastPeriodExpense;
+
+  /// No description provided for @budgetUsageLinePeriod.
+  ///
+  /// In zh, this message translates to:
+  /// **'预算使用率 {percent}%，较上期 {delta}'**
+  String budgetUsageLinePeriod(String percent, String delta);
+
+  /// No description provided for @deltaFlatVsLastPeriod.
+  ///
+  /// In zh, this message translates to:
+  /// **'与上期持平'**
+  String get deltaFlatVsLastPeriod;
+
+  /// No description provided for @deltaMoreVsLastPeriod.
+  ///
+  /// In zh, this message translates to:
+  /// **'比上期多 {amount}'**
+  String deltaMoreVsLastPeriod(String amount);
+
+  /// No description provided for @deltaLessVsLastPeriod.
+  ///
+  /// In zh, this message translates to:
+  /// **'比上期少 {amount}'**
+  String deltaLessVsLastPeriod(String amount);
+
+  /// No description provided for @widgetPeriodBudgetAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'本期可用预算'**
+  String get widgetPeriodBudgetAvailable;
+
+  /// No description provided for @widgetPeriodBudgetOverspent.
+  ///
+  /// In zh, this message translates to:
+  /// **'本期已超支'**
+  String get widgetPeriodBudgetOverspent;
+
   /// No description provided for @budgetOverAmountLabel.
   ///
   /// In zh, this message translates to:

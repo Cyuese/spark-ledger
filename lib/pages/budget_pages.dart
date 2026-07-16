@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/budget_cycle.dart';
 import '../app/category_tree.dart';
 import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
@@ -39,13 +40,17 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
-    final monthEntries = controller.entries
-        .where((entry) => isInMonth(entry, _month))
-        .toList(growable: false);
+    final l10n = AppLocalizations.of(context);
+    // 预算按周期取数：_month 是周期的「键月」（预算存储键），窗口由账本的
+    // 周期起始日决定；起始日 = 1 时窗口即自然月，行为与旧版完全一致。
+    final cyclic = controller.budgetCycleIsCustom;
+    final window = controller.budgetWindow(_month);
+    final monthEntries = entriesInWindow(controller.entries, window);
     final previousMonth = DateTime(_month.year, _month.month - 1);
-    final previousMonthEntries = controller.entries
-        .where((entry) => isInMonth(entry, previousMonth))
-        .toList(growable: false);
+    final previousMonthEntries = entriesInWindow(
+      controller.entries,
+      controller.budgetWindow(previousMonth),
+    );
     final monthExpense = sumByType(monthEntries, EntryType.expense);
     final previousMonthExpense = sumByType(
       previousMonthEntries,
@@ -57,20 +62,31 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
     final ratio = budget <= 0
         ? 0.0
         : (monthExpense / budget).clamp(0, 1).toDouble();
-    final daysInMonth = DateUtils.getDaysInMonth(_month.year, _month.month);
+    final daysInCycle = window.days.length;
     final now = DateTime.now();
-    final isCurrentMonth = _month.year == now.year && _month.month == now.month;
-    final isPastMonth =
-        _month.year < now.year ||
-        (_month.year == now.year && _month.month < now.month);
+    final nowKeyMonth = controller.budgetKeyMonthFor(now);
+    final isCurrentMonth =
+        _month.year == nowKeyMonth.year && _month.month == nowKeyMonth.month;
+    final isPastMonth = DateTime(
+      _month.year,
+      _month.month,
+    ).isBefore(nowKeyMonth);
+    final today = dateOnly(now);
     final remainingDays = isPastMonth
         ? 0
         : isCurrentMonth
-        ? (daysInMonth - now.day + 1).clamp(1, daysInMonth)
-        : daysInMonth;
+        ? window.days
+              .where((day) => !day.isBefore(today))
+              .length
+              .clamp(1, daysInCycle)
+        : daysInCycle;
     final dailyAvailable = remainingDays <= 0 || remaining <= 0
         ? 0.0
         : remaining / remainingDays;
+    // 自定义周期时标签展示日期范围（如「7月22日 至 8月21日」）而非「2026年7月」。
+    final cycleLabel = cyclic
+        ? l10n.budgetCycleRange(window.start, window.end)
+        : l10n.yearMonth(_month);
     final categoryBudgetSnapshots = computeCategoryBudgetSnapshots(
       controller: controller,
       month: _month,
@@ -95,7 +111,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
             children: <Widget>[
               VeriHeader(
                 title: AppLocalizations.of(context).budgetSettingsTitle,
-                subtitle: AppLocalizations.of(context).yearMonth(_month),
+                subtitle: cycleLabel,
                 showBack: true,
               ),
               const SizedBox(height: 10),
@@ -104,10 +120,21 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    MonthSwitcher(
-                      label: AppLocalizations.of(context).yearMonth(_month),
-                      onPrevious: () => _changeMonth(-1),
-                      onNext: () => _changeMonth(1),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: MonthSwitcher(
+                            label: cycleLabel,
+                            onPrevious: () => _changeMonth(-1),
+                            onNext: () => _changeMonth(1),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: l10n.budgetCycleStartDayTitle,
+                          onPressed: _editCycleStartDay,
+                          icon: const Icon(Icons.event_repeat_outlined),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -178,12 +205,12 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                             children: <Widget>[
                               Text(
                                 remaining < 0
-                                    ? AppLocalizations.of(
-                                        context,
-                                      ).budgetOverspentThisMonth
-                                    : AppLocalizations.of(
-                                        context,
-                                      ).budgetAvailableThisMonth,
+                                    ? (cyclic
+                                          ? l10n.budgetOverspentThisPeriod
+                                          : l10n.budgetOverspentThisMonth)
+                                    : (cyclic
+                                          ? l10n.budgetAvailableThisPeriod
+                                          : l10n.budgetAvailableThisMonth),
                                 style: Theme.of(context).textTheme.titleSmall
                                     ?.copyWith(fontWeight: FontWeight.w800),
                               ),
@@ -233,6 +260,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                                   remainingDays,
                                   isPastMonth,
                                   isCurrentMonth,
+                                  cyclic: cyclic,
                                 ),
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
@@ -258,9 +286,9 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                       childAspectRatio: 2.45,
                       children: <Widget>[
                         _BudgetMetricTile(
-                          label: AppLocalizations.of(
-                            context,
-                          ).budgetMonthExpense,
+                          label: cyclic
+                              ? l10n.budgetPeriodExpense
+                              : l10n.budgetMonthExpense,
                           value: formatExpenseAmount(monthExpense),
                           icon: Icons.payments_outlined,
                           color: veriExpense,
@@ -350,7 +378,13 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                           ),
                         ),
                         Text(
-                          AppLocalizations.of(context).monthExpenseCategories,
+                          cyclic
+                              ? AppLocalizations.of(
+                                  context,
+                                ).periodExpenseCategories
+                              : AppLocalizations.of(
+                                  context,
+                                ).monthExpenseCategories,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: Theme.of(
@@ -400,6 +434,32 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
     setState(() {
       _month = DateTime(_month.year, _month.month + delta);
     });
+  }
+
+  /// 选择预算周期起始日（1–28，账本级）。改起始日只是换周期口径，各键月已存
+  /// 的预算金额不动。
+  Future<void> _editCycleStartDay() async {
+    final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final selected = await showOptionSheet<int>(
+      context: context,
+      title: l10n.budgetCycleStartDayTitle,
+      values: <int>[
+        for (
+          var day = budgetCycleStartDayMin;
+          day <= budgetCycleStartDayMax;
+          day++
+        )
+          day,
+      ],
+      selected: controller.budgetCycleStartDay,
+      labelOf: (day) => day == naturalMonthStartDay
+          ? l10n.budgetCycleNaturalMonth
+          : l10n.budgetCycleStartDayOption(day),
+    );
+    if (selected != null && mounted) {
+      setState(() => controller.setBudgetCycleStartDay(selected));
+    }
   }
 
   /// 递归渲染分类预算树：按分类的父子层级展开，父行显示已含子类的合计花销/预算，

@@ -490,6 +490,74 @@
   "budgetOverspentThisMonth": "Over budget this month",
   "budgetAvailableThisMonth": "Available this month",
   "budgetMonthExpense": "This month's spending",
+  "budgetOverspentThisPeriod": "Over budget this period",
+  "budgetAvailableThisPeriod": "Available this period",
+  "budgetPeriodExpense": "This period's spending",
+  "budgetCycleStartDayTitle": "Budget cycle start day",
+  "budgetCycleStartDayOption": "Day {day} of each month",
+  "@budgetCycleStartDayOption": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetCycleNaturalMonth": "Day 1 (calendar month)",
+  "budgetCycleRange": "{start} – {end}",
+  "@budgetCycleRange": {
+    "description": "Date range label of a custom budget cycle (e.g. Jul 22 – Aug 21)",
+    "placeholders": {
+      "start": {
+        "type": "DateTime",
+        "format": "MMMd"
+      },
+      "end": {
+        "type": "DateTime",
+        "format": "MMMd"
+      }
+    }
+  },
+  "periodExpenseCategories": "This period's expense categories",
+  "periodEnded": "Period ended",
+  "periodTotalDays": "{days} days this period",
+  "@periodTotalDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "lastPeriodExpense": "Last period's spending",
+  "budgetUsageLinePeriod": "Budget usage {percent}%, {delta} vs last period",
+  "@budgetUsageLinePeriod": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "deltaFlatVsLastPeriod": "Same as last period",
+  "deltaMoreVsLastPeriod": "{amount} more than last period",
+  "@deltaMoreVsLastPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "deltaLessVsLastPeriod": "{amount} less than last period",
+  "@deltaLessVsLastPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetPeriodBudgetAvailable": "Budget left this period",
+  "widgetPeriodBudgetOverspent": "Over budget this period",
   "budgetOverAmountLabel": "Over budget",
   "budgetRemainingQuota": "Remaining",
   "budgetAmountLabel": "Budget amount",

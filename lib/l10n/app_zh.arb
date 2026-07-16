@@ -883,6 +883,74 @@
   "budgetOverspentThisMonth": "本月已超支",
   "budgetAvailableThisMonth": "本月可用预算",
   "budgetMonthExpense": "本月支出",
+  "budgetOverspentThisPeriod": "本期已超支",
+  "budgetAvailableThisPeriod": "本期可用预算",
+  "budgetPeriodExpense": "本期支出",
+  "budgetCycleStartDayTitle": "预算周期起始日",
+  "budgetCycleStartDayOption": "每月 {day} 日",
+  "@budgetCycleStartDayOption": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetCycleNaturalMonth": "每月 1 日（自然月）",
+  "budgetCycleRange": "{start} 至 {end}",
+  "@budgetCycleRange": {
+    "description": "自定义预算周期的日期范围标签(如 7月22日 至 8月21日)",
+    "placeholders": {
+      "start": {
+        "type": "DateTime",
+        "format": "MMMd"
+      },
+      "end": {
+        "type": "DateTime",
+        "format": "MMMd"
+      }
+    }
+  },
+  "periodExpenseCategories": "本期支出分类",
+  "periodEnded": "本期已结束",
+  "periodTotalDays": "本期共 {days} 天",
+  "@periodTotalDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "lastPeriodExpense": "上期支出",
+  "budgetUsageLinePeriod": "预算使用率 {percent}%，较上期 {delta}",
+  "@budgetUsageLinePeriod": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "deltaFlatVsLastPeriod": "与上期持平",
+  "deltaMoreVsLastPeriod": "比上期多 {amount}",
+  "@deltaMoreVsLastPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "deltaLessVsLastPeriod": "比上期少 {amount}",
+  "@deltaLessVsLastPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetPeriodBudgetAvailable": "本期可用预算",
+  "widgetPeriodBudgetOverspent": "本期已超支",
   "budgetOverAmountLabel": "超出预算",
   "budgetRemainingQuota": "剩余额度",
   "budgetAmountLabel": "预算金额",

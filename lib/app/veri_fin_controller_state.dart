@@ -73,6 +73,9 @@ mixin _ControllerState on ChangeNotifier {
   final Map<String, double> _dailyBudgets = <String, double>{};
   // 默认付款账户：每个账本各存一个账户 id（键为 bookId）。设备本地偏好。
   final Map<String, String> _defaultAccountIds = <String, String>{};
+  // 预算周期起始日：每个账本一个（键为 bookId，值 1–28），缺省 = 1（自然月）。
+  // 只有非默认值才落键；进 JSON 备份（预算语义的一部分，恢复须还原）。
+  final Map<String, int> _budgetCycleStartDays = <String, int>{};
   final Set<String> _collapsedAssetSections = <String>{};
   final Map<String, List<String>> _assetAccountOrders =
       <String, List<String>>{};
@@ -136,6 +139,36 @@ mixin _ControllerState on ChangeNotifier {
     _store.write(_defaultAccountKey, jsonEncode(_defaultAccountIds));
   }
 
+  void _loadBudgetCycleStartDays() {
+    final raw = _store.read(_budgetCycleKey);
+    if (raw == null || raw.isEmpty) {
+      return;
+    }
+    try {
+      final decoded = jsonDecode(raw) as Map<dynamic, dynamic>;
+      _budgetCycleStartDays
+        ..clear()
+        ..addAll(
+          decoded.map(
+            (key, value) => MapEntry(
+              key.toString(),
+              clampBudgetCycleStartDay((value as num).toInt()),
+            ),
+          ),
+        );
+    } catch (_) {
+      _store.delete(_budgetCycleKey);
+    }
+  }
+
+  void _persistBudgetCycleStartDays() {
+    if (_budgetCycleStartDays.isEmpty) {
+      _store.delete(_budgetCycleKey);
+      return;
+    }
+    _store.write(_budgetCycleKey, jsonEncode(_budgetCycleStartDays));
+  }
+
   /// 删除账户时，清掉任何指向它的默认付款账户设置。
 
   void _loadPreferences() {
@@ -161,6 +194,7 @@ mixin _ControllerState on ChangeNotifier {
     _reminderSettings = ReminderSettings.decode(_store.read(_reminderKey));
     _fabActionMode = FabActionMode.fromStorage(_store.read(_fabActionKey));
     _loadDefaultAccounts();
+    _loadBudgetCycleStartDays();
     _amountForceTwoDecimals = _store.read(_amountFormatKey) == 'true';
     amount_format.amountForceTwoDecimals = _amountForceTwoDecimals;
     _aiSettings = AiSettings.decode(_store.read(_aiSettingsKey));

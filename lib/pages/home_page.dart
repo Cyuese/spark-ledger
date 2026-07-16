@@ -32,7 +32,6 @@ class HomePage extends StatelessWidget {
               entry.occurredAt.month == now.month,
         )
         .toList();
-    final monthExpense = sumByType(monthEntries, EntryType.expense);
     final trendWindow = cumulativeWeekWindowFor(now);
     final trendEntries = entriesInWindow(monthEntries, trendWindow);
     final trendConfig = controller.homeTrendConfig;
@@ -52,11 +51,16 @@ class HomePage extends StatelessWidget {
         .where((e) => e.type != EntryType.refund)
         .take(5)
         .toList();
-    final monthlyBudget = controller.monthlyBudget(now);
+    // 预算面板按预算周期取数（键月 + 周期窗口）；首页其余统计仍按自然月。
+    final budgetKeyMonth = controller.budgetKeyMonthFor(now);
+    final budgetWindow = controller.budgetWindow(budgetKeyMonth);
+    final budgetEntries = entriesInWindow(entries, budgetWindow);
+    final budgetExpense = sumByType(budgetEntries, EntryType.expense);
+    final monthlyBudget = controller.monthlyBudget(budgetKeyMonth);
     final categoryBudgetSnapshots = computeCategoryBudgetSnapshots(
       controller: controller,
-      month: now,
-      monthEntries: monthEntries,
+      month: budgetKeyMonth,
+      monthEntries: budgetEntries,
     );
     final categoryBudgetRisk = topCategoryBudgetRisk(categoryBudgetSnapshots);
     final panelIds = controller.enabledPanelIds(PanelPageKind.home);
@@ -131,14 +135,16 @@ class HomePage extends StatelessWidget {
           );
         case 'budget':
           return BudgetPanel(
-            month: now,
-            expense: monthExpense,
+            month: budgetKeyMonth,
+            window: budgetWindow,
+            expense: budgetExpense,
             budget: monthlyBudget,
             categoryRisk: categoryBudgetRisk,
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
-                  builder: (context) => BudgetSettingsPage(initialMonth: now),
+                  builder: (context) =>
+                      BudgetSettingsPage(initialMonth: budgetKeyMonth),
                 ),
               );
             },
@@ -545,13 +551,19 @@ class BudgetPanel extends StatelessWidget {
   const BudgetPanel({
     super.key,
     required this.month,
+    required this.window,
     required this.expense,
     required this.budget,
     required this.categoryRisk,
     required this.onTap,
   });
 
+  /// 预算周期的键月（预算存储键）。
   final DateTime month;
+
+  /// 当期预算周期窗口（自然月时即该月），决定剩余天数与标题日期范围。
+  final DateWindow window;
+
   final double expense;
   final double budget;
   final CategoryBudgetSnapshot? categoryRisk;
@@ -562,15 +574,20 @@ class BudgetPanel extends StatelessWidget {
     // 未设预算（budget<=0）显示 0；设了预算则超支时显示负数（与预算页口径一致）。
     final remaining = budget <= 0 ? 0.0 : budget - expense;
     final overspent = remaining < 0;
-    final daysInMonth = DateUtils.getDaysInMonth(
-      DateTime.now().year,
-      DateTime.now().month,
-    );
-    final remainingDays = (daysInMonth - DateTime.now().day + 1).clamp(
-      1,
-      daysInMonth,
-    );
+    final today = dateOnly(DateTime.now());
+    final daysInCycle = window.days.length;
+    final remainingDays = window.days
+        .where((day) => !day.isBefore(today))
+        .length
+        .clamp(1, daysInCycle);
     final ratio = budget <= 0 ? 0.0 : (expense / budget).clamp(0, 1).toDouble();
+    // 自定义预算周期时标题展示日期范围，避免「N月预算」误导。
+    final cyclic = VeriFinScope.of(context).budgetCycleIsCustom;
+    final title = cyclic
+        ? AppLocalizations.of(
+            context,
+          ).budgetCycleRange(window.start, window.end)
+        : AppLocalizations.of(context).monthBudgetTitle(month);
 
     return VeriCard(
       onTap: onTap,
@@ -582,7 +599,7 @@ class BudgetPanel extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  AppLocalizations.of(context).monthBudgetTitle(month),
+                  title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),

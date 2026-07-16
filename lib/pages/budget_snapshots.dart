@@ -1,18 +1,22 @@
 part of 'budget_pages.dart';
 
+/// 周期状态标签。[cyclic]（自定义预算周期）时用「本期」措辞，自然月用「本月」。
 String _budgetPeriodLabel(
   AppLocalizations l10n,
   int remainingDays,
   bool isPastMonth,
-  bool isCurrentMonth,
-) {
+  bool isCurrentMonth, {
+  required bool cyclic,
+}) {
   if (isPastMonth) {
-    return l10n.monthEnded;
+    return cyclic ? l10n.periodEnded : l10n.monthEnded;
   }
   if (isCurrentMonth) {
     return l10n.remainingDaysInclToday(remainingDays);
   }
-  return l10n.monthTotalDays(remainingDays);
+  return cyclic
+      ? l10n.periodTotalDays(remainingDays)
+      : l10n.monthTotalDays(remainingDays);
 }
 
 (String, String, IconData) _budgetInsight({
@@ -114,9 +118,11 @@ List<BudgetMonthSnapshot> _budgetMonthSnapshots({
 }) {
   return List<BudgetMonthSnapshot>.generate(count, (index) {
     final month = DateTime(anchor.year, anchor.month - count + 1 + index);
-    final entries = controller.entries
-        .where((entry) => isInMonth(entry, month))
-        .toList(growable: false);
+    // 每个键月的支出按其预算周期窗口聚合（自然月时窗口即该月）。
+    final entries = entriesInWindow(
+      controller.entries,
+      controller.budgetWindow(month),
+    );
     return BudgetMonthSnapshot(
       month: month,
       budget: controller.monthlyBudget(month),
@@ -220,14 +226,23 @@ int _categoryBudgetSortRank(CategoryBudgetSnapshot snapshot) {
   return 4;
 }
 
-String _expenseDeltaLabel(AppLocalizations l10n, double delta) {
+/// 与上一周期的支出差额标签。[cyclic] 时用「上期」措辞，自然月用「上月」。
+String _expenseDeltaLabel(
+  AppLocalizations l10n,
+  double delta, {
+  required bool cyclic,
+}) {
   if (isZeroAmount(delta)) {
-    return l10n.deltaFlatVsLastMonth;
+    return cyclic ? l10n.deltaFlatVsLastPeriod : l10n.deltaFlatVsLastMonth;
   }
   if (delta > 0) {
-    return l10n.deltaMoreVsLastMonth(formatAmount(delta));
+    return cyclic
+        ? l10n.deltaMoreVsLastPeriod(formatAmount(delta))
+        : l10n.deltaMoreVsLastMonth(formatAmount(delta));
   }
-  return l10n.deltaLessVsLastMonth(formatAmount(delta.abs()));
+  return cyclic
+      ? l10n.deltaLessVsLastPeriod(formatAmount(delta.abs()))
+      : l10n.deltaLessVsLastMonth(formatAmount(delta.abs()));
 }
 
 String _usageDeltaLabel(AppLocalizations l10n, double delta) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/chart_painters.dart';
 import 'package:verifin/app/models.dart';
+import 'package:verifin/app/veri_fin_scope.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 import 'package:verifin/pages/budget_pages.dart';
 import 'package:verifin/pages/home_page.dart';
@@ -375,5 +376,127 @@ void main() {
     expect(target.dailyBudget(), 123);
     controller.dispose();
     target.dispose();
+  });
+
+  group('预算周期起始日（issue #19）', () {
+    test('默认自然月；设置/清除/账本隔离/钳位', () async {
+      final controller = await makeController();
+      expect(controller.budgetCycleStartDay, 1);
+      expect(controller.budgetCycleIsCustom, isFalse);
+
+      controller.setBudgetCycleStartDay(22);
+      expect(controller.budgetCycleStartDay, 22);
+      expect(controller.budgetCycleIsCustom, isTrue);
+
+      // 账本隔离：新账本回落默认，各账本独立。
+      controller.addLedgerBook('旅行账本');
+      expect(controller.budgetCycleStartDay, 1);
+      controller.setBudgetCycleStartDay(10);
+      controller.switchLedgerBook('default');
+      expect(controller.budgetCycleStartDay, 22);
+
+      // 越界钳到 1–28；设回 1 即清除自定义。
+      controller.setBudgetCycleStartDay(31);
+      expect(controller.budgetCycleStartDay, 28);
+      controller.setBudgetCycleStartDay(1);
+      expect(controller.budgetCycleIsCustom, isFalse);
+      controller.dispose();
+    });
+
+    test('周期窗口与键月：起始日 22 时 21/22 日分属两期', () async {
+      final controller = await makeController();
+      controller.setBudgetCycleStartDay(22);
+      final window = controller.budgetWindow(DateTime(2026, 7));
+      expect(window.start, DateTime(2026, 7, 22));
+      expect(window.end, DateTime(2026, 8, 21));
+      expect(
+        controller.budgetKeyMonthFor(DateTime(2026, 7, 21)),
+        DateTime(2026, 6),
+      );
+      expect(
+        controller.budgetKeyMonthFor(DateTime(2026, 7, 22)),
+        DateTime(2026, 7),
+      );
+      controller.dispose();
+    });
+
+    test('重启持久化 + 备份导出/导入 roundtrip', () async {
+      final store = LocalKeyValueStore();
+      final controller = await makeController(store);
+      controller.setBudgetCycleStartDay(22);
+      final json = controller.exportDataJson();
+      controller.dispose();
+
+      // 复用同一存储即模拟重启。
+      final restarted = await makeController(store);
+      expect(restarted.budgetCycleStartDay, 22);
+      restarted.dispose();
+
+      final target = await makeController();
+      expect(target.budgetCycleStartDay, 1);
+      target.importDataJson(json);
+      expect(target.budgetCycleStartDay, 22);
+      target.dispose();
+    });
+
+    test('初始化数据后回到自然月', () async {
+      final controller = await makeController();
+      controller.setBudgetCycleStartDay(22);
+      controller.resetAllData();
+      expect(controller.budgetCycleStartDay, 1);
+      controller.dispose();
+    });
+
+    testWidgets('预算页按周期取数并用「本期」文案', (WidgetTester tester) async {
+      final controller = await makeController();
+      controller.setBudgetCycleStartDay(22);
+      final bookId = controller.activeBook.id;
+      controller
+        ..addEntry(
+          LedgerEntry(
+            id: 'in-cycle',
+            bookId: bookId,
+            type: EntryType.expense,
+            amount: 100,
+            categoryId: 'dining',
+            accountId: '',
+            note: '周期内',
+            occurredAt: DateTime(2026, 7, 23),
+          ),
+        )
+        ..addEntry(
+          LedgerEntry(
+            id: 'prev-cycle',
+            bookId: bookId,
+            type: EntryType.expense,
+            amount: 40,
+            categoryId: 'dining',
+            accountId: '',
+            note: '上一期',
+            occurredAt: DateTime(2026, 7, 21),
+          ),
+        );
+
+      await tester.pumpWidget(
+        VeriFinScope(
+          controller: controller,
+          child: zhMaterialApp(
+            home: BudgetSettingsPage(initialMonth: DateTime(2026, 7)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 周期标签展示日期范围而非「2026年7月」，文案用「本期」。
+      expect(find.textContaining('7月22日'), findsWidgets);
+      expect(find.text('本期支出'), findsAtLeastNWidgets(1));
+      expect(find.text('本月支出'), findsNothing);
+      // 键月 2026-07 的周期是 7/22~8/21：只计入 23 日那笔（默认预算 800，
+      // 剩余 700，大字与「剩余额度」瓦片各一处）；若误按自然月聚合会把 21 日
+      // 的 40 也算进来（剩余 660）。
+      expect(find.text('700'), findsWidgets);
+      expect(find.text('660'), findsNothing);
+      controller.dispose();
+    });
   });
 }

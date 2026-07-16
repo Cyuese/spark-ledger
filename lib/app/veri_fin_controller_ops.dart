@@ -329,6 +329,40 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return flattenTree(categories, type);
   }
 
+  /// 当前账本的预算周期起始日（1–28，默认 1 = 自然月）。预算体系（预算页 / 预算
+  /// 面板 / 预算小组件）按此周期取数；统计报表仍按自然月。
+  int get budgetCycleStartDay => clampBudgetCycleStartDay(
+    _budgetCycleStartDays[_activeBookId] ?? naturalMonthStartDay,
+  );
+
+  /// 当前账本是否启用了自定义预算周期（起始日 ≠ 1）。文案据此在「本月/本期」间切换。
+  bool get budgetCycleIsCustom => budgetCycleStartDay != naturalMonthStartDay;
+
+  void setBudgetCycleStartDay(int day) {
+    final clamped = clampBudgetCycleStartDay(day);
+    if (clamped == budgetCycleStartDay) {
+      return;
+    }
+    // 默认值不落键：与「未设置」等价，备份/存储里不留冗余项。
+    if (clamped == naturalMonthStartDay) {
+      _budgetCycleStartDays.remove(_activeBookId);
+    } else {
+      _budgetCycleStartDays[_activeBookId] = clamped;
+    }
+    _persistBudgetCycleStartDays();
+    notifyListeners();
+  }
+
+  /// 键月为 [keyMonth] 的预算周期窗口（当前账本起始日）。预算的存取键仍是键月
+  /// `yyyy-MM`（见 [monthlyBudget]），此窗口决定「这一期」聚合哪些交易。
+  DateWindow budgetWindow(DateTime keyMonth) =>
+      budgetCycleOfKeyMonth(keyMonth, budgetCycleStartDay);
+
+  /// 包含 [date] 的预算周期的键月（当前账本起始日）——面板/小组件用「现在」换算
+  /// 出应读取哪一期的预算。
+  DateTime budgetKeyMonthFor(DateTime date) =>
+      budgetCycleKeyMonthFor(date, budgetCycleStartDay);
+
   double monthlyBudget(DateTime month) {
     return _monthlyBudgets['$_activeBookId:${_monthKey(month)}'] ?? 800;
   }
@@ -1212,6 +1246,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _dailyBudgets.remove(bookId);
     _defaultAccountIds.remove(bookId);
     _persistDefaultAccounts();
+    _budgetCycleStartDays.remove(bookId);
+    _persistBudgetCycleStartDays();
     if (_activeBookId == bookId) {
       _activeBookId = defaultLedgerBookId;
       _store.write(_activeBookKey, _activeBookId);
@@ -1891,6 +1927,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     // 账户被清空，默认付款账户随之失效。
     _defaultAccountIds.clear();
     _persistDefaultAccounts();
+    // 预算周期起始日随预算一起回到默认（自然月）。
+    _budgetCycleStartDays.clear();
+    _persistBudgetCycleStartDays();
     for (final page in PanelPageKind.values) {
       _pagePanels[page] = _defaultPanelSettings(page.specs);
     }
@@ -1918,6 +1957,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
         'monthlyBudgets': Map<String, double>.from(_monthlyBudgets),
         'categoryBudgets': Map<String, double>.from(_categoryBudgets),
         'dailyBudgets': Map<String, double>.from(_dailyBudgets),
+        'budgetCycleStartDays': Map<String, int>.from(_budgetCycleStartDays),
         'profile': _profile.toJson(),
         'themePreference': _themePreference.name,
         'assetCoverUrl': _assetCoverUrl,
@@ -2024,6 +2064,16 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     );
     // 按日预算键是纯 bookId（无日期前缀），无需 _bookScopedBudgets 迁移。
     final nextDailyBudgets = _decodeBudgets(data['dailyBudgets']);
+    // 预算周期起始日（键为 bookId）：旧备份缺键回落空表（= 全部自然月）。
+    final rawBudgetCycles = data['budgetCycleStartDays'];
+    final nextBudgetCycleStartDays = <String, int>{
+      if (rawBudgetCycles is Map)
+        for (final entry in rawBudgetCycles.entries)
+          if (entry.value is num)
+            entry.key.toString(): clampBudgetCycleStartDay(
+              (entry.value as num).toInt(),
+            ),
+    };
 
     final profileValue = data['profile'];
     final nextProfile = profileValue is Map
@@ -2113,6 +2163,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _dailyBudgets
       ..clear()
       ..addAll(nextDailyBudgets);
+    _budgetCycleStartDays
+      ..clear()
+      ..addAll(nextBudgetCycleStartDays);
     _profile = nextProfile;
     _themePreference = nextThemePreference;
     _assetCoverUrl = nextAssetCoverUrl;
@@ -2155,6 +2208,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       _persistPagePanels(page);
     }
     _persistDefaultAccounts();
+    _persistBudgetCycleStartDays();
     _store.write(_fabActionKey, _fabActionMode.name);
     _store.write(_amountFormatKey, _amountForceTwoDecimals.toString());
     _store.write(_homeTrendKey, _homeTrendConfig.encode());

@@ -269,6 +269,8 @@ class _BudgetHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 自定义预算周期时对比措辞用「本期/上期」（对比的是相邻两个周期而非自然月）。
+    final cyclic = VeriFinScope.of(context).budgetCycleIsCustom;
     final expenseDelta = currentExpense - previousExpense;
     final currentUsage = currentBudget <= 0
         ? 0.0
@@ -319,11 +321,14 @@ class _BudgetHistoryCard extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: _BudgetCompareTile(
-                  label: AppLocalizations.of(context).budgetMonthExpense,
+                  label: cyclic
+                      ? AppLocalizations.of(context).budgetPeriodExpense
+                      : AppLocalizations.of(context).budgetMonthExpense,
                   value: formatExpenseAmount(currentExpense),
                   detail: _expenseDeltaLabel(
                     AppLocalizations.of(context),
                     expenseDelta,
+                    cyclic: cyclic,
                   ),
                   color: deltaColor,
                 ),
@@ -331,7 +336,9 @@ class _BudgetHistoryCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _BudgetCompareTile(
-                  label: AppLocalizations.of(context).lastMonthExpense,
+                  label: cyclic
+                      ? AppLocalizations.of(context).lastPeriodExpense
+                      : AppLocalizations.of(context).lastMonthExpense,
                   value: formatExpenseAmount(previousExpense),
                   detail: previousExpense <= 0
                       ? AppLocalizations.of(context).noExpenseYet
@@ -361,10 +368,15 @@ class _BudgetHistoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           Text(
-            AppLocalizations.of(context).budgetUsageLine(
-              (currentUsage * 100).toStringAsFixed(0),
-              _usageDeltaLabel(AppLocalizations.of(context), usageDelta),
-            ),
+            cyclic
+                ? AppLocalizations.of(context).budgetUsageLinePeriod(
+                    (currentUsage * 100).toStringAsFixed(0),
+                    _usageDeltaLabel(AppLocalizations.of(context), usageDelta),
+                  )
+                : AppLocalizations.of(context).budgetUsageLine(
+                    (currentUsage * 100).toStringAsFixed(0),
+                    _usageDeltaLabel(AppLocalizations.of(context), usageDelta),
+                  ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(

@@ -677,6 +677,9 @@
     "dailyBudgets": {
       "default": 200.0
     },
+    "budgetCycleStartDays": {
+      "default": 22
+    },
     "profile": {
       "nickname": "Veri Fin 测试用户",
       "bio": "用于验证资产、预算、看板、账本和导入导出流程",

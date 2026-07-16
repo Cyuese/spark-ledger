@@ -1469,6 +1469,74 @@ class AppLocalizationsZh extends AppLocalizations {
   String get budgetMonthExpense => '本月支出';
 
   @override
+  String get budgetOverspentThisPeriod => '本期已超支';
+
+  @override
+  String get budgetAvailableThisPeriod => '本期可用预算';
+
+  @override
+  String get budgetPeriodExpense => '本期支出';
+
+  @override
+  String get budgetCycleStartDayTitle => '预算周期起始日';
+
+  @override
+  String budgetCycleStartDayOption(int day) {
+    return '每月 $day 日';
+  }
+
+  @override
+  String get budgetCycleNaturalMonth => '每月 1 日（自然月）';
+
+  @override
+  String budgetCycleRange(DateTime start, DateTime end) {
+    final intl.DateFormat startDateFormat = intl.DateFormat.MMMd(localeName);
+    final String startString = startDateFormat.format(start);
+    final intl.DateFormat endDateFormat = intl.DateFormat.MMMd(localeName);
+    final String endString = endDateFormat.format(end);
+
+    return '$startString 至 $endString';
+  }
+
+  @override
+  String get periodExpenseCategories => '本期支出分类';
+
+  @override
+  String get periodEnded => '本期已结束';
+
+  @override
+  String periodTotalDays(int days) {
+    return '本期共 $days 天';
+  }
+
+  @override
+  String get lastPeriodExpense => '上期支出';
+
+  @override
+  String budgetUsageLinePeriod(String percent, String delta) {
+    return '预算使用率 $percent%，较上期 $delta';
+  }
+
+  @override
+  String get deltaFlatVsLastPeriod => '与上期持平';
+
+  @override
+  String deltaMoreVsLastPeriod(String amount) {
+    return '比上期多 $amount';
+  }
+
+  @override
+  String deltaLessVsLastPeriod(String amount) {
+    return '比上期少 $amount';
+  }
+
+  @override
+  String get widgetPeriodBudgetAvailable => '本期可用预算';
+
+  @override
+  String get widgetPeriodBudgetOverspent => '本期已超支';
+
+  @override
   String get budgetOverAmountLabel => '超出预算';
 
   @override

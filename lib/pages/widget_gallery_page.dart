@@ -5,7 +5,6 @@ import '../app/common_widgets.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/platform_bridge.dart';
-import '../app/series_math.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
 
@@ -21,13 +20,16 @@ class WidgetGalleryPage extends StatelessWidget {
     final now = DateTime.now();
     final entries = controller.entries;
 
-    // 预览用实时数据，让展示更贴近桌面上的真实效果。
+    // 预览用实时数据，让展示更贴近桌面上的真实效果。预算与桌面小组件同口径：
+    // 按预算周期（键月 + 周期窗口）取数。
     final today = formatAmount(dayExpenseTotal(entries, dateOnly(now)));
-    final monthExpense = sumByType(
-      entries.where((entry) => isInMonth(entry, now)),
+    final budgetKeyMonth = controller.budgetKeyMonthFor(now);
+    final cycleExpense = sumByType(
+      entriesInWindow(entries, controller.budgetWindow(budgetKeyMonth)),
       EntryType.expense,
     );
-    final remaining = controller.monthlyBudget(now) - monthExpense;
+    final remaining = controller.monthlyBudget(budgetKeyMonth) - cycleExpense;
+    final cyclic = controller.budgetCycleIsCustom;
     final netWorth = formatAmount(
       controller.accounts
           .where((account) => !account.hidden)
@@ -51,8 +53,12 @@ class WidgetGalleryPage extends StatelessWidget {
         name: l10n.widgetBudgetName,
         description: l10n.widgetBudgetDesc,
         previewLabel: remaining < 0
-            ? l10n.widgetBudgetOverspent
-            : l10n.widgetBudgetAvailable,
+            ? (cyclic
+                  ? l10n.widgetPeriodBudgetOverspent
+                  : l10n.widgetBudgetOverspent)
+            : (cyclic
+                  ? l10n.widgetPeriodBudgetAvailable
+                  : l10n.widgetBudgetAvailable),
         previewValue: formatAmount(remaining.abs()),
       ),
       _WidgetSpec(
