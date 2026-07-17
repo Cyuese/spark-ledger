@@ -132,7 +132,9 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
                         IconButton(
                           tooltip: l10n.budgetCycleStartDayTitle,
                           onPressed: _editCycleStartDay,
-                          icon: const Icon(Icons.event_repeat_outlined),
+                          // 字形垂直居中，与左侧上下对称的箭头视觉对齐；
+                          // event_repeat 因底部循环箭头重心偏下会显得偏低。
+                          icon: const Icon(Icons.calendar_month_outlined),
                         ),
                       ],
                     ),
