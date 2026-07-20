@@ -1199,6 +1199,7 @@
   "retryLabel": "Retry",
   "downloadingShort": "Downloading",
   "downloadNewVersion": "Download update",
+  "installNow": "Install now",
   "includePrereleaseLabel": "Include pre-release (Beta)",
   "prereleaseNoticeInline": "This is a pre-release (beta) build and may be unstable or buggy.",
   "prereleaseWarningTitle": "Download pre-release?",

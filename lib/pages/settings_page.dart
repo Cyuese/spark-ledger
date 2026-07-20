@@ -335,6 +335,9 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
   UpdateCheckResult? _result;
   bool _checking = true;
   bool _downloading = false;
+  bool _installing = false;
+  // 下载完成后置真：主按钮变「立即安装」，用户在系统安装页点错取消可反复重试，无需重下。
+  bool _downloaded = false;
   bool _includePrerelease = false;
 
   @override
@@ -347,6 +350,7 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
     setState(() {
       _checking = true;
       _downloading = false;
+      _downloaded = false;
     });
     final result = await AppUpdateBridge.checkForUpdate(
       includePrerelease: _includePrerelease,
@@ -396,6 +400,24 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
     setState(() {
       _result = result;
       _downloading = false;
+      // 下载并已拉起安装：记住 APK 已就绪，主按钮转为「立即安装」可反复重试。
+      _downloaded = result.status == UpdateCheckStatus.installing;
+    });
+  }
+
+  Future<void> _install() async {
+    setState(() => _installing = true);
+    final result = await AppUpdateBridge.installDownloadedUpdate();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _installing = false;
+      _result = result;
+      // 已下载文件不在了（缓存被系统清理），回退到重新下载。
+      if (result.status == UpdateCheckStatus.noAsset) {
+        _downloaded = false;
+      }
     });
   }
 
@@ -522,15 +544,26 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: _downloading ? null : () => Navigator.of(context).pop(),
+          onPressed: (_downloading || _installing)
+              ? null
+              : () => Navigator.of(context).pop(),
           child: Text(AppLocalizations.of(context).closeLabel),
         ),
-        if (!_checking && result?.status == UpdateCheckStatus.error)
+        if (!_checking &&
+            !_downloaded &&
+            result?.status == UpdateCheckStatus.error)
           TextButton(
             onPressed: _downloading ? null : _check,
             child: Text(AppLocalizations.of(context).retryLabel),
           ),
-        if (hasUpdate)
+        if (_downloaded)
+          // 下载已完成：主按钮转为「立即安装」，可反复点击重新拉起系统安装器，无需重下。
+          FilledButton(
+            onPressed: (_downloading || _installing) ? null : _install,
+            child: Text(AppLocalizations.of(context).installNow),
+          )
+        // hasUpdate 或已下载文件丢失（noAsset 回退）时，都提供「下载新版本」入口。
+        else if (hasUpdate || result?.status == UpdateCheckStatus.noAsset)
           FilledButton(
             onPressed: _downloading ? null : _download,
             child: Text(

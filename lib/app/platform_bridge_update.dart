@@ -30,6 +30,27 @@ class AppUpdateBridge {
     }
   }
 
+  /// 重新拉起对「已下载」APK 的安装（用户在系统安装页点错取消后可再次触发，无需重下）。
+  /// 已下载文件不存在时原生返回 [UpdateCheckStatus.noAsset]，UI 应回退到重新下载。
+  static Future<UpdateCheckResult> installDownloadedUpdate() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, Object?>(
+        'installDownloadedUpdate',
+      );
+      return UpdateCheckResult.fromMap(result ?? const <String, Object?>{});
+    } on MissingPluginException {
+      return const UpdateCheckResult(
+        status: UpdateCheckStatus.unsupported,
+        message: '当前预览环境不支持 Android 应用更新。',
+      );
+    } on PlatformException catch (error) {
+      return UpdateCheckResult(
+        status: UpdateCheckStatus.error,
+        message: error.message ?? '安装失败，请稍后再试。',
+      );
+    }
+  }
+
   static Future<UpdateCheckResult> downloadLatestUpdate({
     bool includePrerelease = false,
   }) async {

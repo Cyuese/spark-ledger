@@ -2100,6 +2100,7 @@
   "retryLabel": "重试",
   "downloadingShort": "下载中",
   "downloadNewVersion": "下载新版本",
+  "installNow": "立即安装",
   "includePrereleaseLabel": "包含预发布版本（Beta）",
   "prereleaseNoticeInline": "这是预发布（测试）版本，可能存在不稳定或缺陷。",
   "prereleaseWarningTitle": "下载预发布版本？",

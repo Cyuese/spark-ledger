@@ -3189,6 +3189,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadNewVersion => '下载新版本';
 
   @override
+  String get installNow => '立即安装';
+
+  @override
   String get includePrereleaseLabel => '包含预发布版本（Beta）';
 
   @override

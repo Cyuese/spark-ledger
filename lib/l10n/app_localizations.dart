@@ -5840,6 +5840,12 @@ abstract class AppLocalizations {
   /// **'下载新版本'**
   String get downloadNewVersion;
 
+  /// No description provided for @installNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即安装'**
+  String get installNow;
+
   /// No description provided for @includePrereleaseLabel.
   ///
   /// In zh, this message translates to:

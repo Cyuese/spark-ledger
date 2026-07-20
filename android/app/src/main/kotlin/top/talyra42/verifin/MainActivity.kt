@@ -74,6 +74,7 @@ class MainActivity : FlutterFragmentActivity() {
                     call.argument<Boolean>("includePrerelease") ?: false,
                     result,
                 )
+                "installDownloadedUpdate" -> installDownloadedUpdate(result)
                 "saveTextToDownloads" -> saveTextToDownloads(
                     call.argument<String>("filename") ?: "verifin-backup.json",
                     call.argument<String>("content") ?: "",
@@ -282,6 +283,63 @@ class MainActivity : FlutterFragmentActivity() {
                 }
             }
         }.start()
+    }
+
+    /// 重新拉起对「已下载」APK 的安装（用户在系统安装页点错取消后可再次触发，无需重下）。
+    /// 找不到已下载文件时回 noAsset，供 Flutter 侧回退到重新下载。
+    private fun installDownloadedUpdate(result: MethodChannel.Result) {
+        val currentVersion = BuildConfig.VERSION_NAME
+        val apkFile = downloadedApkFile()
+        if (apkFile == null) {
+            result.success(
+                mapOf(
+                    "status" to "noAsset",
+                    "message" to "安装包已不存在，请重新下载。",
+                    "currentVersion" to currentVersion,
+                ),
+            )
+            return
+        }
+        // 文件名形如 verifin-v1.2.3.apk，回带版本号让弹窗版本行保持正确。
+        val latestTag = apkFile.name.removePrefix("verifin-").removeSuffix(".apk")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !packageManager.canRequestPackageInstalls()
+        ) {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:$packageName"),
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+            result.success(
+                mapOf(
+                    "status" to "error",
+                    "message" to "请先允许 VeriFin 安装未知应用，授权后再次点击立即安装。",
+                    "currentVersion" to currentVersion,
+                    "latestVersion" to latestTag,
+                ),
+            )
+            return
+        }
+        startApkInstall(apkFile)
+        result.success(
+            mapOf(
+                "status" to "installing",
+                "message" to "已重新打开安装确认。",
+                "currentVersion" to currentVersion,
+                "latestVersion" to latestTag,
+            ),
+        )
+    }
+
+    /// 返回缓存目录中已下载的更新 APK（downloadApk 每次只保留一个），不存在则 null。
+    private fun downloadedApkFile(): File? {
+        val updatesDir = File(cacheDir, "updates")
+        if (!updatesDir.isDirectory) {
+            return null
+        }
+        return updatesDir.listFiles()
+            ?.firstOrNull { it.isFile && it.name.endsWith(".apk", ignoreCase = true) && it.length() > 0 }
     }
 
     private fun checkLatestReleaseInfo(includePrerelease: Boolean): Map<String, Any> {

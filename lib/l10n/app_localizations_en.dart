@@ -3257,6 +3257,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadNewVersion => 'Download update';
 
   @override
+  String get installNow => 'Install now';
+
+  @override
   String get includePrereleaseLabel => 'Include pre-release (Beta)';
 
   @override
