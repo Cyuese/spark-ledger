@@ -352,6 +352,18 @@
   "@panelYearSummaryDesc": {
     "description": "看板年统计面板:本年收支摘要卡片描述"
   },
+  "metricYearIncome": "本年收入",
+  "@metricYearIncome": {
+    "description": "看板年统计面板:本年收入指标"
+  },
+  "metricYearExpense": "本年支出",
+  "@metricYearExpense": {
+    "description": "看板年统计面板:本年支出指标"
+  },
+  "metricYearNet": "本年结余",
+  "@metricYearNet": {
+    "description": "看板年统计面板:本年结余指标"
+  },
   "panelYearTrendLabel": "月度收支",
   "@panelYearTrendLabel": {
     "description": "看板年统计面板:本年每月收入与支出双柱卡片标题"

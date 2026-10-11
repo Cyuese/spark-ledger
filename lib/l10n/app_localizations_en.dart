@@ -544,6 +544,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Income, spending and balance for this year';
 
   @override
+  String get metricYearNet => 'This year balance';
+
+  @override
   String get panelYearTrendLabel => 'Monthly income & spending';
 
   @override
