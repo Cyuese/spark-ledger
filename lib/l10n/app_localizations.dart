@@ -1034,6 +1034,60 @@ abstract class AppLocalizations {
   /// **'本月收入、支出与结余合计'**
   String get panelSummaryDesc;
 
+  /// 看板日常面板:近 7 日 / 本周收支统计卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'近7日统计'**
+  String get panelRecentDailyLabel;
+
+  /// 看板日常面板:近 7 日 / 本周收支统计卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'近 7 日或本周的收支柱状图与日均'**
+  String get panelRecentDailyDesc;
+
+  /// 近 7 日统计面板的时间范围切换项
+  ///
+  /// In zh, this message translates to:
+  /// **'近7日'**
+  String get recent7Days;
+
+  /// 近 7 日统计面板:总支出
+  ///
+  /// In zh, this message translates to:
+  /// **'总支出'**
+  String get recentTotalExpense;
+
+  /// 近 7 日统计面板:日均支出
+  ///
+  /// In zh, this message translates to:
+  /// **'日均支出'**
+  String get recentDailyAvgExpense;
+
+  /// 近 7 日统计面板:总收入
+  ///
+  /// In zh, this message translates to:
+  /// **'总收入'**
+  String get recentTotalIncome;
+
+  /// 近 7 日统计面板:日均收入
+  ///
+  /// In zh, this message translates to:
+  /// **'日均收入'**
+  String get recentDailyAvgIncome;
+
+  /// 近 7 日统计面板的文字统计行(标签：金额)
+  ///
+  /// In zh, this message translates to:
+  /// **'{label}：{amount}'**
+  String recentStatLine(String label, String amount);
+
+  /// 图表气泡等处的收入金额行(与 expenseAmountLabel 对称)
+  ///
+  /// In zh, this message translates to:
+  /// **'收入 {amount}'**
+  String incomeAmountLabel(String amount);
+
   /// No description provided for @panelBudgetExecutionLabel.
   ///
   /// In zh, this message translates to:

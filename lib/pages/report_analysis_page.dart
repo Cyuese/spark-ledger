@@ -107,7 +107,7 @@ class _ReportAnalysisPageState extends State<ReportAnalysisPage> {
                 ),
               ],
               const SizedBox(height: 10),
-              _DimensionToggle(
+              VeriEntryTypeToggle(
                 dimension: _dimension,
                 onChanged: (value) => setState(() => _dimension = value),
               ),
@@ -570,30 +570,6 @@ class _ChangeCell extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
-    );
-  }
-}
-
-class _DimensionToggle extends StatelessWidget {
-  const _DimensionToggle({required this.dimension, required this.onChanged});
-
-  final EntryType dimension;
-  final ValueChanged<EntryType> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return VeriSegmentedControl<EntryType>(
-      values: const <EntryType>[EntryType.expense, EntryType.income],
-      selected: dimension,
-      semanticLabel: l10n.statTypeTitle,
-      labelOf: (type) => type == EntryType.expense
-          ? l10n.entryTypeExpense
-          : l10n.entryTypeIncome,
-      accentOf: (type) => type == EntryType.expense
-          ? veriSemantic(context, veriExpense)
-          : veriSemantic(context, veriIncome),
-      onChanged: onChanged,
     );
   }
 }

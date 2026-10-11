@@ -87,7 +87,7 @@ void main() {
   ) async {
     final store = LocalKeyValueStore();
     await pumpApp(tester, store);
-    await tapBottomTab(tester, 2);
+    await openReportsMonthlyTab(tester);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('panel_settings_entry_reportsMonthly')),
@@ -327,7 +327,6 @@ void main() {
   test('report tabs without a panel catalog stay empty', () async {
     final controller = await makeController();
     for (final page in <PanelPageKind>[
-      PanelPageKind.reportsDaily,
       PanelPageKind.reportsYearly,
       PanelPageKind.reportsCustom,
     ]) {

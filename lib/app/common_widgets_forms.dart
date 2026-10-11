@@ -2,6 +2,41 @@ part of 'common_widgets.dart';
 
 // 表单域：设置行、选择字段、紧凑开关行、交易标签选择、卡号输入组。
 
+/// 支出 / 收入 口径切换。看板近 7 日面板与统计分析页共用同一套语义与配色
+/// （支出用语义红、收入用语义绿）。
+class VeriEntryTypeToggle extends StatelessWidget {
+  const VeriEntryTypeToggle({
+    super.key,
+    required this.dimension,
+    required this.onChanged,
+  });
+
+  final EntryType dimension;
+
+  /// 为 null 时整组禁用。
+  final ValueChanged<EntryType>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return VeriSegmentedControl<EntryType>(
+      values: const <EntryType>[EntryType.expense, EntryType.income],
+      selected: dimension,
+      semanticLabel: l10n.statTypeTitle,
+      labelOf: (type) => type == EntryType.expense
+          ? l10n.entryTypeExpense
+          : l10n.entryTypeIncome,
+      accentOf: (type) => type == EntryType.expense
+          ? veriSemantic(context, veriExpense)
+          : veriSemantic(context, veriIncome),
+      // Key 只挂选中项：分段控件会把选中项多渲染一份用于滑动动画。
+      keyOf: (type) =>
+          type == dimension ? Key('dimension_toggle_${type.name}') : null,
+      onChanged: onChanged,
+    );
+  }
+}
+
 class SettingsRow extends StatelessWidget {
   const SettingsRow({
     super.key,

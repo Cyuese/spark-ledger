@@ -357,6 +357,8 @@ class PagePanelSpec {
       case 'monthly_structure':
         // 该面板只有支出序列，标题与看板卡片保持一致，不写成「月度收支」。
         return l10n.monthlyTrendTitle;
+      case 'recent_daily':
+        return l10n.panelRecentDailyLabel;
     }
     return id;
   }
@@ -385,6 +387,8 @@ class PagePanelSpec {
         return l10n.panelDailyTrendDesc;
       case 'monthly_structure':
         return l10n.panelMonthlyStructureDesc;
+      case 'recent_daily':
+        return l10n.panelRecentDailyDesc;
     }
     return '';
   }
@@ -410,7 +414,9 @@ const List<PagePanelSpec> reportMonthlyPanelSpecs = <PagePanelSpec>[
 ];
 
 /// 看板其余 Tab 的面板目录。对应 Tab 的内容尚未实现，先留空。
-const List<PagePanelSpec> reportDailyPanelSpecs = <PagePanelSpec>[];
+const List<PagePanelSpec> reportDailyPanelSpecs = <PagePanelSpec>[
+  PagePanelSpec(id: 'recent_daily'),
+];
 const List<PagePanelSpec> reportYearlyPanelSpecs = <PagePanelSpec>[];
 const List<PagePanelSpec> reportCustomPanelSpecs = <PagePanelSpec>[];
 

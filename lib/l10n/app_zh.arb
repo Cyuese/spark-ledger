@@ -292,6 +292,49 @@
   "@panelSummaryDesc": {
     "description": "看板月统计面板:本月收支摘要卡片描述"
   },
+  "panelRecentDailyLabel": "近7日统计",
+  "@panelRecentDailyLabel": {
+    "description": "看板日常面板:近 7 日 / 本周收支统计卡片标题"
+  },
+  "panelRecentDailyDesc": "近 7 日或本周的收支柱状图与日均",
+  "@panelRecentDailyDesc": {
+    "description": "看板日常面板:近 7 日 / 本周收支统计卡片描述"
+  },
+  "recent7Days": "近7日",
+  "@recent7Days": {
+    "description": "近 7 日统计面板的时间范围切换项"
+  },
+  "recentTotalExpense": "总支出",
+  "@recentTotalExpense": {
+    "description": "近 7 日统计面板:总支出"
+  },
+  "recentDailyAvgExpense": "日均支出",
+  "@recentDailyAvgExpense": {
+    "description": "近 7 日统计面板:日均支出"
+  },
+  "recentTotalIncome": "总收入",
+  "@recentTotalIncome": {
+    "description": "近 7 日统计面板:总收入"
+  },
+  "recentDailyAvgIncome": "日均收入",
+  "@recentDailyAvgIncome": {
+    "description": "近 7 日统计面板:日均收入"
+  },
+  "recentStatLine": "{label}：{amount}",
+  "@recentStatLine": {
+    "description": "近 7 日统计面板的文字统计行(标签：金额)",
+    "placeholders": {
+      "label": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
+  "incomeAmountLabel": "收入 {amount}",
+  "@incomeAmountLabel": {
+    "description": "图表气泡等处的收入金额行(与 expenseAmountLabel 对称)",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
   "panelBudgetExecutionLabel": "预算执行",
   "panelBudgetExecutionDesc": "本月预算、支出与分类预算执行情况",
   "panelCategoryRingLabel": "分类统计",
