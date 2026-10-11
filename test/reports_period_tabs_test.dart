@@ -304,4 +304,51 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('-123.11'), findsWidgets);
   });
+
+  testWidgets('资产汇总：负资产超过 5 个时折叠态并入「其他」而不是丢掉', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 2600);
+    addTearDown(tester.view.reset);
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    Future<void> add(String id, String name, double balance) => controller
+        .addAccountDraft(
+          Account(
+            id: id,
+            bookId: controller.activeBook.id,
+            name: name,
+            type: AccountType.onlinePayment,
+            groupId: null,
+            initialBalance: balance,
+            iconCode: 'wallet',
+            note: '',
+            includeInAssets: true,
+            hidden: false,
+            currencyCode: controller.activeBook.baseCurrencyCode,
+          ),
+        )
+        .then((_) {});
+    for (var i = 1; i <= 6; i++) {
+      await add('debt_$i', '负债账户$i', -100.0 * i);
+    }
+    controller.dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2); // 看板 · 日常
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('负资产').first);
+    await tester.pumpAndSettle();
+
+    // 图例按绝对值降序，折叠态只列前 5 个（绝对额最大的），余额最小的那个
+    // 必须并入「其他」：
+    // 负资产侧各项与合计都是负数，判定写成 `otherAmount > 0` 会让这一行消失，
+    // 图例各行之和与中心总额对不上（回归保护）。
+    expect(find.text('其他'), findsOneWidget);
+    expect(find.text('负债账户1'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('asset_summary_expand_toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('负债账户1'), findsOneWidget);
+    expect(find.text('其他'), findsNothing);
+  });
 }
