@@ -55,6 +55,8 @@ const Set<String> _knownBackupDataKeys = <String>{
   'themePreference',
   'homePanels',
   'reportPanels',
+  'reportDailyPanels',
+  'reportYearlyPanels',
 };
 
 // 偏好类 KV 键（库级私有以便各 part 共享）。全部 `verifin.*.v1` 键集中在此，
@@ -76,7 +78,10 @@ const String _assetSectionCollapsedKey = 'verifin.asset_section_collapsed.v1';
 const String _assetAccountOrderKey = 'verifin.asset_account_order.v1';
 const String _assetSectionOrderKey = 'verifin.asset_section_order.v1';
 const String _homePanelsKey = 'verifin.home_panels.v1';
-const String _reportPanelsKey = 'verifin.report_panels.v1';
+// 看板各 Tab 的面板清单按 Tab 分键。月统计沿用旧键，老用户升级后清单不重置。
+const String _reportDailyPanelsKey = 'verifin.report_daily_panels.v1';
+const String _reportMonthlyPanelsKey = 'verifin.report_panels.v1';
+const String _reportYearlyPanelsKey = 'verifin.report_yearly_panels.v1';
 const String _backupSettingsKey = 'verifin.backup_settings.v1';
 const String _backupPassphraseKey = 'verifin.backup_passphrase.v1';
 const String _webdavKey = 'verifin.webdav.v1';
@@ -101,8 +106,12 @@ String _panelsKeyFor(PanelPageKind page) {
   switch (page) {
     case PanelPageKind.home:
       return _homePanelsKey;
-    case PanelPageKind.reports:
-      return _reportPanelsKey;
+    case PanelPageKind.reportsDaily:
+      return _reportDailyPanelsKey;
+    case PanelPageKind.reportsMonthly:
+      return _reportMonthlyPanelsKey;
+    case PanelPageKind.reportsYearly:
+      return _reportYearlyPanelsKey;
   }
 }
 
@@ -426,24 +435,39 @@ List<PagePanelSetting> _defaultPanelSettings(List<PagePanelSpec> specs) {
       .toList();
 }
 
-/// 面板设置归一化:丢弃目录外的 id 并去重,目录新增的面板默认追加为开启;
+/// 面板设置归一化:丢弃目录外的 id 并去重;目录中新增的面板按其在 [specs] 里的
+/// 位置插入（而不是一律追加到末尾,例如摘要卡应当落在首位)并默认开启;
 /// 若结果全部关闭则强制开启第一个,保证页面至少保留一个面板。
+/// 目录为空（对应 Tab 的内容尚未实现）时结果保持为空。
 List<PagePanelSetting> _normalizePanelSettings(
   List<PagePanelSetting> stored,
   List<PagePanelSpec> specs,
 ) {
-  final specIds = <String>{for (final spec in specs) spec.id};
+  final specIndexById = <String, int>{
+    for (var i = 0; i < specs.length; i++) specs[i].id: i,
+  };
   final seen = <String>{};
   final result = <PagePanelSetting>[
     for (final item in stored)
-      if (specIds.contains(item.id) && seen.add(item.id)) item,
+      if (specIndexById.containsKey(item.id) && seen.add(item.id)) item,
   ];
-  for (final spec in specs) {
-    if (seen.add(spec.id)) {
-      result.add(PagePanelSetting(id: spec.id, enabled: true));
+  for (var i = 0; i < specs.length; i++) {
+    final spec = specs[i];
+    if (!seen.add(spec.id)) {
+      continue;
     }
+    // 排在所有「目录下标更靠前」的既有项之后；没有更早的项时落到最前。
+    var insertAt = 0;
+    for (var k = result.length - 1; k >= 0; k--) {
+      final indexInSpecs = specIndexById[result[k].id];
+      if (indexInSpecs != null && indexInSpecs < i) {
+        insertAt = k + 1;
+        break;
+      }
+    }
+    result.insert(insertAt, PagePanelSetting(id: spec.id, enabled: true));
   }
-  if (result.every((item) => !item.enabled)) {
+  if (result.isNotEmpty && result.every((item) => !item.enabled)) {
     result[0] = result[0].copyWith(enabled: true);
   }
   return result;

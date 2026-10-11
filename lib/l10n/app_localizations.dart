@@ -164,6 +164,24 @@ abstract class AppLocalizations {
   /// **'看板'**
   String get tabReports;
 
+  /// 看板顶部口径 Tab:日常(近期滚动统计与资产快照)
+  ///
+  /// In zh, this message translates to:
+  /// **'日常'**
+  String get reportTabDaily;
+
+  /// 看板顶部口径 Tab:按自然月统计
+  ///
+  /// In zh, this message translates to:
+  /// **'月统计'**
+  String get reportTabMonthly;
+
+  /// 看板顶部口径 Tab:按自然年统计
+  ///
+  /// In zh, this message translates to:
+  /// **'年统计'**
+  String get reportTabYearly;
+
   /// 底部导航:我的
   ///
   /// In zh, this message translates to:
@@ -908,13 +926,13 @@ abstract class AppLocalizations {
   /// **'本周结余'**
   String get metricWeekNet;
 
-  /// No description provided for @metricYearExpense.
+  /// 看板年统计面板:本年支出指标
   ///
   /// In zh, this message translates to:
   /// **'本年支出'**
   String get metricYearExpense;
 
-  /// No description provided for @metricYearIncome.
+  /// 看板年统计面板:本年收入指标
   ///
   /// In zh, this message translates to:
   /// **'本年收入'**
@@ -997,6 +1015,180 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'按日历查看每天的收支情况'**
   String get panelCalendarDesc;
+
+  /// 看板月统计面板:本月收支摘要卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'本月收支'**
+  String get panelSummaryLabel;
+
+  /// 看板月统计面板:本月收支摘要卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'本月收入、支出与结余合计'**
+  String get panelSummaryDesc;
+
+  /// 看板日常面板:近 7 日 / 本周收支统计卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'近7日统计'**
+  String get panelRecentDailyLabel;
+
+  /// 看板日常面板:近 7 日 / 本周收支统计卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'近 7 日或本周的收支柱状图与日均'**
+  String get panelRecentDailyDesc;
+
+  /// 看板日常面板:切到本周时的卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'本周统计'**
+  String get panelThisWeekLabel;
+
+  /// 近 7 日统计面板的时间范围切换项
+  ///
+  /// In zh, this message translates to:
+  /// **'近7日'**
+  String get recent7Days;
+
+  /// 近 7 日统计面板:总支出
+  ///
+  /// In zh, this message translates to:
+  /// **'总支出'**
+  String get recentTotalExpense;
+
+  /// 近 7 日统计面板:日均支出
+  ///
+  /// In zh, this message translates to:
+  /// **'日均支出'**
+  String get recentDailyAvgExpense;
+
+  /// 近 7 日统计面板:总收入
+  ///
+  /// In zh, this message translates to:
+  /// **'总收入'**
+  String get recentTotalIncome;
+
+  /// 近 7 日统计面板:日均收入
+  ///
+  /// In zh, this message translates to:
+  /// **'日均收入'**
+  String get recentDailyAvgIncome;
+
+  /// 近 7 日统计面板的文字统计行(标签：金额)
+  ///
+  /// In zh, this message translates to:
+  /// **'{label}：{amount}'**
+  String recentStatLine(String label, String amount);
+
+  /// 看板日常面板:资产汇总卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'资产汇总'**
+  String get panelAssetSummaryLabel;
+
+  /// 看板日常面板:资产汇总卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'按账户占比查看正资产或负资产'**
+  String get panelAssetSummaryDesc;
+
+  /// 看板月统计面板:排行卡(原统计分析页排行能力迁入)
+  ///
+  /// In zh, this message translates to:
+  /// **'分类 · 标签排行'**
+  String get panelRankingLabel;
+
+  /// 看板月统计面板:排行卡描述
+  ///
+  /// In zh, this message translates to:
+  /// **'按顶级分类 / 子分类 / 标签排行，点行可下钻'**
+  String get panelRankingDesc;
+
+  /// 看板年统计面板:本年收支摘要卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'本年收支'**
+  String get panelYearSummaryLabel;
+
+  /// 看板年统计面板:本年收支摘要卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'本年收入、支出与结余合计'**
+  String get panelYearSummaryDesc;
+
+  /// 看板年统计面板:本年结余指标
+  ///
+  /// In zh, this message translates to:
+  /// **'本年结余'**
+  String get metricYearNet;
+
+  /// 看板年统计面板:本年每月收入与支出双柱卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'收支统计'**
+  String get panelYearTrendLabel;
+
+  /// 看板年统计面板:月度收支卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'本年每月收入与支出双柱对比'**
+  String get panelYearTrendDesc;
+
+  /// 看板年统计面板:按天热力图卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'收支热力'**
+  String get panelYearHeatmapLabel;
+
+  /// 看板年统计面板:按天热力图卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'按天查看全年支出 / 收入的深浅'**
+  String get panelYearHeatmapDesc;
+
+  /// 资产汇总:只统计余额为正的账户
+  ///
+  /// In zh, this message translates to:
+  /// **'正资产'**
+  String get assetPositive;
+
+  /// 资产汇总:只统计余额为负的账户
+  ///
+  /// In zh, this message translates to:
+  /// **'负资产'**
+  String get assetNegative;
+
+  /// 资产汇总:中心与图例显示金额
+  ///
+  /// In zh, this message translates to:
+  /// **'资产金额'**
+  String get assetSummaryAmount;
+
+  /// 资产汇总:中心与图例显示占比
+  ///
+  /// In zh, this message translates to:
+  /// **'资产占比'**
+  String get assetSummaryShare;
+
+  /// 资产汇总:图例超过 5 个账户时的展开入口
+  ///
+  /// In zh, this message translates to:
+  /// **'展开全部（{count}）'**
+  String assetSummaryShowAll(int count);
+
+  /// 资产汇总:图例展开后收起
+  ///
+  /// In zh, this message translates to:
+  /// **'收起'**
+  String get assetSummaryCollapse;
+
+  /// 图表气泡等处的收入金额行(与 expenseAmountLabel 对称)
+  ///
+  /// In zh, this message translates to:
+  /// **'收入 {amount}'**
+  String incomeAmountLabel(String amount);
 
   /// No description provided for @panelBudgetExecutionLabel.
   ///
@@ -3548,12 +3740,6 @@ abstract class AppLocalizations {
   /// **'降低 {points} 个点'**
   String usageDown(String points);
 
-  /// No description provided for @statAnalysisTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'统计分析'**
-  String get statAnalysisTitle;
-
   /// No description provided for @pickTimeRange.
   ///
   /// In zh, this message translates to:
@@ -3578,41 +3764,11 @@ abstract class AppLocalizations {
   /// **'收支概览'**
   String get overviewTitle;
 
-  /// No description provided for @yoyMomTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'同比 · 环比'**
-  String get yoyMomTitle;
-
-  /// No description provided for @yoyMomDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'较上月为环比，较去年同期为同比'**
-  String get yoyMomDesc;
-
-  /// No description provided for @momLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'环比'**
-  String get momLabel;
-
-  /// No description provided for @yoyLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'同比'**
-  String get yoyLabel;
-
   /// No description provided for @monthlyTrendTitle.
   ///
   /// In zh, this message translates to:
   /// **'月度趋势'**
   String get monthlyTrendTitle;
-
-  /// No description provided for @categoryRank.
-  ///
-  /// In zh, this message translates to:
-  /// **'分类排行'**
-  String get categoryRank;
 
   /// No description provided for @rankGroupCategory.
   ///
@@ -3631,12 +3787,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'标签'**
   String get rankGroupTag;
-
-  /// No description provided for @tagRank.
-  ///
-  /// In zh, this message translates to:
-  /// **'标签排行'**
-  String get tagRank;
 
   /// No description provided for @tagRankOverlapNote.
   ///

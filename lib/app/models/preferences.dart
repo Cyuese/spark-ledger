@@ -250,17 +250,24 @@ enum NumberPadLayout {
   }
 }
 
-/// 支持面板管理的主页面。
+/// 支持面板管理的页面。看板按统计口径拆成「日常 / 月统计 / 年统计 / 自定义」
+/// 四个 Tab，每个 Tab 各自持有一份面板清单；首页单独一份。
 enum PanelPageKind {
   home,
-  reports;
+  reportsDaily,
+  reportsMonthly,
+  reportsYearly;
 
   String label(AppLocalizations l10n) {
     switch (this) {
       case PanelPageKind.home:
         return l10n.tabHome;
-      case PanelPageKind.reports:
-        return l10n.tabReports;
+      case PanelPageKind.reportsDaily:
+        return l10n.reportTabDaily;
+      case PanelPageKind.reportsMonthly:
+        return l10n.reportTabMonthly;
+      case PanelPageKind.reportsYearly:
+        return l10n.reportTabYearly;
     }
   }
 
@@ -268,8 +275,43 @@ enum PanelPageKind {
     switch (this) {
       case PanelPageKind.home:
         return homePanelSpecs;
-      case PanelPageKind.reports:
-        return reportPanelSpecs;
+      case PanelPageKind.reportsDaily:
+        return reportDailyPanelSpecs;
+      case PanelPageKind.reportsMonthly:
+        return reportMonthlyPanelSpecs;
+      case PanelPageKind.reportsYearly:
+        return reportYearlyPanelSpecs;
+    }
+  }
+}
+
+/// 看板顶部的统计口径 Tab。顺序即展示顺序；每个 Tab 对应一份独立的面板清单
+/// （见 [PanelPageKind]），当前 Tab 不做持久化，每次进入都回到默认项。
+enum ReportPeriodTab {
+  daily,
+  monthly,
+  yearly;
+
+  String label(AppLocalizations l10n) {
+    switch (this) {
+      case ReportPeriodTab.daily:
+        return l10n.reportTabDaily;
+      case ReportPeriodTab.monthly:
+        return l10n.reportTabMonthly;
+      case ReportPeriodTab.yearly:
+        return l10n.reportTabYearly;
+    }
+  }
+
+  /// 该口径对应的面板清单。
+  PanelPageKind get panelPageKind {
+    switch (this) {
+      case ReportPeriodTab.daily:
+        return PanelPageKind.reportsDaily;
+      case ReportPeriodTab.monthly:
+        return PanelPageKind.reportsMonthly;
+      case ReportPeriodTab.yearly:
+        return PanelPageKind.reportsYearly;
     }
   }
 }
@@ -292,6 +334,8 @@ class PagePanelSpec {
         return l10n.calendarTitle;
       case 'budget_execution':
         return l10n.panelBudgetExecutionLabel;
+      case 'summary':
+        return l10n.panelSummaryLabel;
       case 'category_ring':
         return l10n.panelCategoryRingLabel;
       case 'category_rank':
@@ -303,6 +347,18 @@ class PagePanelSpec {
       case 'monthly_structure':
         // 该面板只有支出序列，标题与看板卡片保持一致，不写成「月度收支」。
         return l10n.monthlyTrendTitle;
+      case 'recent_daily':
+        return l10n.panelRecentDailyLabel;
+      case 'asset_summary':
+        return l10n.panelAssetSummaryLabel;
+      case 'ranking':
+        return l10n.panelRankingLabel;
+      case 'year_summary':
+        return l10n.panelYearSummaryLabel;
+      case 'year_trend':
+        return l10n.panelYearTrendLabel;
+      case 'year_heatmap':
+        return l10n.panelYearHeatmapLabel;
     }
     return id;
   }
@@ -319,6 +375,8 @@ class PagePanelSpec {
         return l10n.panelCalendarDesc;
       case 'budget_execution':
         return l10n.panelBudgetExecutionDesc;
+      case 'summary':
+        return l10n.panelSummaryDesc;
       case 'category_ring':
         return l10n.panelCategoryRingDesc;
       case 'category_rank':
@@ -329,6 +387,18 @@ class PagePanelSpec {
         return l10n.panelDailyTrendDesc;
       case 'monthly_structure':
         return l10n.panelMonthlyStructureDesc;
+      case 'recent_daily':
+        return l10n.panelRecentDailyDesc;
+      case 'asset_summary':
+        return l10n.panelAssetSummaryDesc;
+      case 'ranking':
+        return l10n.panelRankingDesc;
+      case 'year_summary':
+        return l10n.panelYearSummaryDesc;
+      case 'year_trend':
+        return l10n.panelYearTrendDesc;
+      case 'year_heatmap':
+        return l10n.panelYearHeatmapDesc;
     }
     return '';
   }
@@ -341,13 +411,29 @@ const List<PagePanelSpec> homePanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'calendar'),
 ];
 
-const List<PagePanelSpec> reportPanelSpecs = <PagePanelSpec>[
+/// 看板「月统计」Tab 的面板目录（原 `reportPanelSpecs`，语义不变）。
+/// 顺序即默认渲染顺序，也是新增面板的插入位置依据。
+const List<PagePanelSpec> reportMonthlyPanelSpecs = <PagePanelSpec>[
+  PagePanelSpec(id: 'summary'),
   PagePanelSpec(id: 'budget_execution'),
-  PagePanelSpec(id: 'category_ring'),
-  PagePanelSpec(id: 'category_rank'),
-  PagePanelSpec(id: 'tag_stats'),
+  PagePanelSpec(id: 'ranking'),
   PagePanelSpec(id: 'daily_trend'),
   PagePanelSpec(id: 'monthly_structure'),
+];
+
+/// 看板其余 Tab 的面板目录。对应 Tab 的内容尚未实现，先留空。
+const List<PagePanelSpec> reportDailyPanelSpecs = <PagePanelSpec>[
+  PagePanelSpec(id: 'recent_daily'),
+  PagePanelSpec(id: 'asset_summary'),
+];
+
+/// 看板「年统计」Tab：本年收支摘要、本月度收支双柱、本年排行。
+/// 排行复用月统计的 `ranking` 面板，只是取数窗口换成整年。
+const List<PagePanelSpec> reportYearlyPanelSpecs = <PagePanelSpec>[
+  PagePanelSpec(id: 'year_summary'),
+  PagePanelSpec(id: 'year_trend'),
+  PagePanelSpec(id: 'year_heatmap'),
+  PagePanelSpec(id: 'ranking'),
 ];
 
 /// 页面面板的开关状态,列表顺序即页面渲染顺序。

@@ -151,6 +151,14 @@ Future<void> tapBottomTab(WidgetTester tester, int index) async {
   await tester.pumpAndSettle();
 }
 
+/// 切到看板并选中「月统计」Tab。看板默认落在「日常」Tab，断言原有月度面板的
+/// 用例必须先切过去（脚手架默认固定中文，故按文案点）。
+Future<void> openReportsMonthlyTab(WidgetTester tester) async {
+  await tapBottomTab(tester, 2);
+  await tester.tap(find.text('月统计').first);
+  await tester.pumpAndSettle();
+}
+
 /// 当前页面自身的纵向滚动视图。
 ///
 /// 主壳用横向 [PageView] 承载四个 Tab（支持左右滑动切换页面），它本身也是一个

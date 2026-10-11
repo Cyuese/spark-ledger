@@ -240,7 +240,7 @@ void main() {
         );
       await tester.pumpAndSettle();
 
-      await tapBottomTab(tester, 2);
+      await openReportsMonthlyTab(tester);
 
       // 预算执行卡：预算口径只算 100，剩余 1000 - 100 = 900。
       expect(find.text('900'), findsOneWidget);

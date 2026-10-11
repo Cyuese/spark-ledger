@@ -6,7 +6,7 @@ import 'support/test_harness.dart';
 void main() {
   useTestDatabases();
 
-  testWidgets('我的页宫格展示功能入口并可进入统计分析', (WidgetTester tester) async {
+  testWidgets('我的页宫格展示功能入口', (WidgetTester tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(393, 852);
     addTearDown(tester.view.reset);
@@ -28,16 +28,14 @@ void main() {
     );
     expect(find.textContaining('Web 开发预览'), findsNothing);
 
+    // 「统计分析」已并入看板，入口不再出现在宫格里。
     final scrollable = firstVerticalScrollable();
     await tester.scrollUntilVisible(
-      find.text('统计分析'),
+      find.text('记账提醒'),
       200,
       scrollable: scrollable,
     );
-    await tester.tap(find.text('统计分析'));
-    await tester.pumpAndSettle();
-
-    // 统计分析页头部标题（与磁贴同名，故断言收支概览确认已进入页面）。
-    expect(find.text('收支概览'), findsOneWidget);
+    expect(find.text('统计分析'), findsNothing);
+    expect(find.text('记账提醒'), findsOneWidget);
   });
 }

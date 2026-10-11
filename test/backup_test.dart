@@ -550,7 +550,10 @@ void main() {
         ..update('data', (value) {
           return Map<String, Object?>.from(value as Map<dynamic, dynamic>)
             ..remove('homePanels')
-            ..remove('reportPanels');
+            ..remove('reportPanels')
+            ..remove('reportDailyPanels')
+            ..remove('reportYearlyPanels')
+            ..remove('reportCustomPanels');
         }),
     );
 
@@ -562,8 +565,8 @@ void main() {
       homePanelSpecs.length,
     );
     expect(
-      target.enabledPanelIds(PanelPageKind.reports).length,
-      reportPanelSpecs.length,
+      target.enabledPanelIds(PanelPageKind.reportsMonthly).length,
+      reportMonthlyPanelSpecs.length,
     );
 
     target.dispose();
@@ -693,13 +696,14 @@ void main() {
       'budget',
       'recent',
     ]);
-    expect(controller.enabledPanelIds(PanelPageKind.reports), <String>[
-      'category_ring',
+    expect(controller.enabledPanelIds(PanelPageKind.reportsMonthly), <String>[
+      // summary / tag_stats 是样例备份没有的面板：归一化按它们在目录里的位置
+      // 插入，而不是一律追加到末尾（daily_trend 在样例里是关闭的，不出现；
+      // category_ring / category_rank / tag_stats 已随排行卡合并下线，会被丢弃）。
+      'summary',
       'budget_execution',
-      'category_rank',
+      'ranking',
       'monthly_structure',
-      // tag_stats 是样例备份没有的新面板，归一化时按默认开启追加到末尾。
-      'tag_stats',
     ]);
 
     controller.dispose();

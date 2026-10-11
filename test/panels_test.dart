@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/common_widgets.dart';
@@ -85,28 +87,30 @@ void main() {
   ) async {
     final store = LocalKeyValueStore();
     await pumpApp(tester, store);
-    await tapBottomTab(tester, 2);
+    await openReportsMonthlyTab(tester);
 
     await tester.scrollUntilVisible(
-      find.byKey(const Key('panel_settings_entry_reports')),
+      find.byKey(const Key('panel_settings_entry_reportsMonthly')),
       200,
       scrollable: firstVerticalScrollable(),
     );
     // 看板顶部新增本月摘要卡后入口更靠下，先确保完全进入视口再点击。
     await tester.ensureVisible(
-      find.byKey(const Key('panel_settings_entry_reports')),
+      find.byKey(const Key('panel_settings_entry_reportsMonthly')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('6个看板面板'), findsOneWidget);
+    expect(find.text('5个月统计面板'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('panel_settings_entry_reports')));
+    await tester.tap(
+      find.byKey(const Key('panel_settings_entry_reportsMonthly')),
+    );
     await tester.pumpAndSettle();
-    expect(find.text('看板面板'), findsOneWidget);
+    expect(find.text('月统计面板'), findsOneWidget);
 
     // 进入排序模式后出现拖动手柄,拖动第一个面板到第二位。
     await tester.tap(find.byKey(const Key('panel_sort_toggle')));
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.drag_indicator), findsNWidgets(6));
+    expect(find.byIcon(Icons.drag_indicator), findsNWidgets(5));
 
     final firstHandle = tester.getCenter(
       find.byIcon(Icons.drag_indicator).first,
@@ -127,10 +131,10 @@ void main() {
     final beforeSave = await makeController(store);
     expect(
       beforeSave
-          .panelSettings(PanelPageKind.reports)
+          .panelSettings(PanelPageKind.reportsMonthly)
           .map((panel) => panel.id)
           .take(2),
-      <String>['budget_execution', 'category_ring'],
+      <String>['summary', 'budget_execution'],
     );
     beforeSave.dispose();
 
@@ -140,10 +144,10 @@ void main() {
     final controller = await makeController(store);
     expect(
       controller
-          .panelSettings(PanelPageKind.reports)
+          .panelSettings(PanelPageKind.reportsMonthly)
           .map((panel) => panel.id)
           .take(2),
-      <String>['category_ring', 'budget_execution'],
+      <String>['budget_execution', 'summary'],
     );
     controller.dispose();
   });
@@ -235,17 +239,17 @@ void main() {
     expect(controller.enabledPanelIds(PanelPageKind.home), <String>['trend']);
 
     controller
-      ..reorderPanels(PanelPageKind.reports, 0, 2)
+      ..reorderPanels(PanelPageKind.reportsMonthly, 0, 2)
       ..dispose();
 
     final reloaded = await makeController(store);
     expect(reloaded.enabledPanelIds(PanelPageKind.home), <String>['trend']);
     expect(
       reloaded
-          .panelSettings(PanelPageKind.reports)
+          .panelSettings(PanelPageKind.reportsMonthly)
           .map((panel) => panel.id)
           .take(3),
-      <String>['category_ring', 'category_rank', 'budget_execution'],
+      <String>['budget_execution', 'ranking', 'summary'],
     );
 
     reloaded.resetAllData();
@@ -254,8 +258,8 @@ void main() {
       homePanelSpecs.length,
     );
     expect(
-      reloaded.enabledPanelIds(PanelPageKind.reports).length,
-      reportPanelSpecs.length,
+      reloaded.enabledPanelIds(PanelPageKind.reportsMonthly).length,
+      reportMonthlyPanelSpecs.length,
     );
 
     reloaded.dispose();
@@ -283,5 +287,50 @@ void main() {
     );
 
     target.dispose();
+  });
+
+  test(
+    'panel normalization inserts new specs at their catalog position',
+    () async {
+      final store = LocalKeyValueStore();
+      // 模拟旧版本的清单：缺少 tag_stats（目录下标 3）。
+      store.write(
+        'verifin.report_panels.v1',
+        jsonEncode(<Map<String, Object?>>[
+          <String, Object?>{'id': 'budget_execution', 'enabled': true},
+          <String, Object?>{'id': 'category_ring', 'enabled': true},
+          <String, Object?>{'id': 'category_rank', 'enabled': true},
+          <String, Object?>{'id': 'daily_trend', 'enabled': true},
+          <String, Object?>{'id': 'monthly_structure', 'enabled': true},
+        ]),
+      );
+
+      final controller = await makeController(store);
+      expect(
+        controller
+            .panelSettings(PanelPageKind.reportsMonthly)
+            .map((panel) => panel.id),
+        <String>[
+          'summary',
+          'budget_execution',
+          'ranking',
+          'daily_trend',
+          'monthly_structure',
+        ],
+      );
+      controller.dispose();
+    },
+  );
+
+  test('backup carries every report tab panel list', () async {
+    final controller = await makeController();
+    final data =
+        (jsonDecode(controller.exportDataJson())
+                as Map<String, Object?>)['data']!
+            as Map<String, Object?>;
+    expect(data['reportPanels'], isA<List<Object?>>());
+    expect(data['reportDailyPanels'], isA<List<Object?>>());
+    expect(data['reportYearlyPanels'], isA<List<Object?>>());
+    controller.dispose();
   });
 }

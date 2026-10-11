@@ -67,7 +67,9 @@ SafeArea(child: VeriPage(child: Column(children: [
 ])))
 ```
 
-参照实现：`report_analysis_page.dart`、`ai_settings_page.dart`（ListView 版）；`ai_chat_page.dart`（Column + 固定页脚版）。
+参照实现：`reports_page.dart`、`ai_settings_page.dart`（ListView 版）；`ai_chat_page.dart`（Column + 固定页脚版）。
+
+**看板的分 Tab 骨架**：看板顶部在页头与首个卡片之间放一条 `VeriSegmentedControl`（日常 / 月统计 / 年统计），默认落在「日常」且**不持久化**；每个 Tab 各自持有一份面板清单（`PanelPageKind`），面板管理入口只在该 Tab 有面板时渲染。三个 Tab 都已实现；后续新增 Tab 未实现时只画 Tab 本体、内容为空，**不加**「即将推出」之类占位文案。原独立「统计分析」页已并入看板：排行能力出现在月统计与年统计 Tab（`ranking` 面板按当前 Tab 取整月 / 整年窗口），收入/支出与时间范围切换分别在各自卡片内。
 
 ### 编辑页保存与返回
 

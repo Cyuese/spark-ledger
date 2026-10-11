@@ -15,7 +15,7 @@ void main() {
 
   testWidgets('看板的 SectionTitle 把 trailing 顶到卡片右端', (tester) async {
     await pumpApp(tester, LocalKeyValueStore());
-    await tapBottomTab(tester, 2); // 看板
+    await openReportsMonthlyTab(tester); // 看板 · 月统计
     await tester.pumpAndSettle();
 
     final titles = find.byType(SectionTitle);
@@ -40,36 +40,5 @@ void main() {
       );
     }
     expect(checked, greaterThan(0), reason: '看板应有带 trailing 的 SectionTitle');
-  });
-
-  testWidgets('统计分析页的 SectionTitle 同样贴右端', (tester) async {
-    await pumpApp(tester, LocalKeyValueStore());
-    await tapBottomTab(tester, 2);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('统计分析'));
-    await tester.pumpAndSettle();
-
-    final titles = find.byType(SectionTitle);
-    var checked = 0;
-    for (var i = 0; i < titles.evaluate().length; i++) {
-      final widget = tester.widget<SectionTitle>(titles.at(i));
-      final trailing = widget.trailing;
-      if (trailing == null) {
-        continue;
-      }
-      checked++;
-      final rowRect = tester.getRect(titles.at(i));
-      final trailingRect = tester.getRect(
-        find.descendant(of: titles.at(i), matching: find.text(trailing)),
-      );
-      expect(
-        trailingRect.right,
-        moreOrLessEquals(rowRect.right, epsilon: 1),
-        reason:
-            '「${widget.title}」的 trailing 应贴右端，'
-            '实际差 ${rowRect.right - trailingRect.right}dp',
-      );
-    }
-    expect(checked, greaterThan(0), reason: '统计分析页应有带 trailing 的 SectionTitle');
   });
 }
