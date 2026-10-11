@@ -15,20 +15,6 @@ Future<String?> pickTextFile() async {
   return _readAsUtf8(file);
 }
 
-/// 选择备份文件并返回其 URI/路径，交给原生流式复制（不整份读入内存）。
-///
-/// Android 上 file_selector 返回 `content://` URI，可直接交给 SAF 流式读取；
-/// 用户取消返回 null。
-Future<String?> pickBackupFileUri({String label = '备份文件'}) async {
-  final group = XTypeGroup(
-    label: label,
-    extensions: <String>['json', 'zip', 'verifin'],
-    mimeTypes: <String>['application/json', 'application/zip'],
-  );
-  final file = await openFile(acceptedTypeGroups: <XTypeGroup>[group]);
-  return file?.path;
-}
-
 /// 选择账单文件并读原始字节（编码/格式由调用方按平台判别）。[extensions] 过滤
 /// 可选文件类型（如支付宝/薄荷 csv、微信 xlsx）。用户取消返回 null。
 Future<Uint8List?> pickImportBytes({

@@ -3788,9 +3788,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reminderTestFailed => '测试通知发送失败，请检查通知权限和系统后台限制后重试。';
 
   @override
-  String get backupFileTypeLabel => '备份文件';
-
-  @override
   String get cropAdjustHint => '调整图片位置';
 
   @override

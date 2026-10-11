@@ -125,7 +125,15 @@ class BackupService {
     return encryptBackup(content, passphrase);
   }
 
-  /// 把 [fileUri]（用户选择的备份文件）流式落到缓存目录，返回本地路径。
+  /// 打开备份文件选择器，返回 SAF URI / 桌面路径的描述（不读字节）。
+  ///
+  /// 用应用自己的选择器而不是 `file_selector`：后者会把整份文件读进内存再复制一份，
+  /// GB 级备份必然 OOM（Issue 45）。选完再交给 [stageBackupFile] 流式复制。
+  static Future<PickedBackupFile?> chooseBackupFile() {
+    return pickBackupFile();
+  }
+
+  /// 把 [fileUri]（用户选择的备份文件）流式落到缓存目录，返回本地路径与归属。
   ///
   /// 流式复制意味着选择 1 GB 的备份也不会把整包读进内存——Issue 45 的崩溃点。
   static Future<StagedCacheFile?> stageBackupFile(String fileUri) {

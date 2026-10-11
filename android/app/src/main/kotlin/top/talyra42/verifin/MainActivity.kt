@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.provider.Settings
 import android.util.Base64
 import android.view.WindowManager
@@ -41,6 +42,7 @@ class MainActivity : FlutterFragmentActivity() {
     private var pendingCaptureText: String? = null
     private var pendingDownloadsWrite: PendingDownloadsWrite? = null
     private var pendingDirectoryPick: MethodChannel.Result? = null
+    private var pendingBackupFilePick: MethodChannel.Result? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         rememberQuickEntryIntent(intent)
@@ -98,6 +100,7 @@ class MainActivity : FlutterFragmentActivity() {
                     result,
                 )
                 "pickBackupDirectory" -> pickBackupDirectory(result)
+                "pickBackupFile" -> pickBackupFile(result)
                 "stageBackupFile" -> stageBackupFile(
                     call.argument<String>("fileUri") ?: "",
                     result,
@@ -1034,10 +1037,79 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
+    /// 让用户挑一个备份文件，只回传 SAF 的 `content://` URI 与元信息；字节由
+    /// [stageBackupFile] 流式复制，避免经过 Flutter 插件时整份读进内存（Issue 45）。
+    private fun pickBackupFile(result: MethodChannel.Result) {
+        if (pendingBackupFilePick != null) {
+            result.error("PICK_BUSY", "已有文件选择在进行中，请稍后再试。", null)
+            return
+        }
+        pendingBackupFilePick = result
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // `*/*` 是为了兼容把 .verifin 当成未知类型、或按 MIME 过滤不严的第三方文件管理器；
+            // 具体格式仍由应用自己按魔数判定，选错文件会得到明确的「格式不正确」提示。
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf("application/json", "application/zip", "application/octet-stream"),
+            )
+        }
+        try {
+            startActivityForResult(intent, REQUEST_PICK_BACKUP_FILE)
+        } catch (error: Exception) {
+            pendingBackupFilePick = null
+            result.error("PICK_FAILED", error.message ?: "无法打开文件选择器。", null)
+        }
+    }
+
+    private fun completeBackupFilePick(resultCode: Int, data: Intent?) {
+        val pending = pendingBackupFilePick ?: return
+        pendingBackupFilePick = null
+        val uri = if (resultCode == RESULT_OK) data?.data else null
+        if (uri == null) {
+            pending.success(null)
+            return
+        }
+        var name: String? = null
+        var size: Long? = null
+        try {
+            contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex >= 0 && !cursor.isNull(nameIndex)) {
+                        name = cursor.getString(nameIndex)
+                    }
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) {
+                        size = cursor.getLong(sizeIndex)
+                    }
+                }
+            }
+        } catch (error: Exception) {
+            // 元信息读不到不影响导入：字节读取才是必需的。
+            name = null
+            size = null
+        }
+        pending.success(
+            mapOf(
+                "uri" to uri.toString(),
+                "name" to (name ?: uri.lastPathSegment ?: ""),
+                "size" to size,
+            ),
+        )
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != REQUEST_PICK_BACKUP_DIR) {
-            return
+        when (requestCode) {
+            REQUEST_PICK_BACKUP_FILE -> {
+                completeBackupFilePick(resultCode, data)
+                return
+            }
+            REQUEST_PICK_BACKUP_DIR -> Unit
+            else -> return
         }
         val pending = pendingDirectoryPick ?: return
         pendingDirectoryPick = null
@@ -1075,13 +1147,41 @@ class MainActivity : FlutterFragmentActivity() {
     // 超过设备堆上限直接 OutOfMemoryError（Issue 45）。以下方法一律只传路径，在原生
     // 侧边读边写固定缓冲区，并在复制过程中同步算出 SHA-256 供 Dart 侧比对。
 
-    /// 把用户选择的 SAF 文件流式复制到应用缓存目录，返回本地路径与字节数。
+    /// 把外部备份文件流式复制到应用缓存目录，返回本地路径与字节数。
+    ///
+    /// 接受 SAF `content://` URI，也兼容直接传入本地路径 / `file://`（旧调用方与测试）。
+    /// 已经是本地普通文件时不再复制，原样返回并标 `owned=false`，调用方不得删除它。
     private fun stageBackupFile(fileUri: String, result: MethodChannel.Result) {
         Thread {
             try {
+                if (fileUri.isEmpty()) {
+                    throw IllegalStateException("无法读取备份文件。")
+                }
+                val uri = Uri.parse(fileUri)
+                val scheme = uri.scheme?.lowercase()
+                val localFile = when {
+                    scheme == null -> File(fileUri)
+                    scheme == "file" -> uri.path?.let { File(it) }
+                    else -> null
+                }
+                if (localFile != null) {
+                    if (!localFile.isFile) {
+                        throw IllegalStateException("无法读取备份文件。")
+                    }
+                    runOnUiThread {
+                        result.success(
+                            mapOf(
+                                "path" to localFile.absolutePath,
+                                "bytes" to localFile.length(),
+                                "owned" to false,
+                            ),
+                        )
+                    }
+                    return@Thread
+                }
                 val target = File(cacheDir, "backup_stage_${System.currentTimeMillis()}")
                 var bytes = 0L
-                contentResolver.openInputStream(Uri.parse(fileUri))?.use { input ->
+                contentResolver.openInputStream(uri)?.use { input ->
                     FileOutputStream(target).use { output ->
                         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                         while (true) {
@@ -1095,7 +1195,11 @@ class MainActivity : FlutterFragmentActivity() {
                 } ?: throw IllegalStateException("无法读取备份文件。")
                 runOnUiThread {
                     result.success(
-                        mapOf("path" to target.absolutePath, "bytes" to bytes),
+                        mapOf(
+                            "path" to target.absolutePath,
+                            "bytes" to bytes,
+                            "owned" to true,
+                        ),
                     )
                 }
             } catch (error: Exception) {
@@ -1219,11 +1323,22 @@ class MainActivity : FlutterFragmentActivity() {
         }.start()
     }
 
-    /// 删除应用缓存目录里的临时文件（备份/恢复收尾）。只允许删 cacheDir 下的文件。
+    /// 删除应用缓存目录里的临时文件（备份/恢复收尾）。只允许删 cacheDir 树下（含子目录，
+    /// 例如文件选择插件自己建的 `cache/<uuid>/`）的文件，顺带清掉空目录。
     private fun deleteCacheFile(path: String, result: MethodChannel.Result) {
         try {
-            val file = File(path)
-            val deleted = file.parentFile == cacheDir && (!file.exists() || file.delete())
+            val cache = cacheDir.canonicalFile
+            val target = File(path).canonicalFile
+            val cachePrefix = cache.path + File.separator
+            val inside = target.path == cache.path || target.path.startsWith(cachePrefix)
+            val parent = target.parentFile
+            val deleted = inside && (!target.exists() || target.delete())
+            if (inside && parent != null && parent.canonicalFile.path != cache.path) {
+                // 只清空壳目录：里面还有别的文件就留着。
+                parent.list()?.isEmpty()?.let { empty ->
+                    if (empty) parent.delete()
+                }
+            }
             result.success(deleted)
         } catch (error: Exception) {
             result.success(false)
@@ -1380,6 +1495,7 @@ class MainActivity : FlutterFragmentActivity() {
         private const val CHANNEL_NAME = "verifin/app"
         private const val REQUEST_WRITE_DOWNLOADS = 4301
         private const val REQUEST_PICK_BACKUP_DIR = 4302
+        private const val REQUEST_PICK_BACKUP_FILE = 4303
         private const val RELEASE_API_URL =
             "https://api.github.com/repos/LumiDesk/verifin/releases/latest"
         // 预发布检查用列表端点：/releases/latest 天然排除预发布，需拉列表自行筛选。
