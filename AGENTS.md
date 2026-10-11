@@ -75,7 +75,8 @@
 - Controller 物理拆为 `veri_fin_controller.dart`、`veri_fin_controller_state.dart`、`veri_fin_controller_ops.dart`。`VeriFinController.create()` 是生产异步创建入口。
 - UI 只调用 Controller 的公共读取/操作 API，不直接访问 repository、SQLite 或 KV；Controller 内部再经 `_persistX` 等路径持久化。
 - 账本、交易、账户、分组、分类、标签、附件、周期规则和预算等核心数据只认 SQLite。Controller 的内存集合是运行时读取源，不存在 KV 回退。
-- `LedgerRepository.saveX` 的对外语义是“落库后该表内容等于传入集合”。生产实现把“读取行快照、计算 `_incrementalReplace` 差分、事务写入、更新快照”整体串行化；单次失败不得阻塞后续写。附件表只存元数据（小行，可整表覆盖，但写路径必须保留未迁移的 `data_url`）与小型预算表仍可整表覆盖；导入、恢复、重置、删账本及跨表删除走 `replaceAllLedgerData` 原子整替，显式删除命令落库成功后才替换 Controller 内存。
+- `LedgerRepository.saveX` 的对外语义是“落库后该表内容等于传入集合”。生产实现把“读取行快照、计算 `_incrementalReplace` 差分、事务写入、更新快照”整体串行化；单次失败不得阻塞后续写。附件表只存元数据（小行，可整表覆盖，**但所有写路径——含 `replaceAllLedgerData` 整账本重建——都必须保留未迁移行的 `data_url`，否则会静默丢掉用户还没转换的图片**）与小型预算表仍可整表覆盖；导入、恢复、重置、删账本及跨表删除走 `replaceAllLedgerData` 原子整替，显式删除命令落库成功后才替换 Controller 内存。
+- 冷启动的附件读取只允许取元数据列（`id/entry_id/sort_order/mime_type/byte_size`），**不得整列取回 `data_url`**：旧库里它可能内嵌几十~上百 MB base64，整列读回即 OOM；旧字节只经 `loadAttachmentDataUrl(id)` 逐条读，迁移完成后由 `dropLegacyAttachmentData()` 去列并 VACUUM。
 - 主题、语言、触感、面板配置、备份设置、AI 配置等偏好类小数据走 `LocalKeyValueStore`。新增偏好优先参考主题/语言的独立 `ValueNotifier`，避免继续扩大全树 `notifyListeners()`。
 - 只维护 Android；保留生产原生实现与测试注入/stub 边界，禁止重新引入浏览器适配。真实存储、图片、文件能力不得落到测试 stub。
 
@@ -217,6 +218,7 @@ dart format .
 - `BackupService` 是字节格式编解码唯一入口；Controller 只接收/产出明文 JSON。未加密备份为 zip（`backup.json` + 独立附件），新版加密备份为流式加密容器（`.verifin`，密文里是同一个 zip），旧版 JSON 信封仍可读取导入；不要在 UI/Controller 复制格式判定。
 - 哪些数据进备份、哪些仅设备本地，必须以当前 `exportDataJson` / `importDataJson`、备份测试和实际字段共同核验，并同步维护 `docs/dev/tech-decisions.md` 的“备份范围”表。应用锁、备份口令、WebDAV 凭证、AI Key 等机密不得进入备份。
 - 改备份字段时同步 `exportDataJson` / `importDataJson`、初始化逻辑、旧备份兼容和 `docs/fixtures/sample-backup.json`，并让测试真实导入样例备份。
+- 恢复外部备份文件必须用应用自带的 SAF 选择器（原生 `pickBackupFile` / `BackupService.chooseBackupFile`），**不要用 `file_selector` 读备份**：它会把整份文件读进内存、经平台通道整包传一份、再复制一份到缓存，GB 级必然 OOM；而且它返回的是普通文件路径，不是 `content://` URI。只删除本应用为本次导入新建的临时副本（`StagedCacheFile.owned`）。
 - 第三方账单各自使用独立 parser，统一产出强类型 `RawImportRecord`；共享领域逻辑只放 `plan_builder.dart`。新增平台要同步枚举、注册表、parser、fixtures 和测试。
 - 文件解析后不得直接落库，必须进入导入预览；预览/编辑全程零落库副作用，确认后才由 Controller 创建实际被引用的账户、分类、标签和交易。
 - 不凭空编造第三方格式；解析规则必须来自真实样例，并覆盖编码、日期、金额符号、退款和账户余额等边界。
