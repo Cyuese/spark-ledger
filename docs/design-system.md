@@ -8,7 +8,7 @@
 
 正式应用仅以 Android 交付，真机调试使用同一套真实页面、Controller、组件和持久化逻辑；独立 diagnostic applicationId 隔离数据。
 
-候选外观由 `UNIFIED_DESIGN_PREVIEW` 控制：CI 的 APK/AAB 构建均显式开启该参数，保证发布包使用已评审布局；无参数开发构建保留旧布局路径用于回归，本地复现手机外观须传同样参数。该参数**只控制布局密度与排版**，与材质无关。候选排版覆盖全部页面：公共页面骨架、标题、卡片默认使用同一套紧凑参数，独立记账编辑页同步 16dp 页边距；图表、表单和弹层的业务专用占位仍按内容保留。
+排版只有一套已评审参数，本地构建与发布包一致：公共页面骨架、标题、卡片默认使用同一套紧凑参数（16dp 有效页边距、56dp Header、16dp 卡片圆角、卡片内边距横向 14dp / 纵向 12dp），独立记账编辑页同步 16dp 页边距；图表、表单和弹层的业务专用占位仍按内容保留。材质与此无关，见下方「表面材质」。
 
 ## 已确认的布局
 
@@ -80,7 +80,6 @@ widget 布局测试使用 **393×852**，补充 360dp、大字号、浅/深色�
 
 - [页面、图表与骨架](ui-guidelines.md)
 - [公共组件目录](dev/components.md)
-- [统一设计预览参数](dev/unified-design-preview.md)
 - [底部导航样式契约](dev/navigation-style-decoupling-design.md)
 - [短反馈系统](dev/feedback-system.md)
 - [Android 开发与工具链](dev/android-development.md)

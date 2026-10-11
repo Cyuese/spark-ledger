@@ -196,13 +196,9 @@ class _AssetsPageState extends State<AssetsPage> {
                   : veriContentSurfaceColor(Theme.of(context).brightness),
               borderRadius: BorderRadius.circular(veriCardRadius),
               border: Border.all(
-                color: veriUnifiedDesignPreview
-                    ? Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.045)
-                    : Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withValues(alpha: 0.10)
-                    : veriLine,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.045),
               ),
               image: !hasAssetCover
                   ? null
@@ -211,15 +207,6 @@ class _AssetsPageState extends State<AssetsPage> {
                       fit: BoxFit.cover,
                       alignment: Alignment.center,
                     ),
-              boxShadow: <BoxShadow>[
-                if (!veriUnifiedDesignPreview &&
-                    Theme.of(context).brightness == Brightness.light)
-                  BoxShadow(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.045),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-              ],
             ),
             child: Stack(
               children: <Widget>[

@@ -614,6 +614,11 @@ void main() {
   testWidgets('merges a category into another via the hierarchical picker', (
     WidgetTester tester,
   ) async {
+    // 锚点菜单挂在被点的分类行下方：手机视口下子菜单完整可见，而 800×600 的
+    // 默认测试视口会把最后一项挤进 ListView 的 cacheExtent（在树里但不可点）。
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(393, 852);
+    addTearDown(tester.view.reset);
     await pumpApp(tester);
 
     await tapBottomTab(tester, 3);

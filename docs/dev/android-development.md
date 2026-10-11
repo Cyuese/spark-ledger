@@ -79,7 +79,7 @@ $env:JAVA_TOOL_OPTIONS='-Djava.io.tmpdir=C:/Dev/java-tmp -Djdk.net.unixdomain.tm
 出现多个设备时必须显式选择 `-s <serial>` / `-d <device-id>`，不得盲装。
 
 ```powershell
-flutter run -d <device-id> --flavor diagnostic --dart-define=UNIFIED_DESIGN_PREVIEW=true
+flutter run -d <device-id> --flavor diagnostic
 ```
 
 默认调试使用独立 applicationId `top.talyra42.verifin.graphicsdiagnostic`，显示名称
@@ -101,7 +101,7 @@ debug 支持 hot reload；最终图形/OCR/插件行为必须另外用 release/R
 
 ## 验收与交付
 
- - 使用与发布包一致的设计参数（`UNIFIED_DESIGN_PREVIEW=true`）；widget 测试保留 393×852 和 360dp 布局检查，
+ - 本地构建即发布外观（只有一套排版参数）；widget 测试保留 393×852 和 360dp 布局检查，
   真机按其实际逻辑尺寸截图，不能把桌面测试当作原生验收。
 - 材质与导航验收：强停冷启、四页切换、底栏点击/页面滑动/取消、菜单与弹层进出、深浅色、前后台。
   卡片、弹层与默认停靠底栏必须保持不透明实色；作为可选底部导航样式的液态玻璃

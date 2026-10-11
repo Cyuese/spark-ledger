@@ -2,7 +2,7 @@
 
 材质规范：卡片、导航、快捷按钮、菜单与弹层一律使用**不透明实色**表面，页面背景为单一纯色；界面目标是高效率、干净直接。唯一例外是底部导航的**可选液态玻璃样式**，其实现必须局部化在 `root_navigation_liquid_glass.dart`、`liquid_glass_surface.dart`、`liquid_glass_lens.dart`、`liquid_glass_material.dart` 与 `shaders/liquid_glass_lens.frag`，不得扩散到卡片、菜单、弹层或页面背景，并在透镜着色器不可用时降级为不含折射的玻璃面板；其余样式与界面禁止引入背景模糊、折射、片元着色器滤镜或整屏渐变。
 
-发布包参数：CI Android 两渠道显式带 `--dart-define=UNIFIED_DESIGN_PREVIEW=true`，保证手机包含已评审外观。该参数**只控制布局密度与排版**，与材质无关；本地与发布包对照时必须使用相同参数，无参数构建保留旧布局用于回归。CI 固定 Flutter 3.47.2；正式包由 CI 构建，须用户明确授权发版，禁止要求清除应用数据。
+发布包外观：已评审的统一排版（16dp 有效页边距、56dp Header、16dp 卡片圆角、14/12 卡片内边距）是当前**唯一**外观，本地构建与发布包一致，不再有需要对齐的构建参数。CI 固定 Flutter 3.47.2；正式包由 CI 构建，须用户明确授权发版，禁止要求清除应用数据。
 
 界面调整必读 [统一设计与交互规范](docs/design-system.md)：集中记录布局、表面材质、设置持久化与验收约定。候选统一排版覆盖全部页面；导航静止必须显示实时文字，预算环禁止内外白线。
 
@@ -38,7 +38,6 @@
 - `docs/dev/refund-design.md`：退款（关联条目、待到账/已到账、多币种冲减）的当前口径。
 - `docs/dev/auto-capture-plan.md`、`docs/dev/i18n-verification.md`、`docs/automation.md`：截图识账与外部意图接口、多语言、自动化接入的当前约定与验收资料。
 - `docs/dev/android-development.md`：真机开发、工具链检测和缺失时自动安装、日志、隔离验收及测试应用清理。
-- `docs/dev/unified-design-preview.md`：`UNIFIED_DESIGN_PREVIEW` 的当前语义与验证方式；默认关闭，用户确认前不得默认开启或移除旧布局路径。
 - `docs/dev/feedback-system.md`：根级轻提示 Host 的调用、时长、操作结果、去重与优先级队列规范；新增或替换短反馈前必读。
 - `docs/dev/home-widgets.md`：桌面小组件（Jetpack Glance Provider、配置 Activity、指标投影与预览）的当前实现与验收。
 - `docs/dev/save-interaction-consistency-design.md`、`docs/dev/navigation-style-decoupling-design.md`：草稿/保存/返回语义与底部导航样式契约。

@@ -24,16 +24,7 @@ void main() {
         await tester.pumpAndSettle();
         for (final tab in [0, 1, 2, 3]) {
           await tapBottomTab(tester, tab);
-          for (final header in tester.widgetList<VeriHeader>(
-            find.byType(VeriHeader),
-          )) {
-            expect(header.compact, isTrue);
-          }
-          for (final card in tester.widgetList<VeriCard>(
-            find.byType(VeriCard),
-          )) {
-            expect(card.compact, isTrue);
-          }
+          expect(find.byType(VeriHeader), findsAtLeastNWidgets(1));
           expect(tester.takeException(), isNull);
         }
         final title = tester.widget<Text>(find.text('账本'));
@@ -59,18 +50,25 @@ void main() {
           );
           await tester.pumpAndSettle();
           expect(find.byType(VeriHeader), findsAtLeastNWidgets(1));
-          for (final header in tester.widgetList<VeriHeader>(
-            find.byType(VeriHeader),
-          )) {
-            expect(header.compact, isTrue);
-          }
           expect(tester.takeException(), isNull, reason: '${page.runtimeType}');
           navigator.pop();
           await tester.pumpAndSettle();
         }
-      }, skip: !veriUnifiedDesignPreview);
+      });
     }
   }
+
+  // 评审外观现在是唯一外观：几何常量与骨架默认值都不再有第二套分支。
+  test('设计令牌只保留评审外观的几何常量', () {
+    expect(veriCardRadius, 16);
+    expect(veriHeaderHeight, 56);
+    expect(veriRadiusMd, 12);
+    expect(veriRadiusLg, 16);
+    expect(
+      const VeriCard(child: SizedBox.shrink()).padding,
+      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    );
+  });
 
   // 大字号 + 英文是最容易撞上裁切的组合：四列宫格宽度固定，英文标签又长。
   testWidgets('大字号下「我的」宫格标签不被裁切', (tester) async {

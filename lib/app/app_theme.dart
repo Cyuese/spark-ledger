@@ -2,33 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'models.dart';
 
-/// 候选设计只通过显式构建参数开启；正常 Android 构建仍使用已发布外观。
-const bool veriUnifiedDesignPreview = bool.fromEnvironment(
-  'UNIFIED_DESIGN_PREVIEW',
-);
-
 // 画布与内容基色：一律实体填色，不模拟玻璃折射或模糊。
-const Color veriPreviewCanvasLight = Color(0xFFF3F5F8);
-const Color veriPreviewCanvasDark = Color(0xFF101318);
-const Color veriPreviewSurfaceDark = Color(0xFF1A1F27);
-const double veriCardRadius = veriUnifiedDesignPreview ? 16 : veriRadiusMd;
-const double veriCompactCardRadius = 16;
-const double veriCompactHeaderHeight = 56;
+const Color veriCanvasLight = Color(0xFFF3F5F8);
+const Color veriCanvasDark = Color(0xFF101318);
 
-/// 卡片圆角半径，与 [VeriCard] 的默认取值同源。
-///
-/// 需要在卡内自行裁圆角（例如样式预览这类整宽内容）时用它，不要在调用点重写
-/// `veriUnifiedDesignPreview ? veriCompactCardRadius : veriCardRadius`。
-double veriCardRadiusFor({bool? compact}) {
-  final useCompact = compact ?? veriUnifiedDesignPreview;
-  return useCompact ? veriCompactCardRadius : veriCardRadius;
-}
+/// 内容卡片（与资产封面）的深色基色。
+const Color veriCardSurfaceDark = Color(0xFF1A1F27);
+
+/// 卡片圆角半径。卡内需要自行裁圆角（例如样式预览这类整宽内容）时用它。
+const double veriCardRadius = 16;
 
 /// 内容卡片与资产封面共用的实体基色。
 Color veriContentSurfaceColor(Brightness brightness) =>
-    brightness == Brightness.dark
-    ? (veriUnifiedDesignPreview ? veriPreviewSurfaceDark : veriSurfaceDark)
-    : veriSurfaceLight;
+    brightness == Brightness.dark ? veriCardSurfaceDark : veriSurfaceLight;
 
 /// 浮动元件（底部导航、快捷按钮、锚点菜单）的实体基色。
 ///
@@ -83,10 +69,10 @@ const Color veriSurfaceDark = Color(0xFF0E1117);
 const Color veriSurfaceAltLight = Color(0xFFF5F8FC);
 const Color veriSurfaceAltDark = Color(0xFF151A22);
 const double veriRadiusSm = 6;
-const double veriRadiusMd = veriUnifiedDesignPreview ? 12 : 8;
-const double veriRadiusLg = veriUnifiedDesignPreview ? 16 : 12;
+const double veriRadiusMd = 12;
+const double veriRadiusLg = 16;
 const double veriRadiusXl = 24;
-const double veriHeaderHeight = veriUnifiedDesignPreview ? 56 : 52;
+const double veriHeaderHeight = 56;
 const double veriPageMaxWidth = 440;
 
 Color _onCustomPrimary(Color color) =>
@@ -115,14 +101,12 @@ ThemeData buildVeriFinTheme(
     primary: useExactPrimary ? seedColor : null,
     onPrimary: useExactPrimary ? _onCustomPrimary(seedColor) : null,
   );
-  final canvas = isDark ? veriPreviewCanvasDark : veriPreviewCanvasLight;
-  final colorScheme = veriUnifiedDesignPreview
-      ? seedScheme.copyWith(
-          surface: canvas,
-          surfaceContainerHighest: seedScheme.surfaceContainerHighest,
-          onSurface: isDark ? const Color(0xFFF0F3F8) : veriInk,
-        )
-      : seedScheme;
+  final canvas = isDark ? veriCanvasDark : veriCanvasLight;
+  final colorScheme = seedScheme.copyWith(
+    surface: canvas,
+    surfaceContainerHighest: seedScheme.surfaceContainerHighest,
+    onSurface: isDark ? const Color(0xFFF0F3F8) : veriInk,
+  );
 
   final baseTheme = ThemeData(
     useMaterial3: true,
@@ -130,11 +114,7 @@ ThemeData buildVeriFinTheme(
     brightness: brightness,
     colorScheme: colorScheme,
     useSystemColors: useSystemColors,
-    scaffoldBackgroundColor: veriUnifiedDesignPreview
-        ? canvas
-        : isDark
-        ? const Color(0xFF0B0F15)
-        : const Color(0xFFF3F7FC),
+    scaffoldBackgroundColor: canvas,
     fontFamily: 'Roboto',
     visualDensity: VisualDensity.compact,
     dividerTheme: DividerThemeData(
@@ -176,17 +156,6 @@ ThemeData buildVeriFinTheme(
         borderRadius: BorderRadius.all(Radius.circular(veriRadiusLg)),
       ),
     ),
-    bottomNavigationBarTheme: BottomNavigationBarThemeData(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: seedScheme.primary,
-      unselectedItemColor: isDark ? Colors.white54 : Colors.black45,
-      backgroundColor: isDark ? veriSurfaceDark : veriSurfaceLight,
-      elevation: 0,
-      selectedIconTheme: const IconThemeData(size: 25),
-      unselectedIconTheme: const IconThemeData(size: 24),
-      showUnselectedLabels: false,
-      showSelectedLabels: false,
-    ),
     chipTheme: ChipThemeData(
       backgroundColor: isDark ? veriSurfaceAltDark : veriSurfaceLight,
       selectedColor: seedScheme.primary.withValues(alpha: 0.14),
@@ -207,11 +176,7 @@ ThemeData buildVeriFinTheme(
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: isDark
-          ? (veriUnifiedDesignPreview
-                ? veriPreviewSurfaceDark
-                : veriSurfaceAltDark)
-          : veriSurfaceLight,
+      fillColor: isDark ? veriCardSurfaceDark : veriSurfaceLight,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(veriRadiusMd),
         borderSide: BorderSide.none,
