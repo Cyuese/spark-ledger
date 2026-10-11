@@ -250,8 +250,8 @@ class _ReportsPageState extends State<ReportsPage> {
                 tab == _tab ? Key('reports_tab_selected_${tab.name}') : null,
             onChanged: (tab) => setState(() => _tab = tab),
           ),
-          // 各 Tab 的面板清单互相独立。「日常 / 年统计 / 自定义」的内容尚未
-          // 全部实现前，没有面板的 Tab 只画 Tab 本体，不渲染占位文案。
+          // 各 Tab 的面板清单互相独立，顺序与开关由面板管理页配置。
+          // 没有面板的 Tab 只画 Tab 本体，不渲染占位文案。
           for (final id in panelIds) ...<Widget>[
             const SizedBox(height: 10),
             panelFor(id),

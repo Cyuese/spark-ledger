@@ -552,8 +552,7 @@ void main() {
             ..remove('homePanels')
             ..remove('reportPanels')
             ..remove('reportDailyPanels')
-            ..remove('reportYearlyPanels')
-            ..remove('reportCustomPanels');
+            ..remove('reportYearlyPanels');
         }),
     );
 

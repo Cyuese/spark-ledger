@@ -503,9 +503,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get panelThisWeekLabel => 'This week';
 
   @override
-  String get recent7Days => 'Last 7 days';
-
-  @override
   String get recentTotalExpense => 'Total spending';
 
   @override
@@ -591,27 +588,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get panelBudgetExecutionDesc =>
       'This month\'s budget, spending and category budget execution';
-
-  @override
-  String get panelCategoryRingLabel => 'Category breakdown';
-
-  @override
-  String get panelCategoryRingDesc =>
-      'Donut chart of this month\'s spending by category';
-
-  @override
-  String get panelCategoryRankLabel => 'Category details';
-
-  @override
-  String get panelCategoryRankDesc =>
-      'This month\'s category ranking and share';
-
-  @override
-  String get panelTagStatsLabel => 'Tag stats';
-
-  @override
-  String get panelTagStatsDesc =>
-      'Spending amount and share per tag this month';
 
   @override
   String get panelDailyTrendLabel => 'Daily trend';
@@ -763,22 +739,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap the plus button to record your first entry.';
 
   @override
-  String trendNet(String amount) {
-    return 'Net $amount';
-  }
-
-  @override
-  String get homeDaysTracked => 'Days tracked';
-
-  @override
-  String daysCount(int count) {
-    return '$count days';
-  }
-
-  @override
-  String get homeDailyAvgExpense => 'Daily average';
-
-  @override
   String dateMonthDay(DateTime date) {
     final intl.DateFormat dateDateFormat = intl.DateFormat('MMM d', localeName);
     final String dateString = dateDateFormat.format(date);
@@ -877,9 +837,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetsActions => 'Asset actions';
 
   @override
-  String get assetsChangeCover => 'Change card background';
-
-  @override
   String assetsAmount(String amount) {
     return 'Total assets $amount';
   }
@@ -908,10 +865,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assetsEmptyAddAction => 'Add your first account';
-
-  @override
-  String get assetsSortHint =>
-      'Drag the handles on the right to reorder sections';
 
   @override
   String hiddenAccountsCount(int count) {
@@ -944,9 +897,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coverClear => 'Clear background image';
 
   @override
-  String get coverPickOnlineTitle => 'Choose online image';
-
-  @override
   String get coverCustomTitle => 'Custom image';
 
   @override
@@ -963,12 +913,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupManage => 'Manage groups';
-
-  @override
-  String get sectionSort => 'Sort sections';
-
-  @override
-  String get sectionSortNeedTwo => 'Need at least 2 sections to sort';
 
   @override
   String get sortLabel => 'Sort';
@@ -1029,9 +973,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountIconLabel => 'Account icon';
 
   @override
-  String get accountSaveTooltip => 'Save account';
-
-  @override
   String get accountTypeLabel => 'Account type';
 
   @override
@@ -1057,9 +998,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cardLast4Follow => 'Follow number';
-
-  @override
-  String get cardCopyTooltip => 'Copy card number';
 
   @override
   String get copiedToClipboard => 'Copied to clipboard';
@@ -1204,9 +1142,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonCurrency => 'Currency';
 
   @override
-  String get currencyCny => 'CNY';
-
-  @override
   String get commonNote => 'Note';
 
   @override
@@ -1245,9 +1180,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountNameEditTitle => 'Edit account name';
-
-  @override
-  String get cardLast4EditTitle => 'Edit last 4 digits';
 
   @override
   String get pickDueDay => 'Choose due day';
@@ -1586,9 +1518,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteEntryTooltip => 'Delete transaction';
 
   @override
-  String get saveEntryTooltip => 'Save transaction';
-
-  @override
   String get amountLabel => 'Amount';
 
   @override
@@ -1603,17 +1532,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reimbursableHint =>
       'Marking moves no money; a refund offsets the net amount once it arrives.';
-
-  @override
-  String get refundLabel => 'Refund / reimbursement';
-
-  @override
-  String refundedAmountLabel(String amount) {
-    return 'Refunded $amount';
-  }
-
-  @override
-  String get refundAmountTitle => 'Refund / reimbursement amount';
 
   @override
   String get refundRecordsTitle => 'Refunds';
@@ -1661,18 +1579,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String refundOverCapNotice(String amount) {
-    return 'Refund can\'t exceed the refundable amount; capped to $amount';
-  }
-
-  @override
   String refundNetLabel(String amount) {
     return 'Net expense $amount';
-  }
-
-  @override
-  String refundSummaryLine(int count, String net) {
-    return '$count refund(s) · net $net';
   }
 
   @override
@@ -1815,12 +1723,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get widgetPeriodBudgetAvailable => 'Budget left this period';
-
-  @override
-  String get widgetPeriodBudgetOverspent => 'Over budget this period';
-
-  @override
   String get budgetOverAmountLabel => 'Over budget';
 
   @override
@@ -1840,9 +1742,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setMonthBudgetTitle => 'Set this month\'s budget';
-
-  @override
-  String get monthBudgetAmountLabel => 'Monthly budget amount';
 
   @override
   String get dailyBudgetTitle => 'Daily budget';
@@ -1866,17 +1765,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setDailyBudgetTitle => 'Set daily budget';
-
-  @override
-  String get dailyBudgetAmountLabel => 'Daily budget amount';
-
-  @override
-  String setCategoryBudgetTitle(String category) {
-    return 'Set $category budget';
-  }
-
-  @override
-  String get categoryBudgetAmountLabel => 'Category budget amount';
 
   @override
   String get budgetHistoryTitle => 'Budget history';
@@ -2065,16 +1953,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pickTimeRange => 'Select time range';
-
-  @override
   String get okLabel => 'OK';
-
-  @override
-  String get customRange => 'Custom';
-
-  @override
-  String get overviewTitle => 'Overview';
 
   @override
   String get monthlyTrendTitle => 'Monthly trend';
@@ -2121,21 +2000,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsSubtitle => 'Budget & stats';
 
   @override
-  String get noCategoryData => 'No category data';
-
-  @override
-  String get noCategoryDesc =>
-      'Expense records will show a category ranking here.';
-
-  @override
   String get thisYearLabel => 'This year';
-
-  @override
-  String get noTagData => 'No tag data';
-
-  @override
-  String get noTagDesc =>
-      'Tag your transactions to see spending summarized by tag.';
 
   @override
   String get overBudgetLabel => 'Over budget';
@@ -2169,11 +2034,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get othersLabel => 'Others';
-
-  @override
-  String tagShareOfExpense(String percent) {
-    return '$percent% of spending';
-  }
 
   @override
   String get bookkeepingDays => 'Days tracked';
@@ -2286,9 +2146,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardAccountNameHint => 'e.g. Cash / Salary card';
 
   @override
-  String get onboardBalanceLabel => 'Current balance (optional)';
-
-  @override
   String get onboardBudgetDesc =>
       'With a monthly budget set, Home and Reports show budget progress to help control spending. Leave blank to skip; you can change it anytime from the budget card on Home.';
 
@@ -2350,9 +2207,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dataAndTools => 'Data & tools';
-
-  @override
-  String get reportShort => 'Reports';
 
   @override
   String get notEnabled => 'Off';
@@ -2595,9 +2449,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get avatarGenerating => 'Generating avatar…';
-
-  @override
-  String get profileDefaultBio => 'Completely free · Own your data';
 
   @override
   String get settingsTitle => 'Settings';
@@ -2868,9 +2719,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get billImportCommonNote =>
       'Transactions are appended to the current ledger; unmatched accounts and categories are created by name. Nothing is deleted.';
-
-  @override
-  String get backupToLocalDir => 'Back up to local folder';
 
   @override
   String get backupDirLabel => 'Backup folder';
@@ -3156,12 +3004,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatClearConfirm => 'Clear';
 
   @override
-  String get aiChatThinking => 'Thinking…';
-
-  @override
-  String get aiChatQuerying => 'Querying…';
-
-  @override
   String get aiChatUnconfiguredHint =>
       'Configure AI first to start asking about your finances';
 
@@ -3224,9 +3066,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiFillAllFields =>
       'Please fill in the request URL, API key and model';
-
-  @override
-  String get aiSettingsSaved => 'Saved';
 
   @override
   String get aiToolModeTitle => 'Tool calling protocol';
@@ -3486,10 +3325,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get captureEntryFailedTitle => 'Recognition failed';
 
   @override
-  String get captureEntryPrivacyNotice =>
-      'Recognition runs on this device and the image is never uploaded; only the recognized text is sent to your configured AI service for parsing.';
-
-  @override
   String get uploadingWebdav => 'Uploading to WebDAV…';
 
   @override
@@ -3630,16 +3465,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String importPreviewSelectedOf(int selected, int total) {
     return 'Importing $selected / $total';
-  }
-
-  @override
-  String importPreviewNewAccounts(int count) {
-    return '$count new account(s)';
-  }
-
-  @override
-  String importPreviewNewCategories(int count) {
-    return '$count new categor(ies)';
   }
 
   @override
@@ -3965,40 +3790,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bioHint => 'Verify identity';
 
   @override
-  String get bioNotRecognized => 'Not recognized; try again';
-
-  @override
-  String get bioRequiredTitle => 'Biometrics required';
-
-  @override
-  String get bioSuccess => 'Verified';
-
-  @override
-  String get bioSetupDescription => 'Enroll biometrics in system settings';
-
-  @override
-  String get bioGoToSettings => 'Go to settings';
-
-  @override
-  String get bioGoToSettingsDesc =>
-      'No biometrics enrolled; add them in system settings';
-
-  @override
-  String get widgetTodayExpense => 'Today\'s spending';
-
-  @override
-  String get widgetBudgetAvailable => 'Budget left this month';
-
-  @override
-  String get widgetRefreshRequired => 'Open app to refresh';
-
-  @override
-  String get widgetBudgetOverspent => 'Over budget this month';
-
-  @override
-  String get widgetNetWorth => 'Total assets';
-
-  @override
   String get widgetGalleryTitle => 'Desktop widgets';
 
   @override
@@ -4009,20 +3800,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get widgetGalleryShort => 'Template preview';
 
   @override
-  String get widgetAddToHome => 'Add to home screen';
-
-  @override
-  String get widgetPinRequested =>
-      'Add request sent — confirm in the system dialog';
-
-  @override
-  String get widgetPinUnsupported =>
-      'This launcher doesn\'t support one-tap add — add it manually as shown below';
-
-  @override
-  String get widgetHowToAddTitle => 'How to add manually';
-
-  @override
   String get widgetHowToAddDesc =>
       'Long-press an empty spot on your home screen → choose Widgets → find Veri Fin → drag the widget you want onto the screen.';
 
@@ -4030,29 +3807,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get widgetQuickEntryName => 'Today\'s spending + quick entry';
 
   @override
-  String get widgetQuickEntryDesc =>
-      'See today\'s spending and tap to add an entry';
-
-  @override
   String get widgetBudgetName => 'Budget left this month';
-
-  @override
-  String get widgetBudgetDesc => 'How much you can still spend this month';
 
   @override
   String get widgetNetWorthName => 'Total assets';
 
   @override
-  String get widgetNetWorthDesc => 'Sum of all visible account balances';
-
-  @override
   String get widgetTrendName => 'Cash flow trend';
-
-  @override
-  String get widgetTrendDesc => 'See how your cash flow changes over time';
-
-  @override
-  String get widgetConfigure => 'Configure';
 
   @override
   String get widgetMetricTodayExpense => 'Today\'s spending';
@@ -4091,49 +3852,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get widgetMetricSavingsRate => 'Savings rate';
 
   @override
-  String get widgetNoChart => 'No chart';
-
-  @override
-  String get widgetChartExpense => 'Spending trend';
-
-  @override
-  String get widgetChartIncome => 'Income trend';
-
-  @override
-  String get widgetChartNet => 'Balance trend';
-
-  @override
-  String get widgetChartBudgetUsage => 'Budget usage';
-
-  @override
-  String get widgetChartNetWorth => 'Net worth trend';
-
-  @override
-  String get widgetRange7d => 'Last 7 days';
-
-  @override
-  String get widgetRange30d => 'Last 30 days';
-
-  @override
-  String get widgetRange90d => 'Last 90 days';
-
-  @override
-  String get widgetRangeCycle => 'Current budget cycle';
-
-  @override
-  String get widgetRangeYear => 'This year';
-
-  @override
-  String get widgetCurrentBook => 'Current book';
-
-  @override
   String get widgetConfigTitle => 'Configure widget';
 
   @override
   String get widgetSaveConfig => 'Save';
-
-  @override
-  String get widgetTemplate => 'Widget template';
 
   @override
   String get widgetBook => 'Book';
@@ -4142,114 +3864,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get widgetPrimaryMetric => 'Primary metric';
 
   @override
-  String get widgetChart => 'Chart';
-
-  @override
-  String get widgetDateRange => 'Date range';
-
-  @override
-  String get widgetHideAmounts => 'Hide amounts, show trend only';
-
-  @override
-  String get widgetConfigSaved => 'Widget configuration saved';
-
-  @override
-  String get myWidgetsTitle => 'My widgets';
-
-  @override
-  String get myWidgetsSubtitle =>
-      'Create and manage your desktop finance cards';
-
-  @override
-  String get widgetCreateNew => 'Create widget';
-
-  @override
-  String get widgetEmpty => 'No saved widgets yet';
-
-  @override
-  String get widgetEmptyHint =>
-      'Tap the plus button to create your first finance widget';
-
-  @override
-  String get widgetTemplatesSection => 'Base templates';
-
-  @override
-  String get widgetTemplateCreate => 'Create from template';
-
-  @override
-  String get widgetEdit => 'Edit';
-
-  @override
-  String get widgetDuplicate => 'Duplicate';
-
-  @override
-  String get widgetDelete => 'Delete';
-
-  @override
-  String get widgetAddSaved => 'Add to home screen';
-
-  @override
-  String get widgetName => 'Widget name';
-
-  @override
-  String get widgetSize => 'Desktop size';
-
-  @override
-  String get widgetBackground => 'Background';
-
-  @override
-  String get widgetThemeBackground => 'Theme background';
-
-  @override
-  String get widgetSolidBackground => 'Solid color';
-
-  @override
-  String get widgetPhotoBackground => 'Local image';
-
-  @override
-  String get widgetPickPhoto => 'Choose image';
-
-  @override
-  String get widgetSaveDesign => 'Save to my widgets';
-
-  @override
-  String get widgetDesignSaved => 'Saved to my widgets';
-
-  @override
-  String get widgetDesignDeleted => 'Widget deleted';
-
-  @override
-  String get widgetDesignNameDefault => 'My finance card';
-
-  @override
   String get widgetPreview => 'Preview';
-
-  @override
-  String get widgetSecondaryMetric => 'Secondary metric';
-
-  @override
-  String get widgetNoSecondaryMetric => 'No secondary metric';
-
-  @override
-  String get widgetTapAction => 'Tap opens';
-
-  @override
-  String get widgetActionApp => 'Open app';
-
-  @override
-  String get widgetActionEntry => 'Quick entry';
-
-  @override
-  String get widgetActionBudget => 'Budget';
-
-  @override
-  String get widgetActionTrend => 'Analytics';
-
-  @override
-  String get widgetActionAssets => 'Assets';
-
-  @override
-  String get widgetActionProfile => 'Me';
 
   @override
   String get reminderNotifBody => 'Don\'t forget to record today\'s spending!';
@@ -4459,14 +4074,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defaultMonthlyBudgetTitle => 'Default monthly budget';
 
   @override
-  String get defaultMonthlyBudgetDesc =>
-      'Applied to every month; adjust individual months as needed';
-
-  @override
   String get setDefaultMonthlyBudgetTitle => 'Set default monthly budget';
-
-  @override
-  String get defaultCategoryBudgetTitle => 'Default category budgets';
 
   @override
   String get defaultCategoryBudgetDesc =>
@@ -4786,9 +4394,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Off by default. When enabled, this transaction\'s rate is saved to the current ledger rate table.';
 
   @override
-  String get entryConversionSummary => 'Amount summary';
-
-  @override
   String get entryConversionSourceRateTable =>
       'Calculated from a local rate. Tap an amount to adjust it.';
 
@@ -4800,10 +4405,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String entryAmountInputTitle(String label, String currency) {
     return 'Enter $label ($currency)';
   }
-
-  @override
-  String get entryCurrencySaveMissing =>
-      'Complete the actual amounts required for this multi-currency transaction first.';
 
   @override
   String get refundAccountAmountLabel => 'Actual account credit';
@@ -4856,9 +4457,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get assetTrendMissingRate =>
       'Historical asset trend needs exchange rates. Add local rates for the affected dates to show it.';
-
-  @override
-  String get widgetRateMissing => 'Rate missing';
 
   @override
   String baseCurrencyAmountLabel(String currency) {
