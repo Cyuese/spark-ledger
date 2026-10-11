@@ -194,6 +194,8 @@ SectionTitle(资产汇总, trailing: 锚点菜单「正资产 / 负资产」)
 - 只渲染 Tab 与 **空内容**；不渲染面板、不渲染面板管理入口、不加任何占位文案或插画。
 - 二者不进 `PanelPageKind` 的实际使用（kind 已预留，等有内容时再填 specs）。
 
+**已实施（2026-10-11）**：年统计已填充三个面板——`year_summary`（复用 `_PeriodSummaryPanel`，窗口换成整年）、`year_trend`（本年 12 个月收入 / 支出双柱）、`ranking`（与月统计共用，按当前 Tab 取整月 / 整年窗口）。仅剩「自定义」仍为空 Tab。
+
 ### 5.7 图表高度 token（建议顺手做）
 
 设计文档 §7.4 的 `chartHeightInline / Card / Detail / Cover` 至今未落地。本次新增 2 个图表面板，建议**最小化**引入 `chartHeightCard` 与 `chartHeightInline`，新代码用 token，旧代码不动。
