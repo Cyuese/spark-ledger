@@ -184,6 +184,10 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   List<Tag> get tags =>
       List<Tag>.unmodifiable(_tags.where((tag) => tag.bookId == _activeBookId));
 
+  /// 某账本的标签（读写跨账本数据的路径用，与 [categoriesForBook] 对称）。
+  List<Tag> tagsForBook(String bookId) =>
+      List<Tag>.unmodifiable(_tags.where((tag) => tag.bookId == bookId));
+
   Tag? tagById(String id) => _tags.where((tag) => tag.id == id).firstOrNull;
 
   /// 某标签在当前账本被多少笔交易使用（分类/标签的笔数口径一律只看当前账本）。
