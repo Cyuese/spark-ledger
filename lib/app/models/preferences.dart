@@ -359,6 +359,8 @@ class PagePanelSpec {
         return l10n.monthlyTrendTitle;
       case 'recent_daily':
         return l10n.panelRecentDailyLabel;
+      case 'asset_summary':
+        return l10n.panelAssetSummaryLabel;
     }
     return id;
   }
@@ -389,6 +391,8 @@ class PagePanelSpec {
         return l10n.panelMonthlyStructureDesc;
       case 'recent_daily':
         return l10n.panelRecentDailyDesc;
+      case 'asset_summary':
+        return l10n.panelAssetSummaryDesc;
     }
     return '';
   }
@@ -416,6 +420,7 @@ const List<PagePanelSpec> reportMonthlyPanelSpecs = <PagePanelSpec>[
 /// 看板其余 Tab 的面板目录。对应 Tab 的内容尚未实现，先留空。
 const List<PagePanelSpec> reportDailyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'recent_daily'),
+  PagePanelSpec(id: 'asset_summary'),
 ];
 const List<PagePanelSpec> reportYearlyPanelSpecs = <PagePanelSpec>[];
 const List<PagePanelSpec> reportCustomPanelSpecs = <PagePanelSpec>[];

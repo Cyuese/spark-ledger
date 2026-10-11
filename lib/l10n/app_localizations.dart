@@ -1082,6 +1082,42 @@ abstract class AppLocalizations {
   /// **'{label}：{amount}'**
   String recentStatLine(String label, String amount);
 
+  /// 看板日常面板:资产汇总卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'资产汇总'**
+  String get panelAssetSummaryLabel;
+
+  /// 看板日常面板:资产汇总卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'按账户占比查看正资产或负资产'**
+  String get panelAssetSummaryDesc;
+
+  /// 资产汇总:只统计余额为正的账户
+  ///
+  /// In zh, this message translates to:
+  /// **'正资产'**
+  String get assetPositive;
+
+  /// 资产汇总:只统计余额为负的账户
+  ///
+  /// In zh, this message translates to:
+  /// **'负资产'**
+  String get assetNegative;
+
+  /// 资产汇总:中心与图例显示金额
+  ///
+  /// In zh, this message translates to:
+  /// **'资产金额'**
+  String get assetSummaryAmount;
+
+  /// 资产汇总:中心与图例显示占比
+  ///
+  /// In zh, this message translates to:
+  /// **'资产占比'**
+  String get assetSummaryShare;
+
   /// 图表气泡等处的收入金额行(与 expenseAmountLabel 对称)
   ///
   /// In zh, this message translates to:

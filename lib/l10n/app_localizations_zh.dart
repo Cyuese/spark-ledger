@@ -509,6 +509,24 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get panelAssetSummaryLabel => '资产汇总';
+
+  @override
+  String get panelAssetSummaryDesc => '按账户占比查看正资产或负资产';
+
+  @override
+  String get assetPositive => '正资产';
+
+  @override
+  String get assetNegative => '负资产';
+
+  @override
+  String get assetSummaryAmount => '资产金额';
+
+  @override
+  String get assetSummaryShare => '资产占比';
+
+  @override
   String incomeAmountLabel(String amount) {
     return '收入 $amount';
   }

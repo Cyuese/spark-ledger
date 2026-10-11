@@ -523,6 +523,25 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get panelAssetSummaryLabel => 'Assets';
+
+  @override
+  String get panelAssetSummaryDesc =>
+      'Positive or negative assets by account share';
+
+  @override
+  String get assetPositive => 'Positive assets';
+
+  @override
+  String get assetNegative => 'Negative assets';
+
+  @override
+  String get assetSummaryAmount => 'Amount';
+
+  @override
+  String get assetSummaryShare => 'Share';
+
+  @override
   String incomeAmountLabel(String amount) {
     return 'Income $amount';
   }
