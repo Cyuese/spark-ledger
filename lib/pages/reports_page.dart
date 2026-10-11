@@ -118,7 +118,7 @@ class _ReportsPageState extends State<ReportsPage> {
               children: <Widget>[
                 SectionTitle(
                   title: l10n.panelDailyTrendLabel,
-                  trailing: formatExpenseAmount(trendExpense),
+                  trailing: _unsignedAmount(trendExpense),
                 ),
                 const SizedBox(height: 16),
                 if (isZeroAmount(trendExpense))
@@ -145,7 +145,7 @@ class _ReportsPageState extends State<ReportsPage> {
                           lines: <ChartTooltipLine>[
                             ChartTooltipLine(
                               text: l10n.expenseAmountLabel(
-                                formatExpenseAmount(trendValues[index]),
+                                _unsignedAmount(trendValues[index]),
                               ),
                             ),
                           ],
@@ -202,7 +202,7 @@ class _ReportsPageState extends State<ReportsPage> {
                         lines: <ChartTooltipLine>[
                           ChartTooltipLine(
                             text: l10n.expenseAmountLabel(
-                              formatExpenseAmount(monthlyValues[index]),
+                              _unsignedAmount(monthlyValues[index]),
                             ),
                           ),
                         ],
@@ -994,7 +994,7 @@ class _BudgetExecutionCard extends StatelessWidget {
                       budget <= 0
                           ? _unsignedAmount(expense)
                           : remaining < 0
-                          ? formatExpenseAmount(remaining.abs())
+                          ? _unsignedAmount(remaining)
                           : formatAmount(remaining),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
