@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:verifin/app/models.dart';
-import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/data/app_database.dart';
 import 'package:verifin/data/ledger_repository.dart';
 import 'package:verifin/local_storage/local_storage.dart';
@@ -46,7 +45,7 @@ void main() {
 
   test('挂载仓储后新增的交易写入 SQLite 并可被新控制器读回', () async {
     final repo = await openRepo();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -56,7 +55,7 @@ void main() {
     expect((await repo.loadEntries()).single.amount, 25);
 
     // 共享同一数据库的新控制器应从库中恢复交易。
-    final reloaded = await VeriFinController.create(
+    final reloaded = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -65,7 +64,7 @@ void main() {
 
   test('退款关联条目（refund_of/settled_at）写入 SQLite 并被新控制器读回', () async {
     final repo = await openRepo();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -104,7 +103,7 @@ void main() {
     );
     await controller.waitForPendingWrites();
 
-    final reloaded = await VeriFinController.create(
+    final reloaded = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -122,7 +121,7 @@ void main() {
 
   test('删除账户与相关交易会原子清理跨账户退款、附件并停用周期规则', () async {
     final repo = await openRepo();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -185,7 +184,7 @@ void main() {
 
     expect(await controller.deleteAccountAndRelatedEntries(cash.id), 1);
 
-    final reloaded = await VeriFinController.create(
+    final reloaded = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -199,7 +198,7 @@ void main() {
 
   test('交易聚合保存会重算退款缓存，并原子持久化交易、退款和附件', () async {
     final repo = await openRepo();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -234,7 +233,7 @@ void main() {
     );
     expect(saved, isTrue);
 
-    final reloaded = await VeriFinController.create(
+    final reloaded = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -248,7 +247,7 @@ void main() {
 
   test('账本/账户/分组写入 SQLite 并被新控制器读回', () async {
     final repo = await openRepo();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -259,7 +258,7 @@ void main() {
     await controller.addAccountGroup('出行');
     await controller.waitForPendingWrites();
 
-    final reloaded = await VeriFinController.create(
+    final reloaded = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -273,7 +272,7 @@ void main() {
 
   test('新增账户后新控制器能读回', () async {
     final repo = await openRepo();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -313,7 +312,7 @@ void main() {
     );
     await controller.waitForPendingWrites();
 
-    final reloaded = await VeriFinController.create(
+    final reloaded = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -329,7 +328,7 @@ void main() {
 
   test('分类与预算写入 SQLite 并被新控制器读回', () async {
     final repo = await openRepo();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -346,7 +345,7 @@ void main() {
     controller.setCategoryBudget(month, petCategory.id, 500);
     await controller.waitForPendingWrites();
 
-    final reloaded = await VeriFinController.create(
+    final reloaded = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -361,20 +360,21 @@ void main() {
   test('导入备份写入 SQLite 并被新控制器读回', () async {
     final rawJson = File('docs/fixtures/sample-backup.json').readAsStringSync();
     final repo = await openRepo();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
     await controller.importDataJson(rawJson);
     await controller.waitForPendingWrites();
 
-    final reloaded = await VeriFinController.create(
+    final reloaded = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
     expect(reloaded.accounts.length, greaterThanOrEqualTo(8));
     expect(reloaded.entries.length, greaterThanOrEqualTo(20));
-    expect(reloaded.categories.any((c) => c.id == 'coffee'), isTrue);
+    // 导入旧备份后分类 id 重新随机生成，按名称断言（见 legacy_book_scope）。
+    expect(reloaded.categories.any((c) => c.label == '咖啡'), isTrue);
     // 导出应能从 SQLite 恢复出的内存状态重建等价备份。
     final reExported = jsonDecode(reloaded.exportDataJson()) as Map;
     expect((reExported['data'] as Map)['entries'], isNotEmpty);
@@ -382,7 +382,7 @@ void main() {
 
   test('重置数据会清空 SQLite', () async {
     final repo = await openRepo();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );
@@ -394,7 +394,7 @@ void main() {
     await controller.waitForPendingWrites();
     expect(await repo.loadEntries(), isEmpty);
 
-    final reloaded = await VeriFinController.create(
+    final reloaded = await createTestController(
       LocalKeyValueStore(),
       repository: repo,
     );

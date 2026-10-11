@@ -87,7 +87,7 @@ class _ImportPreviewPageState extends State<ImportPreviewPage> {
   // 有「未分类」兜底候选（来源缺失分类的交易归入它）时默认展开分类映射区，
   // 提醒用户可把这批交易整体映射到具体分类，而不是导入后才发现一堆「未分类」。
   late bool _categoriesExpanded = widget.plan.newCategories.any(
-    (category) => isUncategorizedCategoryId(category.id),
+    (category) => category.isUncategorized,
   );
   bool _tagsExpanded = false;
   bool _saveImportedRates = false;

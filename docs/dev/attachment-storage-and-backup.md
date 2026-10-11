@@ -244,6 +244,10 @@ Android 侧用 `ContentResolver.openInputStream/openOutputStream` 边读边写�
 
 ### 旧格式兼容
 
+> 本节的「v3」指**备份容器形状**（zip：`backup.json` + `attachments/<id>`）的世代，与 zip 内
+> `backup.json` 的 JSON payload `version` 是两个不同的轴：容器形状仍是这一代、没有变化，payload
+> 版本当前为 **v4**（分类/标签带 `bookId`，见 [tech-decisions.md](tech-decisions.md)）。
+
 | 来源 | 处理方式 |
 | --- | --- |
 | v3 zip（当前主线） | 流式解包到暂存目录 |

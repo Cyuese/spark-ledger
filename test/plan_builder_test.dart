@@ -98,6 +98,7 @@ Category _category(
   EntryType type = EntryType.expense,
   String? parentId,
 }) => Category(
+  bookId: _bookId,
   id: id,
   label: label,
   type: type,
@@ -256,10 +257,11 @@ void main() {
       expect(plan.entries[0].categoryId, isNot(plan.entries[1].categoryId));
     });
 
-    test('分类名为空时兜底到固定 id 的「未分类」候选，不再落空分类（issue #16）', () {
+    test('分类名为空时兜底到「未分类」候选，不再落空分类（issue #16）', () {
       final plan = _build(records: <RawImportRecord>[_record()]);
       final candidate = plan.newCategories.single;
-      expect(candidate.id, uncategorizedCategoryId(EntryType.expense));
+      // 分类 id 随机生成，语义只看 key。
+      expect(candidate.key, uncategorizedCategoryKey(EntryType.expense));
       expect(candidate.label, '未分类');
       expect(plan.entries.single.categoryId, candidate.id);
     });
@@ -308,7 +310,9 @@ void main() {
 
     test('现有标签按归一化名复用、不新建', () {
       final plan = _build(
-        existingTags: <Tag>[const Tag(id: 'tag_work', label: '工作')],
+        existingTags: <Tag>[
+          const Tag(bookId: _bookId, id: 'tag_work', label: '工作'),
+        ],
         records: <RawImportRecord>[
           _record(tags: <String>['工作 ']),
         ],
@@ -645,7 +649,9 @@ void main() {
       final plan = _build(
         existingAccounts: <Account>[_account('acct_cash', '现金')],
         existingCategories: <Category>[_category('cat_food', '餐饮')],
-        existingTags: <Tag>[const Tag(id: 'tag_work', label: '工作')],
+        existingTags: <Tag>[
+          const Tag(bookId: _bookId, id: 'tag_work', label: '工作'),
+        ],
         records: mixedRecords(),
       );
       expect(plan.errors, isEmpty);

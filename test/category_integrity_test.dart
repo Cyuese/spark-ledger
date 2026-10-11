@@ -58,7 +58,7 @@ Future<VeriFinController> _controllerWith({
   await repo.saveCategories(categories);
   await repo.saveEntries(entries);
   await repo.saveRecurringRules(recurringRules);
-  return VeriFinController.create(store, repository: repo);
+  return createTestController(store, repository: repo);
 }
 
 void main() {
@@ -68,6 +68,7 @@ void main() {
     test('parentId 指向不存在的父分类（孤儿）→ 视为自身顶级，不返回幽灵祖先', () {
       final categories = <Category>[
         const Category(
+          bookId: defaultLedgerBookId,
           id: 'orphan',
           label: '餐饮',
           type: EntryType.expense,
@@ -94,6 +95,7 @@ void main() {
   group('分类排行显示层止血', () {
     final categories = <Category>[
       const Category(
+        bookId: defaultLedgerBookId,
         id: 'dining',
         label: '餐饮',
         type: EntryType.expense,
@@ -151,6 +153,7 @@ void main() {
       final controller = await _controllerWith(
         categories: <Category>[
           const Category(
+            bookId: defaultLedgerBookId,
             id: 'orphan',
             label: '零食',
             type: EntryType.expense,
@@ -168,12 +171,14 @@ void main() {
       final controller = await _controllerWith(
         categories: <Category>[
           const Category(
+            bookId: defaultLedgerBookId,
             id: 'dining1',
             label: '餐饮',
             type: EntryType.expense,
             iconCode: 'restaurant',
           ),
           const Category(
+            bookId: defaultLedgerBookId,
             id: 'dining2',
             label: '餐饮',
             type: EntryType.expense,
@@ -201,6 +206,7 @@ void main() {
       final controller = await _controllerWith(
         categories: <Category>[
           const Category(
+            bookId: defaultLedgerBookId,
             id: 'dining',
             label: '餐饮',
             type: EntryType.expense,
@@ -229,6 +235,7 @@ void main() {
       final controller = await _controllerWith(
         categories: <Category>[
           const Category(
+            bookId: defaultLedgerBookId,
             id: 'dining',
             label: '餐饮',
             type: EntryType.expense,
@@ -249,6 +256,7 @@ void main() {
       final controller = await _controllerWith(
         categories: <Category>[
           const Category(
+            bookId: defaultLedgerBookId,
             id: 'transfer_out',
             label: '转出',
             type: EntryType.transfer,
@@ -279,6 +287,7 @@ void main() {
       final controller = await _controllerWith(
         categories: <Category>[
           const Category(
+            bookId: defaultLedgerBookId,
             id: 'dining',
             label: '餐饮',
             type: EntryType.expense,
@@ -303,9 +312,16 @@ void main() {
         ],
       );
       final expense = controller.entries.firstWhere((e) => e.id == 'a');
-      expect(expense.categoryId, uncategorizedCategoryId(EntryType.expense));
+      // 分类 id 随机生成，语义只看 key。
+      expect(
+        controller.categoryById(expense.categoryId).key,
+        uncategorizedCategoryKey(EntryType.expense),
+      );
       final income = controller.entries.firstWhere((e) => e.id == 'b');
-      expect(income.categoryId, uncategorizedCategoryId(EntryType.income));
+      expect(
+        controller.categoryById(income.categoryId).key,
+        uncategorizedCategoryKey(EntryType.income),
+      );
       // 分类正常的交易不动。
       final untouched = controller.entries.firstWhere((e) => e.id == 'c');
       expect(untouched.categoryId, 'dining');
@@ -321,6 +337,7 @@ void main() {
         // 只有支出分类、没有任何转账分类（非空列表避免触发默认分类播种）。
         categories: <Category>[
           const Category(
+            bookId: defaultLedgerBookId,
             id: 'dining',
             label: '餐饮',
             type: EntryType.expense,
@@ -356,6 +373,7 @@ void main() {
       final controller = await _controllerWith(
         categories: <Category>[
           const Category(
+            bookId: defaultLedgerBookId,
             id: 'dining',
             label: '餐饮',
             type: EntryType.expense,

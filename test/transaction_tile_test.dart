@@ -28,12 +28,14 @@ void main() {
   );
   const categories = <Category>[
     Category(
+      bookId: defaultLedgerBookId,
       id: 'food',
       label: '食品餐饮',
       type: EntryType.expense,
       iconCode: 'restaurant',
     ),
     Category(
+      bookId: defaultLedgerBookId,
       id: 'lunch',
       label: '午餐',
       type: EntryType.expense,
@@ -42,9 +44,9 @@ void main() {
     ),
   ];
   const tags = <Tag>[
-    Tag(id: 't1', label: '出差'),
-    Tag(id: 't2', label: '报销'),
-    Tag(id: 't3', label: '客户'),
+    Tag(bookId: defaultLedgerBookId, id: 't1', label: '出差'),
+    Tag(bookId: defaultLedgerBookId, id: 't2', label: '报销'),
+    Tag(bookId: defaultLedgerBookId, id: 't3', label: '客户'),
   ];
 
   LedgerEntry entry({

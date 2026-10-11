@@ -36,6 +36,7 @@ LedgerEntry _expense({
 
 const List<Category> _categories = <Category>[
   Category(
+    bookId: defaultLedgerBookId,
     id: 'dining',
     label: '餐饮',
     type: EntryType.expense,

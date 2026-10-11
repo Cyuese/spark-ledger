@@ -158,18 +158,26 @@ ImportPlan buildImportPlanFromRecords({
     return null;
   }
 
-  // 空分类名兜底：解析到固定 id 的「未分类」（与载入自愈同一约定，见
-  // [uncategorizedCategoryId]）。绝不落空 categoryId——空 id 会被展示层回退成
+  // 空分类名兜底：解析到有「未分类」语义键的分类（与载入自愈同一约定，见
+  // [uncategorizedCategoryKey]）。绝不落空 categoryId——空 id 会被展示层回退成
   // 「已删除分类」占位、且无法筛选与批量处理。
   // 「未分类」作为待新建候选进预览页映射区，用户可整体映射到具体分类或保留。
   String resolveUncategorized(EntryType type) {
-    final id = uncategorizedCategoryId(type);
-    if (workingCategories.any((category) => category.id == id)) {
-      return id;
+    final key = uncategorizedCategoryKey(type);
+    final existing = workingCategories
+        .where((category) => category.bookId == bookId && category.key == key)
+        .firstOrNull;
+    if (existing != null) {
+      return existing.id;
     }
-    final seed = buildUncategorizedCategory(type, english: seedEnglish);
+    final seed = buildUncategorizedCategory(
+      nextId('category'),
+      bookId,
+      type,
+      english: seedEnglish,
+    );
     // 用户手建过同名顶级分类（id 不同）时直接复用，避免建出与唯一索引
-    // (label,type,IFNULL(parent_id,'')) 冲突的重复同名分类。
+    // (book_id,label,type,IFNULL(parent_id,'')) 冲突的重复同名分类。
     final normalized = normalizedCategoryLabel(seed.label);
     final byLabel = workingCategories.firstWhere(
       (category) =>
@@ -178,6 +186,7 @@ ImportPlan buildImportPlanFromRecords({
           normalizedCategoryLabel(category.label) == normalized,
       orElse: () => const Category(
         id: '',
+        bookId: '',
         label: '',
         type: EntryType.expense,
         iconCode: '',
@@ -206,6 +215,7 @@ ImportPlan buildImportPlanFromRecords({
           normalizedCategoryLabel(category.label) == normalized,
       orElse: () => const Category(
         id: '',
+        bookId: '',
         label: '',
         type: EntryType.expense,
         iconCode: '',
@@ -216,6 +226,7 @@ ImportPlan buildImportPlanFromRecords({
     }
     final category = Category(
       id: nextId('category'),
+      bookId: bookId,
       label: name,
       type: type,
       iconCode: 'category',
@@ -260,13 +271,13 @@ ImportPlan buildImportPlanFromRecords({
       }
       final match = workingTags.firstWhere(
         (tag) => normalizedCategoryLabel(tag.label) == normalized,
-        orElse: () => const Tag(id: '', label: ''),
+        orElse: () => const Tag(id: '', bookId: '', label: ''),
       );
       if (match.id.isNotEmpty) {
         ids.add(match.id);
         continue;
       }
-      final tag = Tag(id: nextId('tag'), label: label);
+      final tag = Tag(id: nextId('tag'), bookId: bookId, label: label);
       workingTags.add(tag);
       newTags.add(tag);
       ids.add(tag.id);
@@ -284,6 +295,7 @@ ImportPlan buildImportPlanFromRecords({
         (category) => category.type == EntryType.transfer,
         orElse: () => const Category(
           id: '',
+          bookId: '',
           label: '',
           type: EntryType.transfer,
           iconCode: '',

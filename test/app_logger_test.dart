@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/logging/app_logger.dart';
-import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 
 import 'support/in_memory_ledger_repository.dart';
@@ -58,7 +57,7 @@ void main() {
   test('落库失败触发 onPersistError 并记入日志', () async {
     final store = LocalKeyValueStore();
     final logger = AppLogger(store);
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       store,
       repository: _ThrowingOnBudgetSaveRepository(),
       logger: logger,

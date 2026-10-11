@@ -943,12 +943,16 @@ class SqliteLedgerRepository implements LedgerRepository {
 
   static Map<String, Object?> _tagToRow(Tag t, int index) => <String, Object?>{
     'id': t.id,
+    'book_id': t.bookId,
     'label': t.label,
     'sort_order': index,
   };
 
-  static Tag _tagFromRow(Map<String, Object?> row) =>
-      Tag(id: row['id'] as String, label: row['label'] as String);
+  static Tag _tagFromRow(Map<String, Object?> row) => Tag(
+    id: row['id'] as String,
+    bookId: row['book_id'] as String,
+    label: row['label'] as String,
+  );
 
   /// 附件元数据列。**任何读取路径都不得把它换成 `SELECT *`**：`data_url` 里可能
   /// 还留着旧版内嵌 base64 图片，整列取回会让内存随附件总量增长（Issue 45）。
@@ -1137,19 +1141,23 @@ class SqliteLedgerRepository implements LedgerRepository {
   static Map<String, Object?> _categoryToRow(Category c, int index) =>
       <String, Object?>{
         'id': c.id,
+        'book_id': c.bookId,
         'label': c.label,
         'type': c.type.storageValue,
         'icon_code': c.iconCode,
         'sort_order': index,
         'parent_id': c.parentId,
+        'category_key': c.key,
       };
 
   static Category _categoryFromRow(Map<String, Object?> row) {
     return Category(
       id: row['id'] as String,
+      bookId: row['book_id'] as String,
       label: row['label'] as String,
       type: EntryType.fromStorage(row['type'] as String),
       iconCode: row['icon_code'] as String,
+      key: row['category_key'] as String?,
       parentId: Category.normalizeParentId(row['parent_id'] as String?),
     );
   }

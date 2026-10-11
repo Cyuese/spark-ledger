@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/attachments/attachment_store.dart';
 import 'package:verifin/app/feedback.dart';
+import 'package:verifin/app/logging/app_logger.dart';
+import 'package:verifin/app/models.dart';
 import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/data/ledger_repository.dart';
 import 'package:verifin/l10n/app_localizations.dart';
@@ -40,6 +42,27 @@ void useTestDatabases() {
   });
 }
 
+/// 可复现的测试 id 生成器：分类按**种子顺序**返回历史形态的 id（`dining`、`transport`…），
+/// 用完之后回落到 `<prefix>_<n>`；其它实体沿用「前缀 + 时间戳 + 序号」形态。
+///
+/// 生产环境的分类 id 是随机生成的纯标识（语义看 [Category.key]，见
+/// lib/app/models/category_keys.dart）。既有测试夹具普遍按可读 id
+/// （`categoryId: 'dining'`）引用种子分类，这里注入确定性生成器复现同一形态，
+/// 避免为了 id 形态改写大量与本次改动无关的用例。
+///
+/// **前提**：默认账本总是第一个被播种的账本（`_loadFromRepository` 会把它排在最前），
+/// 所以它拿到这批可读 id；后续新建账本的分类拿到的是回落的 opaque id。
+String Function(String prefix) deterministicTestIds() {
+  var categoryCalls = 0;
+  var seq = 0;
+  return (prefix) {
+    if (prefix == 'category' && categoryCalls < defaultCategoryKeys.length) {
+      return defaultCategoryKeys[categoryCalls++];
+    }
+    return '${prefix}_${DateTime.now().microsecondsSinceEpoch}_${seq++}';
+  };
+}
+
 /// 构造控制器：相同 [store] 复用同一内存仓储；省略/新 store 则得到独立仓储。
 ///
 /// [acceptConsent] 默认为 true，预置隐私政策同意标记，使 widget 测试不被首启动
@@ -67,12 +90,29 @@ Future<VeriFinController> makeController([
     resolvedStore,
     InMemoryAttachmentStore.new,
   );
-  return VeriFinController.create(
+  return createTestController(
     resolvedStore,
     repository: repository,
     attachmentStore: attachmentStore,
   );
 }
+
+/// 直接构造控制器的测试用例统一入口：与 [makeController] 一样注入确定性 id 生成器，
+/// 让按可读 id 引用种子分类的夹具在真实仓储（如 SQLite）用例里同样成立。
+Future<VeriFinController> createTestController(
+  LocalKeyValueStore store, {
+  required LedgerRepository repository,
+  AttachmentStore? attachmentStore,
+  AppLogger? logger,
+  bool systemIsEnglish = false,
+}) => VeriFinController.create(
+  store,
+  repository: repository,
+  attachmentStore: attachmentStore,
+  logger: logger,
+  systemIsEnglish: systemIsEnglish,
+  idFactory: deterministicTestIds(),
+);
 
 /// 构造控制器并 pump 进 [VeriFinApp]，返回控制器（可用于断言）。
 Future<VeriFinController> pumpApp(

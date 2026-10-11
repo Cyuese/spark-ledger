@@ -4,6 +4,7 @@ import 'package:verifin/app/models.dart';
 
 Category _cat(String id, {String? parent, EntryType type = EntryType.expense}) {
   return Category(
+    bookId: defaultLedgerBookId,
     id: id,
     label: id,
     type: type,

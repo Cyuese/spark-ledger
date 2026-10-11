@@ -215,7 +215,7 @@ void main() {
         currencySetupStatus: CurrencySetupStatus.legacyUnconfirmed,
       ),
     ]);
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repository,
     );

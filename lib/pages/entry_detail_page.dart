@@ -75,7 +75,9 @@ enum _EntryConversionTarget { account, toAccount, base }
 class _EntryDetailPageState extends State<EntryDetailPage> {
   late double _amount = widget.initialAmount;
   EntryType _type = EntryType.expense;
-  String _categoryId = 'dining';
+  // 空串 = 尚未选分类；build 时会按当前账本的该类型分类补上首个可用项
+  // （分类属于账本，不存在跨账本通用的固定 id）。
+  String _categoryId = '';
   late String _accountId = widget.initialAccountId ?? '';
   // 「无账户」：只记金额、不计入任何账户余额（仅收支有效，转账必须选账户）。
   bool _noAccount = false;

@@ -82,8 +82,8 @@
 
 ### 领域不变量
 
-- 多账本数据按 `bookId` 隔离；切换账本不能泄漏账户、交易、预算或排序偏好。
-- 分类是邻接表树。创建路径须按 `normalizedCategoryLabel` 查重复用；不得绕过唯一约束。未知或悬空分类不能回退列表首项，载入/导入后的自愈约定见 `docs/dev/tech-decisions.md`。
+- 多账本数据按 `bookId` 隔离；切换账本不能泄漏账户、交易、分类、标签、预算或排序偏好。**分类与标签是账本内数据**（跟着账本走，不是「跟着应用」）：新建账本播种一份内置默认分类，各账本的分类/标签互不共享，改名、换图标、移动、合并、删除、排序与笔数统计都只作用于当前账本。只有软件设置与用户偏好（主题、语言、导航样式、触感、数字键盘布局、AI 配置、提醒、应用锁）才是设备级数据。**读取口（`categories` / `tags` / `categoriesForType` 等）只返回当前账本，而落库语义是整表覆盖——写入路径必须用私有的全量列表（`_persistCategories`、`saveCategoryOrderDraft` 等），绝不能把过滤后的列表回传当作「整表保存」**，否则会静默删掉其它账本的分类/标签。
+- 分类是邻接表树，**id 一律随机生成、不承载语义**：需要识别「某条分类是什么」的地方一律比较 `Category.key`（默认分类/系统分类/「未分类」兜底，见 `lib/app/models/category_keys.dart`），不要解析或硬编码 id。创建路径须按 `normalizedCategoryLabel` 在**同一账本内**查重复用；不得绕过唯一约束。未知或悬空分类不能回退列表首项，载入/导入后的自愈约定见 `docs/dev/tech-decisions.md`。
 - `LedgerEntry.accountId == ''` 表示“无账户”。展示名称用 `accountDisplayName`；不要用会回退首账户的 `accountById` 解释空 id。
 - 账户能力只通过 `supportsCardLast4`、`supportsCredit` 判断，禁止散落硬编码账户类型。`cardLast4Follows` 是持久化字段，不能从卡号和后四位反推用户选择。
 - 转账不计入收支，手续费由转出账户承担；转账分类不得留空。
