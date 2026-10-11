@@ -865,7 +865,6 @@
       "default": "acc_alipay"
     },
     "fabActionMode": "manualTapAiLongPress",
-    "amountForceTwoDecimals": true,
     "currencyFractionStyle": "standard",
     "moneyUnitStyle": "symbol",
     "hideUnitInSingleCurrency": true,

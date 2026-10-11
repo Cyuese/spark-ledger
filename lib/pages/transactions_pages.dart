@@ -244,7 +244,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       controller.entries,
       controller.accounts,
       controller.categories,
-      amount_format.amountForceTwoDecimals,
+      amount_format.currencyFractionStyle,
       Localizations.localeOf(context),
       ...filterSignature,
     ];

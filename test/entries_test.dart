@@ -378,7 +378,7 @@ void main() {
       localePreference: controller2.localePreference,
       navigationStylePreference: controller2.navigationStylePreference,
       hapticsEnabled: controller2.hapticsEnabled,
-      amountForceTwoDecimals: controller2.amountForceTwoDecimals,
+      currencyFractionStyle: controller2.currencyFractionStyle,
       moneyUnitStyle: controller2.moneyUnitStyle,
       hideUnitInSingleCurrency: controller2.hideUnitInSingleCurrency,
       fabActionMode: controller2.fabActionMode,

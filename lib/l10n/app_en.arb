@@ -896,13 +896,13 @@
   "numberPadLayoutPickerTitle": "Choose number pad layout",
   "numberPadLayoutStandard": "Standard layout",
   "numberPadLayoutPhone": "Phone layout",
-  "amountTwoDecimalsLabel": "Two decimal places",
+  "amountTwoDecimalsLabel": "Currency precision",
   "@amountTwoDecimalsLabel": {
-    "description": "Settings toggle: always show amounts with two decimal places"
+    "description": "Settings toggle: use each currency's standard number of decimals"
   },
-  "amountTwoDecimalsDesc": "Always show amounts with two decimals (e.g. 12 becomes 12.00)",
+  "amountTwoDecimalsDesc": "Show each currency at its standard precision (CNY 12.00, JPY 12, KWD 12.000); off trims trailing zeros",
   "@amountTwoDecimalsDesc": {
-    "description": "Subtitle explaining the two-decimals toggle"
+    "description": "Subtitle explaining the currency-precision toggle"
   },
   "moneyUnitStyleLabel": "Currency unit style",
   "moneyUnitStyleSymbol": "Symbol after (100 $)",

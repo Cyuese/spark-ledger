@@ -4544,16 +4544,16 @@ abstract class AppLocalizations {
   /// **'电话布局'**
   String get numberPadLayoutPhone;
 
-  /// Settings toggle: always show amounts with two decimal places
+  /// Settings toggle: use each currency's standard number of decimals
   ///
   /// In zh, this message translates to:
-  /// **'金额保留两位小数'**
+  /// **'金额按货币标准精度'**
   String get amountTwoDecimalsLabel;
 
-  /// Subtitle explaining the two-decimals toggle
+  /// Subtitle explaining the currency-precision toggle
   ///
   /// In zh, this message translates to:
-  /// **'开启后金额始终显示两位小数（如 12 显示为 12.00）'**
+  /// **'开启后按各货币的标准小数位显示（人民币 12.00、日元 12、第纳尔 12.000）；关闭时去掉多余的尾零'**
   String get amountTwoDecimalsDesc;
 
   /// No description provided for @moneyUnitStyleLabel.

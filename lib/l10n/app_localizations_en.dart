@@ -2517,11 +2517,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get numberPadLayoutPhone => 'Phone layout';
 
   @override
-  String get amountTwoDecimalsLabel => 'Two decimal places';
+  String get amountTwoDecimalsLabel => 'Currency precision';
 
   @override
   String get amountTwoDecimalsDesc =>
-      'Always show amounts with two decimals (e.g. 12 becomes 12.00)';
+      'Show each currency at its standard precision (CNY 12.00, JPY 12, KWD 12.000); off trims trailing zeros';
 
   @override
   String get moneyUnitStyleLabel => 'Currency unit style';
