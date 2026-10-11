@@ -1631,8 +1631,9 @@ class _YearHeatmapPanelState extends State<_YearHeatmapPanel> {
           else
             LayoutBuilder(
               builder: (context, constraints) {
-                // 每月一格，窄屏两列、宽一点就四列（与参考图的排布一致）。
-                final columns = constraints.maxWidth < 420 ? 2 : 4;
+                // 每月一格，固定四列排布（与参考图一致）：手机上每格约 10dp，
+                // 换成两列会把整张卡拉得过长。
+                const columns = 4;
                 final months = <Widget>[
                   for (var month = 1; month <= 12; month++)
                     _MonthHeat(
