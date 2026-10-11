@@ -250,17 +250,27 @@ enum NumberPadLayout {
   }
 }
 
-/// 支持面板管理的主页面。
+/// 支持面板管理的页面。看板按统计口径拆成「日常 / 月统计 / 年统计 / 自定义」
+/// 四个 Tab，每个 Tab 各自持有一份面板清单；首页单独一份。
 enum PanelPageKind {
   home,
-  reports;
+  reportsDaily,
+  reportsMonthly,
+  reportsYearly,
+  reportsCustom;
 
   String label(AppLocalizations l10n) {
     switch (this) {
       case PanelPageKind.home:
         return l10n.tabHome;
-      case PanelPageKind.reports:
-        return l10n.tabReports;
+      case PanelPageKind.reportsDaily:
+        return l10n.reportTabDaily;
+      case PanelPageKind.reportsMonthly:
+        return l10n.reportTabMonthly;
+      case PanelPageKind.reportsYearly:
+        return l10n.reportTabYearly;
+      case PanelPageKind.reportsCustom:
+        return l10n.reportTabCustom;
     }
   }
 
@@ -268,8 +278,14 @@ enum PanelPageKind {
     switch (this) {
       case PanelPageKind.home:
         return homePanelSpecs;
-      case PanelPageKind.reports:
-        return reportPanelSpecs;
+      case PanelPageKind.reportsDaily:
+        return reportDailyPanelSpecs;
+      case PanelPageKind.reportsMonthly:
+        return reportMonthlyPanelSpecs;
+      case PanelPageKind.reportsYearly:
+        return reportYearlyPanelSpecs;
+      case PanelPageKind.reportsCustom:
+        return reportCustomPanelSpecs;
     }
   }
 }
@@ -341,7 +357,9 @@ const List<PagePanelSpec> homePanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'calendar'),
 ];
 
-const List<PagePanelSpec> reportPanelSpecs = <PagePanelSpec>[
+/// 看板「月统计」Tab 的面板目录（原 `reportPanelSpecs`，语义不变）。
+/// 顺序即默认渲染顺序，也是新增面板的插入位置依据。
+const List<PagePanelSpec> reportMonthlyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'budget_execution'),
   PagePanelSpec(id: 'category_ring'),
   PagePanelSpec(id: 'category_rank'),
@@ -349,6 +367,11 @@ const List<PagePanelSpec> reportPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'daily_trend'),
   PagePanelSpec(id: 'monthly_structure'),
 ];
+
+/// 看板其余 Tab 的面板目录。对应 Tab 的内容尚未实现，先留空。
+const List<PagePanelSpec> reportDailyPanelSpecs = <PagePanelSpec>[];
+const List<PagePanelSpec> reportYearlyPanelSpecs = <PagePanelSpec>[];
+const List<PagePanelSpec> reportCustomPanelSpecs = <PagePanelSpec>[];
 
 /// 页面面板的开关状态,列表顺序即页面渲染顺序。
 class PagePanelSetting {

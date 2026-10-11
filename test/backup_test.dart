@@ -550,7 +550,10 @@ void main() {
         ..update('data', (value) {
           return Map<String, Object?>.from(value as Map<dynamic, dynamic>)
             ..remove('homePanels')
-            ..remove('reportPanels');
+            ..remove('reportPanels')
+            ..remove('reportDailyPanels')
+            ..remove('reportYearlyPanels')
+            ..remove('reportCustomPanels');
         }),
     );
 
@@ -562,8 +565,8 @@ void main() {
       homePanelSpecs.length,
     );
     expect(
-      target.enabledPanelIds(PanelPageKind.reports).length,
-      reportPanelSpecs.length,
+      target.enabledPanelIds(PanelPageKind.reportsMonthly).length,
+      reportMonthlyPanelSpecs.length,
     );
 
     target.dispose();
@@ -693,13 +696,14 @@ void main() {
       'budget',
       'recent',
     ]);
-    expect(controller.enabledPanelIds(PanelPageKind.reports), <String>[
+    expect(controller.enabledPanelIds(PanelPageKind.reportsMonthly), <String>[
       'category_ring',
       'budget_execution',
       'category_rank',
-      'monthly_structure',
-      // tag_stats 是样例备份没有的新面板，归一化时按默认开启追加到末尾。
+      // tag_stats 是样例备份没有的新面板：归一化按它在目录里的位置插到
+      // category_rank 之后，而不是一律追加到末尾。
       'tag_stats',
+      'monthly_structure',
     ]);
 
     controller.dispose();

@@ -164,6 +164,30 @@ abstract class AppLocalizations {
   /// **'看板'**
   String get tabReports;
 
+  /// 看板顶部口径 Tab:日常(近期滚动统计与资产快照)
+  ///
+  /// In zh, this message translates to:
+  /// **'日常'**
+  String get reportTabDaily;
+
+  /// 看板顶部口径 Tab:按自然月统计
+  ///
+  /// In zh, this message translates to:
+  /// **'月统计'**
+  String get reportTabMonthly;
+
+  /// 看板顶部口径 Tab:按自然年统计
+  ///
+  /// In zh, this message translates to:
+  /// **'年统计'**
+  String get reportTabYearly;
+
+  /// 看板顶部口径 Tab:用户自选时间范围
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义'**
+  String get reportTabCustom;
+
   /// 底部导航:我的
   ///
   /// In zh, this message translates to:

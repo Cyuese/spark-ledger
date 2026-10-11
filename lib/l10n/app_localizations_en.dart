@@ -44,6 +44,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabReports => 'Reports';
 
   @override
+  String get reportTabDaily => 'Recent';
+
+  @override
+  String get reportTabMonthly => 'Monthly';
+
+  @override
+  String get reportTabYearly => 'Yearly';
+
+  @override
+  String get reportTabCustom => 'Custom';
+
+  @override
   String get tabProfile => 'Me';
 
   @override
