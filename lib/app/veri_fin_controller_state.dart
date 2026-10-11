@@ -423,12 +423,15 @@ mixin _ControllerState on ChangeNotifier {
     _dailyBudgets
       ..clear()
       ..addAll(await _repository.loadDailyBudgets());
-    // 一次性分类参照完整性自愈：修复历史/异构备份带入的孤儿 parentId、悬空分类引用、
-    // 重复同名分类（消除「幽灵同名分类」的数据根因）。改动了才落库。
+    // 一次性分类/标签参照完整性自愈：修复历史/异构备份带入的孤儿 parentId、悬空分类
+    // 引用、重复同名分类（消除「幽灵同名分类」的数据根因），并摘掉悬空或跨账本的标签
+    // 引用。改动了才落库。
     // 退款数据自愈：迁移旧标量退款为关联退款条目并重算净额缓存。
     final categoryHealed = _healCategoryData();
     final refundHealed = _syncRefundData();
-    if (categoryHealed || refundHealed || categoriesSeeded) {
+    // 标签自愈放在退款自愈之后：合成的退款条目同样要过一遍引用检查。
+    final tagHealed = _healTagData();
+    if (categoryHealed || tagHealed || refundHealed || categoriesSeeded) {
       _persistAllLedgerData();
     }
     notifyListeners();
@@ -461,6 +464,40 @@ mixin _ControllerState on ChangeNotifier {
       everChanged = true;
     }
     return everChanged;
+  }
+
+  /// 标签参照完整性自愈：交易只能引用**自己账本**里存在的标签。指向别的账本或已删除
+  /// 标签的 id 就地摘掉（旧版标签是全局的，异构/手改数据里可能残留跨账本引用），同时
+  /// 去掉同一标签的重复引用。返回是否有改动（调用方据此决定落库）。**幂等**：数据干净
+  /// 时零改动。
+  ///
+  /// 与分类不同，一条都不剩的 `tagIds` 不需要补位——标签是用户可选的横切归类，没有
+  /// 「未分类」等价物，所以只做摘除。
+  bool _healTagData() {
+    var changed = false;
+    final idsByBook = <String, Set<String>>{};
+    for (final tag in _tags) {
+      (idsByBook[tag.bookId] ??= <String>{}).add(tag.id);
+    }
+    for (var i = 0; i < _entries.length; i++) {
+      final entry = _entries[i];
+      if (entry.tagIds.isEmpty) {
+        continue;
+      }
+      final liveIds = idsByBook[entry.bookId] ?? const <String>{};
+      final next = <String>[];
+      for (final tagId in entry.tagIds) {
+        if (liveIds.contains(tagId) && !next.contains(tagId)) {
+          next.add(tagId);
+        }
+      }
+      if (listEquals(next, entry.tagIds)) {
+        continue;
+      }
+      _entries[i] = entry.copyWith(tagIds: next);
+      changed = true;
+    }
+    return changed;
   }
 
   bool _healCategoryDataOnce() {
