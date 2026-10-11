@@ -363,6 +363,10 @@ class PagePanelSpec {
         return l10n.panelAssetSummaryLabel;
       case 'ranking':
         return l10n.panelRankingLabel;
+      case 'year_summary':
+        return l10n.panelYearSummaryLabel;
+      case 'year_trend':
+        return l10n.panelYearTrendLabel;
     }
     return id;
   }
@@ -397,6 +401,10 @@ class PagePanelSpec {
         return l10n.panelAssetSummaryDesc;
       case 'ranking':
         return l10n.panelRankingDesc;
+      case 'year_summary':
+        return l10n.panelYearSummaryDesc;
+      case 'year_trend':
+        return l10n.panelYearTrendDesc;
     }
     return '';
   }
@@ -424,7 +432,14 @@ const List<PagePanelSpec> reportDailyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'recent_daily'),
   PagePanelSpec(id: 'asset_summary'),
 ];
-const List<PagePanelSpec> reportYearlyPanelSpecs = <PagePanelSpec>[];
+
+/// 看板「年统计」Tab：本年收支摘要、本月度收支双柱、本年排行。
+/// 排行复用月统计的 `ranking` 面板，只是取数窗口换成整年。
+const List<PagePanelSpec> reportYearlyPanelSpecs = <PagePanelSpec>[
+  PagePanelSpec(id: 'year_summary'),
+  PagePanelSpec(id: 'year_trend'),
+  PagePanelSpec(id: 'ranking'),
+];
 const List<PagePanelSpec> reportCustomPanelSpecs = <PagePanelSpec>[];
 
 /// 页面面板的开关状态,列表顺序即页面渲染顺序。

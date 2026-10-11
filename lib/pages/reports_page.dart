@@ -35,18 +35,6 @@ class _ReportsPageState extends State<ReportsPage> {
     final l10n = AppLocalizations.of(context);
     final entries = controller.entries;
     final now = DateTime.now();
-    final monthEntries = entries
-        .where((entry) => isInMonth(entry, now))
-        .toList(growable: false);
-    final monthExpense = sumByType(monthEntries, EntryType.expense);
-    final monthIncome = sumByType(monthEntries, EntryType.income);
-    final monthNet = monthIncome - monthExpense;
-    final monthIncomeCount = monthEntries
-        .where((entry) => entry.type == EntryType.income)
-        .length;
-    final monthExpenseCount = monthEntries
-        .where((entry) => entry.type == EntryType.expense)
-        .length;
     // 预算执行卡按预算周期取数（键月 + 周期窗口）；看板其余统计仍按自然月。
     final budgetKeyMonth = controller.budgetKeyMonthFor(now);
     final budgetEntries = entriesInWindow(
@@ -91,12 +79,16 @@ class _ReportsPageState extends State<ReportsPage> {
         case 'asset_summary':
           return const _AssetSummaryPanel();
         case 'summary':
-          return _MonthSummaryPanel(
-            income: monthIncome,
-            expense: monthExpense,
-            net: monthNet,
-            incomeCount: monthIncomeCount,
-            expenseCount: monthExpenseCount,
+          return _PeriodSummaryPanel(
+            window: monthWindowFor(now),
+            title: l10n.panelSummaryLabel,
+            trailing: l10n.monthNumber(now.month),
+          );
+        case 'year_summary':
+          return _PeriodSummaryPanel(
+            window: _yearWindow(now),
+            title: l10n.panelYearSummaryLabel,
+            trailing: l10n.timeYear,
           );
         case 'budget_execution':
           return _BudgetExecutionCard(
@@ -106,7 +98,13 @@ class _ReportsPageState extends State<ReportsPage> {
             snapshots: categoryBudgetSnapshots,
           );
         case 'ranking':
-          return const _RankingPanel();
+          return _RankingPanel(
+            window: _tab == ReportPeriodTab.yearly
+                ? _yearWindow(now)
+                : monthWindowFor(now),
+          );
+        case 'year_trend':
+          return _YearTrendPanel(year: now.year);
         case 'daily_trend':
           return VeriCard(
             child: Column(
@@ -771,26 +769,39 @@ class _RecentStatLine extends StatelessWidget {
   }
 }
 
-/// 月统计的本月收支摘要面板：本月收入 / 支出 / 结余（各带笔数）。
-/// 原先是页面顶部无法关闭的固定条，现在与其它面板一样可开关、可排序。
-class _MonthSummaryPanel extends StatelessWidget {
-  const _MonthSummaryPanel({
-    required this.income,
-    required this.expense,
-    required this.net,
-    required this.incomeCount,
-    required this.expenseCount,
+/// 整年窗口（1 月 1 日到 12 月 31 日），用于年统计 Tab。
+DateWindow _yearWindow(DateTime now) => DateWindow(
+  start: DateTime(now.year, 1, 1),
+  end: DateTime(now.year, 12, 31),
+);
+
+/// 期间收支摘要面板：窗口内的收入 / 支出 / 结余（各带笔数）。
+/// 月统计用整月窗口、年统计用整年窗口；原先是页面顶部无法关闭的固定条，
+/// 现在与其它面板一样可开关、可排序。
+class _PeriodSummaryPanel extends StatelessWidget {
+  const _PeriodSummaryPanel({
+    required this.window,
+    required this.title,
+    required this.trailing,
   });
 
-  final double income;
-  final double expense;
-  final double net;
-  final int incomeCount;
-  final int expenseCount;
+  final DateWindow window;
+  final String title;
+  final String trailing;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final entries = entriesInWindow(VeriFinScope.of(context).entries, window);
+    final income = sumByType(entries, EntryType.income);
+    final expense = sumByType(entries, EntryType.expense);
+    final net = income - expense;
+    final incomeCount = entries
+        .where((entry) => entry.type == EntryType.income)
+        .length;
+    final expenseCount = entries
+        .where((entry) => entry.type == EntryType.expense)
+        .length;
     final zeroColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.48);
@@ -799,10 +810,7 @@ class _MonthSummaryPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SectionTitle(
-            title: l10n.panelSummaryLabel,
-            trailing: l10n.monthNumber(DateTime.now().month),
-          ),
+          SectionTitle(title: title, trailing: trailing),
           const SizedBox(height: 12),
           Row(
             children: <Widget>[
@@ -1012,7 +1020,10 @@ enum _RankGrouping { topCategory, subCategory, tag }
 /// 月统计的排行卡：分类 / 子分类 / 标签排行，点行可下钻到子分类拆分与交易列表。
 /// 聚合口径来自 `report_analysis.dart` 的纯函数（与 AI 账目查询工具共用）。
 class _RankingPanel extends StatefulWidget {
-  const _RankingPanel();
+  const _RankingPanel({required this.window});
+
+  /// 排行取数窗口：月统计传整月、年统计传整年。
+  final DateWindow window;
 
   @override
   State<_RankingPanel> createState() => _RankingPanelState();
@@ -1029,9 +1040,7 @@ class _RankingPanelState extends State<_RankingPanel> {
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
     final l10n = AppLocalizations.of(context);
-    final entries = controller.entries
-        .where((entry) => isInMonth(entry, DateTime.now()))
-        .toList(growable: false);
+    final entries = entriesInWindow(controller.entries, widget.window);
     final color = _type == EntryType.expense
         ? veriSemantic(context, veriExpense)
         : veriSemantic(context, veriIncome);
@@ -1383,6 +1392,139 @@ class _RankRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(veriRadiusSm),
       child: content,
+    );
+  }
+}
+
+/// 年统计的月度收支卡：本年 12 个月的收入 / 支出双柱对比。
+class _YearTrendPanel extends StatelessWidget {
+  const _YearTrendPanel({required this.year});
+
+  final int year;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final income = monthlyNetValuesForType(
+      controller.entries,
+      year,
+      EntryType.income,
+    );
+    final expense = monthlyNetValuesForType(
+      controller.entries,
+      year,
+      EntryType.expense,
+    );
+    final maxValue = <double>[
+      ...income,
+      ...expense,
+    ].fold<double>(0, (max, value) => value > max ? value : max);
+    final incomeColor = veriSemantic(context, veriIncome);
+    final expenseColor = veriSemantic(context, veriExpense);
+
+    return VeriCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SectionTitle(
+            title: l10n.panelYearTrendLabel,
+            trailing: l10n.thisYearLabel,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: <Widget>[
+              _RankLegendDot(color: incomeColor, label: l10n.entryTypeIncome),
+              const SizedBox(width: 12),
+              _RankLegendDot(color: expenseColor, label: l10n.entryTypeExpense),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (maxValue <= 0)
+            EmptyState(
+              icon: Icons.bar_chart_outlined,
+              title: l10n.noDimData(l10n.entryTypeExpense),
+              description: l10n.noDimDesc(l10n.entryTypeExpense),
+            )
+          else
+            SizedBox(
+              height: 146,
+              child: InteractiveBarChart(
+                series: <VeriBarSeries>[
+                  VeriBarSeries(values: income, color: incomeColor),
+                  VeriBarSeries(values: expense, color: expenseColor),
+                ],
+                xLabels: const <String>[
+                  '1',
+                  '2',
+                  '3',
+                  '4',
+                  '5',
+                  '6',
+                  '7',
+                  '8',
+                  '9',
+                  '10',
+                  '11',
+                  '12',
+                ],
+                yLabels: reportAxisLabels(maxValue),
+                labelColor: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.50),
+                tooltipOf: (index) => ChartTooltip(
+                  title: l10n.monthNumber(index + 1),
+                  lines: <ChartTooltipLine>[
+                    ChartTooltipLine(
+                      text: l10n.incomeAmountLabel(
+                        formatIncomeAmount(income[index]),
+                      ),
+                      color: incomeColor,
+                    ),
+                    ChartTooltipLine(
+                      text: l10n.expenseAmountLabel(
+                        formatExpenseAmount(expense[index]),
+                      ),
+                      color: expenseColor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 图表图例：色点 + 标签。
+class _RankLegendDot extends StatelessWidget {
+  const _RankLegendDot({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.48),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -537,6 +537,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Rank by top category, subcategory or tag; tap a row to drill down';
 
   @override
+  String get panelYearSummaryLabel => 'This year';
+
+  @override
+  String get panelYearSummaryDesc =>
+      'Income, spending and balance for this year';
+
+  @override
+  String get panelYearTrendLabel => 'Monthly income & spending';
+
+  @override
+  String get panelYearTrendDesc =>
+      'Income against spending for each month this year';
+
+  @override
   String get assetPositive => 'Positive assets';
 
   @override
