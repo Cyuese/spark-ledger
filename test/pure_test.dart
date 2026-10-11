@@ -442,18 +442,20 @@ void main() {
     );
   });
 
-  test('formatAmount respects the global two-decimals preference', () {
-    addTearDown(() => amount_format.amountForceTwoDecimals = false);
+  test('formatAmount respects the global fraction-style preference', () {
+    addTearDown(
+      () => amount_format.currencyFractionStyle = CurrencyFractionStyle.compact,
+    );
 
     // 默认：去掉多余尾随零。
-    amount_format.amountForceTwoDecimals = false;
+    amount_format.currencyFractionStyle = CurrencyFractionStyle.compact;
     expect(formatAmount(12), '12');
     expect(formatAmount(12.5), '12.5');
     expect(formatAmount(12.34), '12.34');
     expect(formatAmount(0), '0');
 
-    // 强制两位小数。
-    amount_format.amountForceTwoDecimals = true;
+    // 标准精度。
+    amount_format.currencyFractionStyle = CurrencyFractionStyle.standard;
     expect(formatAmount(12), '12.00');
     expect(formatAmount(12.5), '12.50');
     expect(formatAmount(12.34), '12.34');

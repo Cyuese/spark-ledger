@@ -71,7 +71,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _initialNavigationStyle = _navigationStyle =
         controller.navigationStylePreference;
     _initialHaptics = _haptics = controller.hapticsEnabled;
-    _initialTwoDecimals = _twoDecimals = controller.amountForceTwoDecimals;
+    _initialTwoDecimals = _twoDecimals =
+        controller.currencyFractionStyle == CurrencyFractionStyle.standard;
     _initialMoneyUnitStyle = _moneyUnitStyle = controller.moneyUnitStyle;
     _initialHideSingleCurrencyUnit = _hideSingleCurrencyUnit =
         controller.hideUnitInSingleCurrency;
@@ -697,7 +698,9 @@ class _SettingsPageState extends State<SettingsPage> {
       localePreference: _locale,
       navigationStylePreference: _navigationStyle,
       hapticsEnabled: _haptics,
-      amountForceTwoDecimals: _twoDecimals,
+      currencyFractionStyle: _twoDecimals
+          ? CurrencyFractionStyle.standard
+          : CurrencyFractionStyle.compact,
       moneyUnitStyle: _moneyUnitStyle,
       hideUnitInSingleCurrency: _hideSingleCurrencyUnit,
       fabActionMode: _fabAction,

@@ -306,7 +306,7 @@ void main() {
       ..setHapticsEnabled(false)
       ..setDefaultAccountId('cash-test')
       ..setFabActionMode(FabActionMode.ai)
-      ..setAmountForceTwoDecimals(true)
+      ..setCurrencyFractionStyle(CurrencyFractionStyle.standard)
       ..setMoneyDisplayPreferences(
         unitStyle: MoneyUnitStyle.code,
         hideInSingleCurrency: false,
@@ -337,11 +337,11 @@ void main() {
     expect(target.themeColorPreference.mode, ThemeColorMode.custom);
     expect(target.themeColorPreference.customColorValue, 0xFFB3261E);
     expect(target.hapticsEnabled, isFalse);
-    // 设备偏好也随备份还原：默认账户、记一笔按钮行为、金额两位小数、自动识别开关、
+    // 设备偏好也随备份还原：默认账户、记一笔按钮行为、金额小数位风格、自动识别开关、
     // 首页指标配置。
     expect(target.defaultAccountId, 'cash-test');
     expect(target.fabActionMode, FabActionMode.ai);
-    expect(target.amountForceTwoDecimals, isTrue);
+    expect(target.currencyFractionStyle, CurrencyFractionStyle.standard);
     expect(target.moneyUnitStyle, MoneyUnitStyle.code);
     expect(target.hideUnitInSingleCurrency, isFalse);
     expect(target.autoSuggestEnabled, isFalse);
@@ -625,11 +625,11 @@ void main() {
     expect(crossTransfer.toAccountAmount, 100);
     expect(controller.exchangeRates.single.currencyCode, 'USD');
     expect(controller.exchangeRates.single.rateToBase, 7.2);
-    // 设备偏好：样例含默认账户、记一笔按钮行为、金额两位小数、自动识别开关、首页指标
+    // 设备偏好：样例含默认账户、记一笔按钮行为、金额小数位风格、自动识别开关、首页指标
     // 配置，导入后应读回。
     expect(controller.defaultAccountId, 'acc_alipay');
     expect(controller.fabActionMode, FabActionMode.manualTapAiLongPress);
-    expect(controller.amountForceTwoDecimals, isTrue);
+    expect(controller.currencyFractionStyle, CurrencyFractionStyle.standard);
     expect(controller.autoSuggestEnabled, isFalse);
     expect(controller.homeTrendConfig.title, '本月概览');
     expect(controller.homeTrendConfig.series, HomeTrendSeries.net);

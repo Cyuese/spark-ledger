@@ -55,7 +55,7 @@ void main() {
       localePreference: controller.localePreference,
       navigationStylePreference: NavigationStylePreference.docked,
       hapticsEnabled: controller.hapticsEnabled,
-      amountForceTwoDecimals: controller.amountForceTwoDecimals,
+      currencyFractionStyle: controller.currencyFractionStyle,
       moneyUnitStyle: controller.moneyUnitStyle,
       hideUnitInSingleCurrency: controller.hideUnitInSingleCurrency,
       fabActionMode: controller.fabActionMode,

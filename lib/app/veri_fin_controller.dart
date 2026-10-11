@@ -90,7 +90,11 @@ const String _fabActionKey = 'verifin.fab_action.v1';
 const String _numberPadLayoutKey = 'verifin.number_pad_layout.v1';
 const String _defaultAccountKey = 'verifin.default_account.v1';
 const String _budgetCycleKey = 'verifin.budget_cycle.v1';
-const String _amountFormatKey = 'verifin.amount_format.v1';
+const String _currencyFractionStyleKey = 'verifin.currency_fraction_style.v1';
+
+/// 旧键：存的是 `'true'`/`'false'`（当时叫「强制两位小数」）。升级时只读一次，
+/// 之后只写新键；两个键都加进「初始化清除」清单。
+const String _legacyAmountFormatKey = 'verifin.amount_format.v1';
 const String _moneyUnitStyleKey = 'verifin.money_unit_style.v1';
 const String _hideSingleCurrencyUnitKey =
     'verifin.hide_single_currency_unit.v1';

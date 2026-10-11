@@ -148,7 +148,7 @@ mixin _ControllerState on ChangeNotifier {
   ReminderSettings _reminderSettings = ReminderSettings.disabled;
   FabActionMode _fabActionMode = FabActionMode.manual;
   HomeTrendConfig _homeTrendConfig = HomeTrendConfig.defaults;
-  bool _amountForceTwoDecimals = false;
+  CurrencyFractionStyle _currencyFractionStyle = CurrencyFractionStyle.compact;
   MoneyUnitStyle _moneyUnitStyle = MoneyUnitStyle.symbol;
   bool _hideUnitInSingleCurrency = true;
   bool _autoSuggestEnabled = true;
@@ -251,8 +251,24 @@ mixin _ControllerState on ChangeNotifier {
     );
     _loadDefaultAccounts();
     _loadBudgetCycleStartDays();
-    _amountForceTwoDecimals = _store.read(_amountFormatKey) == 'true';
-    amount_format.amountForceTwoDecimals = _amountForceTwoDecimals;
+    // 新键存枚举名；老用户只有旧键（'true'/'false'，当时叫「强制两位小数」）时
+    // 读一次并立刻迁移到新键，之后只认新键。
+    final storedFractionStyle = _store.read(_currencyFractionStyleKey);
+    if (storedFractionStyle != null) {
+      _currencyFractionStyle = CurrencyFractionStyle.fromStorage(
+        storedFractionStyle,
+      );
+    } else {
+      final legacyAmountFormat = _store.read(_legacyAmountFormatKey);
+      _currencyFractionStyle = legacyAmountFormat == 'true'
+          ? CurrencyFractionStyle.standard
+          : CurrencyFractionStyle.compact;
+      if (legacyAmountFormat != null) {
+        _store.write(_currencyFractionStyleKey, _currencyFractionStyle.name);
+        _store.delete(_legacyAmountFormatKey);
+      }
+    }
+    amount_format.currencyFractionStyle = _currencyFractionStyle;
     _moneyUnitStyle = MoneyUnitStyle.fromStorage(
       _store.read(_moneyUnitStyleKey),
     );

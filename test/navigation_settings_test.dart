@@ -22,7 +22,7 @@ void main() {
     expect(find.text('金额显示'), findsOneWidget);
     for (final item in {
       '主题模式': 'settingsSectionAppearance',
-      '金额保留两位小数': 'settingsSectionAmountDisplay',
+      '金额按货币标准精度': 'settingsSectionAmountDisplay',
       '触感反馈': 'settingsSectionGeneral',
     }.entries) {
       // 设置页比一屏长，分组行要滚到可见之后才被构建出来。

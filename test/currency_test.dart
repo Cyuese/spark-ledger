@@ -97,16 +97,17 @@ void main() {
       expect(formatCurrencyNumber(-0.001, 'CNY'), '0');
     });
 
-    test('全局偏好和旧两位小数入口保持兼容', () {
-      amount_format.amountForceTwoDecimals = true;
+    test('全局小数位风格按货币精度生效', () {
+      amount_format.currencyFractionStyle = CurrencyFractionStyle.standard;
       expect(
         amount_format.currencyFractionStyle,
         CurrencyFractionStyle.standard,
       );
+      // 标准精度按货币 minor unit，不承诺固定两位。
       expect(formatCurrencyNumber(12, 'JPY'), '12');
       expect(formatCurrencyNumber(12, 'KWD'), '12.000');
 
-      amount_format.amountForceTwoDecimals = false;
+      amount_format.currencyFractionStyle = CurrencyFractionStyle.compact;
       expect(
         amount_format.currencyFractionStyle,
         CurrencyFractionStyle.compact,
