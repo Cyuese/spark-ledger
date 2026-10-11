@@ -932,13 +932,13 @@ abstract class AppLocalizations {
   /// **'本周结余'**
   String get metricWeekNet;
 
-  /// No description provided for @metricYearExpense.
+  /// 看板年统计面板:本年支出指标
   ///
   /// In zh, this message translates to:
   /// **'本年支出'**
   String get metricYearExpense;
 
-  /// No description provided for @metricYearIncome.
+  /// 看板年统计面板:本年收入指标
   ///
   /// In zh, this message translates to:
   /// **'本年收入'**
@@ -1117,6 +1117,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'本年收入、支出与结余合计'**
   String get panelYearSummaryDesc;
+
+  /// 看板年统计面板:本年结余指标
+  ///
+  /// In zh, this message translates to:
+  /// **'本年结余'**
+  String get metricYearNet;
 
   /// 看板年统计面板:本年每月收入与支出双柱卡片标题
   ///

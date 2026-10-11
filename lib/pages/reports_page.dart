@@ -83,12 +83,18 @@ class _ReportsPageState extends State<ReportsPage> {
             window: monthWindowFor(now),
             title: l10n.panelSummaryLabel,
             trailing: l10n.monthNumber(now.month),
+            incomeLabel: l10n.metricMonthIncome,
+            expenseLabel: l10n.metricMonthExpense,
+            netLabel: l10n.metricMonthNet,
           );
         case 'year_summary':
           return _PeriodSummaryPanel(
             window: _yearWindow(now),
             title: l10n.panelYearSummaryLabel,
             trailing: l10n.timeYear,
+            incomeLabel: l10n.metricYearIncome,
+            expenseLabel: l10n.metricYearExpense,
+            netLabel: l10n.metricYearNet,
           );
         case 'budget_execution':
           return _BudgetExecutionCard(
@@ -705,13 +711,14 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
               Expanded(
                 child: _RecentStatLine(
                   label: l10n.recentTotalIncome,
-                  value: formatAmount(incomeTotal),
+                  // 与支出侧一致：零值显示「0」，不带小数。
+                  value: formatIncomeAmount(incomeTotal),
                 ),
               ),
               Expanded(
                 child: _RecentStatLine(
                   label: l10n.recentDailyAvgIncome,
-                  value: formatAmount(_dailyAverage(incomeTotal)),
+                  value: formatIncomeAmount(_dailyAverage(incomeTotal)),
                 ),
               ),
             ],
@@ -783,11 +790,17 @@ class _PeriodSummaryPanel extends StatelessWidget {
     required this.window,
     required this.title,
     required this.trailing,
+    required this.incomeLabel,
+    required this.expenseLabel,
+    required this.netLabel,
   });
 
   final DateWindow window;
   final String title;
   final String trailing;
+  final String incomeLabel;
+  final String expenseLabel;
+  final String netLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -813,17 +826,19 @@ class _PeriodSummaryPanel extends StatelessWidget {
           SectionTitle(title: title, trailing: trailing),
           const SizedBox(height: 12),
           Row(
+            // 指标列高度可能不同（收入/支出带笔数），顶部对齐才不会错位。
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               SummaryMetric(
-                label: l10n.metricMonthIncome,
-                value: formatAmount(income),
+                label: incomeLabel,
+                value: formatIncomeAmount(income),
                 color: isZeroAmount(income)
                     ? zeroColor
                     : veriSemantic(context, veriIncome),
                 detail: l10n.entriesCount(incomeCount),
               ),
               SummaryMetric(
-                label: l10n.metricMonthExpense,
+                label: expenseLabel,
                 value: formatExpenseAmount(expense),
                 color: isZeroAmount(expense)
                     ? zeroColor
@@ -831,7 +846,7 @@ class _PeriodSummaryPanel extends StatelessWidget {
                 detail: l10n.entriesCount(expenseCount),
               ),
               SummaryMetric(
-                label: l10n.metricMonthNet,
+                label: netLabel,
                 value: formatSignedAmount(net),
                 color: Theme.of(context).colorScheme.onSurface,
               ),
