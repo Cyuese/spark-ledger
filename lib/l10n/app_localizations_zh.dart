@@ -489,9 +489,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get panelThisWeekLabel => '本周统计';
 
   @override
-  String get recent7Days => '近7日';
-
-  @override
   String get recentTotalExpense => '总支出';
 
   @override
@@ -571,24 +568,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get panelBudgetExecutionDesc => '本月预算、支出与分类预算执行情况';
-
-  @override
-  String get panelCategoryRingLabel => '分类统计';
-
-  @override
-  String get panelCategoryRingDesc => '本月支出分类占比环形图';
-
-  @override
-  String get panelCategoryRankLabel => '分类明细';
-
-  @override
-  String get panelCategoryRankDesc => '本月支出分类排行与占比';
-
-  @override
-  String get panelTagStatsLabel => '标签统计';
-
-  @override
-  String get panelTagStatsDesc => '本月各标签的支出金额与占比';
 
   @override
   String get panelDailyTrendLabel => '日趋势';
@@ -737,22 +716,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeNoEntriesDesc => '点击右下角加号开始第一笔记账。';
 
   @override
-  String trendNet(String amount) {
-    return '结余 $amount';
-  }
-
-  @override
-  String get homeDaysTracked => '记账日';
-
-  @override
-  String daysCount(int count) {
-    return '$count天';
-  }
-
-  @override
-  String get homeDailyAvgExpense => '日均支出';
-
-  @override
   String dateMonthDay(DateTime date) {
     final intl.DateFormat dateDateFormat = intl.DateFormat('M月d日', localeName);
     final String dateString = dateDateFormat.format(date);
@@ -851,9 +814,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetsActions => '资产操作';
 
   @override
-  String get assetsChangeCover => '更换资产卡片背景';
-
-  @override
   String assetsAmount(String amount) {
     return '总资产 $amount';
   }
@@ -881,9 +841,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get assetsEmptyAddAction => '添加第一个账户';
-
-  @override
-  String get assetsSortHint => '拖动右侧手柄调整分组顺序';
 
   @override
   String hiddenAccountsCount(int count) {
@@ -915,9 +872,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get coverClear => '清除背景图片';
 
   @override
-  String get coverPickOnlineTitle => '选择线上图片';
-
-  @override
   String get coverCustomTitle => '自定义图片';
 
   @override
@@ -934,12 +888,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get groupManage => '管理分组';
-
-  @override
-  String get sectionSort => '排序分组';
-
-  @override
-  String get sectionSortNeedTwo => '至少有 2 个分组才能排序';
 
   @override
   String get sortLabel => '排序';
@@ -999,9 +947,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountIconLabel => '账户图标';
 
   @override
-  String get accountSaveTooltip => '保存账户';
-
-  @override
   String get accountTypeLabel => '账户类型';
 
   @override
@@ -1027,9 +972,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cardLast4Follow => '跟随卡号';
-
-  @override
-  String get cardCopyTooltip => '复制卡号';
 
   @override
   String get copiedToClipboard => '已复制到剪贴板';
@@ -1173,9 +1115,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonCurrency => '货币';
 
   @override
-  String get currencyCny => '人民币';
-
-  @override
   String get commonNote => '备注';
 
   @override
@@ -1212,9 +1151,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountNameEditTitle => '编辑账户名称';
-
-  @override
-  String get cardLast4EditTitle => '编辑卡号后四位';
 
   @override
   String get pickDueDay => '选择还款日';
@@ -1545,9 +1481,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteEntryTooltip => '删除交易';
 
   @override
-  String get saveEntryTooltip => '保存交易';
-
-  @override
   String get amountLabel => '金额';
 
   @override
@@ -1561,17 +1494,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reimbursableHint => '标记本身不产生资金变动；收到退款后净额才会相应减少。';
-
-  @override
-  String get refundLabel => '退款 / 报销回款';
-
-  @override
-  String refundedAmountLabel(String amount) {
-    return '已退款 $amount';
-  }
-
-  @override
-  String get refundAmountTitle => '退款 / 报销回款金额';
 
   @override
   String get refundRecordsTitle => '退款';
@@ -1618,18 +1540,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String refundOverCapNotice(String amount) {
-    return '退款不能超过剩余可退，已按上限 $amount 记入';
-  }
-
-  @override
   String refundNetLabel(String amount) {
     return '净支出 $amount';
-  }
-
-  @override
-  String refundSummaryLine(int count, String net) {
-    return '已退 $count 笔 · 净支出 $net';
   }
 
   @override
@@ -1767,12 +1679,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get widgetPeriodBudgetAvailable => '本期可用预算';
-
-  @override
-  String get widgetPeriodBudgetOverspent => '本期已超支';
-
-  @override
   String get budgetOverAmountLabel => '超出预算';
 
   @override
@@ -1792,9 +1698,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get setMonthBudgetTitle => '设置本月预算';
-
-  @override
-  String get monthBudgetAmountLabel => '月份预算金额';
 
   @override
   String get dailyBudgetTitle => '按日预算';
@@ -1818,17 +1721,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get setDailyBudgetTitle => '设置每日预算';
-
-  @override
-  String get dailyBudgetAmountLabel => '每日预算金额';
-
-  @override
-  String setCategoryBudgetTitle(String category) {
-    return '设置$category预算';
-  }
-
-  @override
-  String get categoryBudgetAmountLabel => '分类预算金额';
 
   @override
   String get budgetHistoryTitle => '预算历史';
@@ -2015,16 +1907,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get pickTimeRange => '选择时间范围';
-
-  @override
   String get okLabel => '确定';
-
-  @override
-  String get customRange => '自定义';
-
-  @override
-  String get overviewTitle => '收支概览';
 
   @override
   String get monthlyTrendTitle => '月度趋势';
@@ -2070,19 +1953,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reportsSubtitle => '预算与统计';
 
   @override
-  String get noCategoryData => '暂无分类数据';
-
-  @override
-  String get noCategoryDesc => '保存支出记录后会在这里显示分类排行。';
-
-  @override
   String get thisYearLabel => '今年';
-
-  @override
-  String get noTagData => '暂无标签数据';
-
-  @override
-  String get noTagDesc => '给交易打上标签后，会在这里按标签汇总支出。';
 
   @override
   String get overBudgetLabel => '已超预算';
@@ -2116,11 +1987,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get othersLabel => '其他';
-
-  @override
-  String tagShareOfExpense(String percent) {
-    return '占支出 $percent%';
-  }
 
   @override
   String get bookkeepingDays => '记账天数';
@@ -2230,9 +2096,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardAccountNameHint => '如：现金 / 工资卡';
 
   @override
-  String get onboardBalanceLabel => '当前余额（可选）';
-
-  @override
   String get onboardBudgetDesc =>
       '设定每月预算后，首页与看板会展示预算执行进度，帮你控制支出。留空则暂不设预算，之后可在首页预算卡随时修改。';
 
@@ -2294,9 +2157,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dataAndTools => '数据与工具';
-
-  @override
-  String get reportShort => '报表';
 
   @override
   String get notEnabled => '未开启';
@@ -2537,9 +2397,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get avatarGenerating => '正在生成头像…';
-
-  @override
-  String get profileDefaultBio => '完全免费 · 数据自主';
 
   @override
   String get settingsTitle => '设置';
@@ -2805,9 +2662,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get billImportCommonNote => '交易会追加到当前账本，匹配不到的账户与分类按名称自动新建，不会删除现有数据。';
-
-  @override
-  String get backupToLocalDir => '备份到本地目录';
 
   @override
   String get backupDirLabel => '备份目录';
@@ -3085,12 +2939,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatClearConfirm => '清空';
 
   @override
-  String get aiChatThinking => '思考中…';
-
-  @override
-  String get aiChatQuerying => '正在查询…';
-
-  @override
   String get aiChatUnconfiguredHint => '先配置 AI，才能开始对话查询账目';
 
   @override
@@ -3147,9 +2995,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiFillAllFields => '请填写请求地址、API Key 与模型';
-
-  @override
-  String get aiSettingsSaved => '保存成功';
 
   @override
   String get aiToolModeTitle => '工具调用协议';
@@ -3390,10 +3235,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get captureEntryFailedTitle => '识别失败';
 
   @override
-  String get captureEntryPrivacyNotice =>
-      '识别在本机完成，图片不会上传；识别出的文字会发送到你配置的 AI 服务解析。';
-
-  @override
   String get uploadingWebdav => '正在上传到 WebDAV...';
 
   @override
@@ -3529,16 +3370,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String importPreviewSelectedOf(int selected, int total) {
     return '将导入 $selected / $total 笔';
-  }
-
-  @override
-  String importPreviewNewAccounts(int count) {
-    return '新建账户 $count';
-  }
-
-  @override
-  String importPreviewNewCategories(int count) {
-    return '新建分类 $count';
   }
 
   @override
@@ -3858,39 +3689,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bioHint => '验证身份';
 
   @override
-  String get bioNotRecognized => '未能识别，请重试';
-
-  @override
-  String get bioRequiredTitle => '需要生物识别';
-
-  @override
-  String get bioSuccess => '验证成功';
-
-  @override
-  String get bioSetupDescription => '请在系统设置中录入生物识别';
-
-  @override
-  String get bioGoToSettings => '前往设置';
-
-  @override
-  String get bioGoToSettingsDesc => '尚未录入生物识别，请在系统设置中添加';
-
-  @override
-  String get widgetTodayExpense => '今日支出';
-
-  @override
-  String get widgetBudgetAvailable => '本月可用预算';
-
-  @override
-  String get widgetRefreshRequired => '打开应用刷新';
-
-  @override
-  String get widgetBudgetOverspent => '本月已超支';
-
-  @override
-  String get widgetNetWorth => '资产总额';
-
-  @override
   String get widgetGalleryTitle => '桌面小组件';
 
   @override
@@ -3900,18 +3698,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetGalleryShort => '模板预览';
 
   @override
-  String get widgetAddToHome => '添加到桌面';
-
-  @override
-  String get widgetPinRequested => '已发起添加，请在系统弹窗中确认';
-
-  @override
-  String get widgetPinUnsupported => '当前桌面不支持一键添加，请按下方说明手动添加';
-
-  @override
-  String get widgetHowToAddTitle => '如何手动添加';
-
-  @override
   String get widgetHowToAddDesc =>
       '长按桌面空白处 → 选择「小组件」→ 找到 Veri Fin → 拖动想要的小组件到桌面。';
 
@@ -3919,28 +3705,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetQuickEntryName => '今日支出 + 记一笔';
 
   @override
-  String get widgetQuickEntryDesc => '查看今日支出，点按快速记一笔';
-
-  @override
   String get widgetBudgetName => '本月可用预算';
-
-  @override
-  String get widgetBudgetDesc => '当前账本本月还能花多少';
 
   @override
   String get widgetNetWorthName => '资产总额';
 
   @override
-  String get widgetNetWorthDesc => '所有可见账户余额合计';
-
-  @override
   String get widgetTrendName => '收支趋势';
-
-  @override
-  String get widgetTrendDesc => '查看最近一段时间的收支变化';
-
-  @override
-  String get widgetConfigure => '配置';
 
   @override
   String get widgetMetricTodayExpense => '今日支出';
@@ -3979,49 +3750,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetMetricSavingsRate => '储蓄率';
 
   @override
-  String get widgetNoChart => '不显示图表';
-
-  @override
-  String get widgetChartExpense => '支出趋势';
-
-  @override
-  String get widgetChartIncome => '收入趋势';
-
-  @override
-  String get widgetChartNet => '结余趋势';
-
-  @override
-  String get widgetChartBudgetUsage => '预算消耗';
-
-  @override
-  String get widgetChartNetWorth => '净资产趋势';
-
-  @override
-  String get widgetRange7d => '最近 7 天';
-
-  @override
-  String get widgetRange30d => '最近 30 天';
-
-  @override
-  String get widgetRange90d => '最近 90 天';
-
-  @override
-  String get widgetRangeCycle => '当前预算周期';
-
-  @override
-  String get widgetRangeYear => '本年度';
-
-  @override
-  String get widgetCurrentBook => '当前账本';
-
-  @override
   String get widgetConfigTitle => '配置小组件';
 
   @override
   String get widgetSaveConfig => '保存';
-
-  @override
-  String get widgetTemplate => '组件模板';
 
   @override
   String get widgetBook => '账本';
@@ -4030,112 +3762,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetPrimaryMetric => '主指标';
 
   @override
-  String get widgetChart => '图表';
-
-  @override
-  String get widgetDateRange => '日期范围';
-
-  @override
-  String get widgetHideAmounts => '隐藏金额，仅显示趋势';
-
-  @override
-  String get widgetConfigSaved => '小组件配置已保存';
-
-  @override
-  String get myWidgetsTitle => '我的小组件';
-
-  @override
-  String get myWidgetsSubtitle => '创建并管理你的桌面财务卡片';
-
-  @override
-  String get widgetCreateNew => '创建小组件';
-
-  @override
-  String get widgetEmpty => '还没有保存的小组件';
-
-  @override
-  String get widgetEmptyHint => '点击右上角加号，创建你的第一个财务小组件';
-
-  @override
-  String get widgetTemplatesSection => '基础模板';
-
-  @override
-  String get widgetTemplateCreate => '基于模板创建';
-
-  @override
-  String get widgetEdit => '编辑';
-
-  @override
-  String get widgetDuplicate => '复制';
-
-  @override
-  String get widgetDelete => '删除';
-
-  @override
-  String get widgetAddSaved => '添加到桌面';
-
-  @override
-  String get widgetName => '小组件名称';
-
-  @override
-  String get widgetSize => '桌面尺寸';
-
-  @override
-  String get widgetBackground => '背景';
-
-  @override
-  String get widgetThemeBackground => '主题背景';
-
-  @override
-  String get widgetSolidBackground => '纯色背景';
-
-  @override
-  String get widgetPhotoBackground => '本地图片';
-
-  @override
-  String get widgetPickPhoto => '选择图片';
-
-  @override
-  String get widgetSaveDesign => '保存到我的小组件';
-
-  @override
-  String get widgetDesignSaved => '已保存到我的小组件';
-
-  @override
-  String get widgetDesignDeleted => '小组件已删除';
-
-  @override
-  String get widgetDesignNameDefault => '我的财务卡片';
-
-  @override
   String get widgetPreview => '预览';
-
-  @override
-  String get widgetSecondaryMetric => '辅助指标';
-
-  @override
-  String get widgetNoSecondaryMetric => '不显示辅助指标';
-
-  @override
-  String get widgetTapAction => '点击后打开';
-
-  @override
-  String get widgetActionApp => '打开应用';
-
-  @override
-  String get widgetActionEntry => '快速记账';
-
-  @override
-  String get widgetActionBudget => '预算';
-
-  @override
-  String get widgetActionTrend => '统计分析';
-
-  @override
-  String get widgetActionAssets => '资产';
-
-  @override
-  String get widgetActionProfile => '我的';
 
   @override
   String get reminderNotifBody => '别忘了记录今天的收支～';
@@ -4334,13 +3961,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get defaultMonthlyBudgetTitle => '默认月预算';
 
   @override
-  String get defaultMonthlyBudgetDesc => '每月自动沿用，可在各月单独调整';
-
-  @override
   String get setDefaultMonthlyBudgetTitle => '设置默认月预算';
-
-  @override
-  String get defaultCategoryBudgetTitle => '默认分类预算';
 
   @override
   String get defaultCategoryBudgetDesc => '设一次每月自动沿用；点分类设置默认额度';
@@ -4646,9 +4267,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get entryRememberRateHint => '默认关闭；开启后会把本单折算价保存到当前账本的汇率表。';
 
   @override
-  String get entryConversionSummary => '金额摘要';
-
-  @override
   String get entryConversionSourceRateTable => '已按本地汇率自动换算，可点击金额修改';
 
   @override
@@ -4658,9 +4276,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String entryAmountInputTitle(String label, String currency) {
     return '填写 $label（$currency）';
   }
-
-  @override
-  String get entryCurrencySaveMissing => '请先补齐跨币种交易所需的实际金额';
 
   @override
   String get refundAccountAmountLabel => '账户实际到账';
@@ -4711,9 +4326,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get assetTrendMissingRate => '历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。';
-
-  @override
-  String get widgetRateMissing => '汇率缺失';
 
   @override
   String baseCurrencyAmountLabel(String currency) {

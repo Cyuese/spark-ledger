@@ -438,7 +438,7 @@ List<PagePanelSetting> _defaultPanelSettings(List<PagePanelSpec> specs) {
 /// 面板设置归一化:丢弃目录外的 id 并去重;目录中新增的面板按其在 [specs] 里的
 /// 位置插入（而不是一律追加到末尾,例如摘要卡应当落在首位)并默认开启;
 /// 若结果全部关闭则强制开启第一个,保证页面至少保留一个面板。
-/// 目录为空（对应 Tab 的内容尚未实现）时结果保持为空。
+/// 目录为空时结果保持为空。
 List<PagePanelSetting> _normalizePanelSettings(
   List<PagePanelSetting> stored,
   List<PagePanelSpec> specs,

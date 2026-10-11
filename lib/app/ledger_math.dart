@@ -270,19 +270,6 @@ List<String> sparseLabelsForWindow(
       .toList();
 }
 
-List<double> dailyExpenseValues(Iterable<LedgerEntry> entries, DateTime now) {
-  final days = DateUtils.getDaysInMonth(now.year, now.month);
-  final values = List<double>.filled(days, 0);
-  for (final entry in entries) {
-    if (entry.type == EntryType.expense &&
-        entry.occurredAt.year == now.year &&
-        entry.occurredAt.month == now.month) {
-      values[entry.occurredAt.day - 1] += entry.netBaseAmount;
-    }
-  }
-  return values;
-}
-
 /// 指定日期当天的支出净额合计（用于桌面小组件「今日支出」）。
 double dayExpenseTotal(Iterable<LedgerEntry> entries, DateTime day) {
   return entries

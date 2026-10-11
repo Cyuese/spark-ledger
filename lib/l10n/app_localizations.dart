@@ -1046,12 +1046,6 @@ abstract class AppLocalizations {
   /// **'本周统计'**
   String get panelThisWeekLabel;
 
-  /// 近 7 日统计面板的时间范围切换项
-  ///
-  /// In zh, this message translates to:
-  /// **'近7日'**
-  String get recent7Days;
-
   /// 近 7 日统计面板:总支出
   ///
   /// In zh, this message translates to:
@@ -1201,42 +1195,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'本月预算、支出与分类预算执行情况'**
   String get panelBudgetExecutionDesc;
-
-  /// No description provided for @panelCategoryRingLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'分类统计'**
-  String get panelCategoryRingLabel;
-
-  /// No description provided for @panelCategoryRingDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'本月支出分类占比环形图'**
-  String get panelCategoryRingDesc;
-
-  /// No description provided for @panelCategoryRankLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'分类明细'**
-  String get panelCategoryRankLabel;
-
-  /// No description provided for @panelCategoryRankDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'本月支出分类排行与占比'**
-  String get panelCategoryRankDesc;
-
-  /// No description provided for @panelTagStatsLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'标签统计'**
-  String get panelTagStatsLabel;
-
-  /// No description provided for @panelTagStatsDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'本月各标签的支出金额与占比'**
-  String get panelTagStatsDesc;
 
   /// No description provided for @panelDailyTrendLabel.
   ///
@@ -1514,30 +1472,6 @@ abstract class AppLocalizations {
   /// **'点击右下角加号开始第一笔记账。'**
   String get homeNoEntriesDesc;
 
-  /// No description provided for @trendNet.
-  ///
-  /// In zh, this message translates to:
-  /// **'结余 {amount}'**
-  String trendNet(String amount);
-
-  /// No description provided for @homeDaysTracked.
-  ///
-  /// In zh, this message translates to:
-  /// **'记账日'**
-  String get homeDaysTracked;
-
-  /// No description provided for @daysCount.
-  ///
-  /// In zh, this message translates to:
-  /// **'{count}天'**
-  String daysCount(int count);
-
-  /// No description provided for @homeDailyAvgExpense.
-  ///
-  /// In zh, this message translates to:
-  /// **'日均支出'**
-  String get homeDailyAvgExpense;
-
   /// 图表气泡等处的「几月几日」短日期
   ///
   /// In zh, this message translates to:
@@ -1694,12 +1628,6 @@ abstract class AppLocalizations {
   /// **'资产操作'**
   String get assetsActions;
 
-  /// No description provided for @assetsChangeCover.
-  ///
-  /// In zh, this message translates to:
-  /// **'更换资产卡片背景'**
-  String get assetsChangeCover;
-
   /// No description provided for @assetsAmount.
   ///
   /// In zh, this message translates to:
@@ -1741,12 +1669,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'添加第一个账户'**
   String get assetsEmptyAddAction;
-
-  /// No description provided for @assetsSortHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'拖动右侧手柄调整分组顺序'**
-  String get assetsSortHint;
 
   /// No description provided for @hiddenAccountsCount.
   ///
@@ -1802,12 +1724,6 @@ abstract class AppLocalizations {
   /// **'清除背景图片'**
   String get coverClear;
 
-  /// No description provided for @coverPickOnlineTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'选择线上图片'**
-  String get coverPickOnlineTitle;
-
   /// No description provided for @coverCustomTitle.
   ///
   /// In zh, this message translates to:
@@ -1843,18 +1759,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'管理分组'**
   String get groupManage;
-
-  /// No description provided for @sectionSort.
-  ///
-  /// In zh, this message translates to:
-  /// **'排序分组'**
-  String get sectionSort;
-
-  /// No description provided for @sectionSortNeedTwo.
-  ///
-  /// In zh, this message translates to:
-  /// **'至少有 2 个分组才能排序'**
-  String get sectionSortNeedTwo;
 
   /// No description provided for @sortLabel.
   ///
@@ -1958,12 +1862,6 @@ abstract class AppLocalizations {
   /// **'账户图标'**
   String get accountIconLabel;
 
-  /// No description provided for @accountSaveTooltip.
-  ///
-  /// In zh, this message translates to:
-  /// **'保存账户'**
-  String get accountSaveTooltip;
-
   /// No description provided for @accountTypeLabel.
   ///
   /// In zh, this message translates to:
@@ -2017,12 +1915,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'跟随卡号'**
   String get cardLast4Follow;
-
-  /// No description provided for @cardCopyTooltip.
-  ///
-  /// In zh, this message translates to:
-  /// **'复制卡号'**
-  String get cardCopyTooltip;
 
   /// No description provided for @copiedToClipboard.
   ///
@@ -2294,12 +2186,6 @@ abstract class AppLocalizations {
   /// **'货币'**
   String get commonCurrency;
 
-  /// No description provided for @currencyCny.
-  ///
-  /// In zh, this message translates to:
-  /// **'人民币'**
-  String get currencyCny;
-
   /// No description provided for @commonNote.
   ///
   /// In zh, this message translates to:
@@ -2371,12 +2257,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'编辑账户名称'**
   String get accountNameEditTitle;
-
-  /// No description provided for @cardLast4EditTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'编辑卡号后四位'**
-  String get cardLast4EditTitle;
 
   /// No description provided for @pickDueDay.
   ///
@@ -2972,12 +2852,6 @@ abstract class AppLocalizations {
   /// **'删除交易'**
   String get deleteEntryTooltip;
 
-  /// No description provided for @saveEntryTooltip.
-  ///
-  /// In zh, this message translates to:
-  /// **'保存交易'**
-  String get saveEntryTooltip;
-
   /// No description provided for @amountLabel.
   ///
   /// In zh, this message translates to:
@@ -3007,24 +2881,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'标记本身不产生资金变动；收到退款后净额才会相应减少。'**
   String get reimbursableHint;
-
-  /// No description provided for @refundLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'退款 / 报销回款'**
-  String get refundLabel;
-
-  /// No description provided for @refundedAmountLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'已退款 {amount}'**
-  String refundedAmountLabel(String amount);
-
-  /// No description provided for @refundAmountTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'退款 / 报销回款金额'**
-  String get refundAmountTitle;
 
   /// No description provided for @refundRecordsTitle.
   ///
@@ -3110,23 +2966,11 @@ abstract class AppLocalizations {
   /// **'剩余可退 {amount}'**
   String refundRemainingLabel(String amount);
 
-  /// No description provided for @refundOverCapNotice.
-  ///
-  /// In zh, this message translates to:
-  /// **'退款不能超过剩余可退，已按上限 {amount} 记入'**
-  String refundOverCapNotice(String amount);
-
   /// No description provided for @refundNetLabel.
   ///
   /// In zh, this message translates to:
   /// **'净支出 {amount}'**
   String refundNetLabel(String amount);
-
-  /// No description provided for @refundSummaryLine.
-  ///
-  /// In zh, this message translates to:
-  /// **'已退 {count} 笔 · 净支出 {net}'**
-  String refundSummaryLine(int count, String net);
 
   /// No description provided for @refundPendingTotal.
   ///
@@ -3344,18 +3188,6 @@ abstract class AppLocalizations {
   /// **'比上期少 {amount}'**
   String deltaLessVsLastPeriod(String amount);
 
-  /// No description provided for @widgetPeriodBudgetAvailable.
-  ///
-  /// In zh, this message translates to:
-  /// **'本期可用预算'**
-  String get widgetPeriodBudgetAvailable;
-
-  /// No description provided for @widgetPeriodBudgetOverspent.
-  ///
-  /// In zh, this message translates to:
-  /// **'本期已超支'**
-  String get widgetPeriodBudgetOverspent;
-
   /// No description provided for @budgetOverAmountLabel.
   ///
   /// In zh, this message translates to:
@@ -3398,12 +3230,6 @@ abstract class AppLocalizations {
   /// **'设置本月预算'**
   String get setMonthBudgetTitle;
 
-  /// No description provided for @monthBudgetAmountLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'月份预算金额'**
-  String get monthBudgetAmountLabel;
-
   /// No description provided for @dailyBudgetTitle.
   ///
   /// In zh, this message translates to:
@@ -3445,24 +3271,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'设置每日预算'**
   String get setDailyBudgetTitle;
-
-  /// No description provided for @dailyBudgetAmountLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'每日预算金额'**
-  String get dailyBudgetAmountLabel;
-
-  /// No description provided for @setCategoryBudgetTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'设置{category}预算'**
-  String setCategoryBudgetTitle(String category);
-
-  /// No description provided for @categoryBudgetAmountLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'分类预算金额'**
-  String get categoryBudgetAmountLabel;
 
   /// No description provided for @budgetHistoryTitle.
   ///
@@ -3740,29 +3548,11 @@ abstract class AppLocalizations {
   /// **'降低 {points} 个点'**
   String usageDown(String points);
 
-  /// No description provided for @pickTimeRange.
-  ///
-  /// In zh, this message translates to:
-  /// **'选择时间范围'**
-  String get pickTimeRange;
-
   /// No description provided for @okLabel.
   ///
   /// In zh, this message translates to:
   /// **'确定'**
   String get okLabel;
-
-  /// No description provided for @customRange.
-  ///
-  /// In zh, this message translates to:
-  /// **'自定义'**
-  String get customRange;
-
-  /// No description provided for @overviewTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'收支概览'**
-  String get overviewTitle;
 
   /// No description provided for @monthlyTrendTitle.
   ///
@@ -3830,35 +3620,11 @@ abstract class AppLocalizations {
   /// **'预算与统计'**
   String get reportsSubtitle;
 
-  /// No description provided for @noCategoryData.
-  ///
-  /// In zh, this message translates to:
-  /// **'暂无分类数据'**
-  String get noCategoryData;
-
-  /// No description provided for @noCategoryDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'保存支出记录后会在这里显示分类排行。'**
-  String get noCategoryDesc;
-
   /// No description provided for @thisYearLabel.
   ///
   /// In zh, this message translates to:
   /// **'今年'**
   String get thisYearLabel;
-
-  /// No description provided for @noTagData.
-  ///
-  /// In zh, this message translates to:
-  /// **'暂无标签数据'**
-  String get noTagData;
-
-  /// No description provided for @noTagDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'给交易打上标签后，会在这里按标签汇总支出。'**
-  String get noTagDesc;
 
   /// No description provided for @overBudgetLabel.
   ///
@@ -3913,12 +3679,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'其他'**
   String get othersLabel;
-
-  /// No description provided for @tagShareOfExpense.
-  ///
-  /// In zh, this message translates to:
-  /// **'占支出 {percent}%'**
-  String tagShareOfExpense(String percent);
 
   /// No description provided for @bookkeepingDays.
   ///
@@ -4118,12 +3878,6 @@ abstract class AppLocalizations {
   /// **'如：现金 / 工资卡'**
   String get onboardAccountNameHint;
 
-  /// No description provided for @onboardBalanceLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'当前余额（可选）'**
-  String get onboardBalanceLabel;
-
   /// No description provided for @onboardBudgetDesc.
   ///
   /// In zh, this message translates to:
@@ -4237,12 +3991,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'数据与工具'**
   String get dataAndTools;
-
-  /// No description provided for @reportShort.
-  ///
-  /// In zh, this message translates to:
-  /// **'报表'**
-  String get reportShort;
 
   /// No description provided for @notEnabled.
   ///
@@ -4663,12 +4411,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'正在生成头像…'**
   String get avatarGenerating;
-
-  /// No description provided for @profileDefaultBio.
-  ///
-  /// In zh, this message translates to:
-  /// **'完全免费 · 数据自主'**
-  String get profileDefaultBio;
 
   /// No description provided for @settingsTitle.
   ///
@@ -5167,12 +4909,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'交易会追加到当前账本，匹配不到的账户与分类按名称自动新建，不会删除现有数据。'**
   String get billImportCommonNote;
-
-  /// No description provided for @backupToLocalDir.
-  ///
-  /// In zh, this message translates to:
-  /// **'备份到本地目录'**
-  String get backupToLocalDir;
 
   /// No description provided for @backupDirLabel.
   ///
@@ -5690,18 +5426,6 @@ abstract class AppLocalizations {
   /// **'清空'**
   String get aiChatClearConfirm;
 
-  /// No description provided for @aiChatThinking.
-  ///
-  /// In zh, this message translates to:
-  /// **'思考中…'**
-  String get aiChatThinking;
-
-  /// No description provided for @aiChatQuerying.
-  ///
-  /// In zh, this message translates to:
-  /// **'正在查询…'**
-  String get aiChatQuerying;
-
   /// No description provided for @aiChatUnconfiguredHint.
   ///
   /// In zh, this message translates to:
@@ -5815,12 +5539,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'请填写请求地址、API Key 与模型'**
   String get aiFillAllFields;
-
-  /// No description provided for @aiSettingsSaved.
-  ///
-  /// In zh, this message translates to:
-  /// **'保存成功'**
-  String get aiSettingsSaved;
 
   /// No description provided for @aiToolModeTitle.
   ///
@@ -6278,12 +5996,6 @@ abstract class AppLocalizations {
   /// **'识别失败'**
   String get captureEntryFailedTitle;
 
-  /// No description provided for @captureEntryPrivacyNotice.
-  ///
-  /// In zh, this message translates to:
-  /// **'识别在本机完成，图片不会上传；识别出的文字会发送到你配置的 AI 服务解析。'**
-  String get captureEntryPrivacyNotice;
-
   /// No description provided for @uploadingWebdav.
   ///
   /// In zh, this message translates to:
@@ -6499,18 +6211,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'将导入 {selected} / {total} 笔'**
   String importPreviewSelectedOf(int selected, int total);
-
-  /// No description provided for @importPreviewNewAccounts.
-  ///
-  /// In zh, this message translates to:
-  /// **'新建账户 {count}'**
-  String importPreviewNewAccounts(int count);
-
-  /// No description provided for @importPreviewNewCategories.
-  ///
-  /// In zh, this message translates to:
-  /// **'新建分类 {count}'**
-  String importPreviewNewCategories(int count);
 
   /// No description provided for @importPreviewSkipped.
   ///
@@ -7088,72 +6788,6 @@ abstract class AppLocalizations {
   /// **'验证身份'**
   String get bioHint;
 
-  /// No description provided for @bioNotRecognized.
-  ///
-  /// In zh, this message translates to:
-  /// **'未能识别，请重试'**
-  String get bioNotRecognized;
-
-  /// No description provided for @bioRequiredTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'需要生物识别'**
-  String get bioRequiredTitle;
-
-  /// No description provided for @bioSuccess.
-  ///
-  /// In zh, this message translates to:
-  /// **'验证成功'**
-  String get bioSuccess;
-
-  /// No description provided for @bioSetupDescription.
-  ///
-  /// In zh, this message translates to:
-  /// **'请在系统设置中录入生物识别'**
-  String get bioSetupDescription;
-
-  /// No description provided for @bioGoToSettings.
-  ///
-  /// In zh, this message translates to:
-  /// **'前往设置'**
-  String get bioGoToSettings;
-
-  /// No description provided for @bioGoToSettingsDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'尚未录入生物识别，请在系统设置中添加'**
-  String get bioGoToSettingsDesc;
-
-  /// No description provided for @widgetTodayExpense.
-  ///
-  /// In zh, this message translates to:
-  /// **'今日支出'**
-  String get widgetTodayExpense;
-
-  /// No description provided for @widgetBudgetAvailable.
-  ///
-  /// In zh, this message translates to:
-  /// **'本月可用预算'**
-  String get widgetBudgetAvailable;
-
-  /// No description provided for @widgetRefreshRequired.
-  ///
-  /// In zh, this message translates to:
-  /// **'打开应用刷新'**
-  String get widgetRefreshRequired;
-
-  /// No description provided for @widgetBudgetOverspent.
-  ///
-  /// In zh, this message translates to:
-  /// **'本月已超支'**
-  String get widgetBudgetOverspent;
-
-  /// No description provided for @widgetNetWorth.
-  ///
-  /// In zh, this message translates to:
-  /// **'资产总额'**
-  String get widgetNetWorth;
-
   /// No description provided for @widgetGalleryTitle.
   ///
   /// In zh, this message translates to:
@@ -7172,30 +6806,6 @@ abstract class AppLocalizations {
   /// **'模板预览'**
   String get widgetGalleryShort;
 
-  /// No description provided for @widgetAddToHome.
-  ///
-  /// In zh, this message translates to:
-  /// **'添加到桌面'**
-  String get widgetAddToHome;
-
-  /// No description provided for @widgetPinRequested.
-  ///
-  /// In zh, this message translates to:
-  /// **'已发起添加，请在系统弹窗中确认'**
-  String get widgetPinRequested;
-
-  /// No description provided for @widgetPinUnsupported.
-  ///
-  /// In zh, this message translates to:
-  /// **'当前桌面不支持一键添加，请按下方说明手动添加'**
-  String get widgetPinUnsupported;
-
-  /// No description provided for @widgetHowToAddTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'如何手动添加'**
-  String get widgetHowToAddTitle;
-
   /// No description provided for @widgetHowToAddDesc.
   ///
   /// In zh, this message translates to:
@@ -7208,23 +6818,11 @@ abstract class AppLocalizations {
   /// **'今日支出 + 记一笔'**
   String get widgetQuickEntryName;
 
-  /// No description provided for @widgetQuickEntryDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'查看今日支出，点按快速记一笔'**
-  String get widgetQuickEntryDesc;
-
   /// No description provided for @widgetBudgetName.
   ///
   /// In zh, this message translates to:
   /// **'本月可用预算'**
   String get widgetBudgetName;
-
-  /// No description provided for @widgetBudgetDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'当前账本本月还能花多少'**
-  String get widgetBudgetDesc;
 
   /// No description provided for @widgetNetWorthName.
   ///
@@ -7232,29 +6830,11 @@ abstract class AppLocalizations {
   /// **'资产总额'**
   String get widgetNetWorthName;
 
-  /// No description provided for @widgetNetWorthDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'所有可见账户余额合计'**
-  String get widgetNetWorthDesc;
-
   /// No description provided for @widgetTrendName.
   ///
   /// In zh, this message translates to:
   /// **'收支趋势'**
   String get widgetTrendName;
-
-  /// No description provided for @widgetTrendDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'查看最近一段时间的收支变化'**
-  String get widgetTrendDesc;
-
-  /// No description provided for @widgetConfigure.
-  ///
-  /// In zh, this message translates to:
-  /// **'配置'**
-  String get widgetConfigure;
 
   /// No description provided for @widgetMetricTodayExpense.
   ///
@@ -7328,78 +6908,6 @@ abstract class AppLocalizations {
   /// **'储蓄率'**
   String get widgetMetricSavingsRate;
 
-  /// No description provided for @widgetNoChart.
-  ///
-  /// In zh, this message translates to:
-  /// **'不显示图表'**
-  String get widgetNoChart;
-
-  /// No description provided for @widgetChartExpense.
-  ///
-  /// In zh, this message translates to:
-  /// **'支出趋势'**
-  String get widgetChartExpense;
-
-  /// No description provided for @widgetChartIncome.
-  ///
-  /// In zh, this message translates to:
-  /// **'收入趋势'**
-  String get widgetChartIncome;
-
-  /// No description provided for @widgetChartNet.
-  ///
-  /// In zh, this message translates to:
-  /// **'结余趋势'**
-  String get widgetChartNet;
-
-  /// No description provided for @widgetChartBudgetUsage.
-  ///
-  /// In zh, this message translates to:
-  /// **'预算消耗'**
-  String get widgetChartBudgetUsage;
-
-  /// No description provided for @widgetChartNetWorth.
-  ///
-  /// In zh, this message translates to:
-  /// **'净资产趋势'**
-  String get widgetChartNetWorth;
-
-  /// No description provided for @widgetRange7d.
-  ///
-  /// In zh, this message translates to:
-  /// **'最近 7 天'**
-  String get widgetRange7d;
-
-  /// No description provided for @widgetRange30d.
-  ///
-  /// In zh, this message translates to:
-  /// **'最近 30 天'**
-  String get widgetRange30d;
-
-  /// No description provided for @widgetRange90d.
-  ///
-  /// In zh, this message translates to:
-  /// **'最近 90 天'**
-  String get widgetRange90d;
-
-  /// No description provided for @widgetRangeCycle.
-  ///
-  /// In zh, this message translates to:
-  /// **'当前预算周期'**
-  String get widgetRangeCycle;
-
-  /// No description provided for @widgetRangeYear.
-  ///
-  /// In zh, this message translates to:
-  /// **'本年度'**
-  String get widgetRangeYear;
-
-  /// No description provided for @widgetCurrentBook.
-  ///
-  /// In zh, this message translates to:
-  /// **'当前账本'**
-  String get widgetCurrentBook;
-
   /// No description provided for @widgetConfigTitle.
   ///
   /// In zh, this message translates to:
@@ -7411,12 +6919,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'保存'**
   String get widgetSaveConfig;
-
-  /// No description provided for @widgetTemplate.
-  ///
-  /// In zh, this message translates to:
-  /// **'组件模板'**
-  String get widgetTemplate;
 
   /// No description provided for @widgetBook.
   ///
@@ -7430,221 +6932,11 @@ abstract class AppLocalizations {
   /// **'主指标'**
   String get widgetPrimaryMetric;
 
-  /// No description provided for @widgetChart.
-  ///
-  /// In zh, this message translates to:
-  /// **'图表'**
-  String get widgetChart;
-
-  /// No description provided for @widgetDateRange.
-  ///
-  /// In zh, this message translates to:
-  /// **'日期范围'**
-  String get widgetDateRange;
-
-  /// No description provided for @widgetHideAmounts.
-  ///
-  /// In zh, this message translates to:
-  /// **'隐藏金额，仅显示趋势'**
-  String get widgetHideAmounts;
-
-  /// No description provided for @widgetConfigSaved.
-  ///
-  /// In zh, this message translates to:
-  /// **'小组件配置已保存'**
-  String get widgetConfigSaved;
-
-  /// No description provided for @myWidgetsTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'我的小组件'**
-  String get myWidgetsTitle;
-
-  /// No description provided for @myWidgetsSubtitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'创建并管理你的桌面财务卡片'**
-  String get myWidgetsSubtitle;
-
-  /// No description provided for @widgetCreateNew.
-  ///
-  /// In zh, this message translates to:
-  /// **'创建小组件'**
-  String get widgetCreateNew;
-
-  /// No description provided for @widgetEmpty.
-  ///
-  /// In zh, this message translates to:
-  /// **'还没有保存的小组件'**
-  String get widgetEmpty;
-
-  /// No description provided for @widgetEmptyHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'点击右上角加号，创建你的第一个财务小组件'**
-  String get widgetEmptyHint;
-
-  /// No description provided for @widgetTemplatesSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'基础模板'**
-  String get widgetTemplatesSection;
-
-  /// No description provided for @widgetTemplateCreate.
-  ///
-  /// In zh, this message translates to:
-  /// **'基于模板创建'**
-  String get widgetTemplateCreate;
-
-  /// No description provided for @widgetEdit.
-  ///
-  /// In zh, this message translates to:
-  /// **'编辑'**
-  String get widgetEdit;
-
-  /// No description provided for @widgetDuplicate.
-  ///
-  /// In zh, this message translates to:
-  /// **'复制'**
-  String get widgetDuplicate;
-
-  /// No description provided for @widgetDelete.
-  ///
-  /// In zh, this message translates to:
-  /// **'删除'**
-  String get widgetDelete;
-
-  /// No description provided for @widgetAddSaved.
-  ///
-  /// In zh, this message translates to:
-  /// **'添加到桌面'**
-  String get widgetAddSaved;
-
-  /// No description provided for @widgetName.
-  ///
-  /// In zh, this message translates to:
-  /// **'小组件名称'**
-  String get widgetName;
-
-  /// No description provided for @widgetSize.
-  ///
-  /// In zh, this message translates to:
-  /// **'桌面尺寸'**
-  String get widgetSize;
-
-  /// No description provided for @widgetBackground.
-  ///
-  /// In zh, this message translates to:
-  /// **'背景'**
-  String get widgetBackground;
-
-  /// No description provided for @widgetThemeBackground.
-  ///
-  /// In zh, this message translates to:
-  /// **'主题背景'**
-  String get widgetThemeBackground;
-
-  /// No description provided for @widgetSolidBackground.
-  ///
-  /// In zh, this message translates to:
-  /// **'纯色背景'**
-  String get widgetSolidBackground;
-
-  /// No description provided for @widgetPhotoBackground.
-  ///
-  /// In zh, this message translates to:
-  /// **'本地图片'**
-  String get widgetPhotoBackground;
-
-  /// No description provided for @widgetPickPhoto.
-  ///
-  /// In zh, this message translates to:
-  /// **'选择图片'**
-  String get widgetPickPhoto;
-
-  /// No description provided for @widgetSaveDesign.
-  ///
-  /// In zh, this message translates to:
-  /// **'保存到我的小组件'**
-  String get widgetSaveDesign;
-
-  /// No description provided for @widgetDesignSaved.
-  ///
-  /// In zh, this message translates to:
-  /// **'已保存到我的小组件'**
-  String get widgetDesignSaved;
-
-  /// No description provided for @widgetDesignDeleted.
-  ///
-  /// In zh, this message translates to:
-  /// **'小组件已删除'**
-  String get widgetDesignDeleted;
-
-  /// No description provided for @widgetDesignNameDefault.
-  ///
-  /// In zh, this message translates to:
-  /// **'我的财务卡片'**
-  String get widgetDesignNameDefault;
-
   /// No description provided for @widgetPreview.
   ///
   /// In zh, this message translates to:
   /// **'预览'**
   String get widgetPreview;
-
-  /// No description provided for @widgetSecondaryMetric.
-  ///
-  /// In zh, this message translates to:
-  /// **'辅助指标'**
-  String get widgetSecondaryMetric;
-
-  /// No description provided for @widgetNoSecondaryMetric.
-  ///
-  /// In zh, this message translates to:
-  /// **'不显示辅助指标'**
-  String get widgetNoSecondaryMetric;
-
-  /// No description provided for @widgetTapAction.
-  ///
-  /// In zh, this message translates to:
-  /// **'点击后打开'**
-  String get widgetTapAction;
-
-  /// No description provided for @widgetActionApp.
-  ///
-  /// In zh, this message translates to:
-  /// **'打开应用'**
-  String get widgetActionApp;
-
-  /// No description provided for @widgetActionEntry.
-  ///
-  /// In zh, this message translates to:
-  /// **'快速记账'**
-  String get widgetActionEntry;
-
-  /// No description provided for @widgetActionBudget.
-  ///
-  /// In zh, this message translates to:
-  /// **'预算'**
-  String get widgetActionBudget;
-
-  /// No description provided for @widgetActionTrend.
-  ///
-  /// In zh, this message translates to:
-  /// **'统计分析'**
-  String get widgetActionTrend;
-
-  /// No description provided for @widgetActionAssets.
-  ///
-  /// In zh, this message translates to:
-  /// **'资产'**
-  String get widgetActionAssets;
-
-  /// No description provided for @widgetActionProfile.
-  ///
-  /// In zh, this message translates to:
-  /// **'我的'**
-  String get widgetActionProfile;
 
   /// No description provided for @reminderNotifBody.
   ///
@@ -8018,23 +7310,11 @@ abstract class AppLocalizations {
   /// **'默认月预算'**
   String get defaultMonthlyBudgetTitle;
 
-  /// No description provided for @defaultMonthlyBudgetDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'每月自动沿用，可在各月单独调整'**
-  String get defaultMonthlyBudgetDesc;
-
   /// No description provided for @setDefaultMonthlyBudgetTitle.
   ///
   /// In zh, this message translates to:
   /// **'设置默认月预算'**
   String get setDefaultMonthlyBudgetTitle;
-
-  /// No description provided for @defaultCategoryBudgetTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'默认分类预算'**
-  String get defaultCategoryBudgetTitle;
 
   /// No description provided for @defaultCategoryBudgetDesc.
   ///
@@ -8522,12 +7802,6 @@ abstract class AppLocalizations {
   /// **'默认关闭；开启后会把本单折算价保存到当前账本的汇率表。'**
   String get entryRememberRateHint;
 
-  /// No description provided for @entryConversionSummary.
-  ///
-  /// In zh, this message translates to:
-  /// **'金额摘要'**
-  String get entryConversionSummary;
-
   /// No description provided for @entryConversionSourceRateTable.
   ///
   /// In zh, this message translates to:
@@ -8545,12 +7819,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'填写 {label}（{currency}）'**
   String entryAmountInputTitle(String label, String currency);
-
-  /// No description provided for @entryCurrencySaveMissing.
-  ///
-  /// In zh, this message translates to:
-  /// **'请先补齐跨币种交易所需的实际金额'**
-  String get entryCurrencySaveMissing;
 
   /// No description provided for @refundAccountAmountLabel.
   ///
@@ -8635,12 +7903,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。'**
   String get assetTrendMissingRate;
-
-  /// No description provided for @widgetRateMissing.
-  ///
-  /// In zh, this message translates to:
-  /// **'汇率缺失'**
-  String get widgetRateMissing;
 
   /// No description provided for @baseCurrencyAmountLabel.
   ///
