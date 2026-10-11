@@ -397,8 +397,9 @@ void main() {
     await pumpPage(tester, controller, const IncomeExpenseStatsPage());
 
     expect(find.text('单位：¥'), findsOneWidget);
-    expect(find.text('-72'), findsAtLeastNWidgets(2));
-    expect(find.text('-10'), findsNothing);
+    // 支出汇总 / 日行只给绝对值（方向由标签与类型色表达），仍是本位币金额。
+    expect(find.text('72'), findsAtLeastNWidgets(2));
+    expect(find.text('10'), findsNothing);
   });
 
   testWidgets('历史外币交易只改日期时保持冻结金额', (tester) async {

@@ -270,19 +270,6 @@ List<String> sparseLabelsForWindow(
       .toList();
 }
 
-List<double> dailyExpenseValues(Iterable<LedgerEntry> entries, DateTime now) {
-  final days = DateUtils.getDaysInMonth(now.year, now.month);
-  final values = List<double>.filled(days, 0);
-  for (final entry in entries) {
-    if (entry.type == EntryType.expense &&
-        entry.occurredAt.year == now.year &&
-        entry.occurredAt.month == now.month) {
-      values[entry.occurredAt.day - 1] += entry.netBaseAmount;
-    }
-  }
-  return values;
-}
-
 /// 指定日期当天的支出净额合计（用于桌面小组件「今日支出」）。
 double dayExpenseTotal(Iterable<LedgerEntry> entries, DateTime day) {
   return entries
@@ -323,11 +310,18 @@ String formatAmount(num value) {
   return formatCurrencyNumber(value, activeBaseCurrencyCode);
 }
 
+/// 支出金额的展示文本：**只给绝对值，不带负号**。
+///
+/// 支出方向由同屏的标签（「本月支出」「今日已超」）、类型色或图表序列表达，
+/// 重复一个负号会和旁边的正数柱、正数日均互相矛盾；与 [formatIncomeAmount]
+/// 对称（收入同样只给绝对值）。需要在**混合类型**的列表里用符号区分方向时，
+/// 用 [formatSignedAmount] / `formatSignedUserMoney`，或在需要「负的减少量」
+/// 语义的位置直接用 [formatAmount]（负数自带 `-`）。
 String formatExpenseAmount(num value) {
   if (isZeroAmount(value)) {
     return '0';
   }
-  return '-${formatAmount(value.abs())}';
+  return formatAmount(value.abs());
 }
 
 String formatIncomeAmount(num value) {

@@ -300,10 +300,6 @@
   "@panelThisWeekLabel": {
     "description": "看板日常面板:切到本周时的卡片标题"
   },
-  "recent7Days": "近7日",
-  "@recent7Days": {
-    "description": "近 7 日统计面板的时间范围切换项"
-  },
   "recentTotalExpense": "总支出",
   "@recentTotalExpense": {
     "description": "近 7 日统计面板:总支出"
@@ -416,12 +412,6 @@
   },
   "panelBudgetExecutionLabel": "预算执行",
   "panelBudgetExecutionDesc": "本月预算、支出与分类预算执行情况",
-  "panelCategoryRingLabel": "分类统计",
-  "panelCategoryRingDesc": "本月支出分类占比环形图",
-  "panelCategoryRankLabel": "分类明细",
-  "panelCategoryRankDesc": "本月支出分类排行与占比",
-  "panelTagStatsLabel": "标签统计",
-  "panelTagStatsDesc": "本月各标签的支出金额与占比",
   "panelDailyTrendLabel": "日趋势",
   "panelDailyTrendDesc": "近 7 天每日支出趋势",
   "panelMonthlyStructureDesc": "今年每月支出结构柱状图",
@@ -503,24 +493,6 @@
   "commonDone": "完成",
   "homeNoEntriesTitle": "还没有交易",
   "homeNoEntriesDesc": "点击右下角加号开始第一笔记账。",
-  "trendNet": "结余 {amount}",
-  "@trendNet": {
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      }
-    }
-  },
-  "homeDaysTracked": "记账日",
-  "daysCount": "{count}天",
-  "@daysCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "homeDailyAvgExpense": "日均支出",
   "dateMonthDay": "{date}",
   "@dateMonthDay": {
     "description": "图表气泡等处的「几月几日」短日期",
@@ -611,7 +583,6 @@
   "assetsUngrouped": "未分组",
   "netAssets": "净资产",
   "assetsActions": "资产操作",
-  "assetsChangeCover": "更换资产卡片背景",
   "assetsAmount": "总资产 {amount}",
   "@assetsAmount": {
     "placeholders": {
@@ -648,7 +619,6 @@
   "assetsEmptyTitle": "还没有资产账户",
   "assetsEmptyDesc": "请先点击右上角添加资产，之后可以在这里按类型或分组查看资产。",
   "assetsEmptyAddAction": "添加第一个账户",
-  "assetsSortHint": "拖动右侧手柄调整分组顺序",
   "hiddenAccountsCount": "{count}个隐藏账户",
   "@hiddenAccountsCount": {
     "placeholders": {
@@ -665,15 +635,12 @@
   "coverEnterUrl": "输入图片链接",
   "coverPickLocal": "选择本地图片",
   "coverClear": "清除背景图片",
-  "coverPickOnlineTitle": "选择线上图片",
   "coverCustomTitle": "自定义图片",
   "coverUrlLabel": "图片链接",
   "coverCropTitle": "裁剪资产背景",
   "coverGenerating": "正在生成背景图…",
   "accountAdd": "添加账户",
   "groupManage": "管理分组",
-  "sectionSort": "排序分组",
-  "sectionSortNeedTwo": "至少有 2 个分组才能排序",
   "sortLabel": "排序",
   "hiddenAccountsTitle": "隐藏账户",
   "hiddenAccountsEmptyTitle": "暂无隐藏账户",
@@ -715,7 +682,6 @@
     }
   },
   "accountIconLabel": "账户图标",
-  "accountSaveTooltip": "保存账户",
   "accountTypeLabel": "账户类型",
   "accountNameLabel": "账户名称",
   "accountNameRequired": "账户名称必填",
@@ -725,7 +691,6 @@
   "cardNumberLabel": "完整卡号（选填）",
   "cardNumberTitle": "完整卡号",
   "cardLast4Follow": "跟随卡号",
-  "cardCopyTooltip": "复制卡号",
   "copiedToClipboard": "已复制到剪贴板",
   "accountSectionBasic": "基本信息",
   "accountSectionCard": "卡片信息",
@@ -792,7 +757,6 @@
     }
   },
   "commonCurrency": "货币",
-  "currencyCny": "人民币",
   "commonNote": "备注",
   "commonNoneShort": "无",
   "commonGroup": "分组",
@@ -815,7 +779,6 @@
   "balanceEditRecord": "计入收支",
   "balanceEditRecordDesc": "生成一笔余额调整交易；不勾选则直接修改账户初始余额，不影响收支统计。",
   "accountNameEditTitle": "编辑账户名称",
-  "cardLast4EditTitle": "编辑卡号后四位",
   "pickDueDay": "选择还款日",
   "pickStatementDay": "选择账单日",
   "accountNoteEditTitle": "编辑账户备注",
@@ -1017,22 +980,11 @@
   "nextDay": "后一天",
   "entryMissing": "交易不存在",
   "deleteEntryTooltip": "删除交易",
-  "saveEntryTooltip": "保存交易",
   "amountLabel": "金额",
   "dateLabel": "日期",
   "timeLabel": "时间",
   "markReimbursable": "标记待报销",
   "reimbursableHint": "标记本身不产生资金变动；收到退款后净额才会相应减少。",
-  "refundLabel": "退款 / 报销回款",
-  "refundedAmountLabel": "已退款 {amount}",
-  "@refundedAmountLabel": {
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      }
-    }
-  },
-  "refundAmountTitle": "退款 / 报销回款金额",
   "refundRecordsTitle": "退款",
   "refundAdd": "添加退款",
   "refundEditTitle": "编辑退款",
@@ -1054,29 +1006,10 @@
       }
     }
   },
-  "refundOverCapNotice": "退款不能超过剩余可退，已按上限 {amount} 记入",
-  "@refundOverCapNotice": {
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      }
-    }
-  },
   "refundNetLabel": "净支出 {amount}",
   "@refundNetLabel": {
     "placeholders": {
       "amount": {
-        "type": "String"
-      }
-    }
-  },
-  "refundSummaryLine": "已退 {count} 笔 · 净支出 {net}",
-  "@refundSummaryLine": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "net": {
         "type": "String"
       }
     }
@@ -1192,8 +1125,6 @@
       }
     }
   },
-  "widgetPeriodBudgetAvailable": "本期可用预算",
-  "widgetPeriodBudgetOverspent": "本期已超支",
   "budgetOverAmountLabel": "超出预算",
   "budgetRemainingQuota": "剩余额度",
   "budgetAmountLabel": "预算金额",
@@ -1201,7 +1132,6 @@
   "monthExpenseCategories": "本月支出分类",
   "noExpenseCategories": "还没有支出分类",
   "setMonthBudgetTitle": "设置本月预算",
-  "monthBudgetAmountLabel": "月份预算金额",
   "dailyBudgetTitle": "按日预算",
   "dailyBudgetNotSet": "未设置每日上限，点击设置",
   "dailyBudgetLimitLabel": "每日上限 {amount}",
@@ -1216,16 +1146,6 @@
   "dailyBudgetTodayLeft": "今日剩余",
   "dailyBudgetTodayOver": "今日超支",
   "setDailyBudgetTitle": "设置每日预算",
-  "dailyBudgetAmountLabel": "每日预算金额",
-  "setCategoryBudgetTitle": "设置{category}预算",
-  "@setCategoryBudgetTitle": {
-    "placeholders": {
-      "category": {
-        "type": "String"
-      }
-    }
-  },
-  "categoryBudgetAmountLabel": "分类预算金额",
   "budgetHistoryTitle": "预算历史",
   "last12MonthsSub": "最近 12 个月",
   "monthSummary": "月份汇总",
@@ -1457,10 +1377,7 @@
       }
     }
   },
-  "pickTimeRange": "选择时间范围",
   "okLabel": "确定",
-  "customRange": "自定义",
-  "overviewTitle": "收支概览",
   "monthlyTrendTitle": "月度趋势",
   "rankGroupCategory": "分类",
   "rankGroupSubCategory": "子分类",
@@ -1499,11 +1416,7 @@
     }
   },
   "reportsSubtitle": "预算与统计",
-  "noCategoryData": "暂无分类数据",
-  "noCategoryDesc": "保存支出记录后会在这里显示分类排行。",
   "thisYearLabel": "今年",
-  "noTagData": "暂无标签数据",
-  "noTagDesc": "给交易打上标签后，会在这里按标签汇总支出。",
   "overBudgetLabel": "已超预算",
   "remainingBudgetLabel": "剩余预算",
   "expenseOnlyNote": "仅记录支出",
@@ -1534,14 +1447,6 @@
   },
   "normalLabel": "正常",
   "othersLabel": "其他",
-  "tagShareOfExpense": "占支出 {percent}%",
-  "@tagShareOfExpense": {
-    "placeholders": {
-      "percent": {
-        "type": "String"
-      }
-    }
-  },
   "bookkeepingDays": "记账天数",
   "bookkeepingYears": "记账年数",
   "reminderPickTime": "选择提醒时间",
@@ -1589,7 +1494,6 @@
   "onboardAccountDesc": "账户是记账的基础，比如「现金」「工资卡」。填写名称与当前余额即可，也可以稍后在「资产」页添加。",
   "onboardAccountNameLabel": "账户名称（可选）",
   "onboardAccountNameHint": "如：现金 / 工资卡",
-  "onboardBalanceLabel": "当前余额（可选）",
   "onboardBudgetDesc": "设定每月预算后，首页与看板会展示预算执行进度，帮你控制支出。留空则暂不设预算，之后可在首页预算卡随时修改。",
   "onboardBudgetLabel": "本月预算（可选）",
   "onboardDoneTitle": "一切就绪",
@@ -1623,7 +1527,6 @@
     }
   },
   "dataAndTools": "数据与工具",
-  "reportShort": "报表",
   "notEnabled": "未开启",
   "dataManagement": "数据管理",
   "backupRestoreShort": "备份 / 恢复",
@@ -1820,7 +1723,6 @@
   "pickGenderTitle": "选择性别",
   "cropAvatarTitle": "裁剪头像",
   "avatarGenerating": "正在生成头像…",
-  "profileDefaultBio": "完全免费 · 数据自主",
   "settingsTitle": "设置",
   "settingsSectionAppearance": "外观",
   "settingsSectionAmountDisplay": "金额显示",
@@ -1843,13 +1745,13 @@
   "numberPadLayoutPickerTitle": "选择数字键盘布局",
   "numberPadLayoutStandard": "标准布局",
   "numberPadLayoutPhone": "电话布局",
-  "amountTwoDecimalsLabel": "金额保留两位小数",
+  "amountTwoDecimalsLabel": "金额按货币标准精度",
   "@amountTwoDecimalsLabel": {
-    "description": "Settings toggle: always show amounts with two decimal places"
+    "description": "Settings toggle: use each currency's standard number of decimals"
   },
-  "amountTwoDecimalsDesc": "开启后金额始终显示两位小数（如 12 显示为 12.00）",
+  "amountTwoDecimalsDesc": "开启后按各货币的标准小数位显示（人民币 12.00、日元 12、第纳尔 12.000）；关闭时去掉多余的尾零",
   "@amountTwoDecimalsDesc": {
-    "description": "Subtitle explaining the two-decimals toggle"
+    "description": "Subtitle explaining the currency-precision toggle"
   },
   "moneyUnitStyleLabel": "货币单位样式",
   "moneyUnitStyleSymbol": "符号后置（100 ¥）",
@@ -1926,7 +1828,6 @@
   "tallyImportGuide": "Tally 记账 App →「设置」→ 数据备份与恢复 →「导出备份」，得到 Tally 开头的 .zip 文件，保存到本机后在此选择。\n\n请选「备份 zip」而非 CSV「账单」导出：备份保留精确到秒的交易时间，收入/支出/转账、一级/二级分类、账户与备注都会一并导入（分类按二级分类）。菜单以实际 App 版本为准。",
   "csvTemplateImportGuide": "请先用本页「下载 CSV 模板」，按模板列填写后再导入。外币交易需填写币种，并提供本位币金额或汇率；跨币转账还需提供两端实际金额。含其他软件的列会导入失败。",
   "billImportCommonNote": "交易会追加到当前账本，匹配不到的账户与分类按名称自动新建，不会删除现有数据。",
-  "backupToLocalDir": "备份到本地目录",
   "backupDirLabel": "备份目录",
   "notChosen": "未选择",
   "backupNow": "立即备份",
@@ -2069,8 +1970,6 @@
   "aiChatHistoryLocalOnly": "对话只存本机，不含在备份内",
   "aiChatClearMessage": "将删除当前所有对话，无法恢复。",
   "aiChatClearConfirm": "清空",
-  "aiChatThinking": "思考中…",
-  "aiChatQuerying": "正在查询…",
   "aiChatUnconfiguredHint": "先配置 AI，才能开始对话查询账目",
   "aiChatGoConfigure": "去配置 AI",
   "aiChatEmptyTitle": "问问 AI 你的账目",
@@ -2090,7 +1989,6 @@
   "aiModelLabel": "模型",
   "aiModelHint": "如 gpt-4o-mini",
   "aiFillAllFields": "请填写请求地址、API Key 与模型",
-  "aiSettingsSaved": "保存成功",
   "aiToolModeTitle": "工具调用协议",
   "aiToolModeAuto": "自动（推荐）",
   "aiToolModeNative": "原生 Tool Calls",
@@ -2195,7 +2093,6 @@
   "captureEntryRecognizing": "正在识别账单内容…",
   "captureEntryNoTransaction": "没有识别到交易，请确认内容是账单截图或账单文本",
   "captureEntryFailedTitle": "识别失败",
-  "captureEntryPrivacyNotice": "识别在本机完成，图片不会上传；识别出的文字会发送到你配置的 AI 服务解析。",
   "uploadingWebdav": "正在上传到 WebDAV...",
   "uploadedFile": "已上传：{name}",
   "@uploadedFile": {
@@ -2331,22 +2228,6 @@
         "type": "int"
       },
       "total": {
-        "type": "int"
-      }
-    }
-  },
-  "importPreviewNewAccounts": "新建账户 {count}",
-  "@importPreviewNewAccounts": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "importPreviewNewCategories": "新建分类 {count}",
-  "@importPreviewNewCategories": {
-    "placeholders": {
-      "count": {
         "type": "int"
       }
     }
@@ -2537,34 +2418,14 @@
   "lockKindPattern": "图案密码",
   "bioSignInTitle": "生物解锁",
   "bioHint": "验证身份",
-  "bioNotRecognized": "未能识别，请重试",
-  "bioRequiredTitle": "需要生物识别",
-  "bioSuccess": "验证成功",
-  "bioSetupDescription": "请在系统设置中录入生物识别",
-  "bioGoToSettings": "前往设置",
-  "bioGoToSettingsDesc": "尚未录入生物识别，请在系统设置中添加",
-  "widgetTodayExpense": "今日支出",
-  "widgetBudgetAvailable": "本月可用预算",
-  "widgetRefreshRequired": "打开应用刷新",
-  "widgetBudgetOverspent": "本月已超支",
-  "widgetNetWorth": "资产总额",
   "widgetGalleryTitle": "桌面小组件",
   "widgetGallerySubtitle": "查看 VeriFin 提供的固定组件样式",
   "widgetGalleryShort": "模板预览",
-  "widgetAddToHome": "添加到桌面",
-  "widgetPinRequested": "已发起添加，请在系统弹窗中确认",
-  "widgetPinUnsupported": "当前桌面不支持一键添加，请按下方说明手动添加",
-  "widgetHowToAddTitle": "如何手动添加",
   "widgetHowToAddDesc": "长按桌面空白处 → 选择「小组件」→ 找到 Veri Fin → 拖动想要的小组件到桌面。",
   "widgetQuickEntryName": "今日支出 + 记一笔",
-  "widgetQuickEntryDesc": "查看今日支出，点按快速记一笔",
   "widgetBudgetName": "本月可用预算",
-  "widgetBudgetDesc": "当前账本本月还能花多少",
   "widgetNetWorthName": "资产总额",
-  "widgetNetWorthDesc": "所有可见账户余额合计",
   "widgetTrendName": "收支趋势",
-  "widgetTrendDesc": "查看最近一段时间的收支变化",
-  "widgetConfigure": "配置",
   "widgetMetricTodayExpense": "今日支出",
   "widgetMetricPeriodExpense": "本期支出",
   "widgetMetricPeriodIncome": "本期收入",
@@ -2577,59 +2438,11 @@
   "widgetMetricBalance": "账户余额",
   "widgetMetricTransactionCount": "交易笔数",
   "widgetMetricSavingsRate": "储蓄率",
-  "widgetNoChart": "不显示图表",
-  "widgetChartExpense": "支出趋势",
-  "widgetChartIncome": "收入趋势",
-  "widgetChartNet": "结余趋势",
-  "widgetChartBudgetUsage": "预算消耗",
-  "widgetChartNetWorth": "净资产趋势",
-  "widgetRange7d": "最近 7 天",
-  "widgetRange30d": "最近 30 天",
-  "widgetRange90d": "最近 90 天",
-  "widgetRangeCycle": "当前预算周期",
-  "widgetRangeYear": "本年度",
-  "widgetCurrentBook": "当前账本",
   "widgetConfigTitle": "配置小组件",
   "widgetSaveConfig": "保存",
-  "widgetTemplate": "组件模板",
   "widgetBook": "账本",
   "widgetPrimaryMetric": "主指标",
-  "widgetChart": "图表",
-  "widgetDateRange": "日期范围",
-  "widgetHideAmounts": "隐藏金额，仅显示趋势",
-  "widgetConfigSaved": "小组件配置已保存",
-  "myWidgetsTitle": "我的小组件",
-  "myWidgetsSubtitle": "创建并管理你的桌面财务卡片",
-  "widgetCreateNew": "创建小组件",
-  "widgetEmpty": "还没有保存的小组件",
-  "widgetEmptyHint": "点击右上角加号，创建你的第一个财务小组件",
-  "widgetTemplatesSection": "基础模板",
-  "widgetTemplateCreate": "基于模板创建",
-  "widgetEdit": "编辑",
-  "widgetDuplicate": "复制",
-  "widgetDelete": "删除",
-  "widgetAddSaved": "添加到桌面",
-  "widgetName": "小组件名称",
-  "widgetSize": "桌面尺寸",
-  "widgetBackground": "背景",
-  "widgetThemeBackground": "主题背景",
-  "widgetSolidBackground": "纯色背景",
-  "widgetPhotoBackground": "本地图片",
-  "widgetPickPhoto": "选择图片",
-  "widgetSaveDesign": "保存到我的小组件",
-  "widgetDesignSaved": "已保存到我的小组件",
-  "widgetDesignDeleted": "小组件已删除",
-  "widgetDesignNameDefault": "我的财务卡片",
   "widgetPreview": "预览",
-  "widgetSecondaryMetric": "辅助指标",
-  "widgetNoSecondaryMetric": "不显示辅助指标",
-  "widgetTapAction": "点击后打开",
-  "widgetActionApp": "打开应用",
-  "widgetActionEntry": "快速记账",
-  "widgetActionBudget": "预算",
-  "widgetActionTrend": "统计分析",
-  "widgetActionAssets": "资产",
-  "widgetActionProfile": "我的",
   "reminderNotifBody": "别忘了记录今天的收支～",
   "reminderChannelDesc": "每日记账提醒通知",
   "reminderTestButton": "发送测试通知",
@@ -2720,9 +2533,7 @@
   "budgetSettingsSectionOverall": "总预算与周期",
   "budgetSettingsSectionCategory": "分类默认预算",
   "defaultMonthlyBudgetTitle": "默认月预算",
-  "defaultMonthlyBudgetDesc": "每月自动沿用，可在各月单独调整",
   "setDefaultMonthlyBudgetTitle": "设置默认月预算",
-  "defaultCategoryBudgetTitle": "默认分类预算",
   "defaultCategoryBudgetDesc": "设一次每月自动沿用；点分类设置默认额度",
   "setDefaultCategoryBudgetTitle": "设置{category}默认预算",
   "@setDefaultCategoryBudgetTitle": {
@@ -2950,7 +2761,6 @@
   },
   "entryRememberRate": "记住为当日汇率",
   "entryRememberRateHint": "默认关闭；开启后会把本单折算价保存到当前账本的汇率表。",
-  "entryConversionSummary": "金额摘要",
   "entryConversionSourceRateTable": "已按本地汇率自动换算，可点击金额修改",
   "entryConversionSourceManual": "本单金额已手动调整，历史统计将冻结保存值",
   "entryAmountInputTitle": "填写 {label}（{currency}）",
@@ -2960,7 +2770,6 @@
       "currency": {"type": "String"}
     }
   },
-  "entryCurrencySaveMissing": "请先补齐跨币种交易所需的实际金额",
   "refundAccountAmountLabel": "账户实际到账",
   "refundBaseAmountLabel": "本位币冲抵额",
   "refundCurrencyLockedHint": "退款原币沿用原支出，不可更改。",
@@ -2987,7 +2796,6 @@
     "placeholders": {"currencies": {"type": "String"}}
   },
   "assetTrendMissingRate": "历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。",
-  "widgetRateMissing": "汇率缺失",
   "baseCurrencyAmountLabel": "本位币 {currency}",
   "@baseCurrencyAmountLabel": {
     "placeholders": {"currency": {"type": "String"}}

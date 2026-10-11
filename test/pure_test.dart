@@ -442,26 +442,33 @@ void main() {
     );
   });
 
-  test('formatAmount respects the global two-decimals preference', () {
-    addTearDown(() => amount_format.amountForceTwoDecimals = false);
+  test('formatAmount respects the global fraction-style preference', () {
+    addTearDown(
+      () => amount_format.currencyFractionStyle = CurrencyFractionStyle.compact,
+    );
 
     // 默认：去掉多余尾随零。
-    amount_format.amountForceTwoDecimals = false;
+    amount_format.currencyFractionStyle = CurrencyFractionStyle.compact;
     expect(formatAmount(12), '12');
     expect(formatAmount(12.5), '12.5');
     expect(formatAmount(12.34), '12.34');
     expect(formatAmount(0), '0');
 
-    // 强制两位小数。
-    amount_format.amountForceTwoDecimals = true;
+    // 标准精度。
+    amount_format.currencyFractionStyle = CurrencyFractionStyle.standard;
     expect(formatAmount(12), '12.00');
     expect(formatAmount(12.5), '12.50');
     expect(formatAmount(12.34), '12.34');
     expect(formatAmount(0), '0.00');
     // 派生格式化同步生效。
-    expect(formatExpenseAmount(12), '-12.00');
+    // 支出与收入同为「只给绝对值」，方向由标签 / 类型色 / 图表序列表达；
+    // 需要符号的地方用 formatSignedAmount 或 formatAmount（负数自带 `-`）。
+    expect(formatExpenseAmount(12), '12.00');
+    expect(formatExpenseAmount(-12), '12.00');
+    expect(formatExpenseAmount(0), '0');
     expect(formatIncomeAmount(12.5), '12.50');
     expect(formatSignedAmount(12), '+12.00');
+    expect(formatSignedAmount(-12), '-12.00');
   });
 
   test('cardLast4Of 取完整卡号末四位数字', () {

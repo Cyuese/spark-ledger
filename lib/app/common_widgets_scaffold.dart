@@ -2,22 +2,88 @@ part of 'common_widgets.dart';
 
 // 页面骨架域：VeriPage/VeriCard/VeriHeader 与头部动作、区块标题、空态。
 
-class VeriPage extends StatelessWidget {
-  const VeriPage({
+/// 「缺汇率」提示：说明有多少账户缺率、缺哪些币种，点按可去维护汇率。
+///
+/// 外层容器由调用方决定，两种情况都只写这一份实现：
+/// - 裸用（看板资产汇总卡的缺率态）传 [onTap]，组件自带点击区与 8dp 纵向内边距；
+/// - 已经放在可点卡片里（资产页缺率卡）不要传 [onTap]，避免嵌套点击区。
+class AssetMissingRateNotice extends StatelessWidget {
+  const AssetMissingRateNotice({
     super.key,
-    required this.child,
-    this.compact = veriUnifiedDesignPreview,
+    required this.affectedAccountCount,
+    required this.currencyCodes,
+    this.onTap,
   });
 
+  /// 受影响（缺率）的账户数量。
+  final int affectedAccountCount;
+
+  /// 缺失汇率的币种代码，展示时按字典序拼接。
+  final Set<String> currencyCodes;
+
+  /// 非 null 时整块可点（一般跳 [CurrencyRatesPage]）。
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final codes = (currencyCodes.toList()..sort()).join(', ');
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(
+          Icons.currency_exchange,
+          color: veriSemantic(context, veriWarning),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                l10n.assetValuationMissing(affectedAccountCount),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.assetValuationMissingDesc(codes),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.62),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    if (onTap == null) {
+      return content;
+    }
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(veriRadiusMd),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: content,
+      ),
+    );
+  }
+}
+
+class VeriPage extends StatelessWidget {
+  const VeriPage({super.key, required this.child});
+
   final Widget child;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: veriUnifiedDesignPreview ? (compact ? 2 : 6) : 0,
-      ),
+      // 页面容器补 2dp：加上页面自己的 14dp 横向内边距，有效页边距即 16dp。
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
       ),
@@ -37,44 +103,25 @@ class VeriCard extends StatelessWidget {
     required this.child,
     this.onTap,
     this.quietTap = false,
-    this.compact = veriUnifiedDesignPreview,
     EdgeInsetsGeometry? padding,
   }) : padding =
-           padding ??
-           (compact
-               ? const EdgeInsets.symmetric(horizontal: 14, vertical: 12)
-               : const EdgeInsets.all(veriUnifiedDesignPreview ? 18 : 13));
+           padding ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 12);
 
   final Widget child;
   final VoidCallback? onTap;
   final bool quietTap;
-  final bool compact;
   final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderRadius = BorderRadius.circular(
-      veriCardRadiusFor(compact: compact),
-    );
+    final borderRadius = BorderRadius.circular(veriCardRadius);
     final decoration = BoxDecoration(
       color: veriContentSurfaceColor(Theme.of(context).brightness),
       borderRadius: borderRadius,
       border: Border.all(
-        color: veriUnifiedDesignPreview
-            ? (isDark ? Colors.white : veriInk).withValues(alpha: 0.045)
-            : isDark
-            ? Colors.white.withValues(alpha: 0.10)
-            : veriLine,
+        color: (isDark ? Colors.white : veriInk).withValues(alpha: 0.045),
       ),
-      boxShadow: <BoxShadow>[
-        if (!isDark && !veriUnifiedDesignPreview)
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.045),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-      ],
     );
 
     if (onTap != null && quietTap) {
@@ -117,18 +164,15 @@ class PageHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
-    this.compact = veriUnifiedDesignPreview,
   });
 
   final String title;
   final String? subtitle;
   final Widget? trailing;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return VeriHeader(
-      compact: compact,
       title: title,
       subtitle: subtitle,
       actions: trailing == null ? null : [trailing!],
@@ -144,7 +188,6 @@ class VeriHeader extends StatelessWidget {
     this.showBack = false,
     this.onBack,
     this.actions,
-    this.compact = veriUnifiedDesignPreview,
   });
 
   final String title;
@@ -152,16 +195,13 @@ class VeriHeader extends StatelessWidget {
   final bool showBack;
   final VoidCallback? onBack;
   final List<Widget>? actions;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final actionWidgets = actions ?? const <Widget>[];
     // 最小高度而非固定高度：系统字号放大时标题/副标题两行不能被裁掉。
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: compact ? veriCompactHeaderHeight : veriHeaderHeight,
-      ),
+      constraints: const BoxConstraints(minHeight: veriHeaderHeight),
       child: Row(
         children: <Widget>[
           if (showBack) ...<Widget>[
@@ -193,9 +233,9 @@ class VeriHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(
-                        alpha: veriUnifiedDesignPreview ? 0.62 : 0.48,
-                      ),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.62),
                       fontWeight: FontWeight.w700,
                     ),
                   ),

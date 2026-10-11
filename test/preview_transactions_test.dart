@@ -7,7 +7,7 @@ import 'package:verifin/app/models.dart';
 void main() {
   test('演示 CSV 使用正式模板解析，可追加 18 笔跨月交易', () {
     final rows = parseCsv(
-      File('docs/dev/preview-transactions.csv').readAsStringSync(),
+      File('docs/fixtures/preview-transactions.csv').readAsStringSync(),
     );
     validateCsvTemplateHeader(rows);
     final plan = buildImportPlan(

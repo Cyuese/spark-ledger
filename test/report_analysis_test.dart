@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:verifin/app/demo_data.dart';
+import 'package:verifin/app/seed_data.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/app/report_analysis.dart';
 

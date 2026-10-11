@@ -218,7 +218,7 @@ resolveRate(bookId, currencyCode, date)
 
 ### 列表、报表和资产展示
 
-金额单位样式、单币种隐藏、混币列表、报表本位币、账户原币、缺率状态和图表交互遵循 [design-system.md](../design-system.md) 的「货币单位的显示口径」与 [components.md](components.md) 的族 5/7：
+金额单位样式、单币种隐藏、混币列表、报表本位币、账户原币、缺率状态和图表交互遵循 [design-system.md](../design/design-system.md) 的「货币单位的显示口径」与 [components.md](../design/components.md) 的族 5/7：
 
 - 设置页可选符号后置（`100 ¥`）或代码前置（`CNY 100`），默认符号后置；单币种账本默认隐藏重复单位，多币种或关闭隐藏时显示；
 - 报表、预算、首页概览/日历/收支指标、AI 结果统一使用账本本位币；账户卡片显示原币余额，资产总览显示本位币折算值和汇率日期；
@@ -227,7 +227,7 @@ resolveRate(bookId, currencyCode, date)
 
 ### 金额格式化
 
-`formatMoney` 是显式选择 code/symbol/none 的底层与机器文本入口；UI 优先使用 `formatUserMoney` / `formatSignedUserMoney`，由 Controller 同步的全局偏好决定符号/代码及单币种隐藏。`forceUnit: true` 只用在同一控件同时展示两个币种的换算字段。`CurrencyFractionStyle`（`compact` / `standard`）控制小数风格；JPY 两种模式都是 0 位，KWD 最多/固定 3 位；金额为零使用中性色且不显示 `-0`。汇率展示精度与保存精度分离：`formatRateValue` 常见值 4 位、极小值自适应 6/8 位，CSV 用 `formatRateValueExact` 保留最高 10 位。完整口径见 [design-system.md](../design-system.md)。
+`formatMoney` 是显式选择 code/symbol/none 的底层与机器文本入口；UI 优先使用 `formatUserMoney` / `formatSignedUserMoney`，由 Controller 同步的全局偏好决定符号/代码及单币种隐藏。`forceUnit: true` 只用在同一控件同时展示两个币种的换算字段。`CurrencyFractionStyle`（`compact` / `standard`）控制小数风格；JPY 两种模式都是 0 位，KWD 最多/固定 3 位；金额为零使用中性色且不显示 `-0`。汇率展示精度与保存精度分离：`formatRateValue` 常见值 4 位、极小值自适应 6/8 位，CSV 用 `formatRateValueExact` 保留最高 10 位。完整口径见 [design-system.md](../design/design-system.md)。
 
 ### 国际化与无障碍
 
@@ -253,7 +253,7 @@ Controller 持有当前账本的汇率列表与不可变派生视图（新增派
 
 ## 备份、恢复与初始化
 
-明文 JSON 根字段 `version` 当前为 **3**（zip/加密信封字节格式见 [tech-decisions.md](tech-decisions.md)）。v3 备份携带：`ledgerBooks[].baseCurrencyCode`/`currencySetupStatus`、`accounts[].currencyCode`、`entries[]` 三层金额与 `conversionSource`、`recurringRules[]` 币种字段与 `ratePolicy`、`exchangeRates[]`、金额显示偏好枚举。v1/v2 旧备份按旧数据迁移规则解释为 CNY 并标 `legacyUnconfirmed`，允许一次无换算重解释；未知字段容忍，非法币种/金额拒绝并保持现有数据不被覆盖。货币静态目录不进备份。完整备份范围见 [tech-decisions.md](tech-decisions.md)，样例见 `docs/dev/verifin-sample-backup.json`。
+明文 JSON 根字段 `version` 当前为 **3**（zip/加密信封字节格式见 [tech-decisions.md](tech-decisions.md)）。v3 备份携带：`ledgerBooks[].baseCurrencyCode`/`currencySetupStatus`、`accounts[].currencyCode`、`entries[]` 三层金额与 `conversionSource`、`recurringRules[]` 币种字段与 `ratePolicy`、`exchangeRates[]`、金额显示偏好枚举。v1/v2 旧备份按旧数据迁移规则解释为 CNY 并标 `legacyUnconfirmed`，允许一次无换算重解释；未知字段容忍，非法币种/金额拒绝并保持现有数据不被覆盖。货币静态目录不进备份。完整备份范围见 [tech-decisions.md](tech-decisions.md)，样例见 `docs/fixtures/sample-backup.json`。
 
 “初始化数据”清除账目时一并清除汇率表；设备本地的语言、备份凭证、AI Key 等仍按现有规则保留/清除。
 

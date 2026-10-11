@@ -14,7 +14,7 @@ typedef AttachmentMaterializer = Future<void> Function(String id);
 
 /// 附件（票据图片）字节的唯一读写入口。
 ///
-/// 设计见 `docs/dev/attachment-storage-and-streaming-backup-design.md`：一张附件一个
+/// 设计见 `docs/dev/attachment-storage-and-backup.md`：一张附件一个
 /// 文件，SQLite 只保存元数据，因此启动只读元数据、备份与恢复可逐张流式处理，内存
 /// 不再随附件总量增长。绘制层禁止自行拼路径或直接使用 `File`，一律经本入口。
 abstract interface class AttachmentStore {

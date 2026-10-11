@@ -15,7 +15,7 @@
 - [ ] `flutter analyze` 无告警
 - [ ] `flutter test` 全绿（改了功能已补 / 改测试）
 - [ ] 新用户可见文案已进 `app_zh.arb` + `app_en.arb`，未硬编码中文
-- [ ] 写新组件前查过 `docs/dev/components.md`，优先复用；新增件已登记
+- [ ] 写新组件前查过 `docs/design/components.md`，优先复用；新增件已登记
 - [ ] 用户可见改动已加 `CHANGELOG.md` 的 `## [Unreleased]`
 - [ ] 相关文档（README / AGENTS / docs）已同步
 

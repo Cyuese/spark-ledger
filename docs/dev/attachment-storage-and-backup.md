@@ -295,9 +295,9 @@ class BackupProgress { final BackupPhase phase; final int done; final int total;
 
 - `docs/dev/tech-decisions.md`：更新「图片附件存储」「备份格式」「备份目录」「WebDAV」等条目，
   以及备份数据范围表中附件的表述。
-- `docs/dev/architecture.md`、`docs/dev/components.md`：新增 `AttachmentStore`、进度组件与共享件。
+- `docs/dev/architecture.md`、`docs/design/components.md`：新增 `AttachmentStore`、进度组件与共享件。
 - `docs/dev/known-limitations.md`：移除被本设计解决的大小限制条目；保留旧加密信封等仍需说明的边界。
-- `README.md`、`docs/product.md`、`docs/acceptance-checklist.md`：附件与备份说明。
+- `README.md`、`docs/product/product.md`、`docs/product/acceptance-checklist.md`：附件与备份说明。
 - `CHANGELOG.md`：用户可见的存储格式、迁移、进度与损坏提示变化。
 
 ## 已确认的取舍

@@ -3,7 +3,7 @@
 /// [accountDisplayName]，勿直接 [accountById]（空 id 会误回退首个账户）。
 library;
 
-import 'demo_data.dart';
+import 'seed_data.dart';
 import 'models.dart';
 
 List<Category> categoriesFor(EntryType type, [List<Category>? categories]) {

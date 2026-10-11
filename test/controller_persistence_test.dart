@@ -359,9 +359,7 @@ void main() {
   });
 
   test('导入备份写入 SQLite 并被新控制器读回', () async {
-    final rawJson = File(
-      'docs/dev/verifin-sample-backup.json',
-    ).readAsStringSync();
+    final rawJson = File('docs/fixtures/sample-backup.json').readAsStringSync();
     final repo = await openRepo();
     final controller = await VeriFinController.create(
       LocalKeyValueStore(),

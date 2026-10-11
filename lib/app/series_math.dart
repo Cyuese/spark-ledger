@@ -7,11 +7,6 @@ import 'currency_math.dart';
 import 'models.dart';
 import '../l10n/app_localizations.dart';
 
-bool isInMonth(LedgerEntry entry, DateTime month) {
-  return entry.occurredAt.year == month.year &&
-      entry.occurredAt.month == month.month;
-}
-
 List<String> monthAxisLabels(DateTime month) {
   final days = DateUtils.getDaysInMonth(month.year, month.month);
   return <String>[

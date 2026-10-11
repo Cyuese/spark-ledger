@@ -250,8 +250,8 @@ enum NumberPadLayout {
   }
 }
 
-/// 支持面板管理的页面。看板按统计口径拆成「日常 / 月统计 / 年统计 / 自定义」
-/// 四个 Tab，每个 Tab 各自持有一份面板清单；首页单独一份。
+/// 支持面板管理的页面。看板按统计口径拆成「日常 / 月统计 / 年统计」三个 Tab，
+/// 每个 Tab 各自持有一份面板清单；首页单独一份。
 enum PanelPageKind {
   home,
   reportsDaily,
@@ -336,12 +336,6 @@ class PagePanelSpec {
         return l10n.panelBudgetExecutionLabel;
       case 'summary':
         return l10n.panelSummaryLabel;
-      case 'category_ring':
-        return l10n.panelCategoryRingLabel;
-      case 'category_rank':
-        return l10n.panelCategoryRankLabel;
-      case 'tag_stats':
-        return l10n.panelTagStatsLabel;
       case 'daily_trend':
         return l10n.panelDailyTrendLabel;
       case 'monthly_structure':
@@ -377,12 +371,6 @@ class PagePanelSpec {
         return l10n.panelBudgetExecutionDesc;
       case 'summary':
         return l10n.panelSummaryDesc;
-      case 'category_ring':
-        return l10n.panelCategoryRingDesc;
-      case 'category_rank':
-        return l10n.panelCategoryRankDesc;
-      case 'tag_stats':
-        return l10n.panelTagStatsDesc;
       case 'daily_trend':
         return l10n.panelDailyTrendDesc;
       case 'monthly_structure':
@@ -411,8 +399,8 @@ const List<PagePanelSpec> homePanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'calendar'),
 ];
 
-/// 看板「月统计」Tab 的面板目录（原 `reportPanelSpecs`，语义不变）。
-/// 顺序即默认渲染顺序，也是新增面板的插入位置依据。
+/// 看板「月统计」Tab 的面板目录。顺序即默认渲染顺序，也是新增面板的插入位置依据
+/// （见 `_normalizePanelSettings`）。
 const List<PagePanelSpec> reportMonthlyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'summary'),
   PagePanelSpec(id: 'budget_execution'),
@@ -421,13 +409,13 @@ const List<PagePanelSpec> reportMonthlyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'monthly_structure'),
 ];
 
-/// 看板其余 Tab 的面板目录。对应 Tab 的内容尚未实现，先留空。
+/// 看板「日常」Tab 的面板目录：近 7 日统计 + 资产汇总。
 const List<PagePanelSpec> reportDailyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'recent_daily'),
   PagePanelSpec(id: 'asset_summary'),
 ];
 
-/// 看板「年统计」Tab：本年收支摘要、本月度收支双柱、本年排行。
+/// 看板「年统计」Tab：本年收支摘要、本年 12 个月收支双柱、全年收支热力、排行。
 /// 排行复用月统计的 `ranking` 面板，只是取数窗口换成整年。
 const List<PagePanelSpec> reportYearlyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'year_summary'),

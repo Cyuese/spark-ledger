@@ -19,7 +19,7 @@ import 'budget_cycle.dart';
 import 'category_tree.dart';
 import 'currency_catalog.dart';
 import 'currency_math.dart';
-import 'demo_data.dart';
+import 'seed_data.dart';
 import 'model_lookup.dart';
 import 'amount_format.dart' as amount_format;
 import 'home_metrics.dart';
@@ -90,7 +90,11 @@ const String _fabActionKey = 'verifin.fab_action.v1';
 const String _numberPadLayoutKey = 'verifin.number_pad_layout.v1';
 const String _defaultAccountKey = 'verifin.default_account.v1';
 const String _budgetCycleKey = 'verifin.budget_cycle.v1';
-const String _amountFormatKey = 'verifin.amount_format.v1';
+const String _currencyFractionStyleKey = 'verifin.currency_fraction_style.v1';
+
+/// 旧键：存的是 `'true'`/`'false'`（当时叫「强制两位小数」）。升级时只读一次，
+/// 之后只写新键；两个键都加进「初始化清除」清单。
+const String _legacyAmountFormatKey = 'verifin.amount_format.v1';
 const String _moneyUnitStyleKey = 'verifin.money_unit_style.v1';
 const String _hideSingleCurrencyUnitKey =
     'verifin.hide_single_currency_unit.v1';
@@ -438,7 +442,7 @@ List<PagePanelSetting> _defaultPanelSettings(List<PagePanelSpec> specs) {
 /// 面板设置归一化:丢弃目录外的 id 并去重;目录中新增的面板按其在 [specs] 里的
 /// 位置插入（而不是一律追加到末尾,例如摘要卡应当落在首位)并默认开启;
 /// 若结果全部关闭则强制开启第一个,保证页面至少保留一个面板。
-/// 目录为空（对应 Tab 的内容尚未实现）时结果保持为空。
+/// 目录为空时结果保持为空。
 List<PagePanelSetting> _normalizePanelSettings(
   List<PagePanelSetting> stored,
   List<PagePanelSpec> specs,

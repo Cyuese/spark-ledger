@@ -1,5 +1,14 @@
 part of 'common_widgets.dart';
 
+/// [day] 在其所在年份里是第几天（1 月 1 日 = 0）。
+///
+/// 热力图把 `dailyValues` 当作「从 1 月 1 日起按天排列」的序列，所以这个下标
+/// 就是 `dailyValues` 里的位置。必须走 [calendarDaysBetween]：`difference().inDays`
+/// 算的是绝对时间，在夏令时地区跨过「春季拨快」的月份会少算一天，整月错位一格
+/// （中国时区与 CI 的 UTC 都不会暴露）。
+int heatmapDayIndexOfYear(DateTime day) =>
+    calendarDaysBetween(DateTime(day.year, 1, 1), day);
+
 // 月历热力图：12 个月各一张迷你日历，每天一个方块，颜色按数值深浅。
 //
 // 为什么是 Widget 而不是自绘图表：仓库约定「数据图表一律走 `chart_painters.dart`
@@ -172,7 +181,7 @@ class _VeriHeatMonth extends StatelessWidget {
     final firstDay = DateTime(year, month, 1);
     final daysInMonth = DateUtils.getDaysInMonth(year, month);
     // 该月 1 号在一年中的第几天（1 月 1 日 = 0），用于取每天的数值。
-    final offset = firstDay.difference(DateTime(year, 1, 1)).inDays;
+    final offset = heatmapDayIndexOfYear(firstDay);
     // 周一为第一列。
     final leading = firstDay.weekday - 1;
     final weeks = ((leading + daysInMonth) / 7).ceil();
