@@ -614,16 +614,37 @@ class VeriBarSeries {
   final Color color;
 }
 
+/// 柱子圆角半径上限（逻辑像素）；柱高不足时按柱高缩小，见 [_barRodRadius]。
+const double _barRodRadiusMax = 4;
+
+/// 柱子的像素高度达到圆角直径时才会用满 [_barRodRadiusMax]，矮柱按比例收窄圆角。
+///
+/// fl_chart 会把「正柱」的像素高度垫到至少 `cornerHeight`（上下圆角半径之和）：
+/// 半径写死 4 时，任何算出来矮于 8px 的柱子都会被画成一条等高的短杠。收支口径
+/// 切换里归零的柱子因此表现为「平滑缩小 → 卡成短杠不动 → 末帧整根消失」，看着
+/// 像掉帧。半径跟着柱高走之后，归零的柱子会一路平滑缩没，静止时矮柱也是它真实
+/// 的长度（不再被垫高）。
+double _barRodRadius(double value, double range, double plotHeight) {
+  if (range <= 0 || plotHeight <= 0) {
+    return 0;
+  }
+  final heightPx = value.abs() / range * plotHeight;
+  return math.min(_barRodRadiusMax, heightPx / 2);
+}
+
 /// 可交互柱状图：内部由 `fl_chart` 渲染，点击或左右滑动查看数据气泡。
 ///
 /// 命中由适配层按插槽自己算，而不是用库自带的矩形命中：零值月份和柱子上方的
 /// 空白在矩形命中里都点不中，横向拖动会时灵时不灵。按插槽取最近一根柱子后
 /// 整片绘图区都能响应，气泡在点击或拖动后保持显示。
+///
+/// 单序列柱子默认取主题主色，需要语义色（如支出红 / 收入青）时传 [color]。
 class InteractiveBarChart extends StatefulWidget {
   const InteractiveBarChart({
     super.key,
     this.values = const <double>[],
     this.series,
+    this.color,
     this.xLabels = const <String>[],
     this.yLabels = const <String>[],
     this.labelColor,
@@ -639,6 +660,10 @@ class InteractiveBarChart extends StatefulWidget {
 
   /// 多序列数据；同一插槽内并排绘制，按最短序列对齐。
   final List<VeriBarSeries>? series;
+
+  /// 单序列柱子的颜色；为 null 时取 `colorScheme.primary`，传 [series] 时忽略
+  /// （多序列各自的颜色由 [VeriBarSeries.color] 给出）。
+  final Color? color;
 
   final List<String> xLabels;
   final List<String> yLabels;
@@ -664,7 +689,7 @@ class _InteractiveBarChartState extends State<InteractiveBarChart> {
     return <VeriBarSeries>[
       VeriBarSeries(
         values: widget.values,
-        color: Theme.of(context).colorScheme.primary,
+        color: widget.color ?? Theme.of(context).colorScheme.primary,
       ),
     ];
   }
@@ -741,6 +766,12 @@ class _InteractiveBarChartState extends State<InteractiveBarChart> {
               ((groupWidth - rodsSpace * (series.length - 1)) / series.length)
                   .clamp(2.5, 24.0)
                   .toDouble();
+          // 柱子绘图区高度（去掉底部横轴标题占位），用于按柱高收窄圆角。
+          final plotHeight = math.max(
+            0.0,
+            constraints.maxHeight - _chartBottomTitlesSize,
+          );
+          final valueRange = maxY - minY;
 
           final chart = BarChart(
             BarChartData(
@@ -764,7 +795,13 @@ class _InteractiveBarChartState extends State<InteractiveBarChart> {
                           toY: item.values[i],
                           color: item.color,
                           width: rodWidth,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(
+                            _barRodRadius(
+                              item.values[i],
+                              valueRange,
+                              plotHeight,
+                            ),
+                          ),
                         ),
                     ],
                   ),
