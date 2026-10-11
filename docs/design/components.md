@@ -85,7 +85,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 ## 族 4 — 分类相关
 
-**分类是账本内数据**（`Category.bookId`）：页面一律用 `controller.categories` / `categoriesForType` 等**当前账本作用域**的读取口，跨账本数据（桌面小组件投影等）用 `categoriesForBook(bookId)`。分类 id 一律随机生成、不承载语义，界面不要解析 id；需要识别「系统分类」「未分类」时用 `Category.isBalanceAdjust` / `isUncategorized`（底层是 `Category.key`，见 `lib/app/models/category_keys.dart`）。
+**分类是账本内数据**（`Category.bookId`）：页面一律用 `controller.categories` / `categoriesForType` 等**当前账本作用域**的读取口，需要读其它账本时用 `categoriesForBook(bookId)`。分类 id 一律随机生成、不承载语义，界面不要解析 id；需要识别「系统分类」「未分类」时用 `Category.isBalanceAdjust` / `isUncategorized`（底层是 `Category.key`，见 `lib/app/models/category_keys.dart`）。**标签同口径**（`Tag.bookId`）：取 `controller.tags`、解析用 `tagById`（只解析当前账本），跨账本用 `tagsForBook(bookId)`；交易与退款引用其它账本的分类/标签会被写入守卫拒绝（`EntryValidationCode.categoryOutOfScope` / `tagOutOfScope`）。
 
 | 名称 | 类型 | 位置 | 用途 / 关键点 |
 |---|---|---|---|
