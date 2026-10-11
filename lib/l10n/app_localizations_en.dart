@@ -53,9 +53,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportTabYearly => 'Yearly';
 
   @override
-  String get reportTabCustom => 'Custom';
-
-  @override
   String get tabProfile => 'Me';
 
   @override
@@ -550,11 +547,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get metricYearNet => 'This year balance';
 
   @override
-  String get panelYearTrendLabel => 'Monthly income & spending';
+  String get panelYearTrendLabel => 'Income & spending';
 
   @override
   String get panelYearTrendDesc =>
       'Income against spending for each month this year';
+
+  @override
+  String get panelYearHeatmapLabel => 'Daily heatmap';
+
+  @override
+  String get panelYearHeatmapDesc =>
+      'Spending or income intensity for every day of the year';
 
   @override
   String get assetPositive => 'Positive assets';

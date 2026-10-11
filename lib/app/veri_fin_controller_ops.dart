@@ -3994,7 +3994,6 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       _reportDailyPanelsKey,
       _reportMonthlyPanelsKey,
       _reportYearlyPanelsKey,
-      _reportCustomPanelsKey,
     ]) {
       _store.delete(key);
     }
@@ -4086,9 +4085,6 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
             .map((item) => item.toJson())
             .toList(),
         'reportYearlyPanels': _pagePanels[PanelPageKind.reportsYearly]!
-            .map((item) => item.toJson())
-            .toList(),
-        'reportCustomPanels': _pagePanels[PanelPageKind.reportsCustom]!
             .map((item) => item.toJson())
             .toList(),
         'defaultAccountIds': Map<String, String>.from(_defaultAccountIds),
@@ -4307,13 +4303,6 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       ),
       reportYearlyPanelSpecs,
     );
-    final nextReportCustomPanels = _normalizePanelSettings(
-      _decodeModelList<PagePanelSetting>(
-        data['reportCustomPanels'],
-        PagePanelSetting.fromJson,
-      ),
-      reportCustomPanelSpecs,
-    );
     // 以下 4 项是设备偏好，缺键（旧备份）回落默认，与 theme/haptics 等同一套「整替」语义。
     final rawDefaultAccounts = data['defaultAccountIds'];
     final nextDefaultAccountIds = <String, String>{
@@ -4428,7 +4417,6 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _pagePanels[PanelPageKind.reportsDaily] = nextReportDailyPanels;
     _pagePanels[PanelPageKind.reportsMonthly] = nextReportMonthlyPanels;
     _pagePanels[PanelPageKind.reportsYearly] = nextReportYearlyPanels;
-    _pagePanels[PanelPageKind.reportsCustom] = nextReportCustomPanels;
     _defaultAccountIds
       ..clear()
       ..addAll(nextDefaultAccountIds);

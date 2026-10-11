@@ -182,12 +182,6 @@ abstract class AppLocalizations {
   /// **'年统计'**
   String get reportTabYearly;
 
-  /// 看板顶部口径 Tab:用户自选时间范围
-  ///
-  /// In zh, this message translates to:
-  /// **'自定义'**
-  String get reportTabCustom;
-
   /// 底部导航:我的
   ///
   /// In zh, this message translates to:
@@ -1133,7 +1127,7 @@ abstract class AppLocalizations {
   /// 看板年统计面板:本年每月收入与支出双柱卡片标题
   ///
   /// In zh, this message translates to:
-  /// **'月度收支'**
+  /// **'收支统计'**
   String get panelYearTrendLabel;
 
   /// 看板年统计面板:月度收支卡片描述
@@ -1141,6 +1135,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'本年每月收入与支出双柱对比'**
   String get panelYearTrendDesc;
+
+  /// 看板年统计面板:按天热力图卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'收支热力'**
+  String get panelYearHeatmapLabel;
+
+  /// 看板年统计面板:按天热力图卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'按天查看全年支出 / 收入的深浅'**
+  String get panelYearHeatmapDesc;
 
   /// 资产汇总:只统计余额为正的账户
   ///

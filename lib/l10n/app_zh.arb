@@ -53,10 +53,6 @@
   "@reportTabYearly": {
     "description": "看板顶部口径 Tab:按自然年统计"
   },
-  "reportTabCustom": "自定义",
-  "@reportTabCustom": {
-    "description": "看板顶部口径 Tab:用户自选时间范围"
-  },
   "tabProfile": "我的",
   "@tabProfile": {
     "description": "底部导航:我的"
@@ -368,13 +364,21 @@
   "@metricYearNet": {
     "description": "看板年统计面板:本年结余指标"
   },
-  "panelYearTrendLabel": "月度收支",
+  "panelYearTrendLabel": "收支统计",
   "@panelYearTrendLabel": {
     "description": "看板年统计面板:本年每月收入与支出双柱卡片标题"
   },
   "panelYearTrendDesc": "本年每月收入与支出双柱对比",
   "@panelYearTrendDesc": {
     "description": "看板年统计面板:月度收支卡片描述"
+  },
+  "panelYearHeatmapLabel": "收支热力",
+  "@panelYearHeatmapLabel": {
+    "description": "看板年统计面板:按天热力图卡片标题"
+  },
+  "panelYearHeatmapDesc": "按天查看全年支出 / 收入的深浅",
+  "@panelYearHeatmapDesc": {
+    "description": "看板年统计面板:按天热力图卡片描述"
   },
   "assetPositive": "正资产",
   "@assetPositive": {

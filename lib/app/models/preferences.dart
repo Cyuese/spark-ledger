@@ -256,8 +256,7 @@ enum PanelPageKind {
   home,
   reportsDaily,
   reportsMonthly,
-  reportsYearly,
-  reportsCustom;
+  reportsYearly;
 
   String label(AppLocalizations l10n) {
     switch (this) {
@@ -269,8 +268,6 @@ enum PanelPageKind {
         return l10n.reportTabMonthly;
       case PanelPageKind.reportsYearly:
         return l10n.reportTabYearly;
-      case PanelPageKind.reportsCustom:
-        return l10n.reportTabCustom;
     }
   }
 
@@ -284,8 +281,6 @@ enum PanelPageKind {
         return reportMonthlyPanelSpecs;
       case PanelPageKind.reportsYearly:
         return reportYearlyPanelSpecs;
-      case PanelPageKind.reportsCustom:
-        return reportCustomPanelSpecs;
     }
   }
 }
@@ -295,8 +290,7 @@ enum PanelPageKind {
 enum ReportPeriodTab {
   daily,
   monthly,
-  yearly,
-  custom;
+  yearly;
 
   String label(AppLocalizations l10n) {
     switch (this) {
@@ -306,8 +300,6 @@ enum ReportPeriodTab {
         return l10n.reportTabMonthly;
       case ReportPeriodTab.yearly:
         return l10n.reportTabYearly;
-      case ReportPeriodTab.custom:
-        return l10n.reportTabCustom;
     }
   }
 
@@ -320,8 +312,6 @@ enum ReportPeriodTab {
         return PanelPageKind.reportsMonthly;
       case ReportPeriodTab.yearly:
         return PanelPageKind.reportsYearly;
-      case ReportPeriodTab.custom:
-        return PanelPageKind.reportsCustom;
     }
   }
 }
@@ -367,6 +357,8 @@ class PagePanelSpec {
         return l10n.panelYearSummaryLabel;
       case 'year_trend':
         return l10n.panelYearTrendLabel;
+      case 'year_heatmap':
+        return l10n.panelYearHeatmapLabel;
     }
     return id;
   }
@@ -405,6 +397,8 @@ class PagePanelSpec {
         return l10n.panelYearSummaryDesc;
       case 'year_trend':
         return l10n.panelYearTrendDesc;
+      case 'year_heatmap':
+        return l10n.panelYearHeatmapDesc;
     }
     return '';
   }
@@ -438,9 +432,9 @@ const List<PagePanelSpec> reportDailyPanelSpecs = <PagePanelSpec>[
 const List<PagePanelSpec> reportYearlyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'year_summary'),
   PagePanelSpec(id: 'year_trend'),
+  PagePanelSpec(id: 'year_heatmap'),
   PagePanelSpec(id: 'ranking'),
 ];
-const List<PagePanelSpec> reportCustomPanelSpecs = <PagePanelSpec>[];
 
 /// 页面面板的开关状态,列表顺序即页面渲染顺序。
 class PagePanelSetting {
