@@ -77,6 +77,14 @@ void _runContract(String name, Future<LedgerRepository> Function() openRepo) {
       expect(await repo.loadDailyBudgets(), isEmpty);
     });
 
+    test('无遗留附件数据时迁移相关读取安全退化', () async {
+      final repo = await openRepo();
+      expect(await repo.loadAttachmentDataUrl('missing'), isNull);
+      expect(await repo.attachmentIdsWithLegacyData(), isEmpty);
+      // 清理一个不存在的附件不得抛错。
+      await repo.clearAttachmentDataUrl('missing');
+    });
+
     test('各表 save 后 load 内容与顺序原样读回', () async {
       final repo = await openRepo();
       final entries = <LedgerEntry>[

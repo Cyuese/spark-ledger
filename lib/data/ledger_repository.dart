@@ -80,6 +80,15 @@ abstract interface class LedgerRepository {
   /// 清空某附件的旧版 base64（幂等）。转换成功落盘后才允许调用。
   Future<void> clearAttachmentDataUrl(String id);
 
+  /// 库里是否还存在旧版 `data_url` 列。迁移全部完成后该列会被物理删除。
+  Future<bool> hasLegacyAttachmentColumn();
+
+  /// 迁移完成后的空间回收：重建附件表去掉 `data_url` 并 VACUUM。
+  ///
+  /// 幂等且保守：列已删除时返回 false；**只要还有任何一行非空 `data_url` 就拒绝执行**，
+  /// 绝不在旧字节尚未落盘的窗口里删列。返回是否真的重建了表。
+  Future<bool> dropLegacyAttachmentData();
+
   /// Replaces entries, attachments and optional exchange rates in one transaction.
   Future<void> saveEntryAggregate({
     required List<LedgerEntry> entries,
@@ -142,12 +151,11 @@ class SqliteLedgerRepository implements LedgerRepository {
   /// 快照”整个临界区排成队列，同时让失败只结束当前调用、不阻塞后续写入。
   Future<void> _writeTail = Future<void>.value();
 
-  Future<void> _enqueueWrite(Future<void> Function() operation) {
-    final completer = Completer<void>();
+  Future<T> _enqueueWrite<T>(Future<T> Function() operation) {
+    final completer = Completer<T>();
     _writeTail = _writeTail.then((_) async {
       try {
-        await operation();
-        completer.complete();
+        completer.complete(await operation());
       } catch (error, stackTrace) {
         completer.completeError(error, stackTrace);
       }
@@ -294,6 +302,9 @@ class SqliteLedgerRepository implements LedgerRepository {
 
   @override
   Future<String?> loadAttachmentDataUrl(String id) async {
+    if (!await hasLegacyAttachmentColumn()) {
+      return null;
+    }
     final rows = await _db.query(
       'attachments',
       columns: const <String>['data_url'],
@@ -309,6 +320,9 @@ class SqliteLedgerRepository implements LedgerRepository {
 
   @override
   Future<List<String>> attachmentIdsWithLegacyData() async {
+    if (!await hasLegacyAttachmentColumn()) {
+      return const <String>[];
+    }
     final rows = await _db.query(
       'attachments',
       columns: const <String>['id'],
@@ -320,14 +334,77 @@ class SqliteLedgerRepository implements LedgerRepository {
 
   @override
   Future<void> clearAttachmentDataUrl(String id) {
-    return _enqueueWrite(
-      () => _db.update(
+    return _enqueueWrite(() async {
+      // 列可能已经在空间回收时被物理删除：那样就没有旧字节可清，直接跳过。
+      if (!await hasLegacyAttachmentColumn()) {
+        return;
+      }
+      await _db.update(
         'attachments',
         <String, Object?>{'data_url': null},
         where: 'id = ?',
         whereArgs: <Object?>[id],
-      ),
-    );
+      );
+    });
+  }
+
+  /// `data_url` 列是否还存在；null 表示尚未探测。迁移期每张图片都要问一次，必须缓存。
+  bool? _legacyAttachmentColumnKnown;
+
+  @override
+  Future<bool> hasLegacyAttachmentColumn() async {
+    final cached = _legacyAttachmentColumnKnown;
+    if (cached != null) {
+      return cached;
+    }
+    final rows = await _db.rawQuery('PRAGMA table_info(attachments)');
+    final present = rows.any((row) => row['name'] == 'data_url');
+    _legacyAttachmentColumnKnown = present;
+    return present;
+  }
+
+  @override
+  Future<bool> dropLegacyAttachmentData() {
+    return _enqueueWrite(() async {
+      if (!await hasLegacyAttachmentColumn()) {
+        return false;
+      }
+      final rows = await _db.rawQuery(
+        "SELECT COUNT(*) AS c FROM attachments "
+        "WHERE data_url IS NOT NULL AND data_url != ''",
+      );
+      if ((rows.first['c'] as num?)?.toInt() != 0) {
+        // 还有没落盘的旧字节：保留整列，下次启动继续迁移，绝不在这里删数据。
+        return false;
+      }
+      await _db.transaction((txn) async {
+        await txn.execute(
+          'CREATE TABLE attachments_reclaimed ('
+          'id TEXT PRIMARY KEY, entry_id TEXT NOT NULL, '
+          'sort_order INTEGER NOT NULL, mime_type TEXT NOT NULL, '
+          'byte_size INTEGER NOT NULL)',
+        );
+        await txn.execute(
+          'INSERT INTO attachments_reclaimed '
+          '(id, entry_id, sort_order, mime_type, byte_size) '
+          'SELECT id, entry_id, sort_order, mime_type, byte_size '
+          'FROM attachments',
+        );
+        await txn.execute('DROP TABLE attachments');
+        await txn.execute(
+          'ALTER TABLE attachments_reclaimed RENAME TO attachments',
+        );
+        await txn.execute(
+          'CREATE INDEX IF NOT EXISTS idx_attachments_entry '
+          'ON attachments (entry_id)',
+        );
+      });
+      _legacyAttachmentColumnKnown = false;
+      // VACUUM 不能在事务内执行；它只归还空间，失败（如磁盘不足）不影响数据正确性，
+      // 列已删除、元数据完好，下次启动还会再试。
+      await _db.execute('VACUUM');
+      return true;
+    });
   }
 
   /// 交易与附件在同一事务内提交，保留跨表原子性：交易走行级差分（只写变化行），

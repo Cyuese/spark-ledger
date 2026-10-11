@@ -226,6 +226,10 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
   Future<void> _runAttachmentMaintenance() async {
     await _controller.maintainAttachmentFiles();
     final result = await _controller.migrateLegacyAttachments();
+    if (result.failed == 0) {
+      // 旧的 base64 都落盘后回收 `data_url` 列与文件空间（幂等；失败只记日志）。
+      await _controller.reclaimLegacyAttachmentStorage();
+    }
     if (!mounted || result.converted == 0) {
       return;
     }

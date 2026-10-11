@@ -176,4 +176,51 @@ void main() {
     );
     expect(await repo.loadAttachmentDataUrl('drop'), null);
   });
+
+  test('迁移完成后回收 data_url 列，元数据与后续写入不受影响', () async {
+    final app = await openApp();
+    final repo = SqliteLedgerRepository(app);
+    await insertLegacyRow(app, id: 'a', entryId: 'e1', sortOrder: 0);
+    await insertLegacyRow(
+      app,
+      id: 'b',
+      entryId: 'e1',
+      sortOrder: 1,
+      dataUrl: '',
+    );
+
+    Future<List<String>> columns() async => (await app.db.rawQuery(
+      'PRAGMA table_info(attachments)',
+    )).map((row) => row['name']! as String).toList();
+
+    expect(await columns(), contains('data_url'));
+    // 还有没落盘的旧字节：拒绝回收，整列保留。
+    expect(await repo.dropLegacyAttachmentData(), isFalse);
+    expect(await columns(), contains('data_url'));
+
+    await repo.clearAttachmentDataUrl('a');
+
+    expect(await repo.dropLegacyAttachmentData(), isTrue);
+    expect(await columns(), isNot(contains('data_url')));
+    // 列删除后读取与清理都必须安全退化。
+    expect(await repo.loadAttachmentDataUrl('a'), null);
+    expect(await repo.attachmentIdsWithLegacyData(), isEmpty);
+    await repo.clearAttachmentDataUrl('a');
+    expect((await repo.loadAttachments()).map((a) => a.id).toList(), <String>[
+      'a',
+      'b',
+    ]);
+    // 幂等：第二次没有可回收的内容。
+    expect(await repo.dropLegacyAttachmentData(), isFalse);
+
+    // 回收后附件写入/删除仍然正常。
+    await repo.saveAttachments(const <Attachment>[
+      Attachment(id: 'c', entryId: 'e2', byteSize: 7),
+    ]);
+    expect((await repo.loadAttachments()).map((a) => a.id).toList(), <String>[
+      'c',
+    ]);
+    await repo.saveAttachments(const <Attachment>[]);
+    expect(await repo.loadAttachments(), isEmpty);
+  });
 }
