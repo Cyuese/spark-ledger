@@ -12,7 +12,7 @@ import '../l10n/app_localizations.dart';
 /// [VeriRootNavigationStyle] 的样式都能单独预览与测试。保存只把选中的标识
 /// **回传给设置页草稿**（`Navigator.pop(styleId)`），不写 Controller/KV；
 /// 真正落盘由设置页的统一保存完成，符合
-/// `docs/dev/save-interaction-consistency-design.md` 的「弹窗和底部 Sheet」草稿语义。
+/// `docs/design/ui-guidelines.md`「编辑页保存与返回」的草稿与退出语义。
 class NavigationStyleSettingsPage extends StatefulWidget {
   const NavigationStyleSettingsPage({
     super.key,
@@ -118,7 +118,7 @@ class _NavigationStyleCard extends StatelessWidget {
         children: <Widget>[
           ClipRRect(
             borderRadius: BorderRadius.vertical(
-              top: Radius.circular(veriCardRadiusFor()),
+              top: Radius.circular(veriCardRadius),
             ),
             child: _NavigationStylePreview(style: style),
           ),

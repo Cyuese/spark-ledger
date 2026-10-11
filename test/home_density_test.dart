@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:verifin/app/app_theme.dart';
 import 'package:verifin/app/common_widgets.dart';
 import 'package:verifin/app/chart_painters.dart';
 import 'package:verifin/app/models.dart';
@@ -31,7 +30,7 @@ void main() {
     addTearDown(tester.view.reset);
     final controller = await makeController();
     controller.importTransactionsFromCsv(
-      File('docs/dev/preview-transactions.csv').readAsStringSync(),
+      File('docs/fixtures/preview-transactions.csv').readAsStringSync(),
     );
     controller.setMonthlyBudget(DateTime.now(), 5000);
     controller.setThemePreference(ThemePreference.light);
@@ -80,5 +79,5 @@ void main() {
     expect(find.byType(HomeTrendPanel), findsNothing);
     expect(find.byType(BudgetOverviewPage), findsOneWidget);
     expect(tester.takeException(), isNull);
-  }, skip: !veriUnifiedDesignPreview);
+  });
 }

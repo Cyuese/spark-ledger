@@ -2,12 +2,12 @@
 
 当前约定统一收录于 [设计与交互规范](design-system.md)。材质统一为不透明实色：无磨砂玻璃、无方向高光、无导航折射透镜；唯一例外是**可选的液态玻璃底栏样式**，只作用于底部导航这一处。
 
-统一排版的候选方案见 [统一设计预览参数](dev/unified-design-preview.md)：只在显式开启 `UNIFIED_DESIGN_PREVIEW` 的构建中改变间距和字号，不改变材质。
+页面排版只有一套已评审参数（16dp 有效页边距、56dp Header、16dp 卡片圆角、14/12 卡片内边距），本地与发布包一致。
 
 ## Android 真机评审
 
 视觉方案使用独立 diagnostic flavor 的正式入口在手机上评审；保留桌面 widget 布局测试。
-环境检测、缺失工具自动安装、日志和 release/R8 验收见 [Android 开发](dev/android-development.md)。
+环境检测、缺失工具自动安装、日志和 release/R8 验收见 [Android 开发](../dev/android-development.md)。
 
 ## 根导航
 
@@ -19,18 +19,18 @@
 
 承载根导航的 Shell 取当前样式的 `layout` 决定 `Scaffold.extendBody`（停靠底栏不透明，内容延伸到它背后会被盖住半截）与列表避让，并关闭 body 外层 `SafeArea` 的 bottom 裁切。PageView 外必须套 `VeriRootNavigationBody`，隔离 Scaffold 注入的 bottom padding，避免页面内未显式 padding 的 GridView（日历、功能宫格等）被底栏高度撑大。停靠样式的条目内容用 `SafeArea(minimum: 12, maintainBottomViewPadding: true)` 让开系统导航条；根页面列表用 `veriRootPageListPadding(context)` 取统一内边距。
 
-停靠底栏只响应点击；液态玻璃样式额外支持拖动切换。点击后底栏的选中动效与页面过渡同时起步、同时收住：页面由弹簧驱动、**没有固定时长**，弹簧的收敛时间与距离无关，底栏取同一时间尺度（`VeriRootNavigationStyle.switchDuration`）即可对齐。切页动画被用户交互打断（在页面区域点击或滑动）时，底栏按页面实际停靠的页对齐，不能停留在点击时的目标页。样式必须为每个条目产出稳定的 `<前缀>_nav_item_<下标>` key，并用 `Semantics(selected:)` 向读屏软件报告选中态。完整时序见 `docs/dev/components.md` 的组件条目。
+停靠底栏只响应点击；液态玻璃样式额外支持拖动切换。点击后底栏的选中动效与页面过渡同时起步、同时收住：页面由弹簧驱动、**没有固定时长**，弹簧的收敛时间与距离无关，底栏取同一时间尺度（`VeriRootNavigationStyle.switchDuration`）即可对齐。切页动画被用户交互打断（在页面区域点击或滑动）时，底栏按页面实际停靠的页对齐，不能停留在点击时的目标页。样式必须为每个条目产出稳定的 `<前缀>_nav_item_<下标>` key，并用 `Semantics(selected:)` 向读屏软件报告选中态。完整时序见 `docs/design/components.md` 的组件条目。
 
 停靠底栏与记账按钮都使用不透明表面色加一条顶部描边，不绘制渐变、不做背景模糊或折射。品牌色只用于底栏选中项和记账按钮等明确主操作，不用于底栏背景。
 
 导航触发 PageView 跨页动画时，Shell 只认最终目的地，不得用 `onPageChanged` 途经的中间页覆盖导航状态；用户直接左右滑动 PageView 时才逐页同步。否则跨页动画会被中间页重启，看起来像选中态从原 Tab 重新出发。
 
-新增或替换导航样式前先读 [底部导航样式解耦与选择页实施方案](dev/navigation-style-decoupling-design.md)：哪里可以变（几何、动效、绘制），哪里不能变（四个目的地、切页状态机、返回语义、记账按钮），以及每个样式都要通过的契约测试。
+新增或替换导航样式的硬约束：样式只声明几何事实（`extendBody`、`occupiedHeight`、`listBottomGap`，避让高度由 `contentBottomPadding` 统一推导）与选中动效时长，并实现一个只吃纯数据 `spec` 的 `buildBar`（不接触 Controller/KV/Navigator，样式选择页预览因此复用同一实现）。四个根目的地、切页状态机、返回键与小组件路由在所有样式下完全一致；选中态取 `colorScheme.primary`；尊重系统安全区下限；用 `Semantics(selected:)` 上报选中态；每个样式产出 `<前缀>_bottom_nav` / `<前缀>_nav_bar` / `<前缀>_nav_item_<下标>` 稳定 key；切页动画被用户交互打断时按页面实际落点对齐底栏。新增样式须同时加 `NavigationStylePreference` 枚举值与注册项（测试断言两者一一对应），并通过契约测试：非玻璃样式不出现 `BackdropFilter`、玻璃样式覆盖无着色器降级、360dp 与 393×852 不溢出、避让值与实际占用高度自洽、切换样式后当前 Tab 与 `PageController` 状态不丢、记账按钮在任一样式下不与导航栏重叠且仍只在首页显示。
 
 ## 顶部 Header 与页面骨架
 **副标题放什么**：`subtitle` 只承载与标题互补的上下文——账本名、账户名/类型、日期或统计区间。要带「单位：x」时必须经 `currencyUnitSubtitle(l10n, prefix, code)` 拼接，不要在调用点手写 `'$prefix · 单位：¥'`。该 helper 在隐藏单位时只返回前缀；没有前缀时返回 `null`，`subtitle` 为 `null` 时整行不渲染，所以直接把返回值交过去即可，不要传空串、也不要留下只剩「·」的残句。完整口径（含卡片角标、AI 结果卡与豁免清单）见 [设计与交互规范](design-system.md) 的「货币单位的显示口径」。
 
-所有页面顶部统一使用 `VeriHeader` 或 `PageHeader`。Header 使用**最小高度** `veriHeaderHeight`（基础 52、`UNIFIED_DESIGN_PREVIEW` 构建 56），系统字号放大时两行标题不会被裁掉；支持返回、标题、副标题和右侧操作。不要在页面内手写顶部 `Row + IconButton + Text`，避免不同页面高度和对齐不一致。
+所有页面顶部统一使用 `VeriHeader` 或 `PageHeader`。Header 使用**最小高度** `veriHeaderHeight`（56，系统字号放大时按内容增高），系统字号放大时两行标题不会被裁掉；支持返回、标题、副标题和右侧操作。不要在页面内手写顶部 `Row + IconButton + Text`，避免不同页面高度和对齐不一致。
 
 **新建页面一律套用同一套骨架**，否则头部会和其它页对不齐：
 
@@ -52,7 +52,7 @@ Scaffold(
 
 **关键点**：`VeriHeader` 自身**没有横向内边距**——所有页面头部的左右缩进与顶部间距（8）全靠这层外层 `padding: fromLTRB(14, 8, 14, …)`。少了它，标题栏会贴边、和别的页对不上。
 
-页面级内容容器的横向 padding 固定写 **14**；`VeriPage` 在 `UNIFIED_DESIGN_PREVIEW` 构建会再补 2dp，因此发布/评审构建的**有效**页边距是 16（[设计与交互规范](design-system.md)「已确认的布局」表里的 16dp 就是这个有效值）。页面内的局部容器（如聊天页消息列表）按内容另定，不套用这条。
+页面级内容容器的横向 padding 固定写 **14**；`VeriPage` 再补 2dp，因此**有效**页边距是 16（[设计与交互规范](design-system.md)「已确认的布局」表里的 16dp 就是这个有效值）。页面内的局部容器（如聊天页消息列表）按内容另定，不套用这条。
 
 **带固定页脚的页面**（如聊天页底部有输入栏，不能整页放进一个 `ListView`）：用 `Column`，但**必须单独给头部套上同样的内边距**，否则同样错位：
 
@@ -76,6 +76,8 @@ SafeArea(child: VeriPage(child: Column(children: [
 普通全屏编辑页在 `VeriHeader` 右侧使用 `SaveHeaderAction`，统一显示软碟语义的 `Icons.save_outlined` 和“保存”tooltip；不要用对勾同时表达保存、完成和确认。**快速记账 `EntryDetailPage` 是单手高频流程的明确例外**：使用无顶部分割线的底部固定主按钮保存，Header 只保留返回和账本信息。草稿未修改或校验未通过时保存按钮禁用，字段编辑期间不得直接写 Controller、SQLite 或 KV。
 
 全屏编辑页使用 `UnsavedChangesGuard` 统一处理 Header 返回、Android 系统返回和预测性返回。草稿无变化时直接退出；有变化时显示“保存 / 不保存 / 取消”：保存成功后退出，不保存丢弃草稿后退出，取消继续编辑。持久化失败必须留在原页并保留草稿。Sheet/Dialog 若属于父编辑页，只能更新父页草稿；独立编辑 Sheet/Dialog 的自身保存按钮可作为最终提交动作。
+
+**三类操作必须分清**：① **编辑会话**（全屏编辑页、设置页、排序页）要有初始快照、当前草稿、「草稿是否等于快照」的脏状态、唯一提交动作和退出询问；字段只改草稿，保存前不得调用持久化 API。② **明确业务命令**（删除、清空、初始化、导入、恢复、立即备份/上传、下载、还款、调整余额、待退款核销、启用应用锁、弹窗自己的「确认/保存」）在自身确认后立即执行，不必回到父页二次保存；父页即使有未保存草稿，命令完成后也不再弹未保存提示或把已删除实体保存回来。③ **临时界面状态**（搜索词、筛选条件、报表周期、图表选中点、当前 Tab、展开/折叠、选择器层级、滚动位置、多选集合）不参与保存与退出拦截；若某种折叠会持久化为偏好，则属于可保存偏好，实现前必须明确。保存成功以对应 SQLite/KV 写入完成为准；失败时记隐私友好的日志、给用户可见反馈、保留草稿与 dirty 状态并留在原页，不允许先退出再在上一级页面提示失败。
 
 ## 卡片标题
 首页和功能卡片标题统一使用 `titleMedium` 加 `FontWeight.w800`，与“日历”卡片标题保持一致。不要为单个卡片手写更大的标题字号；需要右侧入口时使用统一的标题行组件或同等字号的 `Row`。
@@ -162,6 +164,8 @@ Toast。提示宽度根据正文、重复计数和操作文字的实际排版自
 
 ## 金额显示
 金额为 0 时统一显示 `0`，使用中性色，不显示 `-0` 或红色。支出、收入和转账颜色只在金额非 0 时表达语义。
+
+**支出金额不带负号**：`formatExpenseAmount` 与 `formatIncomeAmount` 对称，只给绝对值——方向由同屏的标签（「本月支出」「今日已超」）、类型色或图表序列表达，重复负号会和旁边的正数柱/正数日均互相矛盾。需要符号的地方只有两种：混合类型的列表（交易行、AI 结果行）用 `formatSignedAmount` / `formatSignedUserMoney`；「剩余 / 超出」这类**负值本身就是信息**的位置直接用 `formatAmount`（负数自带 `-`），不要写成 `formatExpenseAmount(x.abs())`。
 
 记账详情页顶部大金额颜色跟随当前类型：支出用 `veriExpense` 红色，收入用 `veriIncome` 青绿色，转账用 `veriBlue` 蓝色。
 

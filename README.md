@@ -39,7 +39,7 @@
 - 首页底栏的圆形记账按钮打开数字键盘**快速记账**，支持支出 / 收入 / 转账三种类型；可选**「无账户」**只记金额、不计入任何账户余额；数字键盘支持**四则运算算式**（如 `500+800`），实时显示结果、算式不完整时提示；
 - **默认付款账户**：在「我的 → 设置」或账户详情页把某账户设为默认，记账时（含 AI 未识别到账户时）自动预选它，每个账本各自设置；
 - **AI 对话记账**（可选）：把「记一笔」按钮设为 AI 模式，用一句话（如「昨天打车 32」）自动解析出类型 / 金额 / 分类 / 账户 / 备注草稿，确认后落账；也可设为**点击手动、长按 AI**，一个按钮两种入口；自带 API Key + 请求地址（OpenAI 兼容），配置只存本机；
-- **截图识账 / 分享识账**（可选，需先配置 AI）：把账单**截图「分享」给 Veri Fin**（或在 AI 记账弹层里选相册截图），文字识别在**本机离线完成、图片绝不上传**，识别文本由 AI 解析成草稿确认落账；账单**文本**同样可分享识别。Veri Fin 本体**不监听任何通知或屏幕**——Tasker 等自动化工具可经 Intent 接口把账单文本送进来（见 [`docs/automation.md`](docs/automation.md)）；
+- **截图识账 / 分享识账**（可选，需先配置 AI）：把账单**截图「分享」给 Veri Fin**（或在 AI 记账弹层里选相册截图），文字识别在**本机离线完成、图片绝不上传**，识别文本由 AI 解析成草稿确认落账；账单**文本**同样可分享识别。Veri Fin 本体**不监听任何通知或屏幕**——Tasker 等自动化工具可经 Intent 接口把账单文本送进来（见 [`docs/product/automation.md`](docs/product/automation.md)）；
 - **多级分类**（任意层级树形结构）+ **多标签**（多对多，可筛选、可统计）；
 - 交易可附**图片票据**（拍照或相册；压缩后以独立文件存本地、数据库只留元数据，按需读取，随备份导出）；
 - **周期记账**（每天 / 周 / 月 / 年自动补记，如房租、工资）、**批量操作**（多选删除、改分类、同账户币种安全改账户；跨币种或无账户交易需逐笔编辑）；
@@ -81,7 +81,7 @@
 - Android **桌面小组件**提供快速记账、预算进度、收支趋势、净资产四个固定模板，跟随当前账本；应用内预览直接展示桌面原生布局的渲染结果。另有下拉快捷开关「快速记账」与每日**记账提醒**通知；
 - 新用户引导：建首个账户、设本月预算，几步上手。
 
-> 完整功能断言清单见 [`docs/acceptance-checklist.md`](docs/acceptance-checklist.md)。
+> 完整功能断言清单见 [`docs/product/acceptance-checklist.md`](docs/product/acceptance-checklist.md)。
 
 ## 🛠 技术栈
 
@@ -108,19 +108,19 @@
 git clone git@github.com:LumiDesk/verifin.git
 cd verifin
 flutter pub get                      # 安装依赖（自动生成 l10n）
-flutter run -d <android-device-id> --flavor github --dart-define=UNIFIED_DESIGN_PREVIEW=true  # Android 模拟器或真机预览
+flutter run -d <android-device-id> --flavor github  # Android 模拟器或真机预览
 flutter analyze && flutter test      # 静态检查 + 全部测试
 ```
 
 真机调试、缺失工具自动安装和隔离验收见 [Android 开发说明](docs/dev/android-development.md)。
-整体样式评审的显式预览开关与验证方式见 [统一设计候选方案](docs/dev/unified-design-preview.md)；无参数构建保留旧布局用于回归，发布和验收构建显式开启统一排版。
+界面只有一套已评审的排版（见 [统一设计规范](docs/design/design-system.md)），本地构建与发布包完全一致，不需要任何额外构建参数。
 
 Android 包名 `top.talyra42.verifin`。本地不构建交付 APK——正式安装包由 GitHub CI 生成。
 
 ## 📦 构建与发布
 
 - 质量 CI（`.github/workflows/ci.yml`）在每个 PR 和每次 push 到 `main` 时执行格式检查、静态分析、全量测试、统一设计专项测试，并构建一个不交付的 `github` debug APK 作为 Kotlin / Manifest / 原生桥编译门禁。`integration_test/` 需要真实引擎，不在 CI 跑，按 [Android 开发](docs/dev/android-development.md) 在真机或本地模拟器手动执行。
-`flutter build apk --release --target-platform android-arm64 --flavor github --dart-define=UNIFIED_DESIGN_PREVIEW=true` + `flutter build appbundle --release --flavor play --dart-define=UNIFIED_DESIGN_PREVIEW=true --dart-define=SELF_UPDATE=false` → 创建 GitHub **预发布**（APK 命名 `verifin-vX.Y.Z-arm64-短提交号.apk`，AAB 命名 `verifin-vX.Y.Z-短提交号.aab`；真机验收通过后由维护者手动提升为正式版与 Latest）。自建分发的**安装包只出 arm64-v8a 单架构 APK**（覆盖 2019 年后绝大多数机型、比 universal 约减半；极老 32 位设备装不了）；AAB 含全部 ABI，供 Google Play 上架用（由 Play 按设备分发）。release 开启 R8 代码/资源裁剪，反射依赖点由 `android/app/proguard-rules.pro` 的 keep 规则保护。
+`flutter build apk --release --target-platform android-arm64 --flavor github` + `flutter build appbundle --release --flavor play --dart-define=SELF_UPDATE=false` → 创建 GitHub **预发布**（APK 命名 `verifin-vX.Y.Z-arm64-短提交号.apk`，AAB 命名 `verifin-vX.Y.Z-短提交号.aab`；真机验收通过后由维护者手动提升为正式版与 Latest）。自建分发的**安装包只出 arm64-v8a 单架构 APK**（覆盖 2019 年后绝大多数机型、比 universal 约减半；极老 32 位设备装不了）；AAB 含全部 ABI，供 Google Play 上架用（由 Play 按设备分发）。release 开启 R8 代码/资源裁剪，反射依赖点由 `android/app/proguard-rules.pro` 的 keep 规则保护。
 - **分发渠道 flavor（`github` / `play`）**：应用内自更新（下载 GitHub Release 安装包自动更新）只用于 GitHub 自分发的 `github` flavor；Google Play 政策禁止应用自下载 APK 更新，故 `play` flavor 移除 `REQUEST_INSTALL_PACKAGES` 权限并隐藏「检查更新」入口。**本地 Android 构建/运行需带 `--flavor github`。**
 - 发版前先提升并提交 `CHANGELOG.md` 的 `Unreleased`，确认位于 `main` 且工作树完全干净；随后运行 Dart 发布脚本（脚本会先校验本机 Flutter 版本与 CI 固定版本一致，不一致会直接失败）：
 
@@ -149,18 +149,18 @@ lib/
 
 | 文档 | 内容 |
 | --- | --- |
-| [`docs/product.md`](docs/product.md) | 产品定位与数据策略 |
-| [`docs/ui-guidelines.md`](docs/ui-guidelines.md) | UI 规范（Header、弹窗、金额展示、图表交互） |
-| [`docs/acceptance-checklist.md`](docs/acceptance-checklist.md) | 功能验收清单 |
-| [`docs/automation.md`](docs/automation.md) | 自动化接入（Intent 接口，配 Tasker 示例） |
+| [`docs/product/product.md`](docs/product/product.md) | 产品定位与数据策略 |
+| [`docs/design/ui-guidelines.md`](docs/design/ui-guidelines.md) | UI 规范（Header、弹窗、金额展示、图表交互） |
+| [`docs/product/acceptance-checklist.md`](docs/product/acceptance-checklist.md) | 功能验收清单 |
+| [`docs/product/automation.md`](docs/product/automation.md) | 自动化接入（Intent 接口，配 Tasker 示例） |
 | [`docs/dev/i18n-verification.md`](docs/dev/i18n-verification.md) | 多语言真机验证清单 |
-| [`docs/dev/verifin-sample-backup.json`](docs/dev/verifin-sample-backup.json) | 可导入的测试备份数据 |
+| [`docs/fixtures/sample-backup.json`](docs/fixtures/sample-backup.json) | 可导入的测试备份数据 |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | 贡献指南（上手路线 + 提交前检查清单） |
 | [`AGENTS.md`](AGENTS.md) | 贡献与 Agent 开发规范（含代码规范·组件化） |
-| [`docs/dev/components.md`](docs/dev/components.md) | 组件清单（写新组件前先查） |
+| [`docs/design/components.md`](docs/design/components.md) | 组件清单（写新组件前先查） |
 | [`docs/dev/tech-decisions.md`](docs/dev/tech-decisions.md) | 关键技术决策与选型理由 |
 | [`docs/dev/known-limitations.md`](docs/dev/known-limitations.md) | 已知限制与技术债台账 |
-| [`docs/dev/multi-currency-design.md`](docs/dev/multi-currency-design.md) | 多币种与离线汇率的口径与验收 |
+| [`docs/dev/multi-currency.md`](docs/dev/multi-currency.md) | 多币种与离线汇率的口径与验收 |
 | [`docs/dev/feedback-system.md`](docs/dev/feedback-system.md) | 应用内轻提示组件、操作结果与队列规范 |
 
 ## ❤️ 支持项目
@@ -191,8 +191,8 @@ Veri Fin 是自由软件，基于 **GNU 通用公共许可证 v3.0 或更高版�
 
 </div>
 
-开发界面前请阅读 [统一设计与交互规范](docs/design-system.md)。界面材质统一为不透明实色：卡片、导航、快捷按钮、菜单与弹层均无背景模糊、折射或渐变；底部导航另提供一个可选的「液态玻璃」样式（设置 → 外观 → 导航栏样式），是唯一例外。
+开发界面前请阅读 [统一设计与交互规范](docs/design/design-system.md)。界面材质统一为不透明实色：卡片、导航、快捷按钮、菜单与弹层均无背景模糊、折射或渐变；底部导航另提供一个可选的「液态玻璃」样式（设置 → 外观 → 导航栏样式），是唯一例外。
 
-复现手机外观时，Flutter 运行/构建命令附加 `--dart-define=UNIFIED_DESIGN_PREVIEW=true`（该参数只控制布局密度与排版）；Android 同时指定 `--flavor github`。CI 与本地验收统一使用 Flutter **3.47.2**；真机命令见 [Android 开发与环境自动补齐](docs/dev/android-development.md)。正式更新仍须通过 CI 发版。
+界面只有一个评审外观，本地与发布包一致，无需额外构建参数；Android 运行/构建指定 `--flavor github`。CI 与本地验收统一使用 Flutter **3.47.2**；真机命令见 [Android 开发与环境自动补齐](docs/dev/android-development.md)。正式更新仍须通过 CI 发版。
 
 开发与评审仅使用 Android。规范入口为 [AGENTS.md](AGENTS.md)，架构导览见 [docs/dev/architecture.md](docs/dev/architecture.md)。

@@ -1214,15 +1214,16 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return true;
   }
 
-  /// 是否强制所有金额展示两位小数（`12` → `12.00`）。全局显示偏好（不分账本），
-  /// 进 JSON 备份、初始化保留。经顶层量 [amountForceTwoDecimals] 让无 context 的金额
-  /// 格式化纯函数（小组件、通知、`series_math` 等）同步生效。
-  bool get amountForceTwoDecimals => _amountForceTwoDecimals;
+  /// 金额小数位风格：按货币 minor unit 的标准精度，或去掉多余的尾随零。
+  /// 全局显示偏好（不分账本），进 JSON 备份、初始化保留。经顶层量
+  /// [amount_format.currencyFractionStyle] 让无 context 的金额格式化纯函数
+  /// （小组件、通知、`series_math` 等）同步生效。
+  CurrencyFractionStyle get currencyFractionStyle => _currencyFractionStyle;
 
-  void setAmountForceTwoDecimals(bool value) {
-    _amountForceTwoDecimals = value;
-    amount_format.amountForceTwoDecimals = value;
-    _store.write(_amountFormatKey, value.toString());
+  void setCurrencyFractionStyle(CurrencyFractionStyle value) {
+    _currencyFractionStyle = value;
+    amount_format.currencyFractionStyle = value;
+    _store.write(_currencyFractionStyleKey, value.name);
     notifyListeners();
   }
 
@@ -1275,7 +1276,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     required LocalePreference localePreference,
     required NavigationStylePreference navigationStylePreference,
     required bool hapticsEnabled,
-    required bool amountForceTwoDecimals,
+    required CurrencyFractionStyle currencyFractionStyle,
     required MoneyUnitStyle moneyUnitStyle,
     required bool hideUnitInSingleCurrency,
     required FabActionMode fabActionMode,
@@ -1300,8 +1301,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       );
       await _store.writeAndFlush(_hapticsKey, hapticsEnabled.toString());
       await _store.writeAndFlush(
-        _amountFormatKey,
-        amountForceTwoDecimals.toString(),
+        _currencyFractionStyleKey,
+        currencyFractionStyle.name,
       );
       await _store.writeAndFlush(_moneyUnitStyleKey, moneyUnitStyle.name);
       await _store.writeAndFlush(
@@ -1332,8 +1333,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _localePreference = localePreference;
     _navigationStylePreference = navigationStylePreference;
     _hapticsEnabled = hapticsEnabled;
-    _amountForceTwoDecimals = amountForceTwoDecimals;
-    amount_format.amountForceTwoDecimals = amountForceTwoDecimals;
+    _currencyFractionStyle = currencyFractionStyle;
+    amount_format.currencyFractionStyle = currencyFractionStyle;
     _moneyUnitStyle = moneyUnitStyle;
     _hideUnitInSingleCurrency = hideUnitInSingleCurrency;
     _fabActionMode = fabActionMode;
@@ -3994,6 +3995,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       _reportDailyPanelsKey,
       _reportMonthlyPanelsKey,
       _reportYearlyPanelsKey,
+      _currencyFractionStyleKey,
+      _legacyAmountFormatKey,
     ]) {
       _store.delete(key);
     }
@@ -4089,7 +4092,6 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
             .toList(),
         'defaultAccountIds': Map<String, String>.from(_defaultAccountIds),
         'fabActionMode': _fabActionMode.name,
-        'amountForceTwoDecimals': _amountForceTwoDecimals,
         'currencyFractionStyle': amount_format.currencyFractionStyle.name,
         'moneyUnitStyle': _moneyUnitStyle.name,
         'hideUnitInSingleCurrency': _hideUnitInSingleCurrency,
@@ -4313,6 +4315,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     final nextFabActionMode = FabActionMode.fromStorage(
       data['fabActionMode'] as String?,
     );
+    // 旧备份只有 `amountForceTwoDecimals`（布尔）时按「标准精度 / 精简尾零」重解释。
     final nextCurrencyFractionStyle = data.containsKey('currencyFractionStyle')
         ? CurrencyFractionStyle.fromStorage(
             data['currencyFractionStyle'] as String?,
@@ -4320,8 +4323,6 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
         : (data['amountForceTwoDecimals'] as bool? ?? false)
         ? CurrencyFractionStyle.standard
         : CurrencyFractionStyle.compact;
-    final nextAmountForceTwoDecimals =
-        nextCurrencyFractionStyle == CurrencyFractionStyle.standard;
     final nextMoneyUnitStyle = MoneyUnitStyle.fromStorage(
       data['moneyUnitStyle'] as String?,
     );
@@ -4421,8 +4422,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       ..clear()
       ..addAll(nextDefaultAccountIds);
     _fabActionMode = nextFabActionMode;
-    _amountForceTwoDecimals = nextAmountForceTwoDecimals;
-    amount_format.amountForceTwoDecimals = nextAmountForceTwoDecimals;
+    _currencyFractionStyle = nextCurrencyFractionStyle;
+    amount_format.currencyFractionStyle = nextCurrencyFractionStyle;
     _moneyUnitStyle = nextMoneyUnitStyle;
     _hideUnitInSingleCurrency = nextHideUnitInSingleCurrency;
     _autoSuggestEnabled = nextAutoSuggestEnabled;
@@ -4449,7 +4450,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _persistDefaultAccounts();
     _persistBudgetCycleStartDays();
     _store.write(_fabActionKey, _fabActionMode.name);
-    _store.write(_amountFormatKey, _amountForceTwoDecimals.toString());
+    _store.write(_currencyFractionStyleKey, _currencyFractionStyle.name);
+    _store.delete(_legacyAmountFormatKey);
     _store.write(_moneyUnitStyleKey, _moneyUnitStyle.name);
     _store.write(
       _hideSingleCurrencyUnitKey,

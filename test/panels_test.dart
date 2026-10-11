@@ -59,12 +59,14 @@ void main() {
     await tester.drag(firstVerticalScrollable(), const Offset(0, 800));
     await tester.pumpAndSettle();
     expect(find.byType(HomeTrendPanel), findsOneWidget);
+    // 评审外观：走势卡右上角是走势窗口（如「10.1-10.7」），单位角标只留在预算卡等
+    // 聚合卡上。
     expect(
       find.descendant(
         of: find.byType(HomeTrendPanel),
         matching: find.byType(MoneyUnitLabel),
       ),
-      findsOneWidget,
+      findsNothing,
     );
     await tester.scrollUntilVisible(
       find.byKey(const Key('panel_settings_entry_home')),

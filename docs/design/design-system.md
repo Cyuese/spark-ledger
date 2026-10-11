@@ -8,7 +8,7 @@
 
 正式应用仅以 Android 交付，真机调试使用同一套真实页面、Controller、组件和持久化逻辑；独立 diagnostic applicationId 隔离数据。
 
-候选外观由 `UNIFIED_DESIGN_PREVIEW` 控制：CI 的 APK/AAB 构建均显式开启该参数，保证发布包使用已评审布局；无参数开发构建保留旧布局路径用于回归，本地复现手机外观须传同样参数。该参数**只控制布局密度与排版**，与材质无关。候选排版覆盖全部页面：公共页面骨架、标题、卡片默认使用同一套紧凑参数，独立记账编辑页同步 16dp 页边距；图表、表单和弹层的业务专用占位仍按内容保留。
+排版只有一套已评审参数，本地构建与发布包一致：公共页面骨架、标题、卡片默认使用同一套紧凑参数（16dp 有效页边距、56dp Header、16dp 卡片圆角、卡片内边距横向 14dp / 纵向 12dp），独立记账编辑页同步 16dp 页边距；图表、表单和弹层的业务专用占位仍按内容保留。材质与此无关，见下方「表面材质」。
 
 ## 已确认的布局
 
@@ -37,8 +37,8 @@
 
 | 对象 | 约定 |
 | --- | --- |
-| 内容卡片 | `veriContentSurfaceColor(brightness)` 实色 + 圆角 + 细描边；深色 `veriPreviewSurfaceDark`，浅色 `veriSurfaceLight` |
-| 页面背景 | `scaffoldBackgroundColor` 取画布纯色（`veriPreviewCanvasLight` / `veriPreviewCanvasDark`），不用渐变 |
+| 内容卡片 | `veriContentSurfaceColor(brightness)` 实色 + `veriCardRadius`（16）圆角 + 细描边；深色 `veriCardSurfaceDark`，浅色 `veriSurfaceLight` |
+| 页面背景 | `scaffoldBackgroundColor` 取画布纯色（`veriCanvasLight` / `veriCanvasDark`），不用渐变 |
 | 底部导航（停靠底栏） | 不透明表面色 + 顶部细描边；表面色一直铺到屏幕最底（含系统导航条背后） |
 | 底部导航（液态玻璃，可选样式） | 浮动胶囊：背景模糊 + 中性填色 + 沿边方向高光，拖动/按压时对导航内容做透镜形变；仅此一处允许模糊/折射，透镜着色器不可用时降级为不含折射的玻璃面板 |
 | 快捷记账按钮 | `colorScheme.primary` 实色圆角方形 + `onPrimary` 加号，只在首页右下角显示 |
@@ -68,20 +68,18 @@
 
 外观偏好（主题、语言等）走设备 KV，全局不分账本、不进账目备份，恢复备份与初始化账目都保留当前设备选择。偏好改动须由 Controller 完成落盘后，再更新对应的独立 `ValueNotifier`；绘制组件不直接访问 Controller/KV。
 
-账目仍以 Android 本机 SQLite 为权威；本地优先、AI 只生成待确认草稿、Android 原生能力必须真实可用。完整工程和业务不变量仍以 [AGENTS.md](../AGENTS.md) 与 [技术决策](dev/tech-decisions.md) 为准。
+账目仍以 Android 本机 SQLite 为权威；本地优先、AI 只生成待确认草稿、Android 原生能力必须真实可用。完整工程和业务不变量仍以 [AGENTS.md](../../AGENTS.md) 与 [技术决策](../dev/tech-decisions.md) 为准。
 
 ## 修改与验收
 
-先查 [组件注册表](dev/components.md)，复用后再扩展。新增可见文案完成中英文 l10n；不为材质调整改动金额、预算或退款口径。按独立功能提交，不积压工作区，不擅自推送或发版。
+先查 [组件注册表](components.md)，复用后再扩展。新增可见文案完成中英文 l10n；不为材质调整改动金额、预算或退款口径。按独立功能提交，不积压工作区，不擅自推送或发版。
 
 widget 布局测试使用 **393×852**，补充 360dp、大字号、浅/深色和高对比度测试。实际检查保存/取消/冷启动、底栏点击/页面滑动/取消、菜单、键盘和滚动末项。运行 format、analyze、相关测试与全量测试。Android 手势、系统安全区及真实流畅度仍需真机验证，桌面截图不替代它。
 
 ## 详细资料
 
 - [页面、图表与骨架](ui-guidelines.md)
-- [公共组件目录](dev/components.md)
-- [统一设计预览参数](dev/unified-design-preview.md)
-- [底部导航样式契约](dev/navigation-style-decoupling-design.md)
-- [短反馈系统](dev/feedback-system.md)
-- [Android 开发与工具链](dev/android-development.md)
-- [架构、数据与备份取舍](dev/tech-decisions.md) / [已接受限制](dev/known-limitations.md)
+- [公共组件目录](components.md)
+- [短反馈系统](../dev/feedback-system.md)
+- [Android 开发与工具链](../dev/android-development.md)
+- [架构、数据与备份取舍](../dev/tech-decisions.md) / [已接受限制](../dev/known-limitations.md)

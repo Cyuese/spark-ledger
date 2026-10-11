@@ -40,4 +40,4 @@
 - 待到账退款不进余额/净额/统计，标记已到账后才生效。
 - 超额拦截、级联删除、删除退款后净额恢复。
 - 备份 round-trip（含待到账退款）一致。
-- 退款原币上限与本位币净额分别计算；外币退款遵循 [multi-currency-design.md](multi-currency-design.md)。
+- 退款原币上限与本位币净额分别计算；外币退款遵循 [multi-currency-design.md](multi-currency.md)。

@@ -4,7 +4,8 @@ import 'package:verifin/app/models.dart';
 
 import 'support/test_harness.dart';
 
-/// 同一业务路径同时用于默认外观和显式设计预览构建，避免为候选设计复制页面。
+/// 真实页面的冒烟测试：360/393 与浅深色下导航、菜单和保存都可用。
+/// （原 `unified_design_preview_test.dart`：设计预览参数移除后，评审批次外观就是唯一外观。）
 void main() {
   useTestDatabases();
   for (final width in [360.0, 393.0]) {

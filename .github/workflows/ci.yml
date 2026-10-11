@@ -48,13 +48,15 @@ jobs:
         run: flutter test
 
       - name: Test release materials
-        run: flutter test test/anchored_menu_test.dart test/material_stability_test.dart test/navigation_settings_test.dart test/design_consistency_test.dart test/home_density_test.dart --dart-define=UNIFIED_DESIGN_PREVIEW=true
+        # 发布外观专项：这些用例断言评审外观的几何与材质，普通 flutter test 也会跑到，
+        # 单独列出来是为了在 CI 里明确它们是发版门禁。
+        run: flutter test test/anchored_menu_test.dart test/material_stability_test.dart test/navigation_settings_test.dart test/design_consistency_test.dart test/home_density_test.dart
 
       # Dart analyze/test 不会编译 android/ 下的 Kotlin。普通 PR/main CI 额外构建
       # github debug APK，提前拦截 MethodChannel、Manifest 和原生桥编译错误，避免
       # 只在打发布标签后才发现 Kotlin 无法编译。
       - name: Build Android debug APK
-        run: flutter build apk --debug --flavor github --dart-define=UNIFIED_DESIGN_PREVIEW=true
+        run: flutter build apk --debug --flavor github
 
 # 集成测试（integration_test/）刻意不挂在 CI：它们需要真实引擎与真实帧时序，
 # 只能跑在设备或模拟器上。曾试过 android-emulator-runner：

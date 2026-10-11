@@ -12,7 +12,7 @@ Veri Fin 本体不监听任何通知或屏幕：不注册 `NotificationListenerS
 
 ## 路线 B · 外部意图接口
 
-- 显式导出的 Intent：Action `top.talyra42.verifin.action.CAPTURE_TEXT`，Extra `text`，目标 `ShareReceiverActivity`；Tasker、MacroDroid 等自动化工具用它送入账单原文，解析交给用户配置的 AI。用户文档见 [automation.md](../automation.md)。
+- 显式导出的 Intent：Action `top.talyra42.verifin.action.CAPTURE_TEXT`，Extra `text`，目标 `ShareReceiverActivity`；Tasker、MacroDroid 等自动化工具用它送入账单原文，解析交给用户配置的 AI。用户文档见 [automation.md](../product/automation.md)。
 - 安全边界：文本输入长度限制、简单频率限制；收到后只产草稿弹确认，绝不静默落账。
 
 ## 共同约定

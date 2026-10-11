@@ -96,13 +96,6 @@ WidgetMetric defaultWidgetMetric(WidgetTemplate template) => switch (template) {
   WidgetTemplate.netWorth => WidgetMetric.netWorth,
 };
 
-WidgetChartMetric? defaultWidgetChart(WidgetTemplate template) =>
-    switch (template) {
-      WidgetTemplate.quickEntry || WidgetTemplate.budget => null,
-      WidgetTemplate.trend => WidgetChartMetric.expense,
-      WidgetTemplate.netWorth => WidgetChartMetric.netWorth,
-    };
-
 String widgetMetricLabel(AppLocalizations l, WidgetMetric metric) =>
     switch (metric) {
       WidgetMetric.todayExpense => l.widgetMetricTodayExpense,

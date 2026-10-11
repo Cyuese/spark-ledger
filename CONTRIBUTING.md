@@ -19,7 +19,7 @@ dart format .                       # 提交前格式化
 ## 上手路线
 
 1. 读 [`docs/dev/architecture.md`](docs/dev/architecture.md)：架构总览（单 Controller + InheritedNotifier、KV vs SQLite 分级、平台条件导入两件套）。
-2. 读 [`docs/dev/components.md`](docs/dev/components.md)：**写任何组件前先查这份组件清单**，有现成的就复用。
+2. 读 [`docs/design/components.md`](docs/design/components.md)：**写任何组件前先查这份组件清单**，有现成的就复用。
 3. 读 [`AGENTS.md`](AGENTS.md) 的「代码规范 · 组件化与工程约定」：组件化、图标入口、弹窗 helper、错误处理与日志、异步守卫、l10n。
 4. 关键技术选型见 [`docs/dev/tech-decisions.md`](docs/dev/tech-decisions.md)；已知限制与技术债见 [`docs/dev/known-limitations.md`](docs/dev/known-limitations.md)。
 
@@ -29,9 +29,9 @@ dart format .                       # 提交前格式化
 - [ ] `flutter analyze` 无告警。
 - [ ] `flutter test` 全绿；改了功能就补 / 改对应测试。
 - [ ] 新用户可见文案已写入 `lib/l10n/app_zh.arb` + `app_en.arb` 并经 `AppLocalizations` 引用（不硬编码中文）。
-- [ ] 新组件已先查组件清单、优先复用；确有新增则登记进 `docs/dev/components.md`。
+- [ ] 新组件已先查组件清单、优先复用；确有新增则登记进 `docs/design/components.md`。
 - [ ] 涉及本地存储/图片/文件/系统入口的功能，确认 Android 端有真实实现并检查权限、持久化、进程重启行为。
-- [ ] 数据结构变更同步了导出/导入、初始化、样例备份 `docs/dev/verifin-sample-backup.json`。
+- [ ] 数据结构变更同步了导出/导入、初始化、样例备份 `docs/fixtures/sample-backup.json`。
 - [ ] 用户可见改动已往 `CHANGELOG.md` 的 `## [Unreleased]` 加一行。
 - [ ] 变更影响命令/架构/流程/配置/用户行为时，同步更新了 `README.md` / `AGENTS.md` / `docs/`。
 
