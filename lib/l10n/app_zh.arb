@@ -1382,6 +1382,10 @@
   "rankGroupCategory": "分类",
   "rankGroupSubCategory": "子分类",
   "rankGroupTag": "标签",
+  "rankGroupingLabel": "排行方式",
+  "@rankGroupingLabel": {
+    "description": "看板排行卡:分类 / 子分类 / 标签分组切换的无障碍标签"
+  },
   "tagRankOverlapNote": "同一笔可带多个标签，各标签占比之和可能超过 100%",
   "subCategoryOf": "「{name}」的子分类",
   "@subCategoryOf": {

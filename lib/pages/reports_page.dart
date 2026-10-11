@@ -1075,29 +1075,32 @@ class _RankingPanelState extends State<_RankingPanel> {
         children: <Widget>[
           SectionTitle(
             title: l10n.panelRankingLabel,
-            trailingWidget: VeriSegmentedControl<_RankGrouping>(
+            // 右上角是「看什么口径」（支出 / 收入），与其它卡片的右上角一致。
+            trailingWidget: VeriEntryTypeToggle(
               compact: true,
-              values: _RankGrouping.values,
-              selected: _grouping,
-              semanticLabel: l10n.statTypeTitle,
-              labelOf: (grouping) => switch (grouping) {
-                _RankGrouping.topCategory => l10n.rankGroupCategory,
-                _RankGrouping.subCategory => l10n.rankGroupSubCategory,
-                _RankGrouping.tag => l10n.rankGroupTag,
-              },
-              // Key 只挂选中项：分段控件会把选中项多渲染一份用于滑动动画。
-              keyOf: (grouping) => grouping == _grouping
-                  ? Key('ranking_group_${grouping.name}')
-                  : null,
-              onChanged: (grouping) => setState(() {
-                _grouping = grouping;
-              }),
+              dimension: _type,
+              onChanged: (type) => setState(() => _type = type),
             ),
           ),
           const SizedBox(height: 10),
-          VeriEntryTypeToggle(
-            dimension: _type,
-            onChanged: (type) => setState(() => _type = type),
+          // 分组维度（分类 / 子分类 / 标签）放在标题下方，同样是紧凑档。
+          VeriSegmentedControl<_RankGrouping>(
+            compact: true,
+            values: _RankGrouping.values,
+            selected: _grouping,
+            semanticLabel: l10n.rankGroupingLabel,
+            labelOf: (grouping) => switch (grouping) {
+              _RankGrouping.topCategory => l10n.rankGroupCategory,
+              _RankGrouping.subCategory => l10n.rankGroupSubCategory,
+              _RankGrouping.tag => l10n.rankGroupTag,
+            },
+            // Key 只挂选中项：分段控件会把选中项多渲染一份用于滑动动画。
+            keyOf: (grouping) => grouping == _grouping
+                ? Key('ranking_group_${grouping.name}')
+                : null,
+            onChanged: (grouping) => setState(() {
+              _grouping = grouping;
+            }),
           ),
           const SizedBox(height: 8),
           _buildBody(context, entries, color),
