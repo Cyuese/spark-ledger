@@ -26,9 +26,8 @@ class ReportsPage extends StatefulWidget {
 }
 
 class _ReportsPageState extends State<ReportsPage> {
-  /// 看板顶部统计口径 Tab。最终默认落在「日常」；「日常」的面板（阶段 4/5）
-  /// 落地前先停在「月统计」，否则入口打开就是空白页。
-  ReportPeriodTab _tab = ReportPeriodTab.monthly;
+  /// 看板顶部统计口径 Tab。默认落在「日常」；不做持久化，每次进入都回到它。
+  ReportPeriodTab _tab = ReportPeriodTab.daily;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +91,8 @@ class _ReportsPageState extends State<ReportsPage> {
     // 面板 id 对应的卡片,渲染顺序与开关由面板管理页配置。
     Widget panelFor(String id) {
       switch (id) {
+        case 'recent_daily':
+          return const _RecentDailyStatsPanel();
         case 'summary':
           return _MonthSummaryPanel(
             income: monthIncome,
@@ -340,16 +341,213 @@ class _ReportsPageState extends State<ReportsPage> {
             onChanged: (tab) => setState(() => _tab = tab),
           ),
           // 各 Tab 的面板清单互相独立。「日常 / 年统计 / 自定义」的内容尚未
-          // 实现，先只画 Tab 本体，不渲染任何面板与占位文案。
-          if (_tab == ReportPeriodTab.monthly) ...<Widget>[
-            for (final id in panelIds) ...<Widget>[
-              const SizedBox(height: 10),
-              panelFor(id),
-            ],
+          // 全部实现前，没有面板的 Tab 只画 Tab 本体，不渲染占位文案。
+          for (final id in panelIds) ...<Widget>[
+            const SizedBox(height: 10),
+            panelFor(id),
+          ],
+          if (panelIds.isNotEmpty) ...<Widget>[
             const SizedBox(height: 8),
             PanelSettingsEntry(kind: _tab.panelPageKind),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// 近 7 日统计的时间范围：滚动 7 天，或自然周（周一至周日，含今天）。
+enum _RecentDailyRange { last7Days, thisWeek }
+
+/// 日常 Tab 的收支统计面板：柱状图 + 总额 / 日均（支出与收入同时给出）。
+class _RecentDailyStatsPanel extends StatefulWidget {
+  const _RecentDailyStatsPanel();
+
+  @override
+  State<_RecentDailyStatsPanel> createState() => _RecentDailyStatsPanelState();
+}
+
+class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
+  _RecentDailyRange _range = _RecentDailyRange.last7Days;
+  EntryType _type = EntryType.expense;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final today = dateOnly(DateTime.now());
+    final window = _range == _RecentDailyRange.thisWeek
+        ? weekWindowFor(today)
+        : DateWindow(start: addCalendarDays(today, -6), end: today);
+    final expenseValues = valuesForTypeInWindow(
+      controller.entries,
+      window,
+      EntryType.expense,
+    );
+    final incomeValues = valuesForTypeInWindow(
+      controller.entries,
+      window,
+      EntryType.income,
+    );
+    final expenseTotal = _sumValues(expenseValues);
+    final incomeTotal = _sumValues(incomeValues);
+    final expense = _type == EntryType.expense;
+    final chartValues = expense ? expenseValues : incomeValues;
+    final chartTotal = expense ? expenseTotal : incomeTotal;
+    final maxValue = chartValues.fold<double>(
+      0,
+      (max, value) => value > max ? value : max,
+    );
+    final dimLabel = _type.label(l10n);
+
+    return VeriCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SectionTitle(
+            title: l10n.panelRecentDailyLabel,
+            trailingWidget: VeriSegmentedControl<_RecentDailyRange>(
+              compact: true,
+              values: const <_RecentDailyRange>[
+                _RecentDailyRange.last7Days,
+                _RecentDailyRange.thisWeek,
+              ],
+              selected: _range,
+              semanticLabel: l10n.statRangeLabel,
+              labelOf: (range) => range == _RecentDailyRange.last7Days
+                  ? l10n.recent7Days
+                  : l10n.timeWeek,
+              // Key 只挂选中项：分段控件会把选中项多渲染一份用于滑动动画。
+              keyOf: (range) => range == _range
+                  ? Key('recent_daily_range_${range.name}')
+                  : null,
+              onChanged: (range) => setState(() => _range = range),
+            ),
+          ),
+          const SizedBox(height: 10),
+          VeriEntryTypeToggle(
+            dimension: _type,
+            onChanged: (type) => setState(() => _type = type),
+          ),
+          const SizedBox(height: 16),
+          if (isZeroAmount(chartTotal))
+            EmptyState(
+              icon: Icons.bar_chart_outlined,
+              title: l10n.noDimData(dimLabel),
+              description: l10n.noDimDesc(dimLabel),
+            )
+          else
+            SizedBox(
+              height: 138,
+              child: InteractiveBarChart(
+                values: chartValues,
+                xLabels: _range == _RecentDailyRange.thisWeek
+                    ? window.days
+                          .map((day) => _weekdayLabel(l10n, day))
+                          .toList(growable: false)
+                    : labelsForWindow(window),
+                yLabels: reportAxisLabels(maxValue),
+                labelColor: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.50),
+                tooltipOf: (index) => ChartTooltip(
+                  title: l10n.dateMonthDay(window.days[index]),
+                  lines: <ChartTooltipLine>[
+                    ChartTooltipLine(
+                      text: expense
+                          ? l10n.expenseAmountLabel(
+                              formatExpenseAmount(chartValues[index]),
+                            )
+                          : l10n.incomeAmountLabel(
+                              formatIncomeAmount(chartValues[index]),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 14),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _RecentStatLine(
+                  label: l10n.recentTotalExpense,
+                  value: formatExpenseAmount(expenseTotal),
+                ),
+              ),
+              Expanded(
+                child: _RecentStatLine(
+                  label: l10n.recentDailyAvgExpense,
+                  value: formatExpenseAmount(_dailyAverage(expenseTotal)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _RecentStatLine(
+                  label: l10n.recentTotalIncome,
+                  value: formatAmount(incomeTotal),
+                ),
+              ),
+              Expanded(
+                child: _RecentStatLine(
+                  label: l10n.recentDailyAvgIncome,
+                  value: formatAmount(_dailyAverage(incomeTotal)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 面板内的合计：规整到最小货币单位，避免浮点残差。
+double _sumValues(List<double> values) =>
+    normalizeAmount(values.fold<double>(0, (sum, value) => sum + value));
+
+/// 日均固定按 7 天折算（滚动 7 日与自然周两种窗口都对齐）。
+double _dailyAverage(double total) => normalizeAmount(total / 7);
+
+String _weekdayLabel(AppLocalizations l10n, DateTime day) {
+  switch (day.weekday) {
+    case DateTime.monday:
+      return l10n.weekdayMon;
+    case DateTime.tuesday:
+      return l10n.weekdayTue;
+    case DateTime.wednesday:
+      return l10n.weekdayWed;
+    case DateTime.thursday:
+      return l10n.weekdayThu;
+    case DateTime.friday:
+      return l10n.weekdayFri;
+    case DateTime.saturday:
+      return l10n.weekdaySat;
+    default:
+      return l10n.weekdaySun;
+  }
+}
+
+/// 「标签：金额」一行的紧凑排布（近 7 日面板底部两列两行）。
+class _RecentStatLine extends StatelessWidget {
+  const _RecentStatLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      AppLocalizations.of(context).recentStatLine(label, value),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        color: Theme.of(context).colorScheme.onSurface,
+        fontWeight: FontWeight.w700,
       ),
     );
   }

@@ -483,6 +483,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String get panelSummaryDesc => '本月收入、支出与结余合计';
 
   @override
+  String get panelRecentDailyLabel => '近7日统计';
+
+  @override
+  String get panelRecentDailyDesc => '近 7 日或本周的收支柱状图与日均';
+
+  @override
+  String get recent7Days => '近7日';
+
+  @override
+  String get recentTotalExpense => '总支出';
+
+  @override
+  String get recentDailyAvgExpense => '日均支出';
+
+  @override
+  String get recentTotalIncome => '总收入';
+
+  @override
+  String get recentDailyAvgIncome => '日均收入';
+
+  @override
+  String recentStatLine(String label, String amount) {
+    return '$label：$amount';
+  }
+
+  @override
+  String incomeAmountLabel(String amount) {
+    return '收入 $amount';
+  }
+
+  @override
   String get panelBudgetExecutionLabel => '预算执行';
 
   @override

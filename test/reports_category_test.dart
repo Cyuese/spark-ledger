@@ -40,7 +40,7 @@ void main() {
       ..dispose();
 
     await pumpApp(tester, store);
-    await tapBottomTab(tester, 2);
+    await openReportsMonthlyTab(tester);
     await tester.pumpAndSettle();
 
     // 分类统计面板在预算执行卡之后；卡片变高后它在 800dp 测试视口下落到首屏之外，
@@ -79,7 +79,7 @@ void main() {
       ..dispose();
 
     await pumpApp(tester, store);
-    await tapBottomTab(tester, 2);
+    await openReportsMonthlyTab(tester);
     await tester.pumpAndSettle();
 
     // 标签统计面板在看板底部，滚动到可见。

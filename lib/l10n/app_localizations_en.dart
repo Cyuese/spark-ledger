@@ -496,6 +496,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get panelSummaryDesc => 'Income, spending and balance for this month';
 
   @override
+  String get panelRecentDailyLabel => 'Last 7 days';
+
+  @override
+  String get panelRecentDailyDesc =>
+      'Spending and income chart with daily averages for the last 7 days or this week';
+
+  @override
+  String get recent7Days => 'Last 7 days';
+
+  @override
+  String get recentTotalExpense => 'Total spending';
+
+  @override
+  String get recentDailyAvgExpense => 'Daily avg spending';
+
+  @override
+  String get recentTotalIncome => 'Total income';
+
+  @override
+  String get recentDailyAvgIncome => 'Daily avg income';
+
+  @override
+  String recentStatLine(String label, String amount) {
+    return '$label: $amount';
+  }
+
+  @override
+  String incomeAmountLabel(String amount) {
+    return 'Income $amount';
+  }
+
+  @override
   String get panelBudgetExecutionLabel => 'Budget execution';
 
   @override

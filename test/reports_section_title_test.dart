@@ -15,7 +15,7 @@ void main() {
 
   testWidgets('看板的 SectionTitle 把 trailing 顶到卡片右端', (tester) async {
     await pumpApp(tester, LocalKeyValueStore());
-    await tapBottomTab(tester, 2); // 看板
+    await openReportsMonthlyTab(tester); // 看板 · 月统计
     await tester.pumpAndSettle();
 
     final titles = find.byType(SectionTitle);

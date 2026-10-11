@@ -336,10 +336,18 @@ class HeaderInline extends StatelessWidget {
 }
 
 class SectionTitle extends StatelessWidget {
-  const SectionTitle({super.key, required this.title, this.trailing});
+  const SectionTitle({
+    super.key,
+    required this.title,
+    this.trailing,
+    this.trailingWidget,
+  });
 
   final String title;
   final String? trailing;
+
+  /// 右侧槽位放自定义控件（如紧凑分段控件）时使用，优先于 [trailing]。
+  final Widget? trailingWidget;
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +359,7 @@ class SectionTitle extends StatelessWidget {
         context,
       ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
     );
-    if (trailing == null) {
+    if (trailing == null && trailingWidget == null) {
       return titleText;
     }
     // 标题自然宽度靠左，trailing 占满剩余槽位后内部右对齐，贴到内容区右端。
@@ -371,17 +379,19 @@ class SectionTitle extends StatelessWidget {
           const SizedBox(width: 10),
           Flexible(
             fit: FlexFit.tight,
-            child: Text(
-              trailing!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.62),
-              ),
-            ),
+            child: trailingWidget != null
+                ? Align(alignment: Alignment.centerRight, child: trailingWidget)
+                : Text(
+                    trailing!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.62),
+                    ),
+                  ),
           ),
         ],
       ),
