@@ -6,5 +6,8 @@
 - `assets.jpg` — 资产
 - `reports.jpg` — 看板
 
-最近一次重拍：2026-10-10（v1.19.0 图表统一为 `fl_chart` 适配层之后，深色主题 + `UNIFIED_DESIGN_PREVIEW=true`）。
-更新界面后记得同步替换：用 diagnostic flavor 打开对应页面顶部，`adb exec-out screencap -p` 截 1180×2556，转 JPEG 覆盖同名文件。
+最近一次重拍：2026-10-11（看板改为「日常 / 月统计 / 年统计」三 Tab 之后，深色主题；`reports.jpg` 取「月统计」Tab，能同时看到 Tab 结构与摘要 / 预算 / 排行卡）。
+
+更新界面后记得同步替换：用 diagnostic flavor（`--flavor diagnostic`，覆盖安装不丢演示账目）打开对应页面顶部，
+确认模拟器为 1180×2556 / density 480（`adb shell wm size` / `wm density`），
+`adb exec-out screencap -p > shot.png`，再转 JPEG 覆盖同名文件（如 `ffmpeg -i shot.png -q:v 3 home.jpg`）。
