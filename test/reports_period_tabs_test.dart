@@ -133,6 +133,41 @@ void main() {
     expect(find.text('分类 · 标签排行'), findsOneWidget);
   });
 
+  testWidgets('年统计热力图在窄屏（360dp）不溢出', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(360, 900);
+    addTearDown(tester.view.reset);
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    controller.addEntry(
+      LedgerEntry(
+        id: 'heat-narrow',
+        bookId: controller.activeBook.id,
+        type: EntryType.expense,
+        amount: 100,
+        categoryId: 'dining',
+        accountId: 'cash',
+        note: '',
+        occurredAt: DateTime(now.year, 2, 3),
+      ),
+    );
+    controller.dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2); // 看板
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('年统计').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byType(VeriCalendarHeatmap),
+      300,
+      scrollable: firstVerticalScrollable(),
+    );
+    expect(find.byType(VeriCalendarHeatmap), findsOneWidget);
+    // 布局溢出会在构建时抛异常，这里要求整页渲染无异常。
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('年统计的收支热力卡：标题、支出/收入切换与月份网格', (tester) async {
     final store = LocalKeyValueStore();
     final controller = await makeController(store);
