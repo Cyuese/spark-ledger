@@ -37,8 +37,8 @@
 
 | 对象 | 约定 |
 | --- | --- |
-| 内容卡片 | `veriContentSurfaceColor(brightness)` 实色 + 圆角 + 细描边；深色 `veriPreviewSurfaceDark`，浅色 `veriSurfaceLight` |
-| 页面背景 | `scaffoldBackgroundColor` 取画布纯色（`veriPreviewCanvasLight` / `veriPreviewCanvasDark`），不用渐变 |
+| 内容卡片 | `veriContentSurfaceColor(brightness)` 实色 + `veriCardRadius`（16）圆角 + 细描边；深色 `veriCardSurfaceDark`，浅色 `veriSurfaceLight` |
+| 页面背景 | `scaffoldBackgroundColor` 取画布纯色（`veriCanvasLight` / `veriCanvasDark`），不用渐变 |
 | 底部导航（停靠底栏） | 不透明表面色 + 顶部细描边；表面色一直铺到屏幕最底（含系统导航条背后） |
 | 底部导航（液态玻璃，可选样式） | 浮动胶囊：背景模糊 + 中性填色 + 沿边方向高光，拖动/按压时对导航内容做透镜形变；仅此一处允许模糊/折射，透镜着色器不可用时降级为不含折射的玻璃面板 |
 | 快捷记账按钮 | `colorScheme.primary` 实色圆角方形 + `onPrimary` 加号，只在首页右下角显示 |
