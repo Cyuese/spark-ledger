@@ -284,6 +284,14 @@
   "panelBudgetLabel": "月度预算",
   "panelBudgetDesc": "本月预算进度与分类超支提醒",
   "panelCalendarDesc": "按日历查看每天的收支情况",
+  "panelSummaryLabel": "本月收支",
+  "@panelSummaryLabel": {
+    "description": "看板月统计面板:本月收支摘要卡片标题"
+  },
+  "panelSummaryDesc": "本月收入、支出与结余合计",
+  "@panelSummaryDesc": {
+    "description": "看板月统计面板:本月收支摘要卡片描述"
+  },
   "panelBudgetExecutionLabel": "预算执行",
   "panelBudgetExecutionDesc": "本月预算、支出与分类预算执行情况",
   "panelCategoryRingLabel": "分类统计",

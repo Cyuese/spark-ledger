@@ -490,6 +490,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'View daily income and spending on a calendar';
 
   @override
+  String get panelSummaryLabel => 'This month';
+
+  @override
+  String get panelSummaryDesc => 'Income, spending and balance for this month';
+
+  @override
   String get panelBudgetExecutionLabel => 'Budget execution';
 
   @override

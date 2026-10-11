@@ -477,6 +477,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get panelCalendarDesc => '按日历查看每天的收支情况';
 
   @override
+  String get panelSummaryLabel => '本月收支';
+
+  @override
+  String get panelSummaryDesc => '本月收入、支出与结余合计';
+
+  @override
   String get panelBudgetExecutionLabel => '预算执行';
 
   @override

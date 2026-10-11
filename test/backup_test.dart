@@ -697,11 +697,12 @@ void main() {
       'recent',
     ]);
     expect(controller.enabledPanelIds(PanelPageKind.reportsMonthly), <String>[
+      // summary / tag_stats 是样例备份没有的面板：归一化按它们在目录里的位置
+      // 插入，而不是一律追加到末尾（daily_trend 在样例里是关闭的，不出现）。
+      'summary',
       'category_ring',
       'budget_execution',
       'category_rank',
-      // tag_stats 是样例备份没有的新面板：归一化按它在目录里的位置插到
-      // category_rank 之后，而不是一律追加到末尾。
       'tag_stats',
       'monthly_structure',
     ]);
