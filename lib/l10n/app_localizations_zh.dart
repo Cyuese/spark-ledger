@@ -1922,6 +1922,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rankGroupTag => '标签';
 
   @override
+  String get rankGroupingLabel => '排行方式';
+
+  @override
   String get tagRankOverlapNote => '同一笔可带多个标签，各标签占比之和可能超过 100%';
 
   @override

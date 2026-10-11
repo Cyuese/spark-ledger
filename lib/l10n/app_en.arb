@@ -692,6 +692,7 @@
   "rankGroupCategory": "Category",
   "rankGroupSubCategory": "Subcategory",
   "rankGroupTag": "Tag",
+  "rankGroupingLabel": "Ranking dimension",
   "tagRankOverlapNote": "An entry can carry multiple tags, so the percentages may add up to more than 100%",
   "subCategoryOf": "Subcategories of \"{name}\"",
   "@subCategoryOf": {

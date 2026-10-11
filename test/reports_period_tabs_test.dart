@@ -161,6 +161,41 @@ void main() {
     expect(chartColor(), veriSemanticFor(brightness, veriIncome));
   });
 
+  testWidgets('排行卡：支出/收入在标题右上角，分组口径移到下方且同为紧凑档', (tester) async {
+    await pumpApp(tester, LocalKeyValueStore());
+    await openReportsMonthlyTab(tester);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('分类 · 标签排行'),
+      200,
+      scrollable: firstVerticalScrollable(),
+    );
+    await tester.pumpAndSettle();
+
+    final typeToggle = find.byType(VeriEntryTypeToggle);
+    final groupingToggle = find
+        .ancestor(
+          of: find.byKey(const Key('ranking_group_topCategory')),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is VeriSegmentedControl,
+          ),
+        )
+        .first;
+    final title = find.text('分类 · 标签排行');
+
+    // 支出 / 收入在标题行右侧，分组口径在它下面一行。
+    expect(
+      tester.getCenter(typeToggle).dx,
+      greaterThan(tester.getCenter(title).dx),
+    );
+    expect(
+      tester.getCenter(typeToggle).dy,
+      lessThan(tester.getCenter(groupingToggle).dy),
+    );
+    expect(tester.getSize(typeToggle).height, 30);
+    expect(tester.getSize(groupingToggle).height, 30);
+  });
+
   testWidgets('资产汇总面板：正/负资产可切换，中心可切换口径', (tester) async {
     await pumpApp(tester, LocalKeyValueStore());
     await tapBottomTab(tester, 2); // 看板 · 日常
@@ -198,6 +233,28 @@ void main() {
       scrollable: firstVerticalScrollable(),
     );
     expect(find.text('分类 · 标签排行'), findsOneWidget);
+  });
+
+  testWidgets('排行卡在窄屏（360dp）不溢出', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(360, 900);
+    addTearDown(tester.view.reset);
+
+    await pumpApp(tester, LocalKeyValueStore());
+    await openReportsMonthlyTab(tester);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('分类 · 标签排行'),
+      200,
+      scrollable: firstVerticalScrollable(),
+    );
+    await tester.pumpAndSettle();
+
+    // 标题行（标题 + 右上角口径切换）与分组切换行各自成行，卡片宽度再窄也不溢出
+    // （溢出会直接抛错让用例失败）。
+    expect(find.byKey(const Key('dimension_toggle_expense')), findsOneWidget);
+    expect(find.byKey(const Key('ranking_group_topCategory')), findsOneWidget);
+    expect(tester.getSize(find.byType(VeriEntryTypeToggle)).height, 30);
   });
 
   testWidgets('年统计热力图在窄屏（360dp）不溢出', (tester) async {
