@@ -111,6 +111,8 @@ class _ReportsPageState extends State<ReportsPage> {
           );
         case 'year_trend':
           return _YearTrendPanel(year: now.year);
+        case 'year_heatmap':
+          return _YearHeatmapPanel(year: now.year);
         case 'daily_trend':
           return VeriCard(
             child: Column(
@@ -1565,6 +1567,216 @@ class _YearTrendPanel extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// 年统计的收支热力卡：12 个月各一张迷你日历，每天一个小方块，
+/// 颜色深浅按当天金额占全年峰值的比例决定（无色表示当天没有记录）。
+///
+/// 这是「日历网格」而不是图表库图表：与 `CalendarPreview` 同一类做法，
+/// 由普通 Widget 拼装，不引入自绘数据图表。
+class _YearHeatmapPanel extends StatefulWidget {
+  const _YearHeatmapPanel({required this.year});
+
+  final int year;
+
+  @override
+  State<_YearHeatmapPanel> createState() => _YearHeatmapPanelState();
+}
+
+class _YearHeatmapPanelState extends State<_YearHeatmapPanel> {
+  EntryType _type = EntryType.expense;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final window = DateWindow(
+      start: DateTime(widget.year, 1, 1),
+      end: DateTime(widget.year, 12, 31),
+    );
+    final values = valuesForTypeInWindow(controller.entries, window, _type);
+    final peak = values.fold<double>(
+      0,
+      (max, value) => value > max ? value : max,
+    );
+    final color = _type == EntryType.expense
+        ? veriSemantic(context, veriExpense)
+        : veriSemantic(context, veriIncome);
+    final emptyColor = Theme.of(
+      context,
+    ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.7);
+
+    return VeriCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SectionTitle(
+            title: l10n.panelYearHeatmapLabel,
+            trailingWidget: VeriEntryTypeToggle(
+              dimension: _type,
+              onChanged: (type) => setState(() => _type = type),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // 一年都没有记录时不必铺一屏灰格子。
+          if (peak <= 0)
+            EmptyState(
+              icon: Icons.grid_on_outlined,
+              title: l10n.noDimData(_type.label(l10n)),
+              description: l10n.noDimDesc(_type.label(l10n)),
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // 每月一格，窄屏两列、宽一点就四列（与参考图的排布一致）。
+                final columns = constraints.maxWidth < 420 ? 2 : 4;
+                final months = <Widget>[
+                  for (var month = 1; month <= 12; month++)
+                    _MonthHeat(
+                      year: widget.year,
+                      month: month,
+                      values: values,
+                      days: window.days,
+                      peak: peak,
+                      color: color,
+                      emptyColor: emptyColor,
+                      label: l10n.monthNumber(month),
+                    ),
+                ];
+                return Column(
+                  children: <Widget>[
+                    for (var row = 0; row * columns < months.length; row++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            for (var column = 0; column < columns; column++)
+                              Expanded(
+                                child: row * columns + column < months.length
+                                    ? months[row * columns + column]
+                                    : const SizedBox.shrink(),
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 单个月份的迷你日历：按星期对齐的 7 列网格，每格一天。
+class _MonthHeat extends StatelessWidget {
+  const _MonthHeat({
+    required this.year,
+    required this.month,
+    required this.values,
+    required this.days,
+    required this.peak,
+    required this.color,
+    required this.emptyColor,
+    required this.label,
+  });
+
+  final int year;
+  final int month;
+  final List<double> values;
+  final List<DateTime> days;
+  final double peak;
+  final Color color;
+  final Color emptyColor;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final firstIndex = days.indexWhere(
+      (day) => day.year == year && day.month == month,
+    );
+    if (firstIndex < 0) {
+      return const SizedBox.shrink();
+    }
+    final daysInMonth = DateUtils.getDaysInMonth(year, month);
+    // 周一为第一列，月初之前留空，和日历一致。
+    final leading = days[firstIndex].weekday - 1;
+    final cells = <Widget>[
+      for (var i = 0; i < leading; i++) const SizedBox.shrink(),
+      for (var i = 0; i < daysInMonth; i++)
+        _HeatCell(
+          value: values[firstIndex + i],
+          peak: peak,
+          color: color,
+          emptyColor: emptyColor,
+        ),
+    ];
+    final rows = (cells.length / 7).ceil();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.72),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (var row = 0; row < rows; row++)
+          Row(
+            children: <Widget>[
+              for (var column = 0; column < 7; column++)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(1),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: row * 7 + column < cells.length
+                          ? cells[row * 7 + column]
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+/// 热力图里的一个方块：金额越高颜色越深。
+class _HeatCell extends StatelessWidget {
+  const _HeatCell({
+    required this.value,
+    required this.peak,
+    required this.color,
+    required this.emptyColor,
+  });
+
+  final double value;
+  final double peak;
+  final Color color;
+  final Color emptyColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = peak <= 0 ? 0.0 : (value / peak).clamp(0.0, 1.0);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: ratio <= 0
+            ? emptyColor
+            // 有记录就从 0.3 起步，避免小额和「没有记录」在视觉上分不开。
+            : color.withValues(alpha: 0.30 + 0.70 * ratio),
+        borderRadius: BorderRadius.circular(2.5),
       ),
     );
   }

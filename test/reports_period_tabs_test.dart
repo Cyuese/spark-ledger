@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/chart_painters.dart';
+import 'package:verifin/app/common_widgets.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 
 import 'support/test_harness.dart';
 
-// 看板顶部按统计口径分 Tab：日常 / 月统计 / 年统计 / 自定义。
+// 看板顶部按统计口径分 Tab：日常 / 月统计 / 年统计。
 //
-// 默认落在「日常」，每个 Tab 各自持有一份面板清单；尚未实现的 Tab 只画 Tab
-// 本体、内容为空（不加任何占位文案）。当前 Tab 不做持久化。
+// 默认落在「日常」，每个 Tab 各自持有一份面板清单。当前 Tab 不做持久化。
 void main() {
   useTestDatabases();
 
-  testWidgets('看板 Tab 切换：默认日常，月统计保留原内容，年统计/自定义为空', (tester) async {
+  testWidgets('看板 Tab 切换：默认日常，月统计与年统计各有面板', (tester) async {
     await pumpApp(tester, LocalKeyValueStore());
     await tapBottomTab(tester, 2); // 看板
     await tester.pumpAndSettle();
@@ -28,8 +28,8 @@ void main() {
     Finder selectedTab(String name) =>
         find.byKey(Key('reports_tab_selected_$name'));
 
-    // 四个 Tab 都在。
-    for (final label in <String>['日常', '月统计', '年统计', '自定义']) {
+    // 三个 Tab 都在。
+    for (final label in <String>['日常', '月统计', '年统计']) {
       expect(find.text(label), findsWidgets, reason: '缺少 Tab：$label');
     }
     // 默认选中日常，且日常已有面板（先不滚动：滚到底部会回收顶部 Tab 条）。
@@ -37,7 +37,7 @@ void main() {
     expect(find.text('近7日统计'), findsOneWidget);
     expect(monthlyEntry, findsNothing);
 
-    // 年统计：有本年收支 / 月度收支 / 排行三个面板；月统计的入口不在这里。
+    // 年统计：有本年收支 / 收支统计 / 收支热力 / 排行四个面板。
     await tester.tap(tabLabel('年统计'));
     await tester.pumpAndSettle();
     expect(selectedTab('yearly'), findsOneWidget);
@@ -45,13 +45,6 @@ void main() {
     expect(dailyEntry, findsNothing);
     expect(monthlyEntry, findsNothing);
     expect(find.text('本年收支'), findsOneWidget);
-
-    // 自定义还没实现：空 Tab，没有面板也没有面板管理入口。
-    await tester.tap(tabLabel('自定义'));
-    await tester.pumpAndSettle();
-    expect(selectedTab('custom'), findsOneWidget);
-    expect(dailyEntry, findsNothing);
-    expect(monthlyEntry, findsNothing);
 
     // 月统计：内容与改动前一致（摘要面板 + 其余面板 + 管理入口）。
     // 列表是懒加载的，滚到底部后顶部 Tab 条会被回收，所以先切 Tab 再滚动。
@@ -88,7 +81,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('近7日统计'), findsOneWidget);
 
-    await tester.tap(find.text('收入').first);
+    // 页面上「收入」还出现在图例里，这里只点口径切换控件里的那一个。
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(VeriEntryTypeToggle),
+            matching: find.text('收入'),
+          )
+          .first,
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('dimension_toggle_income')), findsOneWidget);
   });
@@ -130,6 +131,57 @@ void main() {
       scrollable: firstVerticalScrollable(),
     );
     expect(find.text('分类 · 标签排行'), findsOneWidget);
+  });
+
+  testWidgets('年统计的收支热力卡：标题、支出/收入切换与月份网格', (tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    controller.addEntry(
+      LedgerEntry(
+        id: 'heat-entry',
+        bookId: controller.activeBook.id,
+        type: EntryType.expense,
+        amount: 42,
+        categoryId: 'dining',
+        accountId: 'cash',
+        note: '',
+        occurredAt: DateTime(now.year, 3, 5),
+      ),
+    );
+    controller.dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2); // 看板
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('年统计').first);
+    await tester.pumpAndSettle();
+
+    // 卡片标题与右上角口径切换。
+    await tester.scrollUntilVisible(
+      find.text('收支热力'),
+      300,
+      scrollable: firstVerticalScrollable(),
+    );
+    expect(find.text('收支热力'), findsOneWidget);
+    expect(find.byKey(const Key('dimension_toggle_expense')), findsWidgets);
+    // 12 个月都有格子。
+    for (final month in <int>[1, 3, 12]) {
+      expect(find.text('$month月'), findsOneWidget);
+    }
+
+    // 页面上「收入」还出现在图例里，这里只点口径切换控件里的那一个。
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(VeriEntryTypeToggle),
+            matching: find.text('收入'),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    // 这个账本只有支出：切到「收入」后热力图应变成空态。
+    expect(find.text('暂无收入数据'), findsOneWidget);
   });
 
   testWidgets('资产汇总：环内空白处点击也能切换金额 / 占比', (tester) async {

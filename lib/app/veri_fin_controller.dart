@@ -57,7 +57,6 @@ const Set<String> _knownBackupDataKeys = <String>{
   'reportPanels',
   'reportDailyPanels',
   'reportYearlyPanels',
-  'reportCustomPanels',
 };
 
 // 偏好类 KV 键（库级私有以便各 part 共享）。全部 `verifin.*.v1` 键集中在此，
@@ -83,7 +82,6 @@ const String _homePanelsKey = 'verifin.home_panels.v1';
 const String _reportDailyPanelsKey = 'verifin.report_daily_panels.v1';
 const String _reportMonthlyPanelsKey = 'verifin.report_panels.v1';
 const String _reportYearlyPanelsKey = 'verifin.report_yearly_panels.v1';
-const String _reportCustomPanelsKey = 'verifin.report_custom_panels.v1';
 const String _backupSettingsKey = 'verifin.backup_settings.v1';
 const String _backupPassphraseKey = 'verifin.backup_passphrase.v1';
 const String _webdavKey = 'verifin.webdav.v1';
@@ -114,8 +112,6 @@ String _panelsKeyFor(PanelPageKind page) {
       return _reportMonthlyPanelsKey;
     case PanelPageKind.reportsYearly:
       return _reportYearlyPanelsKey;
-    case PanelPageKind.reportsCustom:
-      return _reportCustomPanelsKey;
   }
 }
 

@@ -51,9 +51,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reportTabYearly => '年统计';
 
   @override
-  String get reportTabCustom => '自定义';
-
-  @override
   String get tabProfile => '我的';
 
   @override
@@ -533,10 +530,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get metricYearNet => '本年结余';
 
   @override
-  String get panelYearTrendLabel => '月度收支';
+  String get panelYearTrendLabel => '收支统计';
 
   @override
   String get panelYearTrendDesc => '本年每月收入与支出双柱对比';
+
+  @override
+  String get panelYearHeatmapLabel => '收支热力';
+
+  @override
+  String get panelYearHeatmapDesc => '按天查看全年支出 / 收入的深浅';
 
   @override
   String get assetPositive => '正资产';
