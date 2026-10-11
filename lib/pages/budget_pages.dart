@@ -237,9 +237,8 @@ class _BudgetOverviewPageState extends State<BudgetOverviewPage> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                remaining < 0
-                                    ? formatExpenseAmount(remaining.abs())
-                                    : formatAmount(remaining),
+                                // 超出时为负（自带 `-`），上方标签已写明「超出额度」。
+                                formatAmount(remaining),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.displaySmall
@@ -316,9 +315,8 @@ class _BudgetOverviewPageState extends State<BudgetOverviewPage> {
                                   : AppLocalizations.of(
                                       context,
                                     ).budgetRemainingQuota,
-                              value: remaining < 0
-                                  ? formatExpenseAmount(remaining.abs())
-                                  : formatAmount(remaining),
+                              // 超出时为负（自带 `-`），标签写明是「超出额度」。
+                              value: formatAmount(remaining),
                               icon: remaining < 0
                                   ? Icons.warning_amber_rounded
                                   : Icons.account_balance_wallet_outlined,

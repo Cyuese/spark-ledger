@@ -120,7 +120,7 @@ class _ReportsPageState extends State<ReportsPage> {
               children: <Widget>[
                 SectionTitle(
                   title: l10n.panelDailyTrendLabel,
-                  trailing: _unsignedAmount(trendExpense),
+                  trailing: formatExpenseAmount(trendExpense),
                 ),
                 const SizedBox(height: 16),
                 if (isZeroAmount(trendExpense))
@@ -147,7 +147,7 @@ class _ReportsPageState extends State<ReportsPage> {
                           lines: <ChartTooltipLine>[
                             ChartTooltipLine(
                               text: l10n.expenseAmountLabel(
-                                _unsignedAmount(trendValues[index]),
+                                formatExpenseAmount(trendValues[index]),
                               ),
                             ),
                           ],
@@ -204,7 +204,7 @@ class _ReportsPageState extends State<ReportsPage> {
                         lines: <ChartTooltipLine>[
                           ChartTooltipLine(
                             text: l10n.expenseAmountLabel(
-                              _unsignedAmount(monthlyValues[index]),
+                              formatExpenseAmount(monthlyValues[index]),
                             ),
                           ),
                         ],
@@ -333,9 +333,14 @@ class _AssetSummaryPanelState extends State<_AssetSummaryPanel> {
           ),
           const SizedBox(height: 12),
           if (!valuation.isComplete)
-            _AssetMissingRateState(
-              affectedCount: valuation.affectedAccountIds.length,
+            AssetMissingRateNotice(
+              affectedAccountCount: valuation.affectedAccountIds.length,
               currencyCodes: valuation.missingCurrencyCodes,
+              onTap: () => Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (_) => const CurrencyRatesPage(),
+                ),
+              ),
             )
           else if (holdings.isEmpty)
             EmptyState(
@@ -356,64 +361,6 @@ class _AssetSummaryPanelState extends State<_AssetSummaryPanel> {
               onToggleMode: () => setState(() => _showShare = !_showShare),
             ),
         ],
-      ),
-    );
-  }
-}
-
-/// 缺汇率：不给部分和，只说明缺哪些币种并给一个去维护汇率的入口。
-class _AssetMissingRateState extends StatelessWidget {
-  const _AssetMissingRateState({
-    required this.affectedCount,
-    required this.currencyCodes,
-  });
-
-  final int affectedCount;
-  final Set<String> currencyCodes;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final codes = (currencyCodes.toList()..sort()).join(', ');
-    return InkWell(
-      borderRadius: BorderRadius.circular(veriRadiusMd),
-      onTap: () => Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(builder: (_) => const CurrencyRatesPage()),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Icon(
-              Icons.currency_exchange,
-              color: veriSemantic(context, veriWarning),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    l10n.assetValuationMissing(affectedCount),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.assetValuationMissingDesc(codes),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.62),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -735,7 +682,7 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
                     ChartTooltipLine(
                       text: expense
                           ? l10n.expenseAmountLabel(
-                              _unsignedAmount(chartValues[index]),
+                              formatExpenseAmount(chartValues[index]),
                             )
                           : l10n.incomeAmountLabel(
                               formatIncomeAmount(chartValues[index]),
@@ -751,13 +698,13 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
               Expanded(
                 child: _RecentStatLine(
                   label: l10n.recentTotalExpense,
-                  value: _unsignedAmount(expenseTotal),
+                  value: formatExpenseAmount(expenseTotal),
                 ),
               ),
               Expanded(
                 child: _RecentStatLine(
                   label: l10n.recentDailyAvgExpense,
-                  value: _unsignedAmount(_dailyAverage(expenseTotal)),
+                  value: formatExpenseAmount(_dailyAverage(expenseTotal)),
                 ),
               ),
             ],
@@ -789,11 +736,6 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
 /// 面板内的合计：规整到最小货币单位，避免浮点残差。
 double _sumValues(List<double> values) =>
     normalizeAmount(values.fold<double>(0, (sum, value) => sum + value));
-
-/// 汇总卡里的「支出」金额：标签已表明方向，不再重复负号（与柱状图的正数柱保持一致），
-/// 零值统一显示「0」。
-String _unsignedAmount(num value) =>
-    isZeroAmount(value) ? '0' : formatAmount(value.abs());
 
 /// 日均固定按 7 天折算（滚动 7 日与自然周两种窗口都对齐）。
 double _dailyAverage(double total) => normalizeAmount(total / 7);
@@ -901,7 +843,7 @@ class _PeriodSummaryPanel extends StatelessWidget {
               ),
               SummaryMetric(
                 label: expenseLabel,
-                value: _unsignedAmount(expense),
+                value: formatExpenseAmount(expense),
                 color: isZeroAmount(expense)
                     ? zeroColor
                     : veriSemantic(context, veriExpense),
@@ -1004,9 +946,9 @@ class _BudgetExecutionCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       budget <= 0
-                          ? _unsignedAmount(expense)
+                          ? formatExpenseAmount(expense)
                           : remaining < 0
-                          ? _unsignedAmount(remaining)
+                          ? formatExpenseAmount(remaining)
                           : formatAmount(remaining),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1066,7 +1008,7 @@ class _BudgetExecutionCard extends StatelessWidget {
               ),
               SummaryMetric(
                 label: AppLocalizations.of(context).budgetMonthExpense,
-                value: _unsignedAmount(expense),
+                value: formatExpenseAmount(expense),
                 color: veriSemantic(context, veriExpense),
               ),
               SummaryMetric(
@@ -1560,7 +1502,7 @@ class _YearTrendPanel extends StatelessWidget {
                     ),
                     ChartTooltipLine(
                       text: l10n.expenseAmountLabel(
-                        _unsignedAmount(expense[index]),
+                        formatExpenseAmount(expense[index]),
                       ),
                       color: expenseColor,
                     ),

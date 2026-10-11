@@ -163,6 +163,8 @@ Toast。提示宽度根据正文、重复计数和操作文字的实际排版自
 ## 金额显示
 金额为 0 时统一显示 `0`，使用中性色，不显示 `-0` 或红色。支出、收入和转账颜色只在金额非 0 时表达语义。
 
+**支出金额不带负号**：`formatExpenseAmount` 与 `formatIncomeAmount` 对称，只给绝对值——方向由同屏的标签（「本月支出」「今日已超」）、类型色或图表序列表达，重复负号会和旁边的正数柱/正数日均互相矛盾。需要符号的地方只有两种：混合类型的列表（交易行、AI 结果行）用 `formatSignedAmount` / `formatSignedUserMoney`；「剩余 / 超出」这类**负值本身就是信息**的位置直接用 `formatAmount`（负数自带 `-`），不要写成 `formatExpenseAmount(x.abs())`。
+
 记账详情页顶部大金额颜色跟随当前类型：支出用 `veriExpense` 红色，收入用 `veriIncome` 青绿色，转账用 `veriBlue` 蓝色。
 
 金额精度按 ISO 4217 minor unit：JPY/VND 等 0 位、CNY/USD/EUR 等 2 位、KWD/BHD/OMR 等 3 位；「精简尾零/标准精度」只控制显示，不改变持久化值。新代码使用 `formatUserMoney` / `formatSignedUserMoney` / `formatCurrencyNumber`，不得用固定两位的旧 helper 格式化多币种金额。`formatMoney` / `formatSignedMoney` 的 `display` 默认是 `MoneyCodeDisplay.code`（恒带单位），属底层与机器文本入口，界面金额不得吃这个默认值——裸调一次就等于绕开「单币种隐藏单位」；确需代码形态时显式传 `display`。
