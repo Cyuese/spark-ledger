@@ -3686,12 +3686,6 @@ abstract class AppLocalizations {
   /// **'降低 {points} 个点'**
   String usageDown(String points);
 
-  /// No description provided for @statAnalysisTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'统计分析'**
-  String get statAnalysisTitle;
-
   /// No description provided for @pickTimeRange.
   ///
   /// In zh, this message translates to:
@@ -3716,41 +3710,11 @@ abstract class AppLocalizations {
   /// **'收支概览'**
   String get overviewTitle;
 
-  /// No description provided for @yoyMomTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'同比 · 环比'**
-  String get yoyMomTitle;
-
-  /// No description provided for @yoyMomDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'较上月为环比，较去年同期为同比'**
-  String get yoyMomDesc;
-
-  /// No description provided for @momLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'环比'**
-  String get momLabel;
-
-  /// No description provided for @yoyLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'同比'**
-  String get yoyLabel;
-
   /// No description provided for @monthlyTrendTitle.
   ///
   /// In zh, this message translates to:
   /// **'月度趋势'**
   String get monthlyTrendTitle;
-
-  /// No description provided for @categoryRank.
-  ///
-  /// In zh, this message translates to:
-  /// **'分类排行'**
-  String get categoryRank;
 
   /// No description provided for @rankGroupCategory.
   ///
@@ -3769,12 +3733,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'标签'**
   String get rankGroupTag;
-
-  /// No description provided for @tagRank.
-  ///
-  /// In zh, this message translates to:
-  /// **'标签排行'**
-  String get tagRank;
 
   /// No description provided for @tagRankOverlapNote.
   ///

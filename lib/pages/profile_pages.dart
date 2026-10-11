@@ -20,7 +20,6 @@ import 'profile_info_page.dart';
 import 'profile_widgets.dart';
 import 'recurring_page.dart';
 import 'reminder_settings_page.dart';
-import 'report_analysis_page.dart';
 import 'settings_page.dart';
 import 'tag_management_page.dart';
 import 'widget_gallery_page.dart';
@@ -224,17 +223,6 @@ class ProfilePage extends StatelessWidget {
             key: const ValueKey<String>('profile_feature_grid_tools'),
             title: AppLocalizations.of(context).dataAndTools,
             tiles: <_FeatureTileData>[
-              _FeatureTileData(
-                icon: Icons.insights_outlined,
-                color: Theme.of(context).colorScheme.primary,
-                label: AppLocalizations.of(context).statAnalysisTitle,
-                subtitle: AppLocalizations.of(context).reportShort,
-                onTap: () => Navigator.of(context).push<void>(
-                  MaterialPageRoute<void>(
-                    builder: (context) => const ReportAnalysisPage(),
-                  ),
-                ),
-              ),
               _FeatureTileData(
                 icon: Icons.notifications_active_outlined,
                 color: veriSemantic(context, veriWarning),

@@ -17,7 +17,6 @@ import 'package:verifin/pages/assets_pages.dart';
 import 'package:verifin/pages/budget_pages.dart';
 import 'package:verifin/pages/home_page.dart';
 import 'package:verifin/pages/profile_pages.dart';
-import 'package:verifin/pages/report_analysis_page.dart';
 import 'package:verifin/pages/reports_page.dart';
 import 'package:verifin/pages/transactions_pages.dart';
 
@@ -144,13 +143,6 @@ void main() {
       await pumpPage(tester, controller, const BudgetSettingsPage());
 
       expect(find.text('日常账本'), findsOneWidget);
-      expect(find.textContaining('单位：'), findsNothing);
-    });
-
-    testWidgets('统计分析页只留区间标签', (tester) async {
-      final controller = await makeController();
-      await pumpPage(tester, controller, const ReportAnalysisPage());
-
       expect(find.textContaining('单位：'), findsNothing);
     });
 

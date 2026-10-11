@@ -16,7 +16,6 @@ import 'currency_rates_page.dart';
 import 'panel_settings_page.dart';
 import 'sheets.dart';
 import 'transactions_pages.dart';
-import 'report_analysis_page.dart';
 import '../l10n/app_localizations.dart';
 
 class ReportsPage extends StatefulWidget {
@@ -225,26 +224,12 @@ class _ReportsPageState extends State<ReportsPage> {
               AppLocalizations.of(context).reportsSubtitle,
               controller.activeBook.baseCurrencyCode,
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                HeaderAction(
-                  icon: Icons.smart_toy_outlined,
-                  tooltip: AppLocalizations.of(context).aiChatTitle,
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const AiChatPage()),
-                  ),
-                ),
-                HeaderAction(
-                  icon: Icons.insights_outlined,
-                  tooltip: AppLocalizations.of(context).statAnalysisTitle,
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const ReportAnalysisPage(),
-                    ),
-                  ),
-                ),
-              ],
+            trailing: HeaderAction(
+              icon: Icons.smart_toy_outlined,
+              tooltip: AppLocalizations.of(context).aiChatTitle,
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AiChatPage()),
+              ),
             ),
           ),
           const SizedBox(height: 10),
