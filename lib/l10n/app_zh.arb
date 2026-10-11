@@ -336,6 +336,14 @@
   "@panelAssetSummaryDesc": {
     "description": "看板日常面板:资产汇总卡片描述"
   },
+  "panelRankingLabel": "分类 · 标签排行",
+  "@panelRankingLabel": {
+    "description": "看板月统计面板:排行卡(原统计分析页排行能力迁入)"
+  },
+  "panelRankingDesc": "按顶级分类 / 子分类 / 标签排行，点行可下钻",
+  "@panelRankingDesc": {
+    "description": "看板月统计面板:排行卡描述"
+  },
   "assetPositive": "正资产",
   "@assetPositive": {
     "description": "资产汇总:只统计余额为正的账户"

@@ -530,6 +530,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Positive or negative assets by account share';
 
   @override
+  String get panelRankingLabel => 'Categories & tags';
+
+  @override
+  String get panelRankingDesc =>
+      'Rank by top category, subcategory or tag; tap a row to drill down';
+
+  @override
   String get assetPositive => 'Positive assets';
 
   @override

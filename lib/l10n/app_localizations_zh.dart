@@ -515,6 +515,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get panelAssetSummaryDesc => '按账户占比查看正资产或负资产';
 
   @override
+  String get panelRankingLabel => '分类 · 标签排行';
+
+  @override
+  String get panelRankingDesc => '按顶级分类 / 子分类 / 标签排行，点行可下钻';
+
+  @override
   String get assetPositive => '正资产';
 
   @override

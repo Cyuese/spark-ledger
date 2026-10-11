@@ -361,6 +361,8 @@ class PagePanelSpec {
         return l10n.panelRecentDailyLabel;
       case 'asset_summary':
         return l10n.panelAssetSummaryLabel;
+      case 'ranking':
+        return l10n.panelRankingLabel;
     }
     return id;
   }
@@ -393,6 +395,8 @@ class PagePanelSpec {
         return l10n.panelRecentDailyDesc;
       case 'asset_summary':
         return l10n.panelAssetSummaryDesc;
+      case 'ranking':
+        return l10n.panelRankingDesc;
     }
     return '';
   }
@@ -410,9 +414,7 @@ const List<PagePanelSpec> homePanelSpecs = <PagePanelSpec>[
 const List<PagePanelSpec> reportMonthlyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'summary'),
   PagePanelSpec(id: 'budget_execution'),
-  PagePanelSpec(id: 'category_ring'),
-  PagePanelSpec(id: 'category_rank'),
-  PagePanelSpec(id: 'tag_stats'),
+  PagePanelSpec(id: 'ranking'),
   PagePanelSpec(id: 'daily_trend'),
   PagePanelSpec(id: 'monthly_structure'),
 ];
