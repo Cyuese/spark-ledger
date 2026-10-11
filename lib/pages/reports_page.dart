@@ -723,7 +723,7 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
                     ChartTooltipLine(
                       text: expense
                           ? l10n.expenseAmountLabel(
-                              formatExpenseAmount(chartValues[index]),
+                              _unsignedAmount(chartValues[index]),
                             )
                           : l10n.incomeAmountLabel(
                               formatIncomeAmount(chartValues[index]),
@@ -739,13 +739,13 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
               Expanded(
                 child: _RecentStatLine(
                   label: l10n.recentTotalExpense,
-                  value: formatExpenseAmount(expenseTotal),
+                  value: _unsignedAmount(expenseTotal),
                 ),
               ),
               Expanded(
                 child: _RecentStatLine(
                   label: l10n.recentDailyAvgExpense,
-                  value: formatExpenseAmount(_dailyAverage(expenseTotal)),
+                  value: _unsignedAmount(_dailyAverage(expenseTotal)),
                 ),
               ),
             ],
@@ -777,6 +777,11 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
 /// 面板内的合计：规整到最小货币单位，避免浮点残差。
 double _sumValues(List<double> values) =>
     normalizeAmount(values.fold<double>(0, (sum, value) => sum + value));
+
+/// 汇总卡里的「支出」金额：标签已表明方向，不再重复负号（与柱状图的正数柱保持一致），
+/// 零值统一显示「0」。
+String _unsignedAmount(num value) =>
+    isZeroAmount(value) ? '0' : formatAmount(value.abs());
 
 /// 日均固定按 7 天折算（滚动 7 日与自然周两种窗口都对齐）。
 double _dailyAverage(double total) => normalizeAmount(total / 7);
@@ -884,7 +889,7 @@ class _PeriodSummaryPanel extends StatelessWidget {
               ),
               SummaryMetric(
                 label: expenseLabel,
-                value: formatExpenseAmount(expense),
+                value: _unsignedAmount(expense),
                 color: isZeroAmount(expense)
                     ? zeroColor
                     : veriSemantic(context, veriExpense),
@@ -987,7 +992,7 @@ class _BudgetExecutionCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       budget <= 0
-                          ? formatExpenseAmount(expense)
+                          ? _unsignedAmount(expense)
                           : remaining < 0
                           ? formatExpenseAmount(remaining.abs())
                           : formatAmount(remaining),
@@ -1049,7 +1054,7 @@ class _BudgetExecutionCard extends StatelessWidget {
               ),
               SummaryMetric(
                 label: AppLocalizations.of(context).budgetMonthExpense,
-                value: formatExpenseAmount(expense),
+                value: _unsignedAmount(expense),
                 color: veriSemantic(context, veriExpense),
               ),
               SummaryMetric(
@@ -1543,7 +1548,7 @@ class _YearTrendPanel extends StatelessWidget {
                     ),
                     ChartTooltipLine(
                       text: l10n.expenseAmountLabel(
-                        formatExpenseAmount(expense[index]),
+                        _unsignedAmount(expense[index]),
                       ),
                       color: expenseColor,
                     ),
