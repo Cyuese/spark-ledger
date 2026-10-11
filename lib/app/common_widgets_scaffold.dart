@@ -341,6 +341,7 @@ class SectionTitle extends StatelessWidget {
     required this.title,
     this.trailing,
     this.trailingWidget,
+    this.titleSuffix,
   });
 
   final String title;
@@ -348,6 +349,9 @@ class SectionTitle extends StatelessWidget {
 
   /// 右侧槽位放自定义控件（如紧凑分段控件）时使用，优先于 [trailing]。
   final Widget? trailingWidget;
+
+  /// 紧跟标题文字之后的小控件（如切换口径的小图标按钮）。
+  final Widget? titleSuffix;
 
   @override
   Widget build(BuildContext context) {
@@ -359,7 +363,7 @@ class SectionTitle extends StatelessWidget {
         context,
       ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
     );
-    if (trailing == null && trailingWidget == null) {
+    if (trailing == null && trailingWidget == null && titleSuffix == null) {
       return titleText;
     }
     // 标题自然宽度靠左，trailing 占满剩余槽位后内部右对齐，贴到内容区右端。
@@ -375,7 +379,19 @@ class SectionTitle extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Flexible(child: titleText),
+          if (titleSuffix == null)
+            Flexible(child: titleText)
+          else
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Flexible(child: titleText),
+                  const SizedBox(width: 2),
+                  titleSuffix!,
+                ],
+              ),
+            ),
           const SizedBox(width: 10),
           Flexible(
             fit: FlexFit.tight,

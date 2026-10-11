@@ -297,9 +297,10 @@ class _AssetSummaryPanelState extends State<_AssetSummaryPanel> {
         if ((valuation.amountsByAccountId[account.id] ?? 0) * sign > 0)
           (
             account: account,
-            amount: (valuation.amountsByAccountId[account.id] ?? 0).abs(),
+            // 保留原值符号：负资产侧要显示成负数，不能自动转正。
+            amount: valuation.amountsByAccountId[account.id] ?? 0,
           ),
-    ]..sort((a, b) => b.amount.compareTo(a.amount));
+    ]..sort((a, b) => b.amount.abs().compareTo(a.amount.abs()));
     final total = normalizeAmount(
       holdings.fold<double>(0, (sum, holding) => sum + holding.amount),
     );
@@ -474,7 +475,8 @@ class _AssetSummaryChartState extends State<_AssetSummaryChart> {
       for (final item in legend)
         VeriDonutSegment(
           label: item.label,
-          value: item.amount,
+          // 环图分段按绝对值取长度，符号只体现在中心与图例的文本上。
+          value: item.amount.abs(),
           color: item.color,
         ),
     ];
@@ -482,6 +484,9 @@ class _AssetSummaryChartState extends State<_AssetSummaryChart> {
         ? _selectedIndex
         : null;
     final total = widget.total;
+    // 负资产侧 total 为负：占比按绝对值算，文本仍展示带符号的原值。
+    final totalMagnitude = total.abs();
+    final shareDenominator = totalMagnitude == 0 ? 1.0 : totalMagnitude;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,8 +568,8 @@ class _AssetSummaryChartState extends State<_AssetSummaryChart> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  widget.showShare || total <= 0
-                      ? '${(item.amount / (total <= 0 ? 1 : total) * 100).toStringAsFixed(1)}%'
+                  widget.showShare
+                      ? '${(item.amount.abs() / shareDenominator * 100).toStringAsFixed(1)}%'
                       : formatUserMoney(item.amount, widget.baseCurrency),
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w700,
@@ -627,29 +632,37 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SectionTitle(
-            title: l10n.panelRecentDailyLabel,
-            trailingWidget: VeriSegmentedControl<_RecentDailyRange>(
-              compact: true,
-              values: const <_RecentDailyRange>[
-                _RecentDailyRange.last7Days,
-                _RecentDailyRange.thisWeek,
-              ],
-              selected: _range,
-              semanticLabel: l10n.statRangeLabel,
-              labelOf: (range) => range == _RecentDailyRange.last7Days
-                  ? l10n.recent7Days
-                  : l10n.timeWeek,
-              // Key 只挂选中项：分段控件会把选中项多渲染一份用于滑动动画。
-              keyOf: (range) => range == _range
-                  ? Key('recent_daily_range_${range.name}')
-                  : null,
-              onChanged: (range) => setState(() => _range = range),
+            // 标题跟着口径走（近7日统计 / 本周统计），旁边的小图标按钮切换口径。
+            title: _range == _RecentDailyRange.last7Days
+                ? l10n.panelRecentDailyLabel
+                : l10n.panelThisWeekLabel,
+            titleSuffix: Tooltip(
+              message: l10n.statRangeLabel,
+              child: InkWell(
+                key: const Key('recent_daily_range_toggle'),
+                borderRadius: BorderRadius.circular(veriRadiusSm),
+                onTap: () => setState(
+                  () => _range = _range == _RecentDailyRange.last7Days
+                      ? _RecentDailyRange.thisWeek
+                      : _RecentDailyRange.last7Days,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.swap_horiz,
+                    size: 18,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.60),
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          VeriEntryTypeToggle(
-            dimension: _type,
-            onChanged: (type) => setState(() => _type = type),
+            // 右上角留给支出 / 收入切换。
+            trailingWidget: VeriEntryTypeToggle(
+              dimension: _type,
+              onChanged: (type) => setState(() => _type = type),
+            ),
           ),
           const SizedBox(height: 16),
           if (isZeroAmount(chartTotal))

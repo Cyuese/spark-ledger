@@ -489,6 +489,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get panelRecentDailyDesc => '近 7 日或本周的收支柱状图与日均';
 
   @override
+  String get panelThisWeekLabel => '本周统计';
+
+  @override
   String get recent7Days => '近7日';
 
   @override

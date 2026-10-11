@@ -503,6 +503,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Spending and income chart with daily averages for the last 7 days or this week';
 
   @override
+  String get panelThisWeekLabel => 'This week';
+
+  @override
   String get recent7Days => 'Last 7 days';
 
   @override

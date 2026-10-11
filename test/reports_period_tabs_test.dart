@@ -72,22 +72,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('近7日统计'), findsOneWidget);
-    expect(
-      find.byKey(const Key('recent_daily_range_last7Days')),
-      findsOneWidget,
-    );
     expect(find.byKey(const Key('dimension_toggle_expense')), findsOneWidget);
     // 底部始终同时给出支出与收入的总计 / 日均。
     expect(find.textContaining('总支出：'), findsOneWidget);
     expect(find.textContaining('总收入：'), findsOneWidget);
 
-    // Key 只挂选中项，所以用文字点未选中的那一项。
-    await tester.tap(find.text('本周').first);
+    // 标题旁的小图标按钮切换口径，标题跟着换成「本周统计」。
+    await tester.tap(find.byKey(const Key('recent_daily_range_toggle')));
     await tester.pumpAndSettle();
-    expect(
-      find.byKey(const Key('recent_daily_range_thisWeek')),
-      findsOneWidget,
-    );
+    expect(find.text('本周统计'), findsOneWidget);
+    expect(find.text('近7日统计'), findsNothing);
+    await tester.tap(find.byKey(const Key('recent_daily_range_toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('近7日统计'), findsOneWidget);
 
     await tester.tap(find.text('收入').first);
     await tester.pumpAndSettle();
