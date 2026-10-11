@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/backup/backup_storage.dart';
+import 'package:verifin/app/data_file_picker.dart';
 
 /// 恢复入口的契约测试（Issue 45 回归）。
 ///
@@ -123,5 +124,24 @@ void main() {
 
   test('MethodChannel 名与 MainActivity 一致', () {
     expect(mainActivity, contains('"verifin/app"'));
+  });
+
+  test('只把文件选择插件的缓存副本判定为可删除', () {
+    // file_selector 在 Android 上复制出来的形态：{cacheDir}/{uuid}/{原名}。
+    expect(
+      isPickerCacheCopyPath(
+        '/data/user/0/top.talyra42.verifin/cache/'
+        '02d86aff-9093-3a1c-a051-efa0c1f15a48/verifin-backup-20261011-160437.zip',
+      ),
+      isTrue,
+    );
+    // 桌面用户原文件、普通目录、以及非 UUID 的父目录都不能被当成缓存副本。
+    expect(isPickerCacheCopyPath('/downloads/verifin-backup.zip'), isFalse);
+    expect(
+      isPickerCacheCopyPath(
+        '/data/user/0/top.talyra42.verifin/cache/keep/a.zip',
+      ),
+      isFalse,
+    );
   });
 }
