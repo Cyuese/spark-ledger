@@ -1,6 +1,6 @@
 # 看板分 Tab、新增面板与统计能力整合设计
 
-> 状态：**维护者已逐条确认**（2026-10-11 批注）。按第 13 节分阶段实施，**每阶段独立提交**；中间态不发布。
+> 状态：**已实施完成**（阶段 1–6 全部落地，每阶段一个提交）。原独立统计分析页已按维护者授权删除，能力并入看板。
 > 分支：`talyra42/reports-dashboard-tabs`
 > 日期：2026-10-11
 
@@ -291,7 +291,9 @@ SectionTitle(资产汇总, trailing: 锚点菜单「正资产 / 负资产」)
 
 > 说明：阶段 6 内部若一次做完风险过大，可按「月统计能力迁移 / 年统计能力迁移 / 自定义能力迁移 / 删除页面」再拆成 4 个提交。
 
-## 14. 已确认 / 仍待确认
+## 14. 已确认 / 实施结果
+
+**实施结果（2026-10-11）**：6 个阶段全部落地并各自提交——`refactor: generalize page panels for multiple report tabs`（面板多 Tab 化 + 归一化落位 + 备份兼容）、`feat: add report dashboard period tabs`（顶部 Tab，默认日常）、`refactor: turn the report summary into a monthly panel`、`feat: add recent daily stats panel`（含共享 `VeriEntryTypeToggle`）、`feat: add asset summary donut panel`（含 `VeriDonutChart` 环内百分比与可点中心）、`refactor: merge the dashboard category and tag cards into one ranking card`、`refactor: fold analytics into the dashboard tabs`（删除页面与入口、清理文案与测试）。年统计 / 自定义仍为空 Tab，待后续单独实现。
 
 已确认（无需再答）：Tab 结构与命名、默认日常且不记忆、年/自定义空 Tab、移除统计分析页及其入口、**摘要卡 = 看板顶部那三个数，保留并重做、作为月视图里的一个面板**、近 7 日两个口径、不联动、不引线改用库自带百分比与图例、资产汇总交互、排除隐藏与不计入资产、不做 <1% 过滤、**删除同比 / 环比**、每阶段提交。
 
