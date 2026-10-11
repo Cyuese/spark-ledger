@@ -325,7 +325,6 @@ void main() {
   test('report tabs without a panel catalog stay empty', () async {
     final controller = await makeController();
     for (final page in <PanelPageKind>[
-      PanelPageKind.reportsYearly,
       PanelPageKind.reportsCustom,
     ]) {
       expect(controller.panelSettings(page), isEmpty);

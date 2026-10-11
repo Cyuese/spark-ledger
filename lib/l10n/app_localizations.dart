@@ -1106,6 +1106,30 @@ abstract class AppLocalizations {
   /// **'按顶级分类 / 子分类 / 标签排行，点行可下钻'**
   String get panelRankingDesc;
 
+  /// 看板年统计面板:本年收支摘要卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'本年收支'**
+  String get panelYearSummaryLabel;
+
+  /// 看板年统计面板:本年收支摘要卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'本年收入、支出与结余合计'**
+  String get panelYearSummaryDesc;
+
+  /// 看板年统计面板:本年每月收入与支出双柱卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'月度收支'**
+  String get panelYearTrendLabel;
+
+  /// 看板年统计面板:月度收支卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'本年每月收入与支出双柱对比'**
+  String get panelYearTrendDesc;
+
   /// 资产汇总:只统计余额为正的账户
   ///
   /// In zh, this message translates to:

@@ -35,14 +35,16 @@ void main() {
     expect(find.text('近7日统计'), findsOneWidget);
     expect(monthlyEntry, findsNothing);
 
-    // 年统计 / 自定义是空 Tab：没有面板，也没有面板管理入口。
+    // 年统计：有本年收支 / 月度收支 / 排行三个面板；月统计的入口不在这里。
     await tester.tap(tabLabel('年统计'));
     await tester.pumpAndSettle();
     expect(selectedTab('yearly'), findsOneWidget);
     expect(find.text('近7日统计'), findsNothing);
     expect(dailyEntry, findsNothing);
     expect(monthlyEntry, findsNothing);
+    expect(find.text('本年收支'), findsOneWidget);
 
+    // 自定义还没实现：空 Tab，没有面板也没有面板管理入口。
     await tester.tap(tabLabel('自定义'));
     await tester.pumpAndSettle();
     expect(selectedTab('custom'), findsOneWidget);
@@ -111,5 +113,23 @@ void main() {
       find.byKey(const Key('asset_summary_side_negative')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('年统计面板：本年摘要、月度收支与排行卡', (tester) async {
+    await pumpApp(tester, LocalKeyValueStore());
+    await tapBottomTab(tester, 2); // 看板
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('年统计').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('本年收支'), findsOneWidget);
+    // 排行卡与月统计共用同一组件，只是取数窗口换成整年。
+    await tester.scrollUntilVisible(
+      find.text('分类 · 标签排行'),
+      250,
+      scrollable: firstVerticalScrollable(),
+    );
+    expect(find.text('分类 · 标签排行'), findsOneWidget);
   });
 }

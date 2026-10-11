@@ -521,6 +521,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get panelRankingDesc => '按顶级分类 / 子分类 / 标签排行，点行可下钻';
 
   @override
+  String get panelYearSummaryLabel => '本年收支';
+
+  @override
+  String get panelYearSummaryDesc => '本年收入、支出与结余合计';
+
+  @override
+  String get panelYearTrendLabel => '月度收支';
+
+  @override
+  String get panelYearTrendDesc => '本年每月收入与支出双柱对比';
+
+  @override
   String get assetPositive => '正资产';
 
   @override
