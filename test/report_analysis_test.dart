@@ -25,7 +25,12 @@ LedgerEntry entry({
 }
 
 void main() {
-  final categories = defaultCategories;
+  // 默认分类按账本播种、id 随机（分类属于账本）；这里只需一份可解析的分类表。
+  var seq = 0;
+  final categories = <Category>[
+    for (final seed in categorySeedsFor(english: false))
+      seed.build(id: 'cat_${seq++}', bookId: defaultLedgerBookId),
+  ];
 
   group('ReportRange', () {
     test('month range covers whole natural month', () {
@@ -140,12 +145,14 @@ void main() {
     // 餐饮(顶级) → 午餐 / 晚餐(子分类)，加一个 transport 顶级。
     const treeCategories = <Category>[
       Category(
+        bookId: defaultLedgerBookId,
         id: 'dining',
         label: '餐饮',
         type: EntryType.expense,
         iconCode: 'dining',
       ),
       Category(
+        bookId: defaultLedgerBookId,
         id: 'lunch',
         label: '午餐',
         type: EntryType.expense,
@@ -153,6 +160,7 @@ void main() {
         parentId: 'dining',
       ),
       Category(
+        bookId: defaultLedgerBookId,
         id: 'dinner',
         label: '晚餐',
         type: EntryType.expense,
@@ -160,6 +168,7 @@ void main() {
         parentId: 'dining',
       ),
       Category(
+        bookId: defaultLedgerBookId,
         id: 'transport',
         label: '交通',
         type: EntryType.expense,
@@ -256,8 +265,8 @@ void main() {
     }
 
     const tags = <Tag>[
-      Tag(id: 'work', label: '工作'),
-      Tag(id: 'food', label: '吃饭'),
+      Tag(bookId: defaultLedgerBookId, id: 'work', label: '工作'),
+      Tag(bookId: defaultLedgerBookId, id: 'food', label: '吃饭'),
     ];
 
     test('每笔计入其每个标签，占比相对维度总额（可重叠）', () {

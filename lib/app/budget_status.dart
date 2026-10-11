@@ -86,7 +86,8 @@ BudgetStatusSummary computeBudgetStatus({
   final spentByCategory = _spentByCategory(windowEntries, categories);
   final rows = categories
       .where((category) => category.type == EntryType.expense)
-      .where((category) => category.id != 'balance_adjust_expense')
+      // 系统分类（余额调整）不参与分类预算。
+      .where((category) => !category.isBalanceAdjust)
       .map(
         (category) => BudgetStatusCategoryRow(
           categoryId: category.id,

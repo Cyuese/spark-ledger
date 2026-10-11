@@ -101,9 +101,14 @@ void main() {
       );
       expect(
         fallback.entries.single.categoryId,
-        uncategorizedCategoryId(EntryType.expense),
+        fallback.newCategories.single.id,
       );
       expect(fallback.newCategories.single.label, '未分类');
+      // 分类 id 随机生成，语义只看 key。
+      expect(
+        fallback.newCategories.single.key,
+        uncategorizedCategoryKey(EntryType.expense),
+      );
     });
   });
 
@@ -341,6 +346,7 @@ void main() {
         currencyCode: 'CNY',
       );
       const category = Category(
+        bookId: 'book_default',
         id: 'dining',
         label: '餐饮',
         type: EntryType.expense,
@@ -397,6 +403,7 @@ void main() {
         currencyCode: 'USD',
       );
       const category = Category(
+        bookId: 'book_default',
         id: 'dining',
         label: '餐饮',
         type: EntryType.expense,
@@ -472,6 +479,7 @@ void main() {
         currencyCode: 'USD',
       );
       const transferCategory = Category(
+        bookId: 'book_default',
         id: 'transfer_out',
         label: '转出',
         type: EntryType.transfer,
@@ -785,12 +793,14 @@ void main() {
     // 转账分类是系统种子（真实导入时一定存在）；传入以验证转账落到「转出」而非留空。
     const transferCategories = <Category>[
       Category(
+        bookId: 'book_default',
         id: 'transfer_out',
         label: '转出',
         type: EntryType.transfer,
         iconCode: 'transfer_out',
       ),
       Category(
+        bookId: 'book_default',
         id: 'transfer_in',
         label: '转入',
         type: EntryType.transfer,

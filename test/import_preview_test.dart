@@ -387,8 +387,8 @@ void main() {
         _csvBytes(_noCategoryCsv),
       );
       expect(
-        plan.newCategories.single.id,
-        uncategorizedCategoryId(EntryType.expense),
+        plan.newCategories.single.key,
+        uncategorizedCategoryKey(EntryType.expense),
       );
 
       final holder = await _openPreview(tester, controller, plan);
@@ -558,6 +558,7 @@ void main() {
       controller.addAccount(account);
       // 临时（未落库）分类，经 extraCategories 传入草稿编辑页解析。
       const category = Category(
+        bookId: defaultLedgerBookId,
         id: 'cat_x',
         label: '测试类',
         type: EntryType.expense,
@@ -623,7 +624,11 @@ void main() {
     testWidgets('临时标签（导入待新建）在草稿页显示标签名而非「添加标签」', (tester) async {
       final controller = await makeController();
       // 交易引用一个尚未落库的临时标签 id，经 extraTags 传入草稿页解析。
-      const provisional = Tag(id: 'tag_x', label: '代购');
+      const provisional = Tag(
+        bookId: defaultLedgerBookId,
+        id: 'tag_x',
+        label: '代购',
+      );
       final entry = LedgerEntry(
         id: 'draft_tag',
         bookId: controller.activeBook.id,

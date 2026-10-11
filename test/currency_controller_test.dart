@@ -14,10 +14,7 @@ void main() {
   Future<VeriFinController> controllerWith(
     InMemoryLedgerRepository repository,
   ) {
-    return VeriFinController.create(
-      LocalKeyValueStore(),
-      repository: repository,
-    );
+    return createTestController(LocalKeyValueStore(), repository: repository);
   }
 
   test('新账本有已确认的 CNY 本位币', () async {
@@ -34,7 +31,7 @@ void main() {
   test('金额单位偏好持久化，并随活动账本币种构成更新', () async {
     final repository = InMemoryLedgerRepository();
     final store = LocalKeyValueStore();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       store,
       repository: repository,
     );
@@ -63,10 +60,7 @@ void main() {
       hideInSingleCurrency: false,
     );
 
-    final restarted = await VeriFinController.create(
-      store,
-      repository: repository,
-    );
+    final restarted = await createTestController(store, repository: repository);
     expect(restarted.moneyUnitStyle, MoneyUnitStyle.code);
     expect(restarted.hideUnitInSingleCurrency, isFalse);
     expect(restarted.activeBookUsesMultipleCurrencies, isTrue);
@@ -248,7 +242,7 @@ void main() {
         dailyBudgets: const <String, double>{'legacy': 100},
       ),
     );
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore()..write('verifin.active_book.v1', 'legacy'),
       repository: repository,
     );
@@ -286,7 +280,7 @@ void main() {
       isFalse,
     );
 
-    final restarted = await VeriFinController.create(
+    final restarted = await createTestController(
       LocalKeyValueStore()..write('verifin.active_book.v1', 'legacy'),
       repository: repository,
     );
@@ -324,7 +318,7 @@ void main() {
         dailyBudgets: const <String, double>{},
       ),
     );
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore()..write('verifin.active_book.v1', 'legacy'),
       repository: repository,
     );

@@ -167,19 +167,33 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     );
   }
 
+  /// 当前账本的分类（按排序顺序）。分类属于账本，这里只返回活动账本自己的集合；
+  /// 写入路径一律取私有的全量列表 [_categories]，不要用这个 getter 拼「保存整表」的入参。
   List<Category> get categories =>
       _categoriesView ??= List<Category>.unmodifiable(
-        _categories.isEmpty ? _seedCategories : _categories,
+        _categories.where((category) => category.bookId == _activeBookId),
       );
 
-  /// 全部标签（按创建/排序顺序）。标签与账本无关，全局共享。
-  List<Tag> get tags => List<Tag>.unmodifiable(_tags);
+  /// 某账本的分类（读写跨账本数据的路径用，例如桌面小组件投影）。
+  List<Category> categoriesForBook(String bookId) =>
+      List<Category>.unmodifiable(
+        _categories.where((category) => category.bookId == bookId),
+      );
+
+  /// 当前账本的标签（按创建/排序顺序）。标签属于账本。
+  List<Tag> get tags =>
+      List<Tag>.unmodifiable(_tags.where((tag) => tag.bookId == _activeBookId));
 
   Tag? tagById(String id) => _tags.where((tag) => tag.id == id).firstOrNull;
 
-  /// 某标签被多少笔交易使用（当前账本无关，统计全部交易）。
+  /// 某标签在当前账本被多少笔交易使用（分类/标签的笔数口径一律只看当前账本）。
   int tagUsageCount(String tagId) {
-    return _entries.where((entry) => entry.tagIds.contains(tagId)).length;
+    return _entries
+        .where(
+          (entry) =>
+              entry.bookId == _activeBookId && entry.tagIds.contains(tagId),
+        )
+        .length;
   }
 
   /// 某交易的图片附件（按加入顺序）。
@@ -787,6 +801,30 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
 
   List<Category> categoriesForType(EntryType type) {
     return categoriesFor(type, categories);
+  }
+
+  /// 某账本内带指定语义键的分类；没有则返回 null。
+  Category? categoryByKey(String bookId, String key) => _categories
+      .where((category) => category.bookId == bookId && category.key == key)
+      .firstOrNull;
+
+  /// 系统分类（余额调整）在该账本内的 id；该账本缺失时补建一条并落库。
+  /// 系统分类随默认分类播种、用户不能删除，这里只是兜底（异构备份可能缺）。
+  String _ensureBalanceAdjustCategoryId(String bookId, EntryType type) {
+    final key = balanceAdjustCategoryKey(type);
+    final existing = categoryByKey(bookId, key);
+    if (existing != null) {
+      return existing.id;
+    }
+    final created = buildBalanceAdjustCategory(
+      _generateId('category'),
+      bookId,
+      type,
+      english: _seedEnglish,
+    );
+    _categories.add(created);
+    _persistCategories();
+    return created.id;
   }
 
   Category categoryById(String id) {
@@ -1909,6 +1947,18 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
         EntryValidationCode.invalidAmounts,
       );
     }
+    // 分类按账本隔离：交易/退款只能引用自己账本的分类。跨账本引用会被展示层回退成
+    // 「已删除分类」，还会污染另一个账本的分类笔数，所以在写入前拦下。
+    bool categoryInBook(String categoryId, String bookId) =>
+        categoryId.isEmpty ||
+        _categories.any(
+          (category) => category.id == categoryId && category.bookId == bookId,
+        );
+    if (!categoryInBook(entry.categoryId, entry.bookId)) {
+      return const EntrySaveValidationFailure(
+        EntryValidationCode.categoryOutOfScope,
+      );
+    }
     if (refunds.any(
       (refund) =>
           refund.type != EntryType.refund ||
@@ -1916,6 +1966,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
           refund.bookId != entry.bookId ||
           refund.currencyCode != entry.currencyCode ||
           refund.amount <= 0 ||
+          !categoryInBook(refund.categoryId, refund.bookId) ||
           !_validEntryCurrencyAmounts(refund, book),
     )) {
       return const EntrySaveValidationFailure(
@@ -2196,10 +2247,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     }
     _accounts.addAll(plan.newAccounts);
     if (plan.newCategories.isNotEmpty) {
-      // 首次导入前若仍是默认分类占位，先落地为真实列表再追加。
-      if (_categories.isEmpty) {
-        _categories.addAll(_seedCategories);
-      }
+      // 目标账本还没有分类时先播种默认集，再追加导入新建的分类。
+      _seedMissingBookCategories();
       _categories.addAll(plan.newCategories);
     }
     if (plan.newTags.isNotEmpty) {
@@ -2357,10 +2406,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       ),
     );
     if (newCategories.isNotEmpty) {
-      // 首次导入前若仍是默认分类占位，先落地为真实列表再追加。
-      if (_categories.isEmpty) {
-        _categories.addAll(_seedCategories);
-      }
+      // 目标账本还没有分类时先播种默认集，再追加导入新建的分类。
+      _seedMissingBookCategories();
       _categories.addAll(newCategories);
     }
     if (newTags.isNotEmpty) {
@@ -2670,8 +2717,11 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       currencySetupStatus: CurrencySetupStatus.confirmed,
     );
     _ledgerBooks.add(book);
+    // 新账本自带一份内置默认分类（分类属于账本；标签由用户按需新建）。
+    _categories.addAll(_seedCategoriesFor(book.id));
     _activeBookId = book.id;
     _persistLedgerBooks();
+    _persistCategories();
     _store.write(_activeBookKey, _activeBookId);
     notifyListeners();
   }
@@ -2861,6 +2911,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _entries.removeWhere((entry) => entry.bookId == bookId);
     _accounts.removeWhere((account) => account.bookId == bookId);
     _accountGroups.removeWhere((group) => group.bookId == bookId);
+    // 分类与标签属于账本，随账本一起删。
+    _categories.removeWhere((category) => category.bookId == bookId);
+    _tags.removeWhere((tag) => tag.bookId == bookId);
     _recurringRules.removeWhere((rule) => rule.bookId == bookId);
     _exchangeRates.removeWhere((rate) => rate.bookId == bookId);
     _collapsedAssetSections.removeWhere((key) => key.startsWith('$bookId:'));
@@ -2957,7 +3010,10 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     var changed = 0;
     for (var i = 0; i < _entries.length; i++) {
       final entry = _entries[i];
-      if (entryIds.contains(entry.id) && entry.type == category.type) {
+      // 目标分类必须与该交易的账本一致（分类按账本隔离后的写入守卫）。
+      if (entryIds.contains(entry.id) &&
+          entry.bookId == category.bookId &&
+          entry.type == category.type) {
         _entries[i] = entry.copyWith(categoryId: categoryId);
         changed += 1;
       }
@@ -3358,9 +3414,11 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
         conversionSource: account.currencyCode == book.baseCurrencyCode
             ? ConversionSource.identity
             : ConversionSource.rateTable,
-        categoryId: difference > 0
-            ? 'balance_adjust_income'
-            : 'balance_adjust_expense',
+        // 系统分类按账本各有一条：取该账户所属账本的那条（缺失则补建）。
+        categoryId: _ensureBalanceAdjustCategoryId(
+          account.bookId,
+          difference > 0 ? EntryType.income : EntryType.expense,
+        ),
         accountId: account.id,
         note: note,
         occurredAt: now,
@@ -3395,7 +3453,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     notifyListeners();
   }
 
-  /// 新增分类。传入 [parentId] 则创建为该分类的子分类（多级分类）；
+  /// 在当前账本新增分类。传入 [parentId] 则创建为该分类的子分类（多级分类）；
   /// 子分类的类型强制继承父分类，[type] 仅在创建顶级分类时生效。
   void addCategory({
     required EntryType type,
@@ -3407,10 +3465,13 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     if (trimmedLabel.isEmpty) {
       return;
     }
+    final bookId = _activeBookId;
     var resolvedType = type;
     if (parentId != null) {
       final parent = _categories
-          .where((category) => category.id == parentId)
+          .where(
+            (category) => category.id == parentId && category.bookId == bookId,
+          )
           .firstOrNull;
       if (parent == null) {
         return;
@@ -3418,11 +3479,12 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       // 子分类类型必须与父分类一致。
       resolvedType = parent.type;
     }
-    // 同一父级下已存在同名同类型分类则不重复创建（避免增殖出重复同名分类，
+    // 同一账本、同一父级下已存在同名同类型分类则不重复创建（避免增殖出重复同名分类，
     // 也避免触犯分类唯一约束；名称按归一化比较，容忍大小写/空白/全半角差异）。
     final normalized = normalizedCategoryLabel(trimmedLabel);
     final duplicate = _categories.any(
       (category) =>
+          category.bookId == bookId &&
           category.type == resolvedType &&
           category.parentId == parentId &&
           normalizedCategoryLabel(category.label) == normalized,
@@ -3433,6 +3495,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _categories.add(
       Category(
         id: _generateId('category'),
+        bookId: bookId,
         label: trimmedLabel,
         type: resolvedType,
         iconCode: iconCode,
@@ -3444,9 +3507,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   }
 
   /// 移动分类到新的父分类下（[newParentId] 为 null 表示移到顶级）。
-  /// 拦截：系统分类、指向自身、成环（移到自己的后代下）、跨类型。
+  /// 拦截：非当前账本、系统分类、指向自身、成环（移到自己的后代下）、跨类型/跨账本。
   bool moveCategory(String categoryId, String? newParentId) {
-    if (_isProtectedCategory(categoryId) || categoryId == newParentId) {
+    if (categoryId == newParentId) {
       return false;
     }
     final index = _categories.indexWhere((c) => c.id == categoryId);
@@ -3454,12 +3517,17 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       return false;
     }
     final category = _categories[index];
+    if (category.bookId != _activeBookId || category.isBalanceAdjust) {
+      return false;
+    }
     if (category.parentId == newParentId) {
       return false;
     }
     if (newParentId != null) {
       final parent = _categories.where((c) => c.id == newParentId).firstOrNull;
-      if (parent == null || parent.type != category.type) {
+      if (parent == null ||
+          parent.bookId != category.bookId ||
+          parent.type != category.type) {
         return false;
       }
       // 不能移动到自己的后代之下，否则会成环。
@@ -3481,7 +3549,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       return;
     }
     final index = _categories.indexWhere(
-      (category) => category.id == categoryId,
+      (category) =>
+          category.id == categoryId && category.bookId == _activeBookId,
     );
     if (index == -1) {
       return;
@@ -3493,7 +3562,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
 
   void updateCategoryIcon(String categoryId, String iconCode) {
     final index = _categories.indexWhere(
-      (category) => category.id == categoryId,
+      (category) =>
+          category.id == categoryId && category.bookId == _activeBookId,
     );
     if (index == -1) {
       return;
@@ -3535,19 +3605,32 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   }
 
   /// Persists a complete category ordering draft after the user explicitly
-  /// saves sorting mode. Category fields are read from the current controller
-  /// snapshot so a stale editor cannot overwrite a rename or icon change.
+  /// saves sorting mode. [orderedIds] 是**当前账本**分类 id 的全集：分类属于
+  /// 账本，管理页只能编辑当前账本，别的账本的顺序不受影响。Category fields are
+  /// read from the current controller snapshot so a stale editor cannot
+  /// overwrite a rename or icon change.
   Future<bool> saveCategoryOrderDraft(List<String> orderedIds) async {
-    final currentIds = _categories.map((category) => category.id).toSet();
-    if (orderedIds.length != _categories.length ||
+    final bookCategories = _categories
+        .where((category) => category.bookId == _activeBookId)
+        .toList(growable: false);
+    final currentIds = <String>{
+      for (final category in bookCategories) category.id,
+    };
+    if (orderedIds.length != bookCategories.length ||
         orderedIds.toSet().length != orderedIds.length ||
         !orderedIds.toSet().containsAll(currentIds)) {
       return false;
     }
     final byId = <String, Category>{
-      for (final category in _categories) category.id: category,
+      for (final category in bookCategories) category.id: category,
     };
-    final next = <Category>[for (final id in orderedIds) byId[id]!];
+    // 其它账本的分类保持原顺序；全量列表写回（saveCategories 的契约是
+    // 「落库后该表内容 == 传入列表」）。
+    final next = <Category>[
+      for (final category in _categories)
+        if (category.bookId != _activeBookId) category,
+      for (final id in orderedIds) byId[id]!,
+    ];
     try {
       await _repository.saveCategories(next);
     } catch (error, stackTrace) {
@@ -3562,13 +3645,15 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   }
 
   Future<bool> deleteCategory(String categoryId) async {
-    if (_isProtectedCategory(categoryId)) {
-      return false;
-    }
     final category = _categories
         .where((item) => item.id == categoryId)
         .firstOrNull;
-    if (category == null || categoryUsageCount(categoryId) > 0) {
+    if (category == null ||
+        category.bookId != _activeBookId ||
+        category.isBalanceAdjust) {
+      return false;
+    }
+    if (categoryUsageCount(categoryId) > 0) {
       return false;
     }
     // 仍被周期规则引用时不能删除，否则规则到期会生成悬空分类的交易。
@@ -3610,14 +3695,26 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   }
 
   int categoryUsageCount(String categoryId) {
-    return _entries.where((entry) => entry.categoryId == categoryId).length;
+    // 笔数只算当前账本：分类属于账本，别的账本用没用过与这里无关
+    // （删除/合并的判定也据此，避免被另一个账本锁死）。
+    return _entries
+        .where(
+          (entry) =>
+              entry.bookId == _activeBookId && entry.categoryId == categoryId,
+        )
+        .length;
   }
 
   /// 该分类及其全部子分类合计引用的交易笔数。用于分类管理列表展示笔数，
   /// 使「大类」也能反映记在子类下的消费（避免只记子类时大类恒显示 0 笔的困惑）。
   int categoryUsageCountInTree(String categoryId) {
     final ids = <String>{categoryId, ...descendantIds(categories, categoryId)};
-    return _entries.where((entry) => ids.contains(entry.categoryId)).length;
+    return _entries
+        .where(
+          (entry) =>
+              entry.bookId == _activeBookId && ids.contains(entry.categoryId),
+        )
+        .length;
   }
 
   /// 是否有周期规则正引用该分类（含尚未生成过任何交易的规则）。
@@ -3638,12 +3735,18 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   /// 返回被改动的交易笔数；无法合并时返回 -1（源受保护 / 源或目标不存在 / 类型不一致 /
   /// 源与目标相同 / 源仍有子分类 / 目标是源的后代）。源有子分类时应先移动或删除子分类。
   Future<int> mergeCategoryInto(String sourceId, String targetId) async {
-    if (sourceId == targetId || _isProtectedCategory(sourceId)) {
+    if (sourceId == targetId) {
       return -1;
     }
     final source = _categories.where((c) => c.id == sourceId).firstOrNull;
     final target = _categories.where((c) => c.id == targetId).firstOrNull;
-    if (source == null || target == null || source.type != target.type) {
+    if (source == null || target == null) {
+      return -1;
+    }
+    if (source.bookId != _activeBookId ||
+        target.bookId != source.bookId ||
+        source.isBalanceAdjust ||
+        source.type != target.type) {
       return -1;
     }
     // 源有子分类无法整体合并（会孤立子树）；目标是源的后代同理不允许。
@@ -3703,17 +3806,23 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
 
   // ---- 标签 ----
 
-  /// 新增标签。名称去重（忽略首尾空白，区分大小写），已存在则返回其 id。
+  /// 在当前账本新增标签。名称去重（忽略首尾空白，区分大小写），已存在则返回其 id。
   String? addTag(String label) {
     final trimmed = label.trim();
     if (trimmed.isEmpty) {
       return null;
     }
-    final existing = _tags.where((tag) => tag.label == trimmed).firstOrNull;
+    final existing = _tags
+        .where((tag) => tag.bookId == _activeBookId && tag.label == trimmed)
+        .firstOrNull;
     if (existing != null) {
       return existing.id;
     }
-    final tag = Tag(id: _generateId('tag'), label: trimmed);
+    final tag = Tag(
+      id: _generateId('tag'),
+      bookId: _activeBookId,
+      label: trimmed,
+    );
     _tags.add(tag);
     _persistTags();
     notifyListeners();
@@ -3725,7 +3834,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     if (trimmed.isEmpty) {
       return;
     }
-    final index = _tags.indexWhere((tag) => tag.id == tagId);
+    final index = _tags.indexWhere(
+      (tag) => tag.id == tagId && tag.bookId == _activeBookId,
+    );
     if (index == -1) {
       return;
     }
@@ -3734,29 +3845,49 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     notifyListeners();
   }
 
+  /// 在当前账本的标签之间重排。标签属于账本，[oldIndex]/[newIndex] 是**当前账本
+  /// 列表内**的位置；只在全量列表里对当前账本的行做置换，别的账本不受影响。
   void reorderTags(int oldIndex, int newIndex) {
+    final positions = <int>[];
+    for (var i = 0; i < _tags.length; i++) {
+      if (_tags[i].bookId == _activeBookId) {
+        positions.add(i);
+      }
+    }
     if (oldIndex < 0 ||
-        oldIndex >= _tags.length ||
+        oldIndex >= positions.length ||
         newIndex < 0 ||
-        newIndex > _tags.length) {
+        newIndex > positions.length) {
       return;
     }
-    final moved = _tags.removeAt(oldIndex);
-    _tags.insert(newIndex.clamp(0, _tags.length), moved);
+    final siblings = <Tag>[for (final position in positions) _tags[position]];
+    final moved = siblings.removeAt(oldIndex);
+    siblings.insert(newIndex.clamp(0, siblings.length), moved);
+    for (var i = 0; i < positions.length; i++) {
+      _tags[positions[i]] = siblings[i];
+    }
     _persistTags();
     notifyListeners();
   }
 
   /// Persists the tag order only after sorting mode is explicitly saved.
+  /// [orderedIds] 是**当前账本**标签 id 的全集；其它账本的顺序保持不变。
   Future<bool> saveTagOrderDraft(List<String> orderedIds) async {
-    final currentIds = _tags.map((tag) => tag.id).toSet();
-    if (orderedIds.length != _tags.length ||
+    final bookTags = _tags
+        .where((tag) => tag.bookId == _activeBookId)
+        .toList(growable: false);
+    final currentIds = <String>{for (final tag in bookTags) tag.id};
+    if (orderedIds.length != bookTags.length ||
         orderedIds.toSet().length != orderedIds.length ||
         !orderedIds.toSet().containsAll(currentIds)) {
       return false;
     }
-    final byId = <String, Tag>{for (final tag in _tags) tag.id: tag};
-    final next = <Tag>[for (final id in orderedIds) byId[id]!];
+    final byId = <String, Tag>{for (final tag in bookTags) tag.id: tag};
+    final next = <Tag>[
+      for (final tag in _tags)
+        if (tag.bookId != _activeBookId) tag,
+      for (final id in orderedIds) byId[id]!,
+    ];
     try {
       await _repository.saveTags(next);
     } catch (error, stackTrace) {
@@ -3770,16 +3901,19 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return true;
   }
 
-  /// 删除标签，并从所有交易的 tagIds 中移除该标签的引用。
+  /// 删除当前账本的标签，并从**该账本**交易的 tagIds 中移除引用。
+  /// 别的账本的同名标签与引用完全不受影响。
   Future<bool> deleteTag(String tagId) async {
-    final index = _tags.indexWhere((tag) => tag.id == tagId);
+    final index = _tags.indexWhere(
+      (tag) => tag.id == tagId && tag.bookId == _activeBookId,
+    );
     if (index == -1) {
       return false;
     }
     final nextTags = List<Tag>.of(_tags)..removeAt(index);
     final nextEntries = <LedgerEntry>[
       for (final entry in _entries)
-        if (entry.tagIds.contains(tagId))
+        if (entry.bookId == _activeBookId && entry.tagIds.contains(tagId))
           entry.copyWith(
             tagIds: entry.tagIds.where((id) => id != tagId).toList(),
           )
@@ -4012,7 +4146,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       ..addAll(_seedLedgerBooks);
     _categories
       ..clear()
-      ..addAll(_seedCategories);
+      ..addAll(_seedCategoriesFor(defaultLedgerBookId));
     _tags.clear();
     _attachments.clear();
     _recurringRules.clear();
@@ -4051,7 +4185,8 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   String exportDataJson() {
     final payload = <String, Object?>{
       'app': 'verifin',
-      'version': 3,
+      // v4：分类/标签带 bookId（账本内数据）。旧版备份仍可导入，见 importDataJson。
+      'version': 4,
       'exportedAt': DateTime.now().toIso8601String(),
       'data': <String, Object?>{
         'ledgerBooks': _ledgerBooks.map((book) => book.toJson()).toList(),
@@ -4156,7 +4291,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       throw const FormatException('备份版本格式不正确');
     }
     final version = (rawVersion as num?)?.toInt() ?? 1;
-    if (version < 1 || version > 3) {
+    if (version < 1 || version > 4) {
       throw FormatException('不支持的备份版本：$version');
     }
 
@@ -4197,10 +4332,10 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
         ? importedActiveBookId
         : defaultLedgerBookId;
 
-    final nextEntries = _decodeModelList<LedgerEntry>(
+    var nextEntries = _decodeModelList<LedgerEntry>(
       data['entries'],
       LedgerEntry.fromJson,
-    )..sort(_compareEntriesLatestFirst);
+    );
     final nextAccounts = _decodeModelList<Account>(
       data['accounts'],
       Account.fromJson,
@@ -4213,15 +4348,14 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       data['categories'],
       Category.fromJson,
     );
-    final nextCategories = <Category>[
-      ...(importedCategories.isEmpty ? _seedCategories : importedCategories),
-    ];
-    final nextTags = _decodeModelList<Tag>(data['tags'], Tag.fromJson);
+    final importedTags = _decodeModelList<Tag>(data['tags'], Tag.fromJson);
+    var nextCategories = importedCategories;
+    var nextTags = importedTags;
     final nextAttachments = await _materializeImportedAttachments(
       _decodeModelList<Attachment>(data['attachments'], Attachment.fromJson),
       readStagedAttachment,
     );
-    final nextRecurringRules = _decodeModelList<RecurringRule>(
+    var nextRecurringRules = _decodeModelList<RecurringRule>(
       data['recurringRules'],
       RecurringRule.fromJson,
     );
@@ -4232,9 +4366,54 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     final nextMonthlyBudgets = _bookScopedBudgets(
       _decodeBudgets(data['monthlyBudgets']),
     );
-    final nextCategoryBudgets = _bookScopedBudgets(
+    var nextCategoryBudgets = _bookScopedBudgets(
       _decodeBudgets(data['categoryBudgets']),
     );
+
+    final nextBookIds = <String>[for (final book in nextLedgerBooks) book.id];
+    // v4 起分类/标签带 bookId；更早的备份里它们是全局的，必须展开成每个账本一份并把
+    // 引用改写到副本 id（详见 legacy_book_scope.dart 的取舍说明）。
+    if (version < 4) {
+      final expansion = expandLegacyScopedRecords(
+        bookIds: nextBookIds,
+        categories: importedCategories,
+        tags: importedTags,
+        nextId: _generateId,
+      );
+      nextCategories = expansion.categories;
+      nextTags = expansion.tags;
+      nextEntries = <LedgerEntry>[
+        for (final entry in nextEntries)
+          entry.copyWith(
+            categoryId:
+                expansion.categoryIdFor(entry.bookId, entry.categoryId) ??
+                entry.categoryId,
+            tagIds: <String>[
+              for (final id in entry.tagIds)
+                expansion.tagIdFor(entry.bookId, id) ?? id,
+            ],
+          ),
+      ];
+      nextRecurringRules = <RecurringRule>[
+        for (final rule in nextRecurringRules)
+          rule.copyWith(
+            categoryId:
+                expansion.categoryIdFor(rule.bookId, rule.categoryId) ??
+                rule.categoryId,
+          ),
+      ];
+      nextCategoryBudgets = expansion.rewriteCategoryBudgetKeys(
+        nextCategoryBudgets,
+      );
+    }
+    // 每个账本都要有分类：备份完全没带分类、或某个账本一条都没有时播种默认集。
+    nextCategories = withSeededBookCategories(
+      nextCategories,
+      bookIds: nextBookIds,
+      english: _seedEnglish,
+      nextId: () => _generateId('category'),
+    );
+    nextEntries.sort(_compareEntriesLatestFirst);
     // 按日预算键是纯 bookId（无日期前缀），无需 _bookScopedBudgets 迁移。
     final nextDailyBudgets = _decodeBudgets(data['dailyBudgets']);
     // 预算周期起始日（键为 bookId）：旧备份缺键回落空表（= 全部自然月）。

@@ -9,6 +9,7 @@ mixin _ControllerState on ChangeNotifier {
   AttachmentStore get _attachmentStore;
   AppLogger? get _logger;
   bool get _systemIsEnglish;
+  String Function(String prefix)? get _injectedIdFactory;
 
   /// SQLite 落库失败时回调（由 UI 层挂钩弹出「保存失败」提示）。
   void Function(Object error)? onPersistError;
@@ -48,8 +49,31 @@ mixin _ControllerState on ChangeNotifier {
 
   List<LedgerBook> get _seedLedgerBooks =>
       defaultLedgerBooksFor(english: _seedEnglish);
-  List<Category> get _seedCategories =>
-      defaultCategoriesFor(english: _seedEnglish);
+
+  /// 某账本的默认分类。分类属于账本，id 是随机生成的纯标识，语义只看 [Category.key]。
+  List<Category> _seedCategoriesFor(String bookId) => <Category>[
+    for (final seed in categorySeedsFor(english: _seedEnglish))
+      seed.build(id: _generateId('category'), bookId: bookId),
+  ];
+
+  /// 给所有还没有分类的账本播种默认分类（首启动、新建账本、导入缺分类的备份共用）。
+  /// 返回是否有改动。分类名只在播种时定语言，之后随用户编辑。
+  bool _seedMissingBookCategories() {
+    final next = withSeededBookCategories(
+      _categories,
+      bookIds: <String>[for (final book in _ledgerBooks) book.id],
+      english: _seedEnglish,
+      nextId: () => _generateId('category'),
+    );
+    if (next.length == _categories.length) {
+      return false;
+    }
+    _categories
+      ..clear()
+      ..addAll(next);
+    return true;
+  }
+
   UserProfile get _seedProfile => defaultUserProfileFor(english: _seedEnglish);
 
   final List<LedgerEntry> _entries = <LedgerEntry>[];
@@ -329,6 +353,7 @@ mixin _ControllerState on ChangeNotifier {
   /// 从 SQLite 载入账目类数据；全新数据库首启动写入默认账本/账户/分组/分类。
   Future<void> _loadFromRepository() async {
     final books = await _repository.loadBooks();
+    var categoriesSeeded = false;
     if (books.isEmpty) {
       _ledgerBooks
         ..clear()
@@ -341,7 +366,7 @@ mixin _ControllerState on ChangeNotifier {
         ..addAll(defaultAccountGroups);
       _categories
         ..clear()
-        ..addAll(_seedCategories);
+        ..addAll(_seedCategoriesFor(defaultLedgerBookId));
       _normalizeGroupOrder();
       await _repository.saveBooks(_ledgerBooks);
       await _repository.saveAccounts(_accounts);
@@ -361,10 +386,12 @@ mixin _ControllerState on ChangeNotifier {
         ..clear()
         ..addAll(await _repository.loadAccountGroups());
       _normalizeGroupOrder();
-      final categories = await _repository.loadCategories();
       _categories
         ..clear()
-        ..addAll(categories.isEmpty ? _seedCategories : categories);
+        ..addAll(await _repository.loadCategories());
+      // 分类属于账本：某个账本一条分类都没有（首启动、导入缺分类的备份、异构数据）
+      // 就补一份默认集，而不是让整表沿用旧版「全局种子」。
+      categoriesSeeded = _seedMissingBookCategories();
     }
     if (!_ledgerBooks.any((book) => book.id == _activeBookId)) {
       _activeBookId = defaultLedgerBookId;
@@ -401,7 +428,7 @@ mixin _ControllerState on ChangeNotifier {
     // 退款数据自愈：迁移旧标量退款为关联退款条目并重算净额缓存。
     final categoryHealed = _healCategoryData();
     final refundHealed = _syncRefundData();
-    if (categoryHealed || refundHealed) {
+    if (categoryHealed || refundHealed || categoriesSeeded) {
       _persistAllLedgerData();
     }
     notifyListeners();
@@ -410,14 +437,19 @@ mixin _ControllerState on ChangeNotifier {
   /// 分类参照完整性自愈：在内存列表（[_categories]/[_entries]/[_recurringRules]）上就地
   /// 修复脏分类数据，返回是否有改动（调用方据此决定落库）。**幂等**：数据已干净时零改动。
   ///
+  /// **一切判定都在账本内进行**：父级、重复、引用、兜底分类都按记录自己的 `bookId`
+  /// 分组处理，绝不会把一笔交易归到另一个账本的分类上。
+  ///
   /// 反复运行到不再变化（重挂孤儿会催生新的重复、合并重复会改变子分类归属，需收敛到稳定），
-  /// 循环有上限兜底防止异常数据下的死循环。修复三类问题：
-  /// 1) 孤儿 / 空串 parentId（指向不存在的父分类）→ 重挂为顶级（parentId=null）；
-  /// 2) 重复分类（同 type+parentId+label 的多条）→ 保留一条（系统分类优先），其余的交易 /
-  ///    周期规则 / 子分类 parentId 改指向保留者后删除；
-  /// 3) 悬空交易 / 周期规则引用（categoryId 指向不存在的分类），以及**空分类的收/支交易**
-  ///    → 归入按类型惰性创建的「未分类」分类（固定 id，保证幂等、重跑复用同一条）；
-  /// 4) 空分类的转账 → 归到「转账」分类，与 App 内记账/还款口径一致，
+  /// 循环有上限兜底防止异常数据下的死循环。修复五类问题：
+  /// 0) 缺系统分类（余额调整）的账本 → 补齐该账本的两条系统分类；
+  /// 1) 孤儿 / 空串 / 跨账本 parentId（本账本内找不到该父分类）→ 重挂为顶级（parentId=null）；
+  /// 2) 账本内重复分类（同 bookId+type+parentId+label 的多条）→ 保留一条（系统分类优先），
+  ///    其余的交易 / 周期规则 / 子分类 parentId 改指向保留者后删除；
+  /// 3) 悬空交易 / 周期规则引用（categoryId 在**自己的账本内**不存在），以及**空分类的
+  ///    收/支交易** → 归入该账本按类型惰性创建的「未分类」分类（固定 id，保证幂等、
+  ///    重跑复用同一条）；
+  /// 4) 空分类的转账 → 归到**本账本**的「转账」分类，与 App 内记账/还款口径一致，
   ///    避免被交易列表回退成「已删除分类」。
   bool _healCategoryData() {
     var everChanged = false;
@@ -433,20 +465,66 @@ mixin _ControllerState on ChangeNotifier {
 
   bool _healCategoryDataOnce() {
     var changed = false;
-    final ids = <String>{for (final c in _categories) c.id};
+    // 自愈需要考虑的账本：真实账本 + 数据里出现过的账本 id。异构备份可能带来指向
+    // 已不存在账本的交易/规则，它们同样要有归属（否则悬空引用无处安放）。
+    final scope = <String>{
+      for (final book in _ledgerBooks) book.id,
+      for (final entry in _entries) entry.bookId,
+      for (final rule in _recurringRules) rule.bookId,
+    };
 
-    // ---- 1) 孤儿 / 空串 parentId → 顶级 ----
+    // ---- 0) 每个账本都必须有系统分类（余额调整）----
+    // 它们随默认分类播种、用户不能删除（见 Category.isBalanceAdjust），但异构备份
+    // 可能缺。补齐之后，下面所有「引用了不存在的分类」都只需做账本内成员检查，
+    // 不必再为系统分类开特例。
+    for (final bookId in scope) {
+      for (final type in const <EntryType>[
+        EntryType.expense,
+        EntryType.income,
+      ]) {
+        final key = balanceAdjustCategoryKey(type);
+        if (_categories.any(
+          (category) => category.bookId == bookId && category.key == key,
+        )) {
+          continue;
+        }
+        _categories.add(
+          buildBalanceAdjustCategory(
+            _generateId('category'),
+            bookId,
+            type,
+            english: _seedEnglish,
+          ),
+        );
+        changed = true;
+      }
+    }
+
+    // 账本内分类 id 索引：孤儿父级与悬空引用都只能在本账本内判定——指向别的账本
+    // 分类的 parentId 属于孤儿（重挂顶级），不能因为「id 存在」就认它。
+    final idsByBook = <String, Set<String>>{};
+    for (final category in _categories) {
+      (idsByBook[category.bookId] ??= <String>{}).add(category.id);
+    }
+
+    // ---- 1) 孤儿 / 空串 / 跨账本 parentId → 顶级 ----
     for (var i = 0; i < _categories.length; i++) {
       final parentId = _categories[i].parentId;
-      if (parentId != null && (parentId.isEmpty || !ids.contains(parentId))) {
+      if (parentId == null) {
+        continue;
+      }
+      final siblings = idsByBook[_categories[i].bookId] ?? const <String>{};
+      if (parentId.isEmpty || !siblings.contains(parentId)) {
         _categories[i] = _categories[i].copyWith(parentId: null);
         changed = true;
       }
     }
 
-    // ---- 2) 合并重复分类（同 type + parentId + label）----
+    // ---- 2) 合并账本内重复分类（同 bookId + type + parentId + label）----
     String dedupeKey(Category c) =>
-        '${c.type.storageValue}\u0000${c.parentId ?? ''}\u0000${c.label}';
+        '${c.bookId}\u0000${c.type.storageValue}\u0000${c.parentId ?? ''}'
+        '\u0000${c.label}';
+    final byId = <String, Category>{for (final c in _categories) c.id: c};
     final canonical = <String, String>{}; // key -> 保留的 id
     final remap = <String, String>{}; // 被并入的 id -> 保留的 id
     for (final c in _categories) {
@@ -454,7 +532,7 @@ mixin _ControllerState on ChangeNotifier {
       final keep = canonical[key];
       if (keep == null) {
         canonical[key] = c.id;
-      } else if (_isProtectedCategory(c.id) && !_isProtectedCategory(keep)) {
+      } else if (c.isBalanceAdjust && !(byId[keep]?.isBalanceAdjust ?? false)) {
         // 当前是系统分类而已选保留者不是：改用系统分类为保留者，旧的并入。
         canonical[key] = c.id;
         remap[keep] = c.id;
@@ -500,30 +578,41 @@ mixin _ControllerState on ChangeNotifier {
       changed = true;
     }
 
-    // ---- 3) 悬空交易 / 周期规则引用 → 「未分类」（按类型惰性创建，固定 id 幂等）----
-    final liveIds = <String>{for (final c in _categories) c.id};
-    String uncategorizedIdFor(EntryType type) {
-      final id = uncategorizedCategoryId(type);
-      if (!liveIds.contains(id)) {
-        _categories.add(
-          buildUncategorizedCategory(type, english: _seedEnglish),
-        );
-        liveIds.add(id);
-        changed = true;
+    // ---- 3) 悬空交易 / 周期规则引用 → **该条目所属账本**的「未分类」----
+    // （按账本 + 类型惰性创建，固定 id 幂等；绝不能把交易归到别的账本的分类上。）
+    final liveIdsByBook = <String, Set<String>>{};
+    for (final category in _categories) {
+      (liveIdsByBook[category.bookId] ??= <String>{}).add(category.id);
+    }
+    String uncategorizedIdFor(String bookId, EntryType type) {
+      final key = uncategorizedCategoryKey(type);
+      final existing = _categories
+          .where((c) => c.bookId == bookId && c.key == key)
+          .firstOrNull;
+      if (existing != null) {
+        return existing.id;
       }
-      return id;
+      final created = buildUncategorizedCategory(
+        _generateId('category'),
+        bookId,
+        type,
+        english: _seedEnglish,
+      );
+      _categories.add(created);
+      (liveIdsByBook[bookId] ??= <String>{}).add(created.id);
+      changed = true;
+      return created.id;
     }
 
-    bool isDangling(String categoryId) =>
+    bool isDangling(String bookId, String categoryId) =>
         categoryId.isNotEmpty &&
-        !_isProtectedCategory(categoryId) &&
-        !liveIds.contains(categoryId);
+        !(liveIdsByBook[bookId] ?? const <String>{}).contains(categoryId);
 
     // 空分类的收/支交易同样归入「未分类」：空 categoryId 会被展示层回退成「已删除分类」
     // 占位、且无法在分类筛选 / 批量编辑中触达。转账的空分类由下方第 4 步归入「转账」
     // 分类；退款等衍生条目本就不带分类，保持不动。
     bool needsUncategorized(LedgerEntry entry) =>
-        isDangling(entry.categoryId) ||
+        isDangling(entry.bookId, entry.categoryId) ||
         (entry.categoryId.isEmpty &&
             (entry.type == EntryType.expense ||
                 entry.type == EntryType.income));
@@ -531,42 +620,48 @@ mixin _ControllerState on ChangeNotifier {
     for (var i = 0; i < _entries.length; i++) {
       if (needsUncategorized(_entries[i])) {
         _entries[i] = _entries[i].copyWith(
-          categoryId: uncategorizedIdFor(_entries[i].type),
+          categoryId: uncategorizedIdFor(_entries[i].bookId, _entries[i].type),
         );
         changed = true;
       }
     }
     for (var i = 0; i < _recurringRules.length; i++) {
       final categoryId = _recurringRules[i].categoryId;
-      if (isDangling(categoryId)) {
+      if (isDangling(_recurringRules[i].bookId, categoryId)) {
         _recurringRules[i] = _recurringRules[i].copyWith(
-          categoryId: uncategorizedIdFor(_recurringRules[i].type),
+          categoryId: uncategorizedIdFor(
+            _recurringRules[i].bookId,
+            _recurringRules[i].type,
+          ),
         );
         changed = true;
       }
     }
 
-    // ---- 4) 空分类的转账 → 归到「转账」分类（默认「转出」）----
+    // ---- 4) 空分类的转账 → **本账本**的「转账」分类（默认「转出」）----
     // App 内记账/信用卡还款的转账都带「转出」类分类；空 categoryId 会被交易列表回退成
     // 「已删除分类」占位、也不计入分类管理的转账分类下。这里把遗留的空分类转账补齐，
-    // 与之对齐（幂等：补齐后不再为空）。
-    final transferCategory = _categories.firstWhere(
-      (c) => c.type == EntryType.transfer,
-      orElse: () => const Category(
-        id: '',
-        label: '',
-        type: EntryType.transfer,
-        iconCode: '',
-      ),
-    );
-    if (transferCategory.id.isNotEmpty) {
-      for (var i = 0; i < _entries.length; i++) {
-        if (_entries[i].type == EntryType.transfer &&
-            _entries[i].categoryId.isEmpty) {
-          _entries[i] = _entries[i].copyWith(categoryId: transferCategory.id);
-          changed = true;
-        }
+    // 与之对齐（幂等：补齐后不再为空；分类必须取自该交易自己的账本）。
+    for (var i = 0; i < _entries.length; i++) {
+      final entry = _entries[i];
+      if (entry.type != EntryType.transfer || entry.categoryId.isNotEmpty) {
+        continue;
       }
+      final transferCategory = _categories.firstWhere(
+        (c) => c.bookId == entry.bookId && c.type == EntryType.transfer,
+        orElse: () => const Category(
+          id: '',
+          bookId: '',
+          label: '',
+          type: EntryType.transfer,
+          iconCode: '',
+        ),
+      );
+      if (transferCategory.id.isEmpty) {
+        continue;
+      }
+      _entries[i] = entry.copyWith(categoryId: transferCategory.id);
+      changed = true;
     }
 
     return changed;
@@ -784,7 +879,9 @@ mixin _ControllerState on ChangeNotifier {
 
   /// 生成唯一 id：`前缀_微秒时间戳_单调序号`。即便同一微秒批量生成也各不相同。
   /// 放在状态层，供 [_syncRefundData] 等载入期基础流程与 [_ControllerOps] 共用。
+  /// id 是纯标识、不承载语义；测试可注入确定性生成器（见 [_injectedIdFactory]）。
   String _generateId(String prefix) =>
+      _injectedIdFactory?.call(prefix) ??
       '${prefix}_${DateTime.now().microsecondsSinceEpoch}_${_idSeq++}';
 
   void _persistEntries() {

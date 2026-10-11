@@ -124,12 +124,14 @@ void _runContract(String name, Future<LedgerRepository> Function() openRepo) {
       ];
       const categories = <Category>[
         Category(
+          bookId: defaultLedgerBookId,
           id: 'cat-1',
           label: '餐饮',
           type: EntryType.expense,
           iconCode: 'dining',
         ),
         Category(
+          bookId: defaultLedgerBookId,
           id: 'cat-2',
           label: '早餐',
           type: EntryType.expense,
@@ -137,7 +139,9 @@ void _runContract(String name, Future<LedgerRepository> Function() openRepo) {
           parentId: 'cat-1',
         ),
       ];
-      const tags = <Tag>[Tag(id: 'tag-1', label: '出差')];
+      const tags = <Tag>[
+        Tag(bookId: defaultLedgerBookId, id: 'tag-1', label: '出差'),
+      ];
       const attachments = <Attachment>[
         Attachment(id: 'att-1', entryId: 'e1', byteSize: 3),
       ];
@@ -202,8 +206,12 @@ void _runContract(String name, Future<LedgerRepository> Function() openRepo) {
         'c',
       ]);
 
-      await repo.saveTags(const <Tag>[Tag(id: 't1', label: '一')]);
-      await repo.saveTags(const <Tag>[Tag(id: 't2', label: '二')]);
+      await repo.saveTags(const <Tag>[
+        Tag(bookId: defaultLedgerBookId, id: 't1', label: '一'),
+      ]);
+      await repo.saveTags(const <Tag>[
+        Tag(bookId: defaultLedgerBookId, id: 't2', label: '二'),
+      ]);
       expect((await repo.loadTags()).map((t) => t.id).toList(), <String>['t2']);
     });
 
@@ -301,7 +309,9 @@ void _runContract(String name, Future<LedgerRepository> Function() openRepo) {
       await repo.saveEntries(<LedgerEntry>[
         _entry('old', DateTime(2025, 1, 1)),
       ]);
-      await repo.saveTags(const <Tag>[Tag(id: 'old-tag', label: '旧')]);
+      await repo.saveTags(const <Tag>[
+        Tag(bookId: defaultLedgerBookId, id: 'old-tag', label: '旧'),
+      ]);
       await repo.loadEntries();
       await repo.loadTags();
 
@@ -318,13 +328,16 @@ void _runContract(String name, Future<LedgerRepository> Function() openRepo) {
         accountGroups: const <AccountGroup>[],
         categories: const <Category>[
           Category(
+            bookId: defaultLedgerBookId,
             id: 'cat-1',
             label: '餐饮',
             type: EntryType.expense,
             iconCode: 'dining',
           ),
         ],
-        tags: const <Tag>[Tag(id: 'new-tag', label: '新')],
+        tags: const <Tag>[
+          Tag(bookId: defaultLedgerBookId, id: 'new-tag', label: '新'),
+        ],
         attachments: const <Attachment>[],
         entries: <LedgerEntry>[
           _entry('n2', DateTime(2026, 2, 1)),

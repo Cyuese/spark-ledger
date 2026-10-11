@@ -12,6 +12,7 @@ import 'app_lock.dart';
 import 'attachments/attachment_store.dart';
 import 'backup/backup_progress.dart';
 import 'backup/backup_settings.dart';
+import 'backup/legacy_book_scope.dart';
 import 'backup/payment_import.dart';
 import 'backup/transaction_import.dart';
 import 'backup/webdav_config.dart';
@@ -139,12 +140,15 @@ class VeriFinController extends ChangeNotifier
     required AttachmentStore attachmentStore,
     AppLogger? logger,
     bool systemIsEnglish = false,
+    String Function(String prefix)? idFactory,
     // ignore: prefer_initializing_formals
   }) : _attachmentStore = attachmentStore,
        // ignore: prefer_initializing_formals
        _systemIsEnglish = systemIsEnglish,
        // ignore: prefer_initializing_formals
-       _logger = logger {
+       _logger = logger,
+       // ignore: prefer_initializing_formals
+       _injectedIdFactory = idFactory {
     _loadPreferences();
     themePreferenceListenable = ValueNotifier<ThemePreference>(
       _themePreference,
@@ -173,6 +177,7 @@ class VeriFinController extends ChangeNotifier
     AttachmentStore? attachmentStore,
     AppLogger? logger,
     bool systemIsEnglish = false,
+    String Function(String prefix)? idFactory,
   }) async {
     final resolvedAttachmentStore =
         attachmentStore ?? debugDefaultAttachmentStore;
@@ -187,6 +192,7 @@ class VeriFinController extends ChangeNotifier
       attachmentStore: resolvedAttachmentStore,
       logger: logger,
       systemIsEnglish: systemIsEnglish,
+      idFactory: idFactory,
     );
     // 迁移期兜底：文件缺失时由控制器把旧库内 base64 物化成文件（幂等）。
     resolvedAttachmentStore.setMaterializer(
@@ -213,6 +219,12 @@ class VeriFinController extends ChangeNotifier
   @override
   final bool _systemIsEnglish;
 
+  /// 实体 id 生成器（可注入）。生产用默认实现：微秒时间戳 + 单调序号，全局唯一且
+  /// **不承载语义**——分类 id 一律随机生成，语义只看 `Category.key`。测试注入确定性
+  /// 实现，让既有夹具继续按可读 id 引用种子分类。
+  @override
+  final String Function(String prefix)? _injectedIdFactory;
+
   /// 软件日志入口，供「软件日志」页读取；未注入时为 null。
   AppLogger? get logger => _logger;
 
@@ -234,11 +246,6 @@ class VeriFinController extends ChangeNotifier
     attachmentMigrationProgressListenable.dispose();
     super.dispose();
   }
-}
-
-bool _isProtectedCategory(String categoryId) {
-  return categoryId == 'balance_adjust_expense' ||
-      categoryId == 'balance_adjust_income';
 }
 
 String _monthKey(DateTime month) {
@@ -264,6 +271,9 @@ enum EntryValidationCode {
   refundExceedsExpense,
   invalidAttachments,
   invalidRememberedRate,
+
+  /// 交易/退款引用了不属于其账本的分类（分类按账本隔离后的写入守卫）。
+  categoryOutOfScope,
 }
 
 sealed class EntrySaveResult {

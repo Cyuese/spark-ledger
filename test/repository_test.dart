@@ -214,6 +214,7 @@ void main() {
 
     final failed = repo.saveCategories(const <Category>[
       Category(
+        bookId: defaultLedgerBookId,
         id: 'missing-table-category',
         label: '分类',
         type: EntryType.expense,
@@ -298,6 +299,7 @@ void main() {
       accountGroups: const <AccountGroup>[],
       categories: <Category>[
         Category(
+          bookId: defaultLedgerBookId,
           id: 'cat',
           label: '餐饮',
           type: EntryType.expense,
@@ -414,12 +416,14 @@ void main() {
 
     final categories = <Category>[
       const Category(
+        bookId: defaultLedgerBookId,
         id: 'dining',
         label: '餐饮',
         type: EntryType.expense,
         iconCode: 'food',
       ),
       const Category(
+        bookId: defaultLedgerBookId,
         id: 'coffee',
         label: '咖啡',
         type: EntryType.expense,
@@ -427,6 +431,7 @@ void main() {
         parentId: 'dining',
       ),
       const Category(
+        bookId: defaultLedgerBookId,
         id: 'salary',
         label: '工资',
         type: EntryType.income,
@@ -490,24 +495,27 @@ void main() {
     final db = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
     final repo = SqliteLedgerRepository(db);
     final migrated = await repo.loadCategories();
-    expect(migrated.single.id, 'dining');
+    // 分类 id 一律随机生成、不承载语义；旧 seed id 会转成语义键保留下来。
+    expect(migrated.single.key, 'dining');
+    expect(migrated.single.bookId, defaultLedgerBookId);
     expect(migrated.single.parentId, isNull);
 
     // 迁移后可写入子分类并读回。
     await repo.saveCategories(<Category>[
       ...migrated,
-      const Category(
+      Category(
+        bookId: defaultLedgerBookId,
         id: 'coffee',
         label: '咖啡',
         type: EntryType.expense,
         iconCode: 'food',
-        parentId: 'dining',
+        parentId: migrated.single.id,
       ),
     ]);
     final withChild = await repo.loadCategories();
     expect(withChild.map((c) => c.parentId).toList(), <String?>[
       null,
-      'dining',
+      migrated.single.id,
     ]);
 
     await db.close();
@@ -517,8 +525,8 @@ void main() {
   test('交易标签 tag_ids 与 tags 表往返', () async {
     final repo = await openRepo();
     await repo.saveTags(<Tag>[
-      const Tag(id: 'tag_food', label: '外食'),
-      const Tag(id: 'tag_work', label: '工作'),
+      const Tag(bookId: defaultLedgerBookId, id: 'tag_food', label: '外食'),
+      const Tag(bookId: defaultLedgerBookId, id: 'tag_work', label: '工作'),
     ]);
     expect((await repo.loadTags()).map((t) => t.id).toList(), <String>[
       'tag_food',
@@ -802,7 +810,9 @@ void main() {
     expect(migrated.single.id, 'old');
     expect(migrated.single.tagIds, isEmpty);
     // tags 表存在且可写。
-    await repo.saveTags(<Tag>[const Tag(id: 't1', label: '标签')]);
+    await repo.saveTags(<Tag>[
+      const Tag(bookId: defaultLedgerBookId, id: 't1', label: '标签'),
+    ]);
     expect((await repo.loadTags()).single.label, '标签');
 
     await db.close();
@@ -827,7 +837,8 @@ void main() {
           ''');
           await db.execute('''
             CREATE TABLE entries (
-              id TEXT PRIMARY KEY, category_id TEXT NOT NULL
+              id TEXT PRIMARY KEY, book_id TEXT NOT NULL,
+              category_id TEXT NOT NULL
             )
           ''');
         },
@@ -849,10 +860,12 @@ void main() {
     });
     await v9.insert('entries', <String, Object?>{
       'id': 'e1',
+      'book_id': 'default',
       'category_id': 'dining1',
     });
     await v9.insert('entries', <String, Object?>{
       'id': 'e2',
+      'book_id': 'default',
       'category_id': 'dining2',
     });
     await v9.close();
