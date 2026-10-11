@@ -1094,6 +1094,18 @@ abstract class AppLocalizations {
   /// **'按账户占比查看正资产或负资产'**
   String get panelAssetSummaryDesc;
 
+  /// 看板月统计面板:排行卡(原统计分析页排行能力迁入)
+  ///
+  /// In zh, this message translates to:
+  /// **'分类 · 标签排行'**
+  String get panelRankingLabel;
+
+  /// 看板月统计面板:排行卡描述
+  ///
+  /// In zh, this message translates to:
+  /// **'按顶级分类 / 子分类 / 标签排行，点行可下钻'**
+  String get panelRankingDesc;
+
   /// 资产汇总:只统计余额为正的账户
   ///
   /// In zh, this message translates to:

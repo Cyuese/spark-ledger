@@ -1,15 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
-import '../app/category_tree.dart';
 import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
 import '../app/currency_math.dart';
-import '../app/model_lookup.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
+import '../app/report_analysis.dart';
 import '../app/root_navigation.dart';
 import '../app/series_math.dart';
 import '../app/veri_fin_scope.dart';
@@ -17,6 +14,8 @@ import 'ai_chat_page.dart';
 import 'budget_pages.dart';
 import 'currency_rates_page.dart';
 import 'panel_settings_page.dart';
+import 'sheets.dart';
+import 'transactions_pages.dart';
 import 'report_analysis_page.dart';
 import '../l10n/app_localizations.dart';
 
@@ -64,11 +63,6 @@ class _ReportsPageState extends State<ReportsPage> {
       month: budgetKeyMonth,
       monthEntries: budgetEntries,
     );
-    final expenseEntries = monthEntries
-        .where((entry) => entry.type == EntryType.expense)
-        .toList(growable: false);
-    final categoryStats = _categoryStats(expenseEntries, controller.categories);
-    final tagStats = _tagStats(expenseEntries, controller.tags, monthExpense);
     final trendWindow = cumulativeWeekWindowFor(DateTime.now());
     final trendValues = valuesForTypeInWindow(
       entries,
@@ -112,69 +106,15 @@ class _ReportsPageState extends State<ReportsPage> {
             keyMonth: budgetKeyMonth,
             snapshots: categoryBudgetSnapshots,
           );
-        case 'category_ring':
-          return VeriCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                SectionTitle(
-                  title: AppLocalizations.of(context).panelCategoryRingLabel,
-                  trailing:
-                      '${formatExpenseAmount(monthExpense)} · ${AppLocalizations.of(context).monthNumber(DateTime.now().month)} · ${AppLocalizations.of(context).entryTypeExpense}',
-                ),
-                const SizedBox(height: 12),
-                // 与同页其它面板同口径：净额为 0（如支出被全额退款）也视为无数据，
-                // 否则只剩一个空轨道和「0」。
-                if (categoryStats.isEmpty || isZeroAmount(monthExpense))
-                  EmptyState(
-                    icon: Icons.donut_small_outlined,
-                    title: AppLocalizations.of(context).noCategoryData,
-                    description: AppLocalizations.of(context).noCategoryDesc,
-                  )
-                else
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final compact = constraints.maxWidth < 360;
-                      return _CategoryRingChart(
-                        stats: categoryStats,
-                        total: monthExpense,
-                        ringSize: compact ? 126 : 156,
-                      );
-                    },
-                  ),
-              ],
-            ),
-          );
-        case 'category_rank':
-          return VeriCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                SectionTitle(
-                  title: AppLocalizations.of(context).panelCategoryRankLabel,
-                  trailing: AppLocalizations.of(context).entryTypeExpense,
-                ),
-                const SizedBox(height: 8),
-                if (categoryStats.isEmpty)
-                  EmptyState(
-                    icon: Icons.donut_small_outlined,
-                    title: AppLocalizations.of(context).noCategoryData,
-                    description: AppLocalizations.of(context).noCategoryDesc,
-                  )
-                else
-                  ...categoryStats
-                      .take(6)
-                      .map((stat) => _CategoryStatTile(stat: stat)),
-              ],
-            ),
-          );
+        case 'ranking':
+          return const _RankingPanel();
         case 'daily_trend':
           return VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 SectionTitle(
-                  title: AppLocalizations.of(context).panelDailyTrendLabel,
+                  title: l10n.panelDailyTrendLabel,
                   trailing: formatExpenseAmount(trendExpense),
                 ),
                 const SizedBox(height: 16),
@@ -198,13 +138,12 @@ class _ReportsPageState extends State<ReportsPage> {
                       tooltipOf: (index) {
                         final day = trendWindow.days[index];
                         return ChartTooltip(
-                          title: AppLocalizations.of(context).dateMonthDay(day),
+                          title: l10n.dateMonthDay(day),
                           lines: <ChartTooltipLine>[
                             ChartTooltipLine(
-                              text: AppLocalizations.of(context)
-                                  .expenseAmountLabel(
-                                    formatExpenseAmount(trendValues[index]),
-                                  ),
+                              text: l10n.expenseAmountLabel(
+                                formatExpenseAmount(trendValues[index]),
+                              ),
                             ),
                           ],
                         );
@@ -222,8 +161,8 @@ class _ReportsPageState extends State<ReportsPage> {
                 SectionTitle(
                   // 面板只有支出序列（monthlyExpenseValues），不能沿用面板管理页
                   // 里的「月度收支」名称；标题口径与描述「今年每月支出结构柱状图」一致。
-                  title: AppLocalizations.of(context).monthlyTrendTitle,
-                  trailing: AppLocalizations.of(context).thisYearLabel,
+                  title: l10n.monthlyTrendTitle,
+                  trailing: l10n.thisYearLabel,
                 ),
                 const SizedBox(height: 16),
                 if (monthlyMax <= 0)
@@ -256,41 +195,17 @@ class _ReportsPageState extends State<ReportsPage> {
                         context,
                       ).colorScheme.onSurface.withValues(alpha: 0.50),
                       tooltipOf: (index) => ChartTooltip(
-                        title: AppLocalizations.of(
-                          context,
-                        ).monthNumber(index + 1),
+                        title: l10n.monthNumber(index + 1),
                         lines: <ChartTooltipLine>[
                           ChartTooltipLine(
-                            text: AppLocalizations.of(context)
-                                .expenseAmountLabel(
-                                  formatExpenseAmount(monthlyValues[index]),
-                                ),
+                            text: l10n.expenseAmountLabel(
+                              formatExpenseAmount(monthlyValues[index]),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
-              ],
-            ),
-          );
-        case 'tag_stats':
-          return VeriCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                SectionTitle(
-                  title: AppLocalizations.of(context).panelTagStatsLabel,
-                  trailing: AppLocalizations.of(context).budgetMonthExpense,
-                ),
-                const SizedBox(height: 8),
-                if (tagStats.isEmpty)
-                  EmptyState(
-                    icon: Icons.label_outline,
-                    title: AppLocalizations.of(context).noTagData,
-                    description: AppLocalizations.of(context).noTagDesc,
-                  )
-                else
-                  ...tagStats.take(8).map((stat) => _TagStatTile(stat: stat)),
               ],
             ),
           );
@@ -1106,198 +1021,314 @@ class _BudgetExecutionCard extends StatelessWidget {
   }
 }
 
-class _CategoryRingChart extends StatefulWidget {
-  const _CategoryRingChart({
-    required this.stats,
-    required this.total,
-    required this.ringSize,
-  });
+/// 分组口径：顶级分类（子分类金额并入父类）/ 记账所选子分类 / 标签。
+enum _RankGrouping { topCategory, subCategory, tag }
 
-  final List<_CategoryStat> stats;
-  final double total;
-  final double ringSize;
+/// 月统计的排行卡：分类 / 子分类 / 标签排行，点行可下钻到子分类拆分与交易列表。
+/// 聚合口径来自 `report_analysis.dart` 的纯函数（与 AI 账目查询工具共用）。
+class _RankingPanel extends StatefulWidget {
+  const _RankingPanel();
 
   @override
-  State<_CategoryRingChart> createState() => _CategoryRingChartState();
+  State<_RankingPanel> createState() => _RankingPanelState();
 }
 
-class _CategoryRingChartState extends State<_CategoryRingChart> {
-  int? _selectedIndex;
+class _RankingPanelState extends State<_RankingPanel> {
+  /// 卡片内最多展示的排行行数，避免单卡过长。
+  static const int _maxRows = 8;
 
-  @override
-  void didUpdateWidget(covariant _CategoryRingChart oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.stats != widget.stats) {
-      _selectedIndex = null;
-    }
-  }
+  _RankGrouping _grouping = _RankGrouping.topCategory;
+  EntryType _type = EntryType.expense;
 
   @override
   Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
     final l10n = AppLocalizations.of(context);
-    final brightness = Theme.of(context).brightness;
-    final primary = Theme.of(context).colorScheme.primary;
-    final mutedColor = Theme.of(
-      context,
-    ).colorScheme.onSurface.withValues(alpha: 0.56);
-    final neutral = Theme.of(
-      context,
-    ).colorScheme.onSurface.withValues(alpha: 0.45);
-    final segments = _categoryRingSegments(
-      l10n,
-      widget.stats,
-      brightness,
-      primary,
-      neutral,
-    );
-    final selected =
-        _selectedIndex != null &&
-            _selectedIndex! >= 0 &&
-            _selectedIndex! < segments.length
-        ? segments[_selectedIndex!]
-        : null;
-    final selectedPercent = selected == null || widget.total <= 0
-        ? 0.0
-        : selected.value / widget.total;
+    final entries = controller.entries
+        .where((entry) => isInMonth(entry, DateTime.now()))
+        .toList(growable: false);
+    final color = _type == EntryType.expense
+        ? veriSemantic(context, veriExpense)
+        : veriSemantic(context, veriIncome);
 
-    return SizedBox(
-      width: double.infinity,
-      height: widget.ringSize + 26,
-      child: Center(
-        child: SizedBox(
-          width: widget.ringSize,
-          height: widget.ringSize,
-          child: VeriDonutChart(
-            segments: segments,
-            selectedIndex: _selectedIndex,
-            onSelected: (index) => setState(() => _selectedIndex = index),
-            ringWidth: math.max(14.0, widget.ringSize * 0.14),
-            semanticsLabel: l10n.panelCategoryRingLabel,
-            center: selected == null
-                ? Text(
-                    formatExpenseAmount(widget.total),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
+    return VeriCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SectionTitle(
+            title: l10n.panelRankingLabel,
+            trailingWidget: VeriSegmentedControl<_RankGrouping>(
+              compact: true,
+              values: _RankGrouping.values,
+              selected: _grouping,
+              semanticLabel: l10n.statTypeTitle,
+              labelOf: (grouping) => switch (grouping) {
+                _RankGrouping.topCategory => l10n.rankGroupCategory,
+                _RankGrouping.subCategory => l10n.rankGroupSubCategory,
+                _RankGrouping.tag => l10n.rankGroupTag,
+              },
+              // Key 只挂选中项：分段控件会把选中项多渲染一份用于滑动动画。
+              keyOf: (grouping) => grouping == _grouping
+                  ? Key('ranking_group_${grouping.name}')
+                  : null,
+              onChanged: (grouping) => setState(() {
+                _grouping = grouping;
+              }),
+            ),
+          ),
+          const SizedBox(height: 10),
+          VeriEntryTypeToggle(
+            dimension: _type,
+            onChanged: (type) => setState(() => _type = type),
+          ),
+          const SizedBox(height: 8),
+          _buildBody(context, entries, color),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    List<LedgerEntry> entries,
+    Color color,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final controller = VeriFinScope.of(context);
+    switch (_grouping) {
+      case _RankGrouping.topCategory:
+      case _RankGrouping.subCategory:
+        final stats =
+            (_grouping == _RankGrouping.subCategory
+                    ? reportCategoryStatsByOwn(
+                        entries,
+                        controller.categories,
+                        _type,
+                      )
+                    : reportCategoryStats(
+                        entries,
+                        controller.categories,
+                        _type,
+                      ))
+                .take(_maxRows);
+        if (stats.isEmpty) {
+          return _emptyState(context);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            for (final stat in stats)
+              _RankRow(
+                leading: CategoryIconBox(
+                  iconCode: stat.category.iconCode,
+                  color: color,
+                  size: 30,
+                ),
+                label: stat.category.label,
+                amount: stat.amount,
+                percent: stat.percent,
+                count: stat.count,
+                color: color,
+                // 顶级分类点行看子分类拆分；子分类点行直接去筛选后的交易列表。
+                onTap: _grouping == _RankGrouping.topCategory
+                    ? () => _showSubCategoryDrill(context, entries, stat)
+                    : () => _openCategoryEntries(stat.categoryId),
+              ),
+          ],
+        );
+      case _RankGrouping.tag:
+        final stats = reportTagStats(
+          entries,
+          controller.tags,
+          _type,
+        ).take(_maxRows).toList(growable: false);
+        if (stats.isEmpty) {
+          return _emptyState(context);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            for (final stat in stats)
+              // 标签没有对应的交易列表筛选入口，行不可点。
+              _RankRow(
+                leading: VeriIconBox(
+                  icon: Icons.label_outline,
+                  color: color,
+                  size: 30,
+                ),
+                label: stat.tag.label,
+                amount: stat.amount,
+                percent: stat.percent,
+                count: stat.count,
+                color: color,
+              ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.tagRankOverlapNote,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.46),
+              ),
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _emptyState(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final dimLabel = _type.label(l10n);
+    return EmptyState(
+      icon: _grouping == _RankGrouping.tag
+          ? Icons.label_outline
+          : Icons.donut_small_outlined,
+      title: l10n.noDimData(dimLabel),
+      description: l10n.noDimDesc(dimLabel),
+    );
+  }
+
+  void _openCategoryEntries(String categoryId) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => TransactionsPage(initialCategoryId: categoryId),
+      ),
+    );
+  }
+
+  /// 顶级分类下钻：底部弹层按子分类拆分，行与底部按钮都跳到该分类的交易列表。
+  ///
+  /// 下钻取数用聚合原始 key（`stat.categoryId`）而不是 `stat.category.id`：后者在
+  /// 「已删除分类」占位时 id 不等于 key，会把下钻 scope 到错误的分类树。
+  Future<void> _showSubCategoryDrill(
+    BuildContext context,
+    List<LedgerEntry> entries,
+    ReportCategoryStat stat,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final color = _type == EntryType.expense
+        ? veriSemantic(context, veriExpense)
+        : veriSemantic(context, veriIncome);
+    final children = reportCategoryChildStats(
+      entries,
+      VeriFinScope.of(context).categories,
+      stat.categoryId,
+      _type,
+    );
+    return showVeriModalSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (sheetContext) {
+        final maxHeight = MediaQuery.sizeOf(sheetContext).height * 0.72;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
                     children: <Widget>[
-                      Text(
-                        selected.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: mutedColor,
-                          fontWeight: FontWeight.w700,
+                      CategoryIconBox(
+                        iconCode: stat.category.iconCode,
+                        color: color,
+                        size: 30,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          l10n.subCategoryOf(stat.category.label),
+                          style: Theme.of(sheetContext).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                       ),
                       Text(
-                        formatExpenseAmount(selected.value),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        '${(selectedPercent * 100).toStringAsFixed(1)}%',
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: selected.color,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        formatAmount(stat.amount),
+                        style: Theme.of(sheetContext).textTheme.titleMedium
+                            ?.copyWith(
+                              color: color,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: <Widget>[
+                        for (final child in children)
+                          _RankRow(
+                            leading: CategoryIconBox(
+                              iconCode: child.category.iconCode,
+                              color: color,
+                              size: 30,
+                            ),
+                            label: child.category.label,
+                            amount: child.amount,
+                            percent: child.percent,
+                            count: child.count,
+                            color: color,
+                            onTap: () {
+                              Navigator.of(sheetContext).pop();
+                              _openCategoryEntries(child.categoryId);
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                      label: Text(l10n.viewCategoryEntries),
+                      onPressed: () {
+                        Navigator.of(sheetContext).pop();
+                        _openCategoryEntries(stat.categoryId);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-List<VeriDonutSegment> _categoryRingSegments(
-  AppLocalizations l10n,
-  List<_CategoryStat> stats,
-  Brightness brightness,
-  Color primary,
-  Color neutral,
-) {
-  if (stats.isEmpty) {
-    return const <VeriDonutSegment>[];
-  }
-  final colors = <Color>[
-    primary,
-    veriSemanticFor(brightness, veriBlue),
-    veriCyan,
-    veriMint,
-    veriSemanticFor(brightness, veriWarning),
-    neutral,
-  ];
-  final total = stats.fold<double>(0, (sum, stat) => sum + stat.amount);
-  if (total <= 0) {
-    return const <VeriDonutSegment>[];
-  }
-  final visible = stats.take(5).toList();
-  final hidden = stats.skip(5).toList();
-  final segments = <VeriDonutSegment>[
-    for (final item in visible.indexed)
-      VeriDonutSegment(
-        label: item.$2.category.label,
-        value: item.$2.amount,
-        color: colors[item.$1 % colors.length],
-      ),
-  ];
-  final otherAmount = hidden.fold<double>(0, (sum, stat) => sum + stat.amount);
-  if (otherAmount > 0) {
-    segments.add(
-      VeriDonutSegment(
-        label: l10n.othersLabel,
-        value: otherAmount,
-        color: neutral,
-      ),
-    );
-  }
-  return segments;
-}
-
-class _CategoryStat {
-  const _CategoryStat({
-    required this.category,
+/// 排行行：图标 + 名称 + 金额 + 占比进度条 + 占比/笔数。可选点按下钻。
+class _RankRow extends StatelessWidget {
+  const _RankRow({
+    required this.leading,
+    required this.label,
     required this.amount,
     required this.percent,
     required this.count,
+    required this.color,
+    this.onTap,
   });
 
-  final Category category;
+  final Widget leading;
+  final String label;
   final double amount;
   final double percent;
   final int count;
-}
-
-class _CategoryStatTile extends StatelessWidget {
-  const _CategoryStatTile({required this.stat});
-
-  final _CategoryStat stat;
+  final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: <Widget>[
-          CategoryIconBox(
-            iconCode: stat.category.iconCode,
-            color: veriSemantic(context, veriExpense),
-            size: 30,
-          ),
+          leading,
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -1307,34 +1338,46 @@ class _CategoryStatTile extends StatelessWidget {
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        stat.category.label,
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
                     Text(
-                      formatExpenseAmount(stat.amount),
+                      formatAmount(amount),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: veriSemantic(context, veriExpense),
+                        color: color,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    if (onTap != null) ...<Widget>[
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 18,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 6),
                 LinearProgressIndicator(
-                  value: stat.percent.clamp(0, 1).toDouble(),
+                  value: percent.clamp(0, 1).toDouble(),
                   minHeight: 5,
                   borderRadius: BorderRadius.circular(999),
-                  color: veriSemantic(context, veriExpense),
+                  color: color,
                   backgroundColor: Theme.of(
                     context,
                   ).colorScheme.surfaceContainerHighest,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${(stat.percent * 100).toStringAsFixed(1)}% · ${AppLocalizations.of(context).entriesCount(stat.count)}',
+                  '${(percent * 100).toStringAsFixed(1)}% · ${AppLocalizations.of(context).entriesCount(count)}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -1348,163 +1391,13 @@ class _CategoryStatTile extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _TagStatTile extends StatelessWidget {
-  const _TagStatTile({required this.stat});
-
-  final _TagStat stat;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: <Widget>[
-          VeriIconBox(
-            icon: Icons.label,
-            color: Theme.of(context).colorScheme.primary,
-            size: 30,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        stat.tag.label,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      formatExpenseAmount(stat.amount),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: veriSemantic(context, veriExpense),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                LinearProgressIndicator(
-                  value: stat.percent.clamp(0, 1).toDouble(),
-                  minHeight: 5,
-                  borderRadius: BorderRadius.circular(999),
-                  color: Theme.of(context).colorScheme.primary,
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerHighest,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${AppLocalizations.of(context).tagShareOfExpense((stat.percent * 100).toStringAsFixed(1))} · ${AppLocalizations.of(context).entriesCount(stat.count)}',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.46),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 分类统计：多级分类按层级聚合，即每笔交易的金额归总到其**顶级祖先**分类，
-/// 子分类的支出滚动计入所属顶级分类。
-List<_CategoryStat> _categoryStats(
-  List<LedgerEntry> entries,
-  List<Category> categories,
-) {
-  final totals = <String, double>{};
-  final counts = <String, int>{};
-  for (final entry in entries) {
-    final rootId = rootIdOf(categories, entry.categoryId);
-    // 退款/报销回款按净额计入分类统计。
-    totals.update(
-      rootId,
-      (value) => value + entry.netAmount,
-      ifAbsent: () => entry.netAmount,
-    );
-    counts.update(rootId, (value) => value + 1, ifAbsent: () => 1);
-  }
-
-  final total = totals.values.fold<double>(0, (sum, value) => sum + value);
-  final stats =
-      totals.entries
-          .map(
-            (entry) => _CategoryStat(
-              category: categoryById(entry.key, categories),
-              amount: entry.value,
-              percent: total <= 0 ? 0 : entry.value / total,
-              count: counts[entry.key] ?? 0,
-            ),
-          )
-          .toList()
-        ..sort((a, b) => b.amount.compareTo(a.amount));
-  return stats;
-}
-
-class _TagStat {
-  const _TagStat({
-    required this.tag,
-    required this.amount,
-    required this.percent,
-    required this.count,
-  });
-
-  final Tag tag;
-  final double amount;
-
-  /// 该标签支出占本月总支出的比例（多标签交易会分别计入各标签，故各项之和可能 >1）。
-  final double percent;
-  final int count;
-}
-
-/// 标签统计：每笔支出计入其携带的**每个**标签；[totalExpense] 为本月总支出，
-/// 用作占比分母（表示该标签覆盖了本月多少支出）。
-List<_TagStat> _tagStats(
-  List<LedgerEntry> entries,
-  List<Tag> tags,
-  double totalExpense,
-) {
-  final labelById = <String, Tag>{for (final tag in tags) tag.id: tag};
-  final totals = <String, double>{};
-  final counts = <String, int>{};
-  for (final entry in entries) {
-    for (final tagId in entry.tagIds) {
-      if (!labelById.containsKey(tagId)) {
-        continue;
-      }
-      totals.update(
-        tagId,
-        (value) => value + entry.netAmount,
-        ifAbsent: () => entry.netAmount,
-      );
-      counts.update(tagId, (value) => value + 1, ifAbsent: () => 1);
+    if (onTap == null) {
+      return content;
     }
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(veriRadiusSm),
+      child: content,
+    );
   }
-  final stats =
-      totals.entries
-          .map(
-            (entry) => _TagStat(
-              tag: labelById[entry.key]!,
-              amount: entry.value,
-              percent: totalExpense <= 0 ? 0 : entry.value / totalExpense,
-              count: counts[entry.key] ?? 0,
-            ),
-          )
-          .toList()
-        ..sort((a, b) => b.amount.compareTo(a.amount));
-  return stats;
 }

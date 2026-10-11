@@ -57,7 +57,7 @@ void main() {
     expect(find.text('咖啡'), findsNothing);
   });
 
-  testWidgets('看板标签统计展示各标签支出', (WidgetTester tester) async {
+  testWidgets('看板排行卡的标签分组展示各标签支出', (WidgetTester tester) async {
     final store = LocalKeyValueStore();
     final controller = await makeController(store);
     final now = DateTime.now();
@@ -82,7 +82,10 @@ void main() {
     await openReportsMonthlyTab(tester);
     await tester.pumpAndSettle();
 
-    // 标签统计面板在看板底部，滚动到可见。
+    // 排行卡默认按顶级分类分组，切到「标签」分组。
+    await tester.tap(find.text('标签').first);
+    await tester.pumpAndSettle();
+
     await tester.scrollUntilVisible(
       find.text('必要'),
       250,
@@ -90,8 +93,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('标签统计'), findsWidgets);
+    expect(find.text('分类 · 标签排行'), findsWidgets);
     expect(find.text('必要'), findsOneWidget);
-    expect(find.textContaining('占支出'), findsWidgets);
+    // 多标签会重复计入，占比之和可能超过 100%，卡片里必须带这条说明。
+    expect(find.textContaining('超过 100%'), findsWidgets);
   });
 }

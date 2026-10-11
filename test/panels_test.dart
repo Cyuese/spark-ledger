@@ -99,7 +99,7 @@ void main() {
       find.byKey(const Key('panel_settings_entry_reportsMonthly')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('7个月统计面板'), findsOneWidget);
+    expect(find.text('5个月统计面板'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const Key('panel_settings_entry_reportsMonthly')),
@@ -110,7 +110,7 @@ void main() {
     // 进入排序模式后出现拖动手柄,拖动第一个面板到第二位。
     await tester.tap(find.byKey(const Key('panel_sort_toggle')));
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.drag_indicator), findsNWidgets(7));
+    expect(find.byIcon(Icons.drag_indicator), findsNWidgets(5));
 
     final firstHandle = tester.getCenter(
       find.byIcon(Icons.drag_indicator).first,
@@ -249,7 +249,7 @@ void main() {
           .panelSettings(PanelPageKind.reportsMonthly)
           .map((panel) => panel.id)
           .take(3),
-      <String>['budget_execution', 'category_ring', 'summary'],
+      <String>['budget_execution', 'ranking', 'summary'],
     );
 
     reloaded.resetAllData();
@@ -313,9 +313,7 @@ void main() {
         <String>[
           'summary',
           'budget_execution',
-          'category_ring',
-          'category_rank',
-          'tag_stats',
+          'ranking',
           'daily_trend',
           'monthly_structure',
         ],
