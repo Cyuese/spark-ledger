@@ -233,7 +233,6 @@ void main() {
 
   test('同账本内同名分类仍被唯一约束拒绝，跨账本则可同名', () async {
     final controller = await makeController();
-    final defaultBookId = controller.activeBook.id;
     final before = controller.categories.length;
     controller.addCategory(
       type: EntryType.expense,

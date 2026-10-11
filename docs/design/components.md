@@ -85,6 +85,8 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 ## 族 4 — 分类相关
 
+**分类是账本内数据**（`Category.bookId`）：页面一律用 `controller.categories` / `categoriesForType` 等**当前账本作用域**的读取口，跨账本数据（桌面小组件投影等）用 `categoriesForBook(bookId)`。分类 id 一律随机生成、不承载语义，界面不要解析 id；需要识别「系统分类」「未分类」时用 `Category.isBalanceAdjust` / `isUncategorized`（底层是 `Category.key`，见 `lib/app/models/category_keys.dart`）。
+
 | 名称 | 类型 | 位置 | 用途 / 关键点 |
 |---|---|---|---|
 | `showCategoryPickerSheet` | Sheet 函数 | `sheets.dart` | **多级分类选择弹窗**（展开/收起层级树，**按 支出/收入/转账 分区并各带类型标题**，图标按 `colorForType` 上色，区内保持列表顺序）；`allLabel` 非空加「全部」→ 返回 `categoryPickerAll`；`topLevelLabel` 加「移到顶级」→ 返回 `categoryPickerTopLevel`（「全部」「移到顶级」用中性主题色）。**选分类一律用它**，不要裸包 `showModalBottomSheet` |
@@ -119,7 +121,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `VeriCalendarHeatmap` | Widget | `common_widgets_heatmap.dart` | 月历热力图：12 个月各一张迷你日历，按天着色（值越大越深，无记录为浅底）。固定尺寸格子 + `RepaintBoundary`，格子尺寸按可用宽度一次算出（默认 4 列），领空格不生成 Widget；调用方传 `year` / `dailyValues` / 深浅两色 / 月份文案。配套纯函数 `heatmapDayIndexOfYear` 把日期映射成 `dailyValues` 下标（**必须走 `calendarDaysBetween`**，`difference().inDays` 在夏令时地区会少算一天）。看板「收支热力」卡用它 |
 | `EntryTagField` | Widget | `common_widgets.dart` | 记账表单标签行 |
 | `AttachmentsEditor` | Widget | `attachments_editor.dart` | 多图片附件横向缩略图、全屏查看和逐张删除；默认自带标题与拍照/相册添加入口，记账页的轻量元数据布局通过 `showHeader:false` / `showAddButton:false` 只复用缩略图条，添加入口由页面标签触发 |
-| `TagSelectorSheet` / `pickEntryTags` | Widget / Sheet 函数 | `entry_sheets.dart` / `sheets.dart` | 交易标签多选（即时新建）/ 接 controller 的弹窗封装 |
+| `TagSelectorSheet` / `pickEntryTags` | Widget / Sheet 函数 | `entry_sheets.dart` / `sheets.dart` | 交易标签多选（即时新建）/ 接 controller 的弹窗封装。**标签同样是账本内数据**（`Tag.bookId`）：列表取 `controller.tags`（当前账本），跨账本数据用 `tagsForBook(bookId)` |
 | `RefundSection` / `showRefundSheet` | Widget / Sheet 函数 | `refund_editor.dart` | 支出详情页的受控「退款」草稿区（列退款明细+净支出+添加）/ 添加·编辑退款弹窗（金额截剩余可退、到账账户、已到账开关+到账日期、发起日期、备注、删除）；Sheet 保存只回传父交易草稿，交易页最终与本体、附件原子保存。待退款清单独立编辑时由调用方在 Sheet 确认后提交 |
 | `PendingRefundsPage` | Widget | `pending_refunds_page.dart` | 「待退款」清单页（汇总当前账本所有待到账退款、一键标记已到账核销）；入口在交易列表页头 |
 
