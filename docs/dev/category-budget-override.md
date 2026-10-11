@@ -4,7 +4,7 @@
 
 ## 数据与优先级
 
-- 键格式：分类默认 `bookId:default:categoryId`，分类单期覆盖 `bookId:yyyy-MM:categoryId`；总预算同样有默认键与 `bookId:yyyy-MM` 覆盖键。
+- 键格式：分类默认 `bookId:default:categoryId`，分类单期覆盖 `bookId:yyyy-MM:categoryId`；总预算同样有默认键与 `bookId:yyyy-MM` 覆盖键。分类 id 是随机生成的纯标识（分类跟随账本），键里嵌的就是该账本那一条分类的 id；分类删除/合并只清理同账本的键，账本删除按 `bookId:` 前缀整批清理。
 - 读取规则：单期覆盖优先于默认值，都没有则为 0/未设置。
 
 ```text
