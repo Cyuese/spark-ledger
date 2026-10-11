@@ -474,7 +474,9 @@ class _AssetSummaryChartState extends State<_AssetSummaryChart> {
           amount: item.$2.amount,
           color: colors[item.$1 % colors.length],
         ),
-      if (otherAmount > 0)
+      // 按绝对值判断：负资产侧的各项与合计都是负数，用 `> 0` 会让这里的
+      // 「其他」永远不出现，第 6 个起的账户被静默丢掉。
+      if (otherAmount.abs() > 0)
         (label: l10n.othersLabel, amount: otherAmount, color: neutral),
     ];
     final segments = <VeriDonutSegment>[
