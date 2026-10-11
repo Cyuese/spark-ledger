@@ -1986,9 +1986,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get statAnalysisTitle => '统计分析';
-
-  @override
   String get pickTimeRange => '选择时间范围';
 
   @override
@@ -2001,22 +1998,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get overviewTitle => '收支概览';
 
   @override
-  String get yoyMomTitle => '同比 · 环比';
-
-  @override
-  String get yoyMomDesc => '较上月为环比，较去年同期为同比';
-
-  @override
-  String get momLabel => '环比';
-
-  @override
-  String get yoyLabel => '同比';
-
-  @override
   String get monthlyTrendTitle => '月度趋势';
-
-  @override
-  String get categoryRank => '分类排行';
 
   @override
   String get rankGroupCategory => '分类';
@@ -2026,9 +2008,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rankGroupTag => '标签';
-
-  @override
-  String get tagRank => '标签排行';
 
   @override
   String get tagRankOverlapNote => '同一笔可带多个标签，各标签占比之和可能超过 100%';

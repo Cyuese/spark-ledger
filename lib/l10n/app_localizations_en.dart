@@ -2033,9 +2033,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get statAnalysisTitle => 'Analytics';
-
-  @override
   String get pickTimeRange => 'Select time range';
 
   @override
@@ -2048,23 +2045,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get overviewTitle => 'Overview';
 
   @override
-  String get yoyMomTitle => 'YoY · MoM';
-
-  @override
-  String get yoyMomDesc =>
-      'MoM compares to last month; YoY to the same month last year';
-
-  @override
-  String get momLabel => 'MoM';
-
-  @override
-  String get yoyLabel => 'YoY';
-
-  @override
   String get monthlyTrendTitle => 'Monthly trend';
-
-  @override
-  String get categoryRank => 'Category ranking';
 
   @override
   String get rankGroupCategory => 'Category';
@@ -2074,9 +2055,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rankGroupTag => 'Tag';
-
-  @override
-  String get tagRank => 'Tag ranking';
 
   @override
   String get tagRankOverlapNote =>
