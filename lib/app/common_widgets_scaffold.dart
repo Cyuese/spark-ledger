@@ -2,6 +2,78 @@ part of 'common_widgets.dart';
 
 // 页面骨架域：VeriPage/VeriCard/VeriHeader 与头部动作、区块标题、空态。
 
+/// 「缺汇率」提示：说明有多少账户缺率、缺哪些币种，点按可去维护汇率。
+///
+/// 外层容器由调用方决定，两种情况都只写这一份实现：
+/// - 裸用（看板资产汇总卡的缺率态）传 [onTap]，组件自带点击区与 8dp 纵向内边距；
+/// - 已经放在可点卡片里（资产页缺率卡）不要传 [onTap]，避免嵌套点击区。
+class AssetMissingRateNotice extends StatelessWidget {
+  const AssetMissingRateNotice({
+    super.key,
+    required this.affectedAccountCount,
+    required this.currencyCodes,
+    this.onTap,
+  });
+
+  /// 受影响（缺率）的账户数量。
+  final int affectedAccountCount;
+
+  /// 缺失汇率的币种代码，展示时按字典序拼接。
+  final Set<String> currencyCodes;
+
+  /// 非 null 时整块可点（一般跳 [CurrencyRatesPage]）。
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final codes = (currencyCodes.toList()..sort()).join(', ');
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(
+          Icons.currency_exchange,
+          color: veriSemantic(context, veriWarning),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                l10n.assetValuationMissing(affectedAccountCount),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.assetValuationMissingDesc(codes),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.62),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    if (onTap == null) {
+      return content;
+    }
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(veriRadiusMd),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: content,
+      ),
+    );
+  }
+}
+
 class VeriPage extends StatelessWidget {
   const VeriPage({
     super.key,

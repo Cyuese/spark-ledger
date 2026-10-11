@@ -459,9 +459,14 @@ void main() {
     expect(formatAmount(12.34), '12.34');
     expect(formatAmount(0), '0.00');
     // 派生格式化同步生效。
-    expect(formatExpenseAmount(12), '-12.00');
+    // 支出与收入同为「只给绝对值」，方向由标签 / 类型色 / 图表序列表达；
+    // 需要符号的地方用 formatSignedAmount 或 formatAmount（负数自带 `-`）。
+    expect(formatExpenseAmount(12), '12.00');
+    expect(formatExpenseAmount(-12), '12.00');
+    expect(formatExpenseAmount(0), '0');
     expect(formatIncomeAmount(12.5), '12.50');
     expect(formatSignedAmount(12), '+12.00');
+    expect(formatSignedAmount(-12), '-12.00');
   });
 
   test('cardLast4Of 取完整卡号末四位数字', () {

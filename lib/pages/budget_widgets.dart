@@ -133,9 +133,8 @@ class _DailyBudgetCard extends StatelessWidget {
                   label: remaining < 0
                       ? l10n.dailyBudgetTodayOver
                       : l10n.dailyBudgetTodayLeft,
-                  value: remaining < 0
-                      ? formatExpenseAmount(remaining.abs())
-                      : formatAmount(remaining),
+                  // 超出时为负数（自带 `-`），左侧标签已写明「今日已超」。
+                  value: formatAmount(remaining),
                   color: remaining < 0
                       ? veriSemantic(context, veriExpense)
                       : veriSemantic(context, veriIncome),
