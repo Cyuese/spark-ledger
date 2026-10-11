@@ -138,8 +138,6 @@ const List<Category> defaultCategories = <Category>[
   ),
 ];
 
-const List<Category> demoCategories = defaultCategories;
-
 /// 英文种子分类：id/图标与中文版一一对应，仅名称不同。
 const List<Category> _defaultCategoriesEn = <Category>[
   Category(
