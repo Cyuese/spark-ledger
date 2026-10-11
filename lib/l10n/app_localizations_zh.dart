@@ -42,6 +42,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabReports => '看板';
 
   @override
+  String get reportTabDaily => '日常';
+
+  @override
+  String get reportTabMonthly => '月统计';
+
+  @override
+  String get reportTabYearly => '年统计';
+
+  @override
+  String get reportTabCustom => '自定义';
+
+  @override
   String get tabProfile => '我的';
 
   @override

@@ -72,7 +72,7 @@ class ReportsPage extends StatelessWidget {
       0,
       (max, value) => value > max ? value : max,
     );
-    final panelIds = controller.enabledPanelIds(PanelPageKind.reports);
+    final panelIds = controller.enabledPanelIds(PanelPageKind.reportsMonthly);
 
     // 面板 id 对应的卡片,渲染顺序与开关由面板管理页配置。
     Widget panelFor(String id) {
@@ -315,7 +315,7 @@ class ReportsPage extends StatelessWidget {
             panelFor(id),
           ],
           const SizedBox(height: 8),
-          const PanelSettingsEntry(kind: PanelPageKind.reports),
+          const PanelSettingsEntry(kind: PanelPageKind.reportsMonthly),
         ],
       ),
     );

@@ -41,6 +41,22 @@
   "@tabReports": {
     "description": "底部导航:看板"
   },
+  "reportTabDaily": "日常",
+  "@reportTabDaily": {
+    "description": "看板顶部口径 Tab:日常(近期滚动统计与资产快照)"
+  },
+  "reportTabMonthly": "月统计",
+  "@reportTabMonthly": {
+    "description": "看板顶部口径 Tab:按自然月统计"
+  },
+  "reportTabYearly": "年统计",
+  "@reportTabYearly": {
+    "description": "看板顶部口径 Tab:按自然年统计"
+  },
+  "reportTabCustom": "自定义",
+  "@reportTabCustom": {
+    "description": "看板顶部口径 Tab:用户自选时间范围"
+  },
   "tabProfile": "我的",
   "@tabProfile": {
     "description": "底部导航:我的"
