@@ -318,7 +318,8 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   }
 
   List<VeriMenuEntry> _categoryMenuEntries(Category category) {
-    final protected = _isProtectedCategory(category.id);
+    // 系统分类（余额调整）可改名、换图标，但不能移动、合并、删除。
+    final protected = category.isBalanceAdjust;
     final l10n = AppLocalizations.of(context);
     return <VeriMenuEntry>[
       VeriMenuItem(
@@ -527,7 +528,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
 
   Future<void> _deleteCategory(Category category) async {
     final controller = VeriFinScope.of(context);
-    if (_isProtectedCategory(category.id)) {
+    if (category.isBalanceAdjust) {
       unawaited(
         VeriFeedbackHost.of(context).showMessage(
           message: AppLocalizations.of(context).systemCategoryUndeletable,
@@ -600,11 +601,6 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       );
     }
   }
-}
-
-bool _isProtectedCategory(String categoryId) {
-  return categoryId == 'balance_adjust_expense' ||
-      categoryId == 'balance_adjust_income';
 }
 
 class _CategoryManageRow extends StatelessWidget {

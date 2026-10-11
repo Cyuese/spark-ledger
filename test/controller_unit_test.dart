@@ -54,7 +54,7 @@ void main() {
 
   test('seeds English defaults when system locale is not Chinese', () async {
     // 不经 makeController（它预置中文），模拟英文系统的全新首启动。
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: InMemoryLedgerRepository(),
       systemIsEnglish: true,
@@ -189,7 +189,7 @@ void main() {
 
   test('跨表删除落库失败时保留 Controller 与仓储原状态', () async {
     final repository = _FailingReplaceRepository();
-    final controller = await VeriFinController.create(
+    final controller = await createTestController(
       LocalKeyValueStore(),
       repository: repository,
     );

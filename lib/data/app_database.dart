@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:sqflite_common/sqlite_api.dart';
 
+import '../app/models/category_keys.dart';
+import '../app/models/ledger_book.dart';
 import 'database_factory.dart';
 
 /// Veri Fin 本地 SQLite 数据库。负责建表、版本迁移与连接持有。
@@ -14,7 +18,7 @@ class AppDatabase {
   final Database db;
 
   static const String defaultDatabaseName = 'verifin.db';
-  static const int schemaVersion = 18;
+  static const int schemaVersion = 19;
 
   /// 打开（或创建）数据库。测试通过 [factory]/[path] 注入 ffi 与内存路径；
   /// 真实平台留空则由 [resolveDatabaseFactory]/[resolveDatabasePath] 决定。
@@ -71,6 +75,7 @@ class AppDatabase {
         16: _migrateToV16,
         17: _migrateToV17,
         18: _migrateToV18,
+        19: _migrateToV19,
       };
 
   /// 只读暴露迁移注册表，供迁移矩阵测试把库推进到任意中间版本。生产代码勿用。
@@ -389,6 +394,333 @@ class AppDatabase {
     );
   }
 
+  /// v18 → v19：分类与标签改为**账本内数据**。
+  ///
+  /// 旧结构里 `categories` / `tags` 是全局的（没有 `book_id`），所有账本共用一张表，
+  /// 于是出现了「A 账本删不掉被 B 账本用过的分类」「改名/换图标/排序全账本生效」
+  /// 「删标签会静默改写别的账本交易」这些问题。本段把每条分类/标签复制到**每个**
+  /// 账本——旧模型下每个账本看到的本来就是同一张表，全量复制能让升级前后用户可见的
+  /// 分类/标签集合完全一致——并把交易、周期规则与分类预算里的引用改写到该账本自己的
+  /// 副本 id（`<bookId>__<旧id>`，保持整库唯一，`categoryById(id)` 因此不需要账本上下文）。
+  ///
+  /// 无法归属的引用（悬空分类、已折叠的重复标签、账本已不存在的交易）就地清理：
+  /// 分类悬空引用由 controller 载入时的自愈归入该账本「未分类」，标签直接摘掉。
+  static Future<void> _migrateToV19(Database db) async {
+    // 表结构与索引无论如何都要升到 v19 形态（全新库也只有一种结构），数据归属才是
+    // 条件性的：没有账本信息时（最小桩库）把所有旧记录归到默认账本，与
+    // `_bookScopedBudgets` 对无账本前缀旧键的回落口径一致。
+    final bookIds = await _tableExists(db, 'ledger_books')
+        ? ((await db.query(
+            'ledger_books',
+            columns: const <String>['id'],
+          )).map((row) => row['id'] as String).toList()..sort())
+        : const <String>[];
+    final scope = bookIds.isEmpty
+        ? const <String>[defaultLedgerBookId]
+        : bookIds;
+    if (await _tableExists(db, 'categories')) {
+      await _scopeCategoriesToBooks(db, scope);
+    }
+    if (await _tableExists(db, 'tags')) {
+      await _scopeTagsToBooks(db, scope);
+    }
+  }
+
+  /// 把全局分类复制到每个账本，并把交易/周期规则/分类预算的引用指向副本。
+  static Future<void> _scopeCategoriesToBooks(
+    Database db,
+    List<String> bookIds,
+  ) async {
+    if (await _columnsExist(db, 'categories', const <String>[
+      'book_id',
+      'category_key',
+    ])) {
+      return; // 结构已比 user_version 新（迁移矩阵会构造这种库）
+    }
+    final rows = await db.query('categories', orderBy: 'sort_order ASC');
+    await _alterCategoriesToScoped(db);
+    // 旧唯一索引不含 book_id，不先删就没法给第二个账本插入同名分类。
+    await db.execute('DROP INDEX IF EXISTS idx_categories_unique');
+    await db.execute('DELETE FROM categories');
+    // 分类 id 一律随机生成、不承载语义：每个账本各拿一份**全新 id** 的副本，
+    // 旧 id 若是有约定的语义键（默认分类/余额调整/未分类）就转成 `category_key`。
+    final newIdsByBook = <String, Map<String, String>>{
+      for (final bookId in bookIds)
+        bookId: <String, String>{
+          for (final row in rows)
+            row['id'] as String: _nextMigrationId('category'),
+        },
+    };
+    for (final bookId in bookIds) {
+      final ids = newIdsByBook[bookId]!;
+      for (final row in rows) {
+        final oldId = row['id'] as String;
+        final rawParent = row['parent_id'] as String?;
+        final parent = (rawParent == null || rawParent.isEmpty)
+            ? null
+            : rawParent;
+        await db.insert('categories', <String, Object?>{
+          'id': ids[oldId],
+          'book_id': bookId,
+          'label': row['label'],
+          'type': row['type'],
+          'icon_code': row['icon_code'],
+          'sort_order': row['sort_order'],
+          'parent_id': parent == null ? null : ids[parent],
+          'category_key': isKnownCategoryKey(oldId) ? oldId : null,
+        });
+      }
+    }
+    // 引用改写用临时映射表 + 相关子查询，一条 SQL 覆盖所有账本（空分类保持空串、
+    // 映射不到的悬空引用原样保留，交给 controller 载入时的自愈处理）。
+    // 判列存在只为兼容最小桩库：没有 book_id 时无法判定归属，保持原 id。
+    await db.execute(
+      'CREATE TEMP TABLE _category_scope_map ('
+      'book_id TEXT NOT NULL, old_id TEXT NOT NULL, new_id TEXT NOT NULL)',
+    );
+    final mapping = db.batch();
+    for (final entry in newIdsByBook.entries) {
+      for (final pair in entry.value.entries) {
+        mapping.insert('_category_scope_map', <String, Object?>{
+          'book_id': entry.key,
+          'old_id': pair.key,
+          'new_id': pair.value,
+        });
+      }
+    }
+    await mapping.commit(noResult: true);
+    if (await _tableExists(db, 'entries') &&
+        await _columnsExist(db, 'entries', const <String>['book_id'])) {
+      await db.execute(
+        'UPDATE entries SET category_id = ('
+        'SELECT new_id FROM _category_scope_map m '
+        'WHERE m.book_id = entries.book_id AND m.old_id = entries.category_id'
+        ') WHERE category_id <> \'\' AND EXISTS ('
+        'SELECT 1 FROM _category_scope_map m '
+        'WHERE m.book_id = entries.book_id AND m.old_id = entries.category_id'
+        ')',
+      );
+    }
+    if (await _tableExists(db, 'recurring_rules') &&
+        await _columnsExist(db, 'recurring_rules', const <String>['book_id'])) {
+      await db.execute(
+        'UPDATE recurring_rules SET category_id = ('
+        'SELECT new_id FROM _category_scope_map m '
+        'WHERE m.book_id = recurring_rules.book_id '
+        'AND m.old_id = recurring_rules.category_id'
+        ') WHERE category_id <> \'\' AND EXISTS ('
+        'SELECT 1 FROM _category_scope_map m '
+        'WHERE m.book_id = recurring_rules.book_id '
+        'AND m.old_id = recurring_rules.category_id'
+        ')',
+      );
+    }
+    await db.execute('DROP TABLE _category_scope_map');
+    await _scopeCategoryBudgetKeys(db, newIdsByBook);
+    await db.execute(_categoriesScopedUniqueIndex);
+    await db.execute(_categoriesBookIndex);
+    await db.execute(_categoriesKeyIndex);
+  }
+
+  /// 分类预算键 `<bookId>:<yyyy-MM|default>:<categoryId>` 的尾部换成账本内 id。
+  /// 只有能明确解析成「已知账本 + 月份段 + 分类」的键才改写；更早版本的无账本前缀
+  /// 键（`yyyy-MM:<categoryId>`）按 `_bookScopedBudgets` 的口径归默认账本；其余
+  /// 无法解析的键原样保留（它们本来也不会被任何月份查询命中）。
+  static Future<void> _scopeCategoryBudgetKeys(
+    Database db,
+    Map<String, Map<String, String>> newIdsByBook,
+  ) async {
+    if (!await _tableExists(db, 'category_budgets')) {
+      return;
+    }
+    final legacyMonth = RegExp(r'^\d{4}-\d{2}$');
+    final rows = await db.query(
+      'category_budgets',
+      columns: const <String>['scope_key'],
+    );
+    for (final row in rows) {
+      final oldKey = row['scope_key'] as String;
+      final parts = oldKey.split(':');
+      String? bookId;
+      String? monthSegment;
+      String? oldCategoryId;
+      if (parts.length == 3 && newIdsByBook.containsKey(parts[0])) {
+        bookId = parts[0];
+        monthSegment = parts[1];
+        oldCategoryId = parts[2];
+      } else if (parts.length == 2 && legacyMonth.hasMatch(parts[0])) {
+        // 更早的键没有账本前缀（`yyyy-MM:<categoryId>`）。
+        bookId = defaultLedgerBookId;
+        monthSegment = parts[0];
+        oldCategoryId = parts[1];
+      } else {
+        continue;
+      }
+      final newCategoryId = newIdsByBook[bookId]?[oldCategoryId];
+      if (newCategoryId == null) {
+        continue; // 指向未知分类：键保持原样（本来也不会被月份查询命中）
+      }
+      final newKey = '$bookId:$monthSegment:$newCategoryId';
+      if (newKey == oldKey) {
+        continue;
+      }
+      await db.update(
+        'category_budgets',
+        <String, Object?>{'scope_key': newKey},
+        where: 'scope_key = ?',
+        whereArgs: <Object?>[oldKey],
+      );
+    }
+  }
+
+  /// 把全局标签复制到每个账本，并重写交易的 `tag_ids`。
+  static Future<void> _scopeTagsToBooks(
+    Database db,
+    List<String> bookIds,
+  ) async {
+    if (await _columnsExist(db, 'tags', const <String>['book_id'])) {
+      return;
+    }
+    if (!await _columnsExist(db, 'tags', const <String>[
+      'id',
+      'label',
+      'sort_order',
+    ])) {
+      return; // 桩库结构不完整
+    }
+    final rows = await db.query('tags', orderBy: 'sort_order ASC');
+    await _alterTagsToScoped(db);
+    await db.execute('DELETE FROM tags');
+    // 旧表没有唯一约束，同一账本内的同名标签只保留第一条（与 controller 的
+    // 「按名称复用」口径一致）；被折叠掉的旧 id 在重写交易引用时指向保留者。
+    // 每份副本都拿**新生成的随机 id**。
+    final rowByOldId = <String, Map<String, Object?>>{
+      for (final row in rows) row['id'] as String: row,
+    };
+    final labelByOldId = <String, String>{
+      for (final row in rows) row['id'] as String: row['label'] as String,
+    };
+    final keeperIdByLabel = <String, String>{};
+    for (final row in rows) {
+      keeperIdByLabel.putIfAbsent(
+        row['label'] as String,
+        () => row['id'] as String,
+      );
+    }
+    final tagIdsByBook = <String, Map<String, String>>{};
+    for (final bookId in bookIds) {
+      final newIdByKeeperId = <String, String>{};
+      for (final row in rows) {
+        newIdByKeeperId.putIfAbsent(
+          keeperIdByLabel[row['label'] as String]!,
+          () => _nextMigrationId('tag'),
+        );
+      }
+      for (final entry in newIdByKeeperId.entries) {
+        await db.insert('tags', <String, Object?>{
+          'id': entry.value,
+          'book_id': bookId,
+          'label': labelByOldId[entry.key],
+          'sort_order': rowByOldId[entry.key]!['sort_order'],
+        });
+      }
+      tagIdsByBook[bookId] = <String, String>{
+        for (final row in rows)
+          row['id'] as String:
+              newIdByKeeperId[keeperIdByLabel[row['label'] as String]!]!,
+      };
+    }
+    await _rewriteEntryTagIds(db, tagIdsByBook);
+    await db.execute(_tagsBookIndex);
+    await db.execute(_tagsUniqueIndex);
+  }
+
+  /// 重写每笔交易 `tag_ids` 里的标签引用：旧 id → 该交易所属账本的副本 id。
+  /// `tag_ids` 是 JSON 数组，没法用一条 SQL 完成，只能逐行处理（只碰有标签的行）。
+  static Future<void> _rewriteEntryTagIds(
+    Database db,
+    Map<String, Map<String, String>> tagIdsByBook,
+  ) async {
+    if (!await _tableExists(db, 'entries')) {
+      return;
+    }
+    if (!await _columnsExist(db, 'entries', const <String>[
+      'id',
+      'book_id',
+      'tag_ids',
+    ])) {
+      return;
+    }
+    final rows = await db.query(
+      'entries',
+      columns: const <String>['id', 'book_id', 'tag_ids'],
+      where: "tag_ids IS NOT NULL AND tag_ids <> '' AND tag_ids <> '[]'",
+    );
+    for (final row in rows) {
+      final entryId = row['id'] as String;
+      final bookId = row['book_id'] as String;
+      final ids = tagIdsByBook[bookId];
+      final mapped = <String>[];
+      if (ids != null) {
+        for (final value in _decodeTagIdList(row['tag_ids'] as String)) {
+          final newId = ids[value.toString()];
+          if (newId == null) {
+            continue; // 悬空引用：指向的标签不存在
+          }
+          if (!mapped.contains(newId)) {
+            mapped.add(newId);
+          }
+        }
+      }
+      await db.update(
+        'entries',
+        <String, Object?>{'tag_ids': jsonEncode(mapped)},
+        where: 'id = ?',
+        whereArgs: <Object?>[entryId],
+      );
+    }
+  }
+
+  /// 解析 `tag_ids` 的 JSON 数组；坏数据按「没有标签」处理（与模型层的
+  /// `_stringList` 口径一致）。
+  static List<Object?> _decodeTagIdList(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      return decoded is List ? decoded : const <Object?>[];
+    } on FormatException {
+      return const <Object?>[];
+    }
+  }
+
+  static Future<void> _alterCategoriesToScoped(Database db) async {
+    if (!await _columnsExist(db, 'categories', const <String>['book_id'])) {
+      await db.execute(
+        "ALTER TABLE categories ADD COLUMN book_id TEXT NOT NULL DEFAULT ''",
+      );
+    }
+    if (!await _columnsExist(db, 'categories', const <String>[
+      'category_key',
+    ])) {
+      await db.execute('ALTER TABLE categories ADD COLUMN category_key TEXT');
+    }
+  }
+
+  static Future<void> _alterTagsToScoped(Database db) async {
+    if (await _columnsExist(db, 'tags', const <String>['book_id'])) {
+      return;
+    }
+    await db.execute(
+      "ALTER TABLE tags ADD COLUMN book_id TEXT NOT NULL DEFAULT ''",
+    );
+  }
+
+  /// 迁移期生成实体 id：形态与 controller 的 `_generateId` 一致（微秒时间戳 +
+  /// 单调序号），保证 id 随机、唯一、不承载语义。
+  static String _nextMigrationId(String prefix) =>
+      '${prefix}_${DateTime.now().microsecondsSinceEpoch}_${_migrationIdSeq++}';
+
+  static int _migrationIdSeq = 0;
+
   static Future<bool> _tableExists(Database db, String name) async {
     final rows = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
@@ -460,10 +792,34 @@ class AppDatabase {
     await db.execute('DROP TABLE _cat_keep');
   }
 
-  /// 分类唯一约束：同一父级（顶级按空串归一）下不允许同 label+type 的重复分类。
+  /// v10 起的分类唯一约束：同一父级（顶级按空串归一）下不允许同 label+type 的
+  /// 重复分类。**这是历史定义，只被 v10 迁移段使用**（那时的表还没有 book_id）；
+  /// v19 会先 DROP 这个索引再建下面的账本作用域版本，两者同名。
   static const String _categoriesUniqueIndex =
       "CREATE UNIQUE INDEX idx_categories_unique "
       "ON categories (label, type, IFNULL(parent_id, ''))";
+
+  /// v19 起的分类唯一约束：**同一账本内**、同一父级下不允许重复分类。
+  static const String _categoriesScopedUniqueIndex =
+      "CREATE UNIQUE INDEX idx_categories_unique "
+      "ON categories (book_id, label, type, IFNULL(parent_id, ''))";
+
+  static const String _categoriesBookIndex =
+      'CREATE INDEX idx_categories_book ON categories (book_id)';
+
+  /// 同一账本内的语义键唯一（用户自建分类的键为 NULL，SQLite 的唯一索引把 NULL 视为
+  /// 互不相同，因此不限制数量）。
+  static const String _categoriesKeyIndex =
+      'CREATE UNIQUE INDEX idx_categories_key ON categories '
+      '(book_id, category_key)';
+
+  /// v19 起的标签唯一约束：同一账本内不允许同名标签（旧表没有唯一约束，
+  /// v19 迁移会先按 label 折叠重复项再建索引）。
+  static const String _tagsUniqueIndex =
+      'CREATE UNIQUE INDEX idx_tags_unique ON tags (book_id, label)';
+
+  static const String _tagsBookIndex =
+      'CREATE INDEX idx_tags_book ON tags (book_id)';
 
   static const String _dailyBudgetsTable = '''
     CREATE TABLE daily_budgets (
@@ -614,14 +970,18 @@ class AppDatabase {
     '''
     CREATE TABLE categories (
       id TEXT PRIMARY KEY,
+      book_id TEXT NOT NULL,
       label TEXT NOT NULL,
       type TEXT NOT NULL,
       icon_code TEXT NOT NULL,
       sort_order INTEGER NOT NULL,
-      parent_id TEXT
+      parent_id TEXT,
+      category_key TEXT
     )
     ''',
-    _categoriesUniqueIndex,
+    _categoriesBookIndex,
+    _categoriesScopedUniqueIndex,
+    _categoriesKeyIndex,
     '''
     CREATE TABLE monthly_budgets (
       scope_key TEXT PRIMARY KEY,
@@ -638,10 +998,13 @@ class AppDatabase {
     '''
     CREATE TABLE tags (
       id TEXT PRIMARY KEY,
+      book_id TEXT NOT NULL,
       label TEXT NOT NULL,
       sort_order INTEGER NOT NULL
     )
     ''',
+    _tagsBookIndex,
+    _tagsUniqueIndex,
     '''
     CREATE TABLE attachments (
       id TEXT PRIMARY KEY,

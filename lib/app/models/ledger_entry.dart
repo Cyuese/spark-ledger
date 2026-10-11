@@ -271,7 +271,9 @@ class LedgerEntry {
       conversionSource: json.containsKey('conversionSource')
           ? ConversionSource.fromStorage(json['conversionSource'] as String?)
           : ConversionSource.legacy,
-      categoryId: json['categoryId'] as String? ?? 'dining',
+      // 缺分类的旧数据留空串，由载入自愈按本条目的账本归入「未分类」；
+      // 不要回落到某个固定分类 id（那是历史实现，会让缺字段的数据静默变成「餐饮」）。
+      categoryId: json['categoryId'] as String? ?? '',
       accountId: json['accountId'] as String? ?? 'alipay',
       toAccountId: json['toAccountId'] as String?,
       note: json['note'] as String? ?? '',
@@ -462,7 +464,8 @@ class RecurringRule {
       ratePolicy: RecurringRatePolicy.fromStorage(
         json['ratePolicy'] as String?,
       ),
-      categoryId: json['categoryId'] as String? ?? 'dining',
+      // 同上：缺分类留空串，由自愈归入所属账本的「未分类」。
+      categoryId: json['categoryId'] as String? ?? '',
       accountId: json['accountId'] as String? ?? '',
       toAccountId: json['toAccountId'] as String?,
       note: json['note'] as String? ?? '',
@@ -534,24 +537,34 @@ class Attachment {
   }
 }
 
-/// 标签：与交易多对多关联，用于跨分类的横向归类与统计。
+/// 标签：与交易多对多关联，用于**账本内**跨分类的横向归类与统计。
 class Tag {
-  const Tag({required this.id, required this.label});
+  const Tag({required this.id, required this.bookId, required this.label});
 
   final String id;
+
+  /// 所属账本。标签跟随账本而不是跟随应用：换账本会换成该账本自己的标签集合。
+  final String bookId;
+
   final String label;
 
-  Tag copyWith({String? id, String? label}) {
-    return Tag(id: id ?? this.id, label: label ?? this.label);
+  Tag copyWith({String? id, String? bookId, String? label}) {
+    return Tag(
+      id: id ?? this.id,
+      bookId: bookId ?? this.bookId,
+      label: label ?? this.label,
+    );
   }
 
   Map<String, Object?> toJson() {
-    return <String, Object?>{'id': id, 'label': label};
+    return <String, Object?>{'id': id, 'bookId': bookId, 'label': label};
   }
 
   static Tag fromJson(Map<String, Object?> json) {
     return Tag(
       id: json['id'] as String,
+      // 旧版备份里的标签是全局的、没有 bookId；那条路径由导入侧显式展开到各账本。
+      bookId: json['bookId'] as String? ?? defaultLedgerBookId,
       label: json['label'] as String? ?? '未命名标签',
     );
   }
