@@ -1616,6 +1616,7 @@ class _YearHeatmapPanelState extends State<_YearHeatmapPanel> {
           SectionTitle(
             title: l10n.panelYearHeatmapLabel,
             trailingWidget: VeriEntryTypeToggle(
+              compact: true,
               dimension: _type,
               onChanged: (type) => setState(() => _type = type),
             ),
