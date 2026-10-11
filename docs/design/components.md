@@ -132,7 +132,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `SettingsRow` | Widget | `common_widgets.dart` | 设置行（图标+标题+trailing 文本+chevron）；`leading` 可传账户图标等自定义前置，`contentColor` 可上色（如危险操作红色） |
 | `CompactSwitchRow` | Widget | `common_widgets.dart` | 紧凑开关行（整行可点，不只点开关）；`onChanged:null` 保留原生禁用语义，表示当前平台/状态不可用 |
 | `VeriSegmentedControl<T>` | Widget | `common_widgets.dart` | **统一分段控件**（文字标签 + 滑动胶囊指示，基于 `animated_toggle_switch`）。所有「N 选一的横向口径切换」一律用它，不要再手写 Row+InkWell 分段条或裸用 Material `SegmentedButton`。颜色只走设计令牌，调用方仅可通过 `accentOf` 指定选中项的语义强调色；`compact: true` 用于卡片标题行内的小切换；`onChanged: null` 整组禁用；自带 `Semantics`（第三方控件本身无语义）。`keyOf` **只给选中项挂 Key**（`rolling` 会把选中项多渲染一份，全挂会撞 Key）——既有契约见记账页 `entry_type_selected_*`。**不用它**：图标型开关（走 `CompactSwitchRow`）、超过 4 项或需要分区的单选（走 `showOptionSheet` / `VeriAnchoredChoice`）、菜单触发器（走 `FilterPill`）、左右步进器（走 `MonthSwitcher`） |
-| `VeriEntryTypeToggle` | Widget | `common_widgets.dart` | **支出 / 收入口径切换**（内部就是 `VeriSegmentedControl<EntryType>`，支出红 / 收入绿，选中项挂 `dimension_toggle_<type>` Key）。看板近 7 日面板与月统计排行卡共用；新增「支出/收入切换」一律用它，不要各写一份 |
+| `VeriEntryTypeToggle` | Widget | `common_widgets.dart` | **支出 / 收入口径切换**（内部就是 `VeriSegmentedControl<EntryType>`，支出红 / 收入绿，选中项挂 `dimension_toggle_<type>` Key）。看板近 7 日面板、收支热力卡与月/年排行卡共用；**放在卡片标题行时一律 `compact: true`**（与资产汇总、收支热力右上角同档，卡片内不要混用两种大小）。新增「支出/收入切换」一律用它，不要各写一份 |
 | `DetailInfoRow` | Widget | `common_widgets.dart` | 详情页 label/value 行（可点击带 chevron） |
 | `CurrencyAmountField` | Widget | `common_widgets.dart` | 交易/退款/周期编辑器统一的货币金额行；按 ISO minor unit 格式化；`amount == null` 时显示明确缺失态。`forceUnit` **默认 `true` 且不要改**：编辑器允许临时选一个账本里还没有的币种，那一刻闸门还关着但同屏已出现两个币种，单位必须保留。只有两端币种被锁死、不可能出现第二币种的地方（退款表单）才显式传 `false` |
 | `MoneyUnitLabel` | Widget | `common_widgets.dart` | 聚合卡片的轻量「单位：¥/CNY」提示（首页预算卡、日历卡、AI 结果卡；走势设置页预览复用同一张卡。首页支出走势卡不显示它，那里渲染的是「周／月／季／年」周期标签）；单币种账本隐藏单位时组件自身返回 `SizedBox.shrink`——**只表示看不见，不能拿它判断单位是否显示**；把容器一起收掉的调用点（日历卡）隐藏时根本不构建，`find.byType` 是 `findsNothing`。要断言隐藏用 `find.textContaining('单位：')` |
@@ -163,7 +163,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | 名称 | 类型 | 位置 | 用途 |
 |---|---|---|---|
 | `InteractiveTrendChart` | Widget | `chart_painters.dart` | 可交互折线图；`values, xLabels, yLabels, glow, tooltipOf`。平滑曲线 + 渐隐填充，**不画节点圆点**；点击固定显示气泡、再点同一点收起、点左右滑动连续查看，手势自带，不切根页面也不锁页面滚动；自带 `Semantics` 摘要；位于可跳转卡片内时拦截点击 |
-| `InteractiveBarChart` | Widget | `chart_painters.dart` | 可交互柱状图；单序列传 `values`，多序列传 `series`（`List<VeriBarSeries>`，同插槽并排成组，如预算/支出双柱）。命中按插槽取最近一根柱子，整片绘图区可点击或拖动，零值柱也能查看；选中在抬手后保持 |
+| `InteractiveBarChart` | Widget | `chart_painters.dart` | 可交互柱状图；单序列传 `values`（颜色默认取主题主色，语义色传 `color`，如支出红 / 收入青），多序列传 `series`（`List<VeriBarSeries>`，同插槽并排成组，如预算/支出双柱）。命中按插槽取最近一根柱子，整片绘图区可点击或拖动，零值柱也能查看；选中在抬手后保持。**柱子圆角按柱高收窄**（不超过柱高的一半，也不超过 4）：fl_chart 会把正柱的像素高度垫到至少「上下圆角半径之和」，半径写死会让矮柱变成固定高度的短杠，归零的柱子会卡一下再消失 |
 | `VeriBarSeries` | 值类 | `chart_painters.dart` | 柱状图的一条序列（`values, color`）；配合 `InteractiveBarChart.series` 使用 |
 | `VeriDonutChart` | Widget | `chart_painters.dart` | 环形分段图；`segments, center, ringWidth, selectedIndex, onSelected, semanticsLabel, showPercentTitles, onCenterTap`。点击分段回传索引；中心空区回传 `null`，`onCenterTap` 非空时中心改成可点热区（看板资产汇总用它切换「金额 / 占比」）。`showPercentTitles` 打开环内占比文字，低于 5% 的分段不画 |
 | `VeriBudgetRing` | Widget | `chart_painters.dart` | 预算/额度进度环；`value, trackColor, progressColor, center, strokeWidth`。中心内容忽略指针事件 |

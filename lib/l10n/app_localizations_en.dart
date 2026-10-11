@@ -1968,6 +1968,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rankGroupTag => 'Tag';
 
   @override
+  String get rankGroupingLabel => 'Ranking dimension';
+
+  @override
   String get tagRankOverlapNote =>
       'An entry can carry multiple tags, so the percentages may add up to more than 100%';
 
