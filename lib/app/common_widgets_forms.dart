@@ -9,6 +9,7 @@ class VeriEntryTypeToggle extends StatelessWidget {
     super.key,
     required this.dimension,
     required this.onChanged,
+    this.compact = false,
   });
 
   final EntryType dimension;
@@ -16,10 +17,14 @@ class VeriEntryTypeToggle extends StatelessWidget {
   /// 为 null 时整组禁用。
   final ValueChanged<EntryType>? onChanged;
 
+  /// 紧凑档：用于卡片标题行内（与 `VeriSegmentedControl.compact` 同一档）。
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return VeriSegmentedControl<EntryType>(
+      compact: compact,
       values: const <EntryType>[EntryType.expense, EntryType.income],
       selected: dimension,
       semanticLabel: l10n.statTypeTitle,
