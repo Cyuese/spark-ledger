@@ -118,7 +118,7 @@ class _NavigationStyleCard extends StatelessWidget {
         children: <Widget>[
           ClipRRect(
             borderRadius: BorderRadius.vertical(
-              top: Radius.circular(veriCardRadiusFor()),
+              top: Radius.circular(veriCardRadius),
             ),
             child: _NavigationStylePreview(style: style),
           ),

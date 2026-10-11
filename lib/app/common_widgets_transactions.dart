@@ -132,9 +132,7 @@ class TransactionTile extends StatelessWidget {
             formatUserMoney(runningBalance!, fromAccount.currencyCode),
           );
     final subStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-      color: Theme.of(context).colorScheme.onSurface.withValues(
-        alpha: veriUnifiedDesignPreview ? 0.62 : 0.46,
-      ),
+      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.62),
     );
 
     return Material(
@@ -147,10 +145,7 @@ class TransactionTile extends StatelessWidget {
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(veriRadiusSm),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: veriUnifiedDesignPreview ? 12 : 8,
-            horizontal: 4,
-          ),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           child: Row(
             children: <Widget>[
               if (selectionMode) ...<Widget>[

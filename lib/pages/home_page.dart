@@ -83,7 +83,6 @@ class HomePage extends StatelessWidget {
             config: trendConfig,
             metricContext: metricContext,
             chartValues: trendChartValues,
-            currencyCode: controller.activeBook.baseCurrencyCode,
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
@@ -94,7 +93,6 @@ class HomePage extends StatelessWidget {
           );
         case 'recent':
           return VeriCard(
-            compact: veriUnifiedDesignPreview,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -180,12 +178,10 @@ class HomePage extends StatelessWidget {
     }
 
     return VeriPage(
-      compact: veriUnifiedDesignPreview,
       child: ListView(
         padding: veriRootPageListPadding(context),
         children: <Widget>[
           PageHeader(
-            compact: veriUnifiedDesignPreview,
             title: AppLocalizations.of(context).tabHome,
             subtitle: currencyUnitSubtitle(
               AppLocalizations.of(context),
@@ -354,7 +350,6 @@ class HomeTrendPanel extends StatelessWidget {
     required this.config,
     required this.metricContext,
     required this.chartValues,
-    required this.currencyCode,
     required this.onTap,
   });
 
@@ -362,7 +357,6 @@ class HomeTrendPanel extends StatelessWidget {
   final HomeTrendConfig config;
   final HomeMetricContext metricContext;
   final List<double> chartValues;
-  final String currencyCode;
   final VoidCallback onTap;
 
   @override
@@ -370,13 +364,7 @@ class HomeTrendPanel extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = Theme.of(context).colorScheme.onSurface;
-    final mutedColor = textColor.withValues(
-      alpha: veriUnifiedDesignPreview
-          ? 0.68
-          : isDark
-          ? 0.62
-          : 0.52,
-    );
+    final mutedColor = textColor.withValues(alpha: 0.68);
 
     final bigValue = computeHomeMetric(config.big, metricContext);
     final bigColor = homeMetricColor(
@@ -400,12 +388,9 @@ class HomeTrendPanel extends StatelessWidget {
     final seriesLabel = homeTrendSeriesLabel(l10n, config.series);
 
     return VeriCard(
-      compact: veriUnifiedDesignPreview,
       onTap: onTap,
       quietTap: true,
-      padding: veriUnifiedDesignPreview
-          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 12)
-          : const EdgeInsets.fromLTRB(14, 13, 14, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: RepaintBoundary(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,16 +401,6 @@ class HomeTrendPanel extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      if (!veriUnifiedDesignPreview)
-                        Text(
-                          window.label,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: mutedColor,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                      if (!veriUnifiedDesignPreview) const SizedBox(height: 2),
                       Text(
                         title,
                         maxLines: 1,
@@ -436,15 +411,13 @@ class HomeTrendPanel extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (veriUnifiedDesignPreview)
-                  Text(
-                    window.label,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: mutedColor),
-                  )
-                else
-                  MoneyUnitLabel(currencyCode: currencyCode),
+                // 周期标签（周／月／季／年）取代旧外观的「单位：x」角标。
+                Text(
+                  window.label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: mutedColor),
+                ),
                 const SizedBox(width: 8),
                 const _CircleArrow(),
               ],
@@ -470,14 +443,11 @@ class HomeTrendPanel extends StatelessWidget {
                         formatHomeMetric(config.big, bigValue),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            (veriUnifiedDesignPreview
-                                    ? Theme.of(context).textTheme.displayMedium
-                                    : Theme.of(context).textTheme.displaySmall)
-                                ?.copyWith(
-                                  color: bigColor,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                        style: Theme.of(context).textTheme.displayMedium
+                            ?.copyWith(
+                              color: bigColor,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                     ],
                   ),
@@ -551,16 +521,10 @@ class HomeTrendPanel extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             SizedBox(
-              height: veriUnifiedDesignPreview ? 96 : 138,
+              height: 96,
               child: Padding(
-                // 深色主题的曲线发光需要 2dp 余量；否则左右不留空隙，
-                // 保证纵轴标签左缘与卡片标题严格对齐。
-                padding: EdgeInsets.fromLTRB(
-                  isDark && !veriUnifiedDesignPreview ? 2 : 0,
-                  6,
-                  isDark && !veriUnifiedDesignPreview ? 2 : 0,
-                  0,
-                ),
+                // 左右不留空隙，保证纵轴标签左缘与卡片标题严格对齐。
+                padding: const EdgeInsets.fromLTRB(0, 6, 0, 0),
                 // 图表区域自行响应点击展示数据,不触发卡片跳转。
                 child: InteractiveTrendChart(
                   color: seriesColor,
@@ -570,7 +534,7 @@ class HomeTrendPanel extends StatelessWidget {
                     chartValues.map((v) => v.abs()).fold(0, math.max),
                   ),
                   labelColor: mutedColor,
-                  glow: isDark && !veriUnifiedDesignPreview,
+                  glow: false,
                   tooltipOf: (index) {
                     final day = window.days[index];
                     return ChartTooltip(
@@ -727,7 +691,6 @@ class BudgetPanel extends StatelessWidget {
         : AppLocalizations.of(context).monthBudgetTitle(month);
 
     return VeriCard(
-      compact: veriUnifiedDesignPreview,
       onTap: onTap,
       quietTap: true,
       child: Column(

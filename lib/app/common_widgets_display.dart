@@ -268,9 +268,7 @@ class SummaryMetric extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: textColor.withValues(
-                alpha: veriUnifiedDesignPreview ? 0.68 : 0.54,
-              ),
+              color: textColor.withValues(alpha: 0.68),
             ),
           ),
           const SizedBox(height: 7),
@@ -289,9 +287,7 @@ class SummaryMetric extends StatelessWidget {
             Text(
               detail!,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: textColor.withValues(
-                  alpha: veriUnifiedDesignPreview ? 0.62 : 0.42,
-                ),
+                color: textColor.withValues(alpha: 0.62),
                 fontWeight: FontWeight.w700,
               ),
             ),

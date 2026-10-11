@@ -135,7 +135,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `VeriEntryTypeToggle` | Widget | `common_widgets.dart` | **支出 / 收入口径切换**（内部就是 `VeriSegmentedControl<EntryType>`，支出红 / 收入绿，选中项挂 `dimension_toggle_<type>` Key）。看板近 7 日面板与月统计排行卡共用；新增「支出/收入切换」一律用它，不要各写一份 |
 | `DetailInfoRow` | Widget | `common_widgets.dart` | 详情页 label/value 行（可点击带 chevron） |
 | `CurrencyAmountField` | Widget | `common_widgets.dart` | 交易/退款/周期编辑器统一的货币金额行；按 ISO minor unit 格式化；`amount == null` 时显示明确缺失态。`forceUnit` **默认 `true` 且不要改**：编辑器允许临时选一个账本里还没有的币种，那一刻闸门还关着但同屏已出现两个币种，单位必须保留。只有两端币种被锁死、不可能出现第二币种的地方（退款表单）才显式传 `false` |
-| `MoneyUnitLabel` | Widget | `common_widgets.dart` | 聚合卡片的轻量「单位：¥/CNY」提示（首页支出走势卡——**仅未开启 `UNIFIED_DESIGN_PREVIEW` 的旧外观**，正式外观这里渲染的是「周／月／季／年」标签、首页预算卡、日历卡、AI 结果卡；走势设置页预览复用同一张卡）；单币种账本隐藏单位时组件自身返回 `SizedBox.shrink`——**只表示看不见，不能拿它判断单位是否显示**；把容器一起收掉的调用点（日历卡）隐藏时根本不构建，`find.byType` 是 `findsNothing`。要断言隐藏用 `find.textContaining('单位：')` |
+| `MoneyUnitLabel` | Widget | `common_widgets.dart` | 聚合卡片的轻量「单位：¥/CNY」提示（首页预算卡、日历卡、AI 结果卡；走势设置页预览复用同一张卡。首页支出走势卡不显示它，那里渲染的是「周／月／季／年」周期标签）；单币种账本隐藏单位时组件自身返回 `SizedBox.shrink`——**只表示看不见，不能拿它判断单位是否显示**；把容器一起收掉的调用点（日历卡）隐藏时根本不构建，`find.byType` 是 `findsNothing`。要断言隐藏用 `find.textContaining('单位：')` |
 | `currencyUnitSubtitle` | 纯函数 | `common_widgets.dart` | **页头 / 卡片副标题拼「单位：x」的唯一入口**：传 `l10n`、上下文前缀（书名/账户类型/日期范围，可空）与币种代码。隐藏单位时返回前缀本身（**不会把书名一起丢掉**），无前缀时返回 `null`——调用方必须据此整段省略副标题，不要渲染只剩分隔符的残句 |
 | `SummaryMetric` | Widget | `common_widgets.dart` | **指标块**（label+value+color+detail）。各类统计小块一律用它，勿新造 `_XxxMetric`/`_XxxTile` |
 | `FilterPill` | Widget | `common_widgets.dart` | 筛选胶囊（标签+可选图标+chevron） |
@@ -190,7 +190,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | 附件存储与备份管线 | `attachments/attachment_store.dart`、`backup/backup_archive.dart`、`backup/legacy_json_stream.dart` | `AttachmentStore`——附件字节**唯一入口**（文件存储 + 导入暂存 + 孤儿回收 + 迁移期按需物化；生产 `FileAttachmentStore`、测试 `InMemoryAttachmentStore`），绘制层禁止自行拼附件路径或直接用 `File`；`packBackupArchiveToFile` / `unpackBackupArchiveFile`（流式 zip，附件 store 模式、逐条落盘）；`rewriteLegacyBackupJson`（旧版内嵌 base64 备份的前向事件流重写） |
 | AI 对话查询工具 | `ai/ledger_query.dart`、`ai/ai_query_tool.dart`、`ai/ai_tool_schema.dart` | 通用交易筛选 `queryLedgerEntries`（`LedgerQuery`）；只读工具协议 `AiQueryTool` + `AiToolContext`（含 `currencyDisplay`：单位口径由聊天页注入，**工具层不读 `amount_format` 全局闸门**）+ `AiToolResult` + `AiResultDisplay`（sealed）+ typed Schema + 注册表 `buildAiQueryTools`（**新增分析工具在此登记，并更新 `ai-tools.md`**） |
 | AI Agent 引擎 | `ai/ai_agent_engine.dart`、`ai/ai_native_tool_protocol.dart`、`ai/ai_prompt_tool_protocol.dart` | 双协议只读 Agent 状态机（结构化 `AiAgentMessage` / `AiAgentEvent`）；原生 Tool Calls 与兼容标记协议共用工具执行、轮次和重试边界；结构化传输入口为 `aiAgentStream` / `aiAgentComplete` |
-| 设计令牌 | `app_theme.dart` | Material 主交互色从 `Theme.of(context).colorScheme.primary` 读取（默认 Veri Royal、系统动态色或用户自定义色）；`veriRoyal` 仅作为默认回退和无主题上下文的绘制 API 默认值；语义色 `veriBlue` `veriIncome` `veriExpense` `veriWarning` 保持独立；圆角 `veriRadiusSm/Md/Lg/Xl` 与 `veriCardRadiusFor()`（卡片圆角，`VeriCard` 与卡内自行裁角的场景共用同一取值，不要在调用点重写 `veriUnifiedDesignPreview ? ... : ...`）；`veriHeaderHeight` `veriPageMaxWidth` |
+| 设计令牌 | `app_theme.dart` | Material 主交互色从 `Theme.of(context).colorScheme.primary` 读取（默认 Veri Royal、系统动态色或用户自定义色）；`veriRoyal` 仅作为默认回退和无主题上下文的绘制 API 默认值；语义色 `veriBlue` `veriIncome` `veriExpense` `veriWarning` 保持独立；圆角 `veriRadiusSm/Md/Lg/Xl` 与 `veriCardRadius`（卡片圆角，`VeriCard` 与卡内自行裁角的场景共用同一取值，不要在调用点另写数字）；`veriHeaderHeight` `veriPageMaxWidth` |
 
 ## 族 11 — AI 对话查询 UI
 
@@ -206,7 +206,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 ## 维护约定
 
-- `app_theme.dart` 维护内容表面令牌与纯函数 `veriContentSurfaceColor(Brightness)`，供 `VeriCard` 和资产封面共用；`veriUnifiedDesignPreview` 默认关闭，只控制布局密度与排版。既有组件的布局分支见 [统一设计候选方案](unified-design-preview.md)。
+- `app_theme.dart` 维护内容表面令牌与纯函数 `veriContentSurfaceColor(Brightness)`，供 `VeriCard` 和资产封面共用。排版只有一套已评审参数，不再有构建开关或第二套布局分支。
 
 - 新增可复用件 → 归入对应族、加进本表、放对的文件（通用叶子组件→`common_widgets.dart`，跨路由反馈 Host→`feedback.dart`，弹窗 helper→`sheets.dart`，记账相关 widget→`entry_sheets.dart`，纯计算→对应 `*_math`/`*_tree` 模块）。
 - **收起单位要连间距一起收**：调用方为「单位：x」单独加的 `SizedBox`／`Padding` 必须与单位同时消失。只让组件自己渲染为空会把那段间距留在版面里，看起来像空了一块。判断条件用 `textCurrencyUnitHidden`。

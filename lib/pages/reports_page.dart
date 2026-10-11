@@ -955,7 +955,7 @@ class _BudgetExecutionCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
                             // 无预算时这里展示实际支出，不能继承进度条的浅分隔线色。
-                            color: veriUnifiedDesignPreview && budget <= 0
+                            color: budget <= 0
                                 ? (isZeroAmount(expense)
                                       ? Theme.of(context).colorScheme.onSurface
                                       : colorForType(
