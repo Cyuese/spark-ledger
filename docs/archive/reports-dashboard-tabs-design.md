@@ -1,5 +1,10 @@
 # 看板分 Tab、新增面板与统计能力整合设计
 
+> **历史方案存档（已实施完成，2026-10-11）。** 本文记录当时的方案与阶段划分，不是当前实现说明：
+> §4「现状技术盘点」写于改动之前，其中的 `PanelPageKind{home,reports}`、`reportPanelSpecs`（6 项）等
+> 描述**已过时**。判断当前实现请以源码、[组件清单](../dev/components.md) 与
+> [统一设计规范](../design-system.md) 为准。
+>
 > 状态：**已实施完成**（阶段 1–6 全部落地，每阶段一个提交）。原独立统计分析页已按维护者授权删除，能力并入看板。
 > 分支：`talyra42/reports-dashboard-tabs`
 > 日期：2026-10-11
@@ -264,7 +269,7 @@ SectionTitle(资产汇总, trailing: 锚点菜单「正资产 / 负资产」)
 - `docs/design-system.md`：看板 Tab、面板编排、资产汇总。
 - `docs/ui-guidelines.md`：看板骨架（Tab 位置 + 空 Tab 语义）、图表交互、正/负资产口径、**参照实现去掉 `report_analysis_page.dart`**。
 - `docs/dev/components.md`：新增/抽取组件、`VeriDonutChart` 扩展、统计分析页条目改为「页面已移除，纯函数保留」。
-- `docs/dev/data-card-and-chart-system-design.md`：§14 进度。
+- `docs/archive/data-card-and-chart-system-design.md`：§14 进度。
 - `docs/dev/tech-decisions.md`：备份范围表（面板字段）。
 - `CHANGELOG.md`：用户可见变化（新 Tab、新面板、统计分析页并入看板）。
 - `README.md`：功能列表。

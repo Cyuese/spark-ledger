@@ -42,7 +42,9 @@
 - `docs/dev/feedback-system.md`：根级轻提示 Host 的调用、时长、操作结果、去重与优先级队列规范；新增或替换短反馈前必读。
 - `docs/dev/home-widgets.md`：桌面小组件（Jetpack Glance Provider、配置 Activity、指标投影与预览）的当前实现与验收。
 - `docs/dev/save-interaction-consistency-design.md`、`docs/dev/navigation-style-decoupling-design.md`：草稿/保存/返回语义与底部导航样式契约。
+- `docs/dev/anchored-menu.md`：锚点菜单的用法与递进子菜单约定。`docs/dev/account-icon-assets.md`：账户图标资源分组、命名与新增图标的流程。
 - `docs/dev/ui-library-adoption-plan.md`：第三方 UI 组件库的选型结论（哪些采用、哪些不采用及原因）。**打算引入新组件库前先读它**，避免重复评估已被否决的库。
+- `docs/archive/`：**已完成/已废弃的历史方案存档**，只作决策留痕，含撰写时的过时事实（如被删除的页面与旧面板目录）。不要把存档内容当成当前实现，也不要照着它写代码。
 - `README.md`、`docs/product.md`、`docs/acceptance-checklist.md`：产品定位、能力范围与验收清单。
 
 ## 产品原则
