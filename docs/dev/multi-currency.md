@@ -253,7 +253,7 @@ Controller 持有当前账本的汇率列表与不可变派生视图（新增派
 
 ## 备份、恢复与初始化
 
-明文 JSON 根字段 `version` 当前为 **3**（zip/加密信封字节格式见 [tech-decisions.md](tech-decisions.md)）。v3 备份携带：`ledgerBooks[].baseCurrencyCode`/`currencySetupStatus`、`accounts[].currencyCode`、`entries[]` 三层金额与 `conversionSource`、`recurringRules[]` 币种字段与 `ratePolicy`、`exchangeRates[]`、金额显示偏好枚举。v1/v2 旧备份按旧数据迁移规则解释为 CNY 并标 `legacyUnconfirmed`，允许一次无换算重解释；未知字段容忍，非法币种/金额拒绝并保持现有数据不被覆盖。货币静态目录不进备份。完整备份范围见 [tech-decisions.md](tech-decisions.md)，样例见 `docs/fixtures/sample-backup.json`。
+明文 JSON 根字段 `version` 当前为 **3**（zip / `.verifin` 加密容器的字节格式见 [tech-decisions.md](tech-decisions.md)）。v3 备份携带：`ledgerBooks[].baseCurrencyCode`/`currencySetupStatus`、`accounts[].currencyCode`、`entries[]` 三层金额与 `conversionSource`、`recurringRules[]` 币种字段与 `ratePolicy`、`exchangeRates[]`、金额显示偏好枚举。v1/v2 旧备份按旧数据迁移规则解释为 CNY 并标 `legacyUnconfirmed`，允许一次无换算重解释；未知字段容忍，非法币种/金额拒绝并保持现有数据不被覆盖。货币静态目录不进备份。完整备份范围见 [tech-decisions.md](tech-decisions.md)，样例见 `docs/fixtures/sample-backup.json`。
 
 “初始化数据”清除账目时一并清除汇率表；设备本地的语言、备份凭证、AI Key 等仍按现有规则保留/清除。
 

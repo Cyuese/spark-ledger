@@ -47,8 +47,10 @@ target footprint 268435456, growth limit 268435456
 
 1. **内存有界**：任意链路的峰值内存只与「单张附件」和「固定分块」有关，与附件总量、备份体积无关。
    1 GB、10 GB 备份都能备份、恢复、上传、下载。
-2. **不设大小上限**：删除 `MAX_BACKUP_BYTES`、`maxBackupArchive*`、`_maxWebdavDownloadBytes`
-   等固定阈值；反向保护改为流式结构校验 + 可用磁盘空间检查，而非拒绝大数据。
+2. **不按体积拒绝备份**：删除 `MAX_BACKUP_BYTES`、旧版 `maxBackupArchiveBytes`、
+   `_maxWebdavDownloadBytes` 等按字节数拒绝的阈值；保留 `maxBackupAttachmentCount` /
+   `maxBackupArchiveFileCount`（已从 2000/2048 提到 200000）作为「条目数明显不合理」的
+   结构上限，其余交给流式结构校验与可用磁盘空间检查。
 3. **不丢数据**：存量库内 base64 附件必须完整迁移到文件；迁移可中断、可重试、幂等。
 4. **可观测**：备份、导出、恢复、迁移都有百分比进度，可取消；成功、失败、文件损坏分别有明确提示。
 5. **可校验**：写入后校验完整性，恢复时校验结构，损坏必须在落库前被拦下并报错。
@@ -342,7 +344,8 @@ class BackupProgress { final BackupPhase phase; final int done; final int total;
 | 进度条、取消、成功/失败/损坏提示 | 已实现 |
 | WebDAV 流式上传/下载 | 已实现 |
 | Android 真机验收（debug APK，模拟器） | 已执行：见下方「真机验收记录」 |
-| CI release APK 验收 | 待 CI 与维护者真机执行 |
+| CI 构建 | 已通过（v1.19.6 的 APK/AAB 由 CI 构建并创建预发布） |
+| release APK 真机验收 | 待维护者执行（release 包只含 arm64-v8a，本地 x86_64 模拟器装不上） |
 
 ### 真机验收记录（模拟器，debug 构建）
 
