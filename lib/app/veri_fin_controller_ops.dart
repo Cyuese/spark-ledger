@@ -188,7 +188,11 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   List<Tag> tagsForBook(String bookId) =>
       List<Tag>.unmodifiable(_tags.where((tag) => tag.bookId == bookId));
 
-  Tag? tagById(String id) => _tags.where((tag) => tag.id == id).firstOrNull;
+  /// 当前账本的标签；标签属于账本，跨账本一律用 [tagsForBook]（与 [categoryById]
+  /// 只解析当前账本的口径一致）。
+  Tag? tagById(String id) => _tags
+      .where((tag) => tag.id == id && tag.bookId == _activeBookId)
+      .firstOrNull;
 
   /// 某标签在当前账本被多少笔交易使用（分类/标签的笔数口径一律只看当前账本）。
   int tagUsageCount(String tagId) {
@@ -1963,6 +1967,16 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
         EntryValidationCode.categoryOutOfScope,
       );
     }
+    // 标签与分类同一口径：交易/退款只能引用自己账本里**已存在**的标签。跨账本 id 会被
+    // 展示层从标签表里解析出别的账本的标签名，悬空 id 则是一条无效引用，两者都在写入前
+    // 拦下（载入/导入期的存量由 `_healTagData` 清理）。
+    bool tagInBook(String tagId, String bookId) =>
+        _tags.any((tag) => tag.id == tagId && tag.bookId == bookId);
+    if (entry.tagIds.any((tagId) => !tagInBook(tagId, entry.bookId))) {
+      return const EntrySaveValidationFailure(
+        EntryValidationCode.tagOutOfScope,
+      );
+    }
     if (refunds.any(
       (refund) =>
           refund.type != EntryType.refund ||
@@ -1971,6 +1985,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
           refund.currencyCode != entry.currencyCode ||
           refund.amount <= 0 ||
           !categoryInBook(refund.categoryId, refund.bookId) ||
+          refund.tagIds.any((tagId) => !tagInBook(tagId, refund.bookId)) ||
           !_validEntryCurrencyAmounts(refund, book),
     )) {
       return const EntrySaveValidationFailure(
@@ -4612,11 +4627,13 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _autoSuggestEnabled = nextAutoSuggestEnabled;
     _showRunningBalance = nextShowRunningBalance;
     _homeTrendConfig = nextHomeTrendConfig;
-    // 备份恢复零参照完整性校验，是「幽灵同名分类」的唯一现实入口（内部不一致的外部/
-    // 异构/手改备份）；覆盖后跑一遍自愈，堵住这个入口。落库统一由下方 _persistAllLedgerData。
+    // 备份恢复零参照完整性校验，是「幽灵同名分类」与跨账本标签引用的唯一现实入口
+    // （内部不一致的外部/异构/手改备份）；覆盖后跑一遍自愈，堵住这个入口。
+    // 落库统一由下方 _persistAllLedgerData。
     _healCategoryData();
     // 退款自愈：把导入数据里的旧标量退款迁成关联退款条目并重算净额缓存。
     _syncRefundData();
+    _healTagData();
     _persistAllLedgerData();
     _store.write(_activeBookKey, _activeBookId);
     _store.write(_profileKey, jsonEncode(_profile.toJson()));
