@@ -255,6 +255,10 @@ SectionTitle(资产汇总, trailing: 锚点菜单「正资产 / 负资产」)
 
 ## 11. 需同步的文档
 
+> 同步时机：`design-system.md` / `ui-guidelines.md` 属于**永久规范**，在阶段 6 一次性同步，
+> 避免把中间态（空 Tab、临时默认「月统计」）写进规范。阶段 1–5 只维护本设计文档
+> 与 `tech-decisions.md` 的备份范围表。
+
 - `docs/design-system.md`：看板 Tab、面板编排、资产汇总。
 - `docs/ui-guidelines.md`：看板骨架（Tab 位置 + 空 Tab 语义）、图表交互、正/负资产口径、**参照实现去掉 `report_analysis_page.dart`**。
 - `docs/dev/components.md`：新增/抽取组件、`VeriDonutChart` 扩展、统计分析页条目改为「页面已移除，纯函数保留」。
