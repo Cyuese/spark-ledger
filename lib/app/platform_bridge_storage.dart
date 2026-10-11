@@ -1,11 +1,33 @@
 part of 'platform_bridge.dart';
 
-/// 原生流式复制到缓存后的结果：本地路径 + 字节数。
+/// 原生流式复制到缓存后的结果：本地路径 + 字节数 + 归属。
 class StagedCacheFile {
-  const StagedCacheFile({required this.path, required this.byteSize});
+  const StagedCacheFile({
+    required this.path,
+    required this.byteSize,
+    this.owned = true,
+  });
 
   final String path;
   final int byteSize;
+
+  /// true 表示这个文件是本应用为本次操作**新建**的临时副本，用完必须删除；
+  /// false 表示它本来就是用户自己的文件，调用方不得删除。
+  final bool owned;
+}
+
+/// 用户挑中的备份文件描述（只含 URI 与元信息，不含字节）。
+class PickedBackupFile {
+  const PickedBackupFile({required this.uri, this.name, this.size});
+
+  /// Android 为 SAF `content://` URI；桌面为 `file://` URI。
+  final String uri;
+
+  /// 原始文件名，仅用于提示；读取失败时为 null。
+  final String? name;
+
+  /// 文件大小（字节），未知为 null。
+  final int? size;
 }
 
 /// 原生流式写出后的回执：写入字节数与内容 SHA-256（写盘时同步算出）。
@@ -116,6 +138,36 @@ class AppStorageBridge {
 
   // ---- 大文件流式复制（不把整包放进内存）----
 
+  /// 打开系统文件选择器挑一个备份文件，只回传 URI 与元信息。
+  ///
+  /// 故意不经过 `file_selector`：该插件会把整份文件读进 Java `byte[]` 并再复制一份，
+  /// GB 级备份会直接 OOM（Issue 45）。这里拿到 `content://` URI 后由
+  /// [stageBackupFile] 流式复制。
+  static Future<PickedBackupFile?> pickBackupFile() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, Object?>(
+        'pickBackupFile',
+      );
+      if (result == null) {
+        return null;
+      }
+      final uri = result['uri'] as String? ?? '';
+      if (uri.isEmpty) {
+        return null;
+      }
+      final name = result['name'] as String?;
+      return PickedBackupFile(
+        uri: uri,
+        name: name == null || name.isEmpty ? null : name,
+        size: (result['size'] as num?)?.toInt(),
+      );
+    } on MissingPluginException {
+      throw Exception('当前平台不支持选择备份文件。');
+    } on PlatformException catch (error) {
+      throw Exception(error.message ?? '选择备份文件失败，请稍后再试。');
+    }
+  }
+
   /// 把用户选择的 SAF 文件流式复制到应用缓存目录，返回本地路径与字节数。
   static Future<StagedCacheFile?> stageBackupFile(String fileUri) async {
     try {
@@ -133,6 +185,7 @@ class AppStorageBridge {
       return StagedCacheFile(
         path: path,
         byteSize: (result['bytes'] as num?)?.toInt() ?? 0,
+        owned: result['owned'] as bool? ?? true,
       );
     } on MissingPluginException {
       throw Exception('当前平台不支持读取备份文件。');
