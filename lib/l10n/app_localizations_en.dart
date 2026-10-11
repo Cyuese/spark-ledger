@@ -569,6 +569,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetSummaryShare => 'Share';
 
   @override
+  String assetSummaryShowAll(int count) {
+    return 'Show all ($count)';
+  }
+
+  @override
+  String get assetSummaryCollapse => 'Show less';
+
+  @override
   String incomeAmountLabel(String amount) {
     return 'Income $amount';
   }

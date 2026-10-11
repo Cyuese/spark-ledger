@@ -551,6 +551,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetSummaryShare => '资产占比';
 
   @override
+  String assetSummaryShowAll(int count) {
+    return '展开全部（$count）';
+  }
+
+  @override
+  String get assetSummaryCollapse => '收起';
+
+  @override
   String incomeAmountLabel(String amount) {
     return '收入 $amount';
   }
