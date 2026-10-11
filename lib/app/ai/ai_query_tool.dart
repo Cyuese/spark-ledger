@@ -70,10 +70,10 @@ class AiToolContext {
   /// 当前账本账户。
   final List<Account> accounts;
 
-  /// 全局分类。
+  /// 当前账本的分类。
   final List<Category> categories;
 
-  /// 全局标签。
+  /// 当前账本的标签。
   final List<Tag> tags;
 
   /// 账户当前余额查询（含初始余额与全部交易累积）。
