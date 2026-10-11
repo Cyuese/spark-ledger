@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:verifin/app/chart_painters.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 
@@ -129,6 +130,41 @@ void main() {
       scrollable: firstVerticalScrollable(),
     );
     expect(find.text('分类 · 标签排行'), findsOneWidget);
+  });
+
+  testWidgets('资产汇总：环内空白处点击也能切换金额 / 占比', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 2600);
+    addTearDown(tester.view.reset);
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    await controller.addAccountDraft(
+      Account(
+        id: 'acc_tap',
+        bookId: controller.activeBook.id,
+        name: '现金',
+        type: AccountType.onlinePayment,
+        groupId: null,
+        initialBalance: 500,
+        iconCode: 'wallet',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+        currencyCode: controller.activeBook.baseCurrencyCode,
+      ),
+    );
+    controller.dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2); // 看板 · 日常
+    await tester.pumpAndSettle();
+    expect(find.text('资产金额'), findsOneWidget);
+
+    // 点在中心区域偏下（避开文字本身），仍应命中可点的中心。
+    final center = tester.getCenter(find.byType(VeriDonutChart));
+    await tester.tapAt(center + const Offset(0, 32));
+    await tester.pumpAndSettle();
+    expect(find.text('资产占比'), findsOneWidget);
   });
 
   testWidgets('资产汇总：负资产显示负数，账户超过 5 个可展开', (tester) async {

@@ -507,42 +507,50 @@ class _AssetSummaryChartState extends State<_AssetSummaryChart> {
               showPercentTitles: true,
               onCenterTap: widget.onToggleMode,
               semanticsLabel: l10n.panelAssetSummaryLabel,
-              center: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Row(
+              // 固定大小的中心热区：点在环内空白处也应能切换口径，
+              // 不能只有那两行文字可点（尺寸留在圆孔内，不压到环上）。
+              center: SizedBox(
+                width: 88,
+                height: 88,
+                child: Center(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Text(
-                        widget.showShare
-                            ? l10n.assetSummaryShare
-                            : l10n.assetSummaryAmount,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.56),
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            widget.showShare
+                                ? l10n.assetSummaryShare
+                                : l10n.assetSummaryAmount,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.56),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          Icon(
+                            Icons.swap_horiz,
+                            size: 13,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.56),
+                          ),
+                        ],
                       ),
-                      Icon(
-                        Icons.swap_horiz,
-                        size: 13,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.56),
+                      Text(
+                        formatUserMoney(total, widget.baseCurrency),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ],
                   ),
-                  Text(
-                    formatUserMoney(total, widget.baseCurrency),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
