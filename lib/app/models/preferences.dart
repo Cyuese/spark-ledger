@@ -344,6 +344,8 @@ class PagePanelSpec {
         return l10n.calendarTitle;
       case 'budget_execution':
         return l10n.panelBudgetExecutionLabel;
+      case 'summary':
+        return l10n.panelSummaryLabel;
       case 'category_ring':
         return l10n.panelCategoryRingLabel;
       case 'category_rank':
@@ -371,6 +373,8 @@ class PagePanelSpec {
         return l10n.panelCalendarDesc;
       case 'budget_execution':
         return l10n.panelBudgetExecutionDesc;
+      case 'summary':
+        return l10n.panelSummaryDesc;
       case 'category_ring':
         return l10n.panelCategoryRingDesc;
       case 'category_rank':
@@ -396,6 +400,7 @@ const List<PagePanelSpec> homePanelSpecs = <PagePanelSpec>[
 /// 看板「月统计」Tab 的面板目录（原 `reportPanelSpecs`，语义不变）。
 /// 顺序即默认渲染顺序，也是新增面板的插入位置依据。
 const List<PagePanelSpec> reportMonthlyPanelSpecs = <PagePanelSpec>[
+  PagePanelSpec(id: 'summary'),
   PagePanelSpec(id: 'budget_execution'),
   PagePanelSpec(id: 'category_ring'),
   PagePanelSpec(id: 'category_rank'),

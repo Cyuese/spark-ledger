@@ -58,6 +58,6 @@ void main() {
       scrollable: firstVerticalScrollable(),
     );
     expect(monthlyEntry, findsOneWidget);
-    expect(find.text('6个月统计面板'), findsOneWidget);
+    expect(find.text('7个月统计面板'), findsOneWidget);
   });
 }

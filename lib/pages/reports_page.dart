@@ -42,6 +42,12 @@ class _ReportsPageState extends State<ReportsPage> {
     final monthExpense = sumByType(monthEntries, EntryType.expense);
     final monthIncome = sumByType(monthEntries, EntryType.income);
     final monthNet = monthIncome - monthExpense;
+    final monthIncomeCount = monthEntries
+        .where((entry) => entry.type == EntryType.income)
+        .length;
+    final monthExpenseCount = monthEntries
+        .where((entry) => entry.type == EntryType.expense)
+        .length;
     // 预算执行卡按预算周期取数（键月 + 周期窗口）；看板其余统计仍按自然月。
     final budgetKeyMonth = controller.budgetKeyMonthFor(now);
     final budgetEntries = entriesInWindow(
@@ -86,6 +92,14 @@ class _ReportsPageState extends State<ReportsPage> {
     // 面板 id 对应的卡片,渲染顺序与开关由面板管理页配置。
     Widget panelFor(String id) {
       switch (id) {
+        case 'summary':
+          return _MonthSummaryPanel(
+            income: monthIncome,
+            expense: monthExpense,
+            net: monthNet,
+            incomeCount: monthIncomeCount,
+            expenseCount: monthExpenseCount,
+          );
         case 'budget_execution':
           return _BudgetExecutionCard(
             budget: monthlyBudget,
@@ -328,12 +342,6 @@ class _ReportsPageState extends State<ReportsPage> {
           // 各 Tab 的面板清单互相独立。「日常 / 年统计 / 自定义」的内容尚未
           // 实现，先只画 Tab 本体，不渲染任何面板与占位文案。
           if (_tab == ReportPeriodTab.monthly) ...<Widget>[
-            const SizedBox(height: 10),
-            _MonthSummaryCard(
-              income: monthIncome,
-              expense: monthExpense,
-              net: monthNet,
-            ),
             for (final id in panelIds) ...<Widget>[
               const SizedBox(height: 10),
               panelFor(id),
@@ -347,18 +355,22 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 }
 
-/// 看板各面板只统计支出（分类/标签/趋势均按支出取数），页首补一条本月
-/// 收入/支出/结余摘要，避免整个看板看起来「只有支出」。
-class _MonthSummaryCard extends StatelessWidget {
-  const _MonthSummaryCard({
+/// 月统计的本月收支摘要面板：本月收入 / 支出 / 结余（各带笔数）。
+/// 原先是页面顶部无法关闭的固定条，现在与其它面板一样可开关、可排序。
+class _MonthSummaryPanel extends StatelessWidget {
+  const _MonthSummaryPanel({
     required this.income,
     required this.expense,
     required this.net,
+    required this.incomeCount,
+    required this.expenseCount,
   });
 
   final double income;
   final double expense;
   final double net;
+  final int incomeCount;
+  final int expenseCount;
 
   @override
   Widget build(BuildContext context) {
@@ -368,26 +380,38 @@ class _MonthSummaryCard extends StatelessWidget {
     ).colorScheme.onSurface.withValues(alpha: 0.48);
     return VeriCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SummaryMetric(
-            label: l10n.metricMonthIncome,
-            value: formatAmount(income),
-            color: isZeroAmount(income)
-                ? zeroColor
-                : veriSemantic(context, veriIncome),
+          SectionTitle(
+            title: l10n.panelSummaryLabel,
+            trailing: l10n.monthNumber(DateTime.now().month),
           ),
-          SummaryMetric(
-            label: l10n.metricMonthExpense,
-            value: formatExpenseAmount(expense),
-            color: isZeroAmount(expense)
-                ? zeroColor
-                : veriSemantic(context, veriExpense),
-          ),
-          SummaryMetric(
-            label: l10n.metricMonthNet,
-            value: formatSignedAmount(net),
-            color: Theme.of(context).colorScheme.onSurface,
+          const SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              SummaryMetric(
+                label: l10n.metricMonthIncome,
+                value: formatAmount(income),
+                color: isZeroAmount(income)
+                    ? zeroColor
+                    : veriSemantic(context, veriIncome),
+                detail: l10n.entriesCount(incomeCount),
+              ),
+              SummaryMetric(
+                label: l10n.metricMonthExpense,
+                value: formatExpenseAmount(expense),
+                color: isZeroAmount(expense)
+                    ? zeroColor
+                    : veriSemantic(context, veriExpense),
+                detail: l10n.entriesCount(expenseCount),
+              ),
+              SummaryMetric(
+                label: l10n.metricMonthNet,
+                value: formatSignedAmount(net),
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ],
           ),
         ],
       ),

@@ -1022,6 +1022,18 @@ abstract class AppLocalizations {
   /// **'按日历查看每天的收支情况'**
   String get panelCalendarDesc;
 
+  /// 看板月统计面板:本月收支摘要卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'本月收支'**
+  String get panelSummaryLabel;
+
+  /// 看板月统计面板:本月收支摘要卡片描述
+  ///
+  /// In zh, this message translates to:
+  /// **'本月收入、支出与结余合计'**
+  String get panelSummaryDesc;
+
   /// No description provided for @panelBudgetExecutionLabel.
   ///
   /// In zh, this message translates to:
