@@ -91,6 +91,12 @@ class InMemoryLedgerRepository implements LedgerRepository {
   Future<void> clearAttachmentDataUrl(String id) async {}
 
   @override
+  Future<bool> hasLegacyAttachmentColumn() async => false;
+
+  @override
+  Future<bool> dropLegacyAttachmentData() async => false;
+
+  @override
   Future<void> saveEntryAggregate({
     required List<LedgerEntry> entries,
     required List<Attachment> attachments,

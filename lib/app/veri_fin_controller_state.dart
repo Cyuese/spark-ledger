@@ -984,6 +984,20 @@ mixin _ControllerState on ChangeNotifier {
     return (converted: converted, failed: failed);
   }
 
+  /// 迁移完成后的空间回收：库里不再有旧版 base64 时重建附件表去掉 `data_url` 并
+  /// VACUUM，把历史内嵌图片占的空间还给系统。
+  ///
+  /// 幂等，且是尽力而为的维护动作：失败（磁盘不足等）只记日志，列会留到下次启动重试，
+  /// 不影响任何功能，因此不给用户弹反馈。是否还有待迁移数据由仓储层再核验一次。
+  Future<bool> reclaimLegacyAttachmentStorage() async {
+    try {
+      return await _repository.dropLegacyAttachmentData();
+    } catch (error) {
+      _logger?.error('附件旧列回收失败', source: 'attachments', error: error);
+      return false;
+    }
+  }
+
   void _persistRecurringRules() {
     _trackWrite(
       _repository.saveRecurringRules(List<RecurringRule>.of(_recurringRules)),
