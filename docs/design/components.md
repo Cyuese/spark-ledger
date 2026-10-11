@@ -28,7 +28,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 开启设计预览时所有公共骨架默认 compact=true：16dp **有效**页边距（页面容器写 14dp，`VeriPage` 再补 2dp）、56dp Header 最小高度、16dp 卡片圆角，默认内边距
 横向 14dp、纵向 12dp；`VeriCard.padding` 显式传入时仍优先。默认构建仍保持已发布几何参数；候选构建的管理页、设置页和根页面不再分两套密度。
 
-> **新建页面的标准骨架与头部对齐规则见 `docs/ui-guidelines.md`「顶部 Header 与页面骨架」**：`Scaffold > SafeArea > VeriPage > ListView(padding: fromLTRB(14,8,14,…))` + `VeriHeader`；`VeriHeader` 自身无横向内边距，头部缩进全靠外层 padding，带固定页脚的页面须单独给头部套 `Padding(fromLTRB(14,8,14,0))`。
+> **新建页面的标准骨架与头部对齐规则见 `docs/design/ui-guidelines.md`「顶部 Header 与页面骨架」**：`Scaffold > SafeArea > VeriPage > ListView(padding: fromLTRB(14,8,14,…))` + `VeriHeader`；`VeriHeader` 自身无横向内边距，头部缩进全靠外层 padding，带固定页脚的页面须单独给头部套 `Padding(fromLTRB(14,8,14,0))`。
 
 | 名称 | 类型 | 位置 | 用途 |
 |---|---|---|---|
@@ -36,7 +36,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `VeriCard` | Widget | `common_widgets.dart` | 统一圆角/描边/阴影卡片，可点击（`quietTap` 长按吞噬变体） |
 | `VeriHeader` | Widget | `common_widgets.dart` | 页眉（标题+副标题+返回+actions，最小高度 52、候选构建 56；用最小高度而非固定高度，系统字号放大时两行标题不会被裁掉） |
 | `PageHeader` | Widget | `common_widgets.dart` | `VeriHeader` 的薄封装（单 trailing）；`subtitle` 为 `String?`，`null` 时整行不渲染；副标题里带「单位：x」必须用 `currencyUnitSubtitle`（族 7）——隐藏单位且无上下文时它返回 `null`，直接传进去即可整段省略 |
-| `VeriRootNavigationStyle` / `VeriRootNavigationLayout` / `VeriRootNavigationSpec` / `VeriRootNavigationHost` / `VeriRootNavigationBody` / `VeriNavigationDestination` / `veriRootPageListPadding` | 契约接口 / 值类 / Widget / 布局 helper | `root_navigation.dart` | 根导航的**样式契约**：样式只声明几何事实（`extendBody`、`occupiedHeight`、`listBottomGap`，避让高度由 `contentBottomPadding` 统一推导）和选中动效时长，并实现 `buildBar` 画栏；`buildBar` 只吃纯数据 `spec`，不接触 Controller/KV/Navigator，因此同一实现同时服务真实壳层与样式选择页预览（预览把 `onSelect` 置空）。每个样式必须产出 `keyOf('bottom_nav')`、`keyOf('nav_bar')` 与 `keyOf('nav_item_<下标>')` 稳定 key，测试与无障碍按 key 定位、不依赖几何。壳层经 `VeriRootNavigationHost` 渲染，测试从这里读 `spec`。契约不含记账按钮（按钮与导航栏解耦，见 `docs/dev/navigation-style-decoupling-design.md`）。切页动画被用户交互打断时由 `_finishTabSwitch` 按页面实际落点对齐底栏，不能写死点击目标 |
+| `VeriRootNavigationStyle` / `VeriRootNavigationLayout` / `VeriRootNavigationSpec` / `VeriRootNavigationHost` / `VeriRootNavigationBody` / `VeriNavigationDestination` / `veriRootPageListPadding` | 契约接口 / 值类 / Widget / 布局 helper | `root_navigation.dart` | 根导航的**样式契约**：样式只声明几何事实（`extendBody`、`occupiedHeight`、`listBottomGap`，避让高度由 `contentBottomPadding` 统一推导）和选中动效时长，并实现 `buildBar` 画栏；`buildBar` 只吃纯数据 `spec`，不接触 Controller/KV/Navigator，因此同一实现同时服务真实壳层与样式选择页预览（预览把 `onSelect` 置空）。每个样式必须产出 `keyOf('bottom_nav')`、`keyOf('nav_bar')` 与 `keyOf('nav_item_<下标>')` 稳定 key，测试与无障碍按 key 定位、不依赖几何。壳层经 `VeriRootNavigationHost` 渲染，测试从这里读 `spec`。契约不含记账按钮（按钮与导航栏解耦，硬约束与契约测试清单见 `docs/design/ui-guidelines.md` 的「根导航」）。切页动画被用户交互打断时由 `_finishTabSwitch` 按页面实际落点对齐底栏，不能写死点击目标 |
 | `VeriRootNavigationStyles` 注册表（`veriRootNavigationStyles` / `veriRootDefaultNavigationStyle` / `veriRootNavigationStyleFor`） | 常量 / 查表函数 | `root_navigation_styles.dart` | 样式注册表：顺序即样式选择列表顺序；`veriRootNavigationStyleFor` 对缺失/未知标识一律回退默认样式。新增样式须同时加同名 `NavigationStylePreference` 枚举值 |
 | `VeriDockedRootNavigationStyle` / `VeriDockedRootNavigation` | 样式实现 / Widget | `root_navigation_docked.dart` | **停靠式底栏**：整宽、不透明、贴底，底色铺到屏幕最底（含系统导航条背后，否则会分成两块）。条目由 `VeriBottomBar`（`veri_bottom_bar.dart`）绘制，**未选中用 `destination.icon`（线框）、选中用 `selectedIcon`（填充）**，中文标签常显。**安全区**用 `SafeArea(minimum: 12, maintainBottomViewPadding: true)` 取 `max(系统留白, 12)`：系统留白可能是 0，不给下限条目会贴边；`maintainBottomViewPadding` 让键盘弹起时底栏不跳。这是**默认样式**（另有可选的液态玻璃样式），几何参数与迁移前一致（条高 64、列表留白 12） |
 | `VeriLiquidGlassRootNavigationStyle` / `VeriLiquidGlassRootNavigation` | 样式实现 / Widget | `root_navigation_liquid_glass.dart` | **液态玻璃底栏（可选样式）**：浮动胶囊（高 60、左右外边距 12、底部留白 24）+ 玻璃面板 + 透镜。`layout` 声明 `extendBody: true`（列表留白 16），内容从胶囊下方滚过。拖动由 `Listener` 指针状态机驱动：按下即滑向目标项、拖动跟手、松手吸附最近一项、甩动跨格，纯点击走同一条回落动画；只在松手时调用 `spec.onSelect`，因此 Shell 切页状态机不变。条目为自绘图标 + 常显标签，沿用未选中线框、选中填充，`MergeSemantics` + `Semantics(selected:)` 上报选中态，稳定 key 与其他样式一致。拖动时用 `RepaintBoundary` 隔离整屏重绘 |
@@ -52,7 +52,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `EmptyState` | Widget | `common_widgets.dart` | 空状态（插画 + 标题 + 描述 + 可选 `action` 操作入口）；插画是原生绘制（倾斜卡片 + 放大镜，镜片里放调用方的语义 `icon`），随 `colorScheme.primary` 与浅/深主题自动适配，不用外部素材；系统开启「减少动态效果」时停在静态插画，不跑循环动画 |
 | `AssetMissingRateNotice` | Widget | `common_widgets_scaffold.dart` | 「缺汇率」提示：受影响账户数 + 缺失币种，点按跳 `CurrencyRatesPage`。裸用（看板资产汇总卡）传 `onTap` 时自带点击区与 8dp 纵向内边距；已放在可点卡片里（资产页缺率卡）不要传，避免嵌套点击区 |
 | `HeaderAction` / `HeaderTextAction` / `HeaderInline` / `VeriSectionAction` | Widget | `common_widgets.dart` | 页眉动作族（图标钮/文字钮/宽度约束/填充色小图标钮）；需要弹出操作菜单时使用 `VeriAnchoredMenuButton` |
-| `VeriAnchoredMenuAnchor` / `VeriAnchoredMenuButton` / `VeriAnchoredChoice<T>` / `VeriMenuItem` / `VeriMenuDivider` | Widget / 菜单模型 | `common_widgets.dart` | Veri Fin 锚点菜单：图标、标题、副标题、分割线、选中/禁用态、根/默认子菜单/单项子菜单独立宽度、从点击行原位展开的容器变换，以及缩放/压暗但不丢失的完整祖先卡片栈；任意触发器用 `Anchor`，Header 图标入口用 `Button`，2–8 项静态受控单选优先用 `Choice`；完整用法见 [anchored-menu.md](anchored-menu.md) |
+| `VeriAnchoredMenuAnchor` / `VeriAnchoredMenuButton` / `VeriAnchoredChoice<T>` / `VeriMenuItem` / `VeriMenuDivider` | Widget / 菜单模型 | `common_widgets.dart` | Veri Fin 锚点菜单：图标、标题、副标题、分割线、选中/禁用态、根/默认子菜单/单项子菜单独立宽度、从点击行原位展开的容器变换，以及缩放/压暗但不丢失的完整祖先卡片栈；任意触发器用 `Anchor`，Header 图标入口用 `Button`，2–8 项静态受控单选优先用 `Choice`；完整用法见 [anchored-menu.md](../dev/anchored-menu.md) |
 | `SaveHeaderAction` | Widget | `common_widgets.dart` | 全屏编辑页统一保存动作；固定软碟语义的 `Icons.save_outlined` 和本地化 tooltip，支持禁用态 |
 | `SortModeHeaderActions` | Widget | `common_widgets.dart` | 管理页显式排序模式的统一 Header 动作；普通态进入排序，排序态提供取消与软碟保存，未改动时禁用保存 |
 
@@ -158,7 +158,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `runWithLoadingDialog<T>` | Dialog 函数 | `common_widgets.dart` | 不可关闭加载态，任务完成自动关并返回结果 |
 | `confirmCleartextIfRisky` | Dialog 函数 | `sheets.dart` | 明文 http 凭证风险确认 |
 
-## 族 9 — 图表（全部必须支持点击气泡，见 `docs/ui-guidelines.md`）
+## 族 9 — 图表（全部必须支持点击气泡，见 `docs/design/ui-guidelines.md`）
 
 | 名称 | 类型 | 位置 | 用途 |
 |---|---|---|---|

@@ -1,4 +1,4 @@
-/// 通用组件库（跨页面复用，组件清单见 docs/dev/components.md）。
+/// 通用组件库（跨页面复用，组件清单见 docs/design/components.md）。
 /// 组件按域放在 part 文件里，新增组件进对应域、勿再堆回本文件；
 /// 调用方一律 `import 'common_widgets.dart'`，导入路径不变。
 library;

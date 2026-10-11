@@ -572,9 +572,7 @@ void main() {
   });
 
   test('sample backup imports into controller', () async {
-    final rawJson = File(
-      'docs/dev/verifin-sample-backup.json',
-    ).readAsStringSync();
+    final rawJson = File('docs/fixtures/sample-backup.json').readAsStringSync();
     final controller = await makeController();
 
     await controller.importDataJson(rawJson);

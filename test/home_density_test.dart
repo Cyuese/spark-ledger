@@ -30,7 +30,7 @@ void main() {
     addTearDown(tester.view.reset);
     final controller = await makeController();
     controller.importTransactionsFromCsv(
-      File('docs/dev/preview-transactions.csv').readAsStringSync(),
+      File('docs/fixtures/preview-transactions.csv').readAsStringSync(),
     );
     controller.setMonthlyBudget(DateTime.now(), 5000);
     controller.setThemePreference(ThemePreference.light);
