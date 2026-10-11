@@ -1046,6 +1046,12 @@ abstract class AppLocalizations {
   /// **'近 7 日或本周的收支柱状图与日均'**
   String get panelRecentDailyDesc;
 
+  /// 看板日常面板:切到本周时的卡片标题
+  ///
+  /// In zh, this message translates to:
+  /// **'本周统计'**
+  String get panelThisWeekLabel;
+
   /// 近 7 日统计面板的时间范围切换项
   ///
   /// In zh, this message translates to:

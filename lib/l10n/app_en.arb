@@ -157,6 +157,7 @@
   "panelSummaryLabel": "This month",
   "panelSummaryDesc": "Income, spending and balance for this month",
   "panelRecentDailyLabel": "Last 7 days",
+  "panelThisWeekLabel": "This week",
   "panelRecentDailyDesc": "Spending and income chart with daily averages for the last 7 days or this week",
   "recent7Days": "Last 7 days",
   "recentTotalExpense": "Total spending",

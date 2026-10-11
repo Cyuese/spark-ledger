@@ -300,6 +300,10 @@
   "@panelRecentDailyDesc": {
     "description": "看板日常面板:近 7 日 / 本周收支统计卡片描述"
   },
+  "panelThisWeekLabel": "本周统计",
+  "@panelThisWeekLabel": {
+    "description": "看板日常面板:切到本周时的卡片标题"
+  },
   "recent7Days": "近7日",
   "@recent7Days": {
     "description": "近 7 日统计面板的时间范围切换项"
