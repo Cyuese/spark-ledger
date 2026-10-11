@@ -274,6 +274,9 @@ enum EntryValidationCode {
 
   /// 交易/退款引用了不属于其账本的分类（分类按账本隔离后的写入守卫）。
   categoryOutOfScope,
+
+  /// 交易/退款引用了不属于其账本的标签（标签按账本隔离后的写入守卫）。
+  tagOutOfScope,
 }
 
 sealed class EntrySaveResult {

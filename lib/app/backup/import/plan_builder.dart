@@ -22,7 +22,7 @@ class ImportPlan {
   final List<Account> newAccounts;
   final List<Category> newCategories;
 
-  /// 为匹配交易里的标签名需要新建的标签（去重后）。标签全局共享、不分账本。
+  /// 为匹配交易里的标签名需要新建的标签（去重后，属于目标账本）。
   final List<Tag> newTags;
   final List<ImportRowError> errors;
   final List<ImportConversionIssue> conversionIssues;

@@ -37,6 +37,39 @@ Category _categoryIn(VeriFinController controller, String bookId, String key) =>
         .categoriesForBook(bookId)
         .firstWhere((category) => category.key == key);
 
+/// 用给定的库内容构造控制器（默认账本 + 旅行账本），用于验证载入期自愈；
+/// 返回仓储以便断言落库结果。
+Future<(VeriFinController, InMemoryLedgerRepository)> _controllerWithData({
+  required List<Category> categories,
+  required List<Tag> tags,
+  required List<LedgerEntry> entries,
+}) async {
+  final store = LocalKeyValueStore();
+  store.write('verifin.privacy_consent.v1', 'true');
+  store.write('verifin.onboarding.v1', 'true');
+  store.write('verifin.locale.v1', 'zh');
+  final repo = InMemoryLedgerRepository();
+  await repo.saveBooks(<LedgerBook>[
+    LedgerBook(
+      id: defaultLedgerBookId,
+      name: '日常账本',
+      createdAt: DateTime(2026, 1, 1),
+      isDefault: true,
+    ),
+    LedgerBook(
+      id: 'book_travel',
+      name: '旅行',
+      createdAt: DateTime(2026, 1, 2),
+      isDefault: false,
+    ),
+  ]);
+  await repo.saveCategories(categories);
+  await repo.saveTags(tags);
+  await repo.saveEntries(entries);
+  final controller = await createTestController(store, repository: repo);
+  return (controller, repo);
+}
+
 void main() {
   useTestDatabases();
 
@@ -303,5 +336,170 @@ void main() {
     expect(_categoryIn(target, travelBookId, 'dining').label, '美食');
     target.dispose();
     source.dispose();
+  });
+
+  test('交易不能引用别的账本的标签（写入守卫）', () async {
+    final controller = await makeController();
+    final defaultBookId = controller.activeBook.id;
+    final dining = controller.categoryByKey(defaultBookId, 'dining')!;
+    final ownTag = controller.addTag('报销')!;
+    controller.addAccount(
+      const Account(
+        id: 'cash',
+        bookId: defaultLedgerBookId,
+        name: '现金',
+        type: AccountType.cash,
+        groupId: null,
+        initialBalance: 0,
+        iconCode: 'wallet',
+        note: '',
+        includeInAssets: true,
+        hidden: false,
+      ),
+    );
+
+    controller.addLedgerBook('旅行');
+    final travelTag = controller.addTag('报销')!; // 旅行账本的同名标签
+    expect(travelTag, isNot(ownTag));
+
+    // 切回默认账本，把旅行账本的标签挂到默认账本的交易上：必须被拒。
+    controller.switchLedgerBook(defaultBookId);
+    final rejected = await controller.saveEntryAggregateDraftResult(
+      entry: _expense(
+        'e_bad',
+        defaultBookId,
+        dining.id,
+        tagIds: <String>[travelTag],
+      ),
+      isNew: true,
+    );
+    expect(rejected, isA<EntrySaveValidationFailure>());
+    expect(
+      (rejected as EntrySaveValidationFailure).code,
+      EntryValidationCode.tagOutOfScope,
+    );
+    expect(controller.entriesForBook(defaultBookId), isEmpty);
+
+    // 同账本的标签照常保存（守卫只拦跨账本引用）。
+    final saved = await controller.saveEntryAggregateDraftResult(
+      entry: _expense(
+        'e_ok',
+        defaultBookId,
+        dining.id,
+        tagIds: <String>[ownTag],
+      ),
+      isNew: true,
+    );
+    expect(saved.isSuccess, isTrue);
+    expect(controller.entriesForBook(defaultBookId).single.tagIds, <String>[
+      ownTag,
+    ]);
+    controller.dispose();
+  });
+
+  test('tagById 只解析当前账本的标签', () async {
+    final controller = await makeController();
+    final defaultBookId = controller.activeBook.id;
+    final ownTag = controller.addTag('报销')!;
+    controller.addLedgerBook('旅行');
+    final travelBookId = controller.activeBook.id;
+    final travelTag = controller.addTag('报销')!;
+
+    // 当前是旅行账本：解析得到自己的标签，解析不到别的账本的。
+    expect(controller.tagById(travelTag)?.label, '报销');
+    expect(controller.tagById(ownTag), isNull);
+
+    controller.switchLedgerBook(defaultBookId);
+    expect(controller.tagById(ownTag)?.label, '报销');
+    expect(controller.tagById(travelTag), isNull);
+    // 跨账本读取走 tagsForBook。
+    expect(controller.tagsForBook(travelBookId).single.id, travelTag);
+    controller.dispose();
+  });
+
+  test('载入自愈摘掉悬空与跨账本的标签引用并落库，重开幂等', () async {
+    const defaultCategory = Category(
+      id: 'cat_default',
+      bookId: defaultLedgerBookId,
+      label: '餐饮',
+      type: EntryType.expense,
+      iconCode: 'dining',
+      key: 'dining',
+    );
+    const travelCategory = Category(
+      id: 'cat_travel',
+      bookId: 'book_travel',
+      label: '餐饮',
+      type: EntryType.expense,
+      iconCode: 'dining',
+      key: 'dining',
+    );
+    const ownTag = Tag(id: 'tag_own', bookId: defaultLedgerBookId, label: '报销');
+    const otherTag = Tag(id: 'tag_other', bookId: 'book_travel', label: '旅行');
+    const duplicateTag = Tag(
+      id: 'tag_dup',
+      bookId: defaultLedgerBookId,
+      label: '工作',
+    );
+
+    final (controller, repo) = await _controllerWithData(
+      categories: <Category>[defaultCategory, travelCategory],
+      tags: <Tag>[ownTag, otherTag, duplicateTag],
+      entries: <LedgerEntry>[
+        // 悬空 id + 别的账本的 id + 重复引用 + 合法 id。
+        _expense(
+          'e_mixed',
+          defaultLedgerBookId,
+          defaultCategory.id,
+          tagIds: <String>['tag_ghost', otherTag.id, ownTag.id, ownTag.id],
+        ),
+        // 全部解析不到 → 摘空。
+        _expense(
+          'e_foreign',
+          defaultLedgerBookId,
+          defaultCategory.id,
+          tagIds: <String>[otherTag.id],
+        ),
+        // 合法的原样保留。
+        _expense(
+          'e_clean',
+          defaultLedgerBookId,
+          defaultCategory.id,
+          tagIds: <String>[duplicateTag.id],
+        ),
+      ],
+    );
+
+    List<String> tagsOf(String entryId) => controller
+        .entriesForBook(defaultLedgerBookId)
+        .firstWhere((entry) => entry.id == entryId)
+        .tagIds;
+
+    expect(tagsOf('e_mixed'), <String>[ownTag.id]);
+    expect(tagsOf('e_foreign'), isEmpty);
+    expect(tagsOf('e_clean'), <String>[duplicateTag.id]);
+    // 跨账本引用的标签本身不被删除。
+    expect(controller.tagsForBook('book_travel').single.id, otherTag.id);
+
+    // 自愈结果落库。
+    await controller.waitForPendingWrites();
+    final persisted = <String, List<String>>{
+      for (final entry in await repo.loadEntries()) entry.id: entry.tagIds,
+    };
+    expect(persisted['e_mixed'], <String>[ownTag.id]);
+    expect(persisted['e_foreign'], isEmpty);
+    expect(persisted['e_clean'], <String>[duplicateTag.id]);
+
+    // 重开一次：数据已干净，不再有改动（幂等）。
+    final reloaded = await createTestController(
+      LocalKeyValueStore(),
+      repository: repo,
+    );
+    await reloaded.waitForPendingWrites();
+    expect(<String, List<String>>{
+      for (final entry in await repo.loadEntries()) entry.id: entry.tagIds,
+    }, persisted);
+    controller.dispose();
+    reloaded.dispose();
   });
 }

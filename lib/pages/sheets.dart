@@ -1836,7 +1836,7 @@ Future<bool> confirmDeleteAccount(
 enum AccountDeleteAction { hide, delete }
 
 /// 打开标签多选弹窗，返回用户选定的标签 id 列表（取消返回 null）。
-/// 新建标签直接写入 controller（标签全局共享，即时生效）。
+/// 新建标签直接写入 controller（写入当前账本，即时生效）。
 Future<List<String>?> pickEntryTags({
   required BuildContext context,
   required List<String> selectedIds,
