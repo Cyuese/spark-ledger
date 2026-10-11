@@ -333,7 +333,7 @@ void main() {
 
     Navigator.of(tester.element(find.text('上月 40'))).pop();
     await tester.pumpAndSettle();
-    await tapBottomTab(tester, 2);
+    await openReportsMonthlyTab(tester);
 
     expect(find.text('预算执行'), findsOneWidget);
     expect(find.text('1 个超支'), findsOneWidget);

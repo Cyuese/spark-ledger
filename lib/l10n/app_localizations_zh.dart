@@ -42,6 +42,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabReports => '看板';
 
   @override
+  String get reportTabDaily => '日常';
+
+  @override
+  String get reportTabMonthly => '月统计';
+
+  @override
+  String get reportTabYearly => '年统计';
+
+  @override
   String get tabProfile => '我的';
 
   @override
@@ -463,6 +472,99 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get panelCalendarDesc => '按日历查看每天的收支情况';
+
+  @override
+  String get panelSummaryLabel => '本月收支';
+
+  @override
+  String get panelSummaryDesc => '本月收入、支出与结余合计';
+
+  @override
+  String get panelRecentDailyLabel => '近7日统计';
+
+  @override
+  String get panelRecentDailyDesc => '近 7 日或本周的收支柱状图与日均';
+
+  @override
+  String get panelThisWeekLabel => '本周统计';
+
+  @override
+  String get recent7Days => '近7日';
+
+  @override
+  String get recentTotalExpense => '总支出';
+
+  @override
+  String get recentDailyAvgExpense => '日均支出';
+
+  @override
+  String get recentTotalIncome => '总收入';
+
+  @override
+  String get recentDailyAvgIncome => '日均收入';
+
+  @override
+  String recentStatLine(String label, String amount) {
+    return '$label：$amount';
+  }
+
+  @override
+  String get panelAssetSummaryLabel => '资产汇总';
+
+  @override
+  String get panelAssetSummaryDesc => '按账户占比查看正资产或负资产';
+
+  @override
+  String get panelRankingLabel => '分类 · 标签排行';
+
+  @override
+  String get panelRankingDesc => '按顶级分类 / 子分类 / 标签排行，点行可下钻';
+
+  @override
+  String get panelYearSummaryLabel => '本年收支';
+
+  @override
+  String get panelYearSummaryDesc => '本年收入、支出与结余合计';
+
+  @override
+  String get metricYearNet => '本年结余';
+
+  @override
+  String get panelYearTrendLabel => '收支统计';
+
+  @override
+  String get panelYearTrendDesc => '本年每月收入与支出双柱对比';
+
+  @override
+  String get panelYearHeatmapLabel => '收支热力';
+
+  @override
+  String get panelYearHeatmapDesc => '按天查看全年支出 / 收入的深浅';
+
+  @override
+  String get assetPositive => '正资产';
+
+  @override
+  String get assetNegative => '负资产';
+
+  @override
+  String get assetSummaryAmount => '资产金额';
+
+  @override
+  String get assetSummaryShare => '资产占比';
+
+  @override
+  String assetSummaryShowAll(int count) {
+    return '展开全部（$count）';
+  }
+
+  @override
+  String get assetSummaryCollapse => '收起';
+
+  @override
+  String incomeAmountLabel(String amount) {
+    return '收入 $amount';
+  }
 
   @override
   String get panelBudgetExecutionLabel => '预算执行';
@@ -1913,9 +2015,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get statAnalysisTitle => '统计分析';
-
-  @override
   String get pickTimeRange => '选择时间范围';
 
   @override
@@ -1928,22 +2027,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get overviewTitle => '收支概览';
 
   @override
-  String get yoyMomTitle => '同比 · 环比';
-
-  @override
-  String get yoyMomDesc => '较上月为环比，较去年同期为同比';
-
-  @override
-  String get momLabel => '环比';
-
-  @override
-  String get yoyLabel => '同比';
-
-  @override
   String get monthlyTrendTitle => '月度趋势';
-
-  @override
-  String get categoryRank => '分类排行';
 
   @override
   String get rankGroupCategory => '分类';
@@ -1953,9 +2037,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rankGroupTag => '标签';
-
-  @override
-  String get tagRank => '标签排行';
 
   @override
   String get tagRankOverlapNote => '同一笔可带多个标签，各标签占比之和可能超过 100%';

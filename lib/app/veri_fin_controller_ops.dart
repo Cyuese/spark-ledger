@@ -3991,7 +3991,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       _assetAccountOrderKey,
       _assetSectionOrderKey,
       _homePanelsKey,
-      _reportPanelsKey,
+      _reportDailyPanelsKey,
+      _reportMonthlyPanelsKey,
+      _reportYearlyPanelsKey,
     ]) {
       _store.delete(key);
     }
@@ -4075,7 +4077,14 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
         'homePanels': _pagePanels[PanelPageKind.home]!
             .map((item) => item.toJson())
             .toList(),
-        'reportPanels': _pagePanels[PanelPageKind.reports]!
+        // 「月统计」沿用旧字段名，保证旧备份可读、语义不突变。
+        'reportPanels': _pagePanels[PanelPageKind.reportsMonthly]!
+            .map((item) => item.toJson())
+            .toList(),
+        'reportDailyPanels': _pagePanels[PanelPageKind.reportsDaily]!
+            .map((item) => item.toJson())
+            .toList(),
+        'reportYearlyPanels': _pagePanels[PanelPageKind.reportsYearly]!
             .map((item) => item.toJson())
             .toList(),
         'defaultAccountIds': Map<String, String>.from(_defaultAccountIds),
@@ -4271,12 +4280,28 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       ),
       homePanelSpecs,
     );
-    final nextReportPanels = _normalizePanelSettings(
+    // 月统计沿用旧的 `reportPanels` 字段；其余看板 Tab 的字段是新增的，
+    // 旧备份缺字段时归一化为该 Tab 的默认目录。
+    final nextReportMonthlyPanels = _normalizePanelSettings(
       _decodeModelList<PagePanelSetting>(
         data['reportPanels'],
         PagePanelSetting.fromJson,
       ),
-      reportPanelSpecs,
+      reportMonthlyPanelSpecs,
+    );
+    final nextReportDailyPanels = _normalizePanelSettings(
+      _decodeModelList<PagePanelSetting>(
+        data['reportDailyPanels'],
+        PagePanelSetting.fromJson,
+      ),
+      reportDailyPanelSpecs,
+    );
+    final nextReportYearlyPanels = _normalizePanelSettings(
+      _decodeModelList<PagePanelSetting>(
+        data['reportYearlyPanels'],
+        PagePanelSetting.fromJson,
+      ),
+      reportYearlyPanelSpecs,
     );
     // 以下 4 项是设备偏好，缺键（旧备份）回落默认，与 theme/haptics 等同一套「整替」语义。
     final rawDefaultAccounts = data['defaultAccountIds'];
@@ -4389,7 +4414,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       ..clear()
       ..addAll(nextAssetSectionOrders);
     _pagePanels[PanelPageKind.home] = nextHomePanels;
-    _pagePanels[PanelPageKind.reports] = nextReportPanels;
+    _pagePanels[PanelPageKind.reportsDaily] = nextReportDailyPanels;
+    _pagePanels[PanelPageKind.reportsMonthly] = nextReportMonthlyPanels;
+    _pagePanels[PanelPageKind.reportsYearly] = nextReportYearlyPanels;
     _defaultAccountIds
       ..clear()
       ..addAll(nextDefaultAccountIds);

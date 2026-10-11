@@ -44,6 +44,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabReports => 'Reports';
 
   @override
+  String get reportTabDaily => 'Recent';
+
+  @override
+  String get reportTabMonthly => 'Monthly';
+
+  @override
+  String get reportTabYearly => 'Yearly';
+
+  @override
   String get tabProfile => 'Me';
 
   @override
@@ -476,6 +485,105 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get panelCalendarDesc =>
       'View daily income and spending on a calendar';
+
+  @override
+  String get panelSummaryLabel => 'This month';
+
+  @override
+  String get panelSummaryDesc => 'Income, spending and balance for this month';
+
+  @override
+  String get panelRecentDailyLabel => 'Last 7 days';
+
+  @override
+  String get panelRecentDailyDesc =>
+      'Spending and income chart with daily averages for the last 7 days or this week';
+
+  @override
+  String get panelThisWeekLabel => 'This week';
+
+  @override
+  String get recent7Days => 'Last 7 days';
+
+  @override
+  String get recentTotalExpense => 'Total spending';
+
+  @override
+  String get recentDailyAvgExpense => 'Daily avg spending';
+
+  @override
+  String get recentTotalIncome => 'Total income';
+
+  @override
+  String get recentDailyAvgIncome => 'Daily avg income';
+
+  @override
+  String recentStatLine(String label, String amount) {
+    return '$label: $amount';
+  }
+
+  @override
+  String get panelAssetSummaryLabel => 'Assets';
+
+  @override
+  String get panelAssetSummaryDesc =>
+      'Positive or negative assets by account share';
+
+  @override
+  String get panelRankingLabel => 'Categories & tags';
+
+  @override
+  String get panelRankingDesc =>
+      'Rank by top category, subcategory or tag; tap a row to drill down';
+
+  @override
+  String get panelYearSummaryLabel => 'This year';
+
+  @override
+  String get panelYearSummaryDesc =>
+      'Income, spending and balance for this year';
+
+  @override
+  String get metricYearNet => 'This year balance';
+
+  @override
+  String get panelYearTrendLabel => 'Income & spending';
+
+  @override
+  String get panelYearTrendDesc =>
+      'Income against spending for each month this year';
+
+  @override
+  String get panelYearHeatmapLabel => 'Daily heatmap';
+
+  @override
+  String get panelYearHeatmapDesc =>
+      'Spending or income intensity for every day of the year';
+
+  @override
+  String get assetPositive => 'Positive assets';
+
+  @override
+  String get assetNegative => 'Negative assets';
+
+  @override
+  String get assetSummaryAmount => 'Amount';
+
+  @override
+  String get assetSummaryShare => 'Share';
+
+  @override
+  String assetSummaryShowAll(int count) {
+    return 'Show all ($count)';
+  }
+
+  @override
+  String get assetSummaryCollapse => 'Show less';
+
+  @override
+  String incomeAmountLabel(String amount) {
+    return 'Income $amount';
+  }
 
   @override
   String get panelBudgetExecutionLabel => 'Budget execution';
@@ -1957,9 +2065,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get statAnalysisTitle => 'Analytics';
-
-  @override
   String get pickTimeRange => 'Select time range';
 
   @override
@@ -1972,23 +2077,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get overviewTitle => 'Overview';
 
   @override
-  String get yoyMomTitle => 'YoY · MoM';
-
-  @override
-  String get yoyMomDesc =>
-      'MoM compares to last month; YoY to the same month last year';
-
-  @override
-  String get momLabel => 'MoM';
-
-  @override
-  String get yoyLabel => 'YoY';
-
-  @override
   String get monthlyTrendTitle => 'Monthly trend';
-
-  @override
-  String get categoryRank => 'Category ranking';
 
   @override
   String get rankGroupCategory => 'Category';
@@ -1998,9 +2087,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rankGroupTag => 'Tag';
-
-  @override
-  String get tagRank => 'Tag ranking';
 
   @override
   String get tagRankOverlapNote =>

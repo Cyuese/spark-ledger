@@ -48,7 +48,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `NavigationStylePreference` | 枚举 | `models/preferences.dart` | 导航样式偏好（当前 `docked` 默认、`liquidGlass` 可选），枚举名即样式标识、存 KV `verifin.nav_style.v1`；设备本地、不进备份、初始化数据时保留、`resetAllData` 恢复默认。新增样式须同时加枚举值与注册项（测试断言两者一一对应） |
 | `VeriBottomBar` / `VeriBottomBarItem` | Widget / 值类 | `veri_bottom_bar.dart` | 停靠样式的条目绘制：切换时两条圆弧扫过、两枚圆点飞过，图标由灰渐变为主题主色并轻微摆动。颜色缺省取 `Theme.of(context).colorScheme.primary`（`circle1Color` / `circle2Color` 缺省跟随主色），不写死品牌蓝；每个条目用 `MergeSemantics` + `Semantics(selected:)` 向读屏软件报告选中态，并按 `itemKey` 暴露稳定条目 key。**自持实现，不依赖上游包**：选中态完全由 `selectedIndex` 驱动并同步更新，`onSelect` 每次点击恰好一次；父级重建不重置图标状态，进度动画不断档，旋转方向随切换方向，`onSelect` 立即回调 |
 | `VeriFeedbackHost` / `VeriFeedbackController` / `VeriFeedbackRequest` / `VeriFeedbackResult` | 根级 Widget / Controller / 模型 | `feedback.dart` | 跨路由应用内轻提示：内容自适应宽高与三行正文（`error` 六行）、四条可见栈、优先级等待队列、2/4/8 秒与常驻、单操作 Future 结果、显式去重、前后台暂停；完整规范见 `feedback-system.md` |
-| `SectionTitle` | Widget | `common_widgets.dart` | 区块标题 + 可选 trailing |
+| `SectionTitle` | Widget | `common_widgets.dart` | 区块标题 + 可选 trailing（**文字**）；需要在标题行右侧放自定义控件（如紧凑分段控件）时用 `trailingWidget`，它优先于 `trailing` |
 | `EmptyState` | Widget | `common_widgets.dart` | 空状态（插画 + 标题 + 描述 + 可选 `action` 操作入口）；插画是原生绘制（倾斜卡片 + 放大镜，镜片里放调用方的语义 `icon`），随 `colorScheme.primary` 与浅/深主题自动适配，不用外部素材；系统开启「减少动态效果」时停在静态插画，不跑循环动画 |
 | `HeaderAction` / `HeaderTextAction` / `HeaderInline` / `VeriSectionAction` | Widget | `common_widgets.dart` | 页眉动作族（图标钮/文字钮/宽度约束/填充色小图标钮）；需要弹出操作菜单时使用 `VeriAnchoredMenuButton` |
 | `VeriAnchoredMenuAnchor` / `VeriAnchoredMenuButton` / `VeriAnchoredChoice<T>` / `VeriMenuItem` / `VeriMenuDivider` | Widget / 菜单模型 | `common_widgets.dart` | Veri Fin 锚点菜单：图标、标题、副标题、分割线、选中/禁用态、根/默认子菜单/单项子菜单独立宽度、从点击行原位展开的容器变换，以及缩放/压暗但不丢失的完整祖先卡片栈；任意触发器用 `Anchor`，Header 图标入口用 `Button`，2–8 项静态受控单选优先用 `Choice`；完整用法见 [anchored-menu.md](anchored-menu.md) |
@@ -114,7 +114,8 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `TransactionListCard` | Widget | `common_widgets.dart` | 交易列表卡（多条 `TransactionTile` + 分隔线） |
 | `DateGroupHeader` | Widget | `common_widgets.dart` | 日期分组小标题（日期+今天/昨天+当日合计） |
 | `groupEntriesByDate` / `relativeDay` | 纯函数 | `common_widgets.dart` | 按日分组、日期倒序 / 相对今天；`DateEntryGroup` 分组模型 |
-| `CalendarPreview` | Widget | `common_widgets.dart` | 月历预览（内建月份切换、非当前月份显示「本月」回跳按钮 + 日收支）；必传 `currencyCode`；单币种账本隐藏单位时右下角不再显示轻量单位提示，并**连同前置 6dp 间距整块不构建**（`if (!textCurrencyUnitHidden)`，见维护约定），多币种账本照常显示 |
+| `CalendarPreview` | Widget | `common_widgets.dart` | 月历预览（内建月份切换、非当前月份显示「本月」回跳按钮 + 日收支）；必传 `currencyCode`；单币种账本隐藏单位时右下角不再显示轻量单位提示，并**连同前置 6dp 间距整块不构建**（`if (!textCurrencyUnitHidden)`，见维护约定），多币种账本照常显示 |
+| `VeriCalendarHeatmap` | Widget | `common_widgets.dart` | 月历热力图：12 个月各一张迷你日历，按天着色（值越大越深，无记录为浅底）。固定尺寸格子 + `RepaintBoundary`，格子尺寸按可用宽度一次算出（手机固定 4 列），领空格不生成 Widget；调用方传 `year` / `dailyValues` / 深浅两色 / 月份文案。看板「收支热力」卡用它 |
 | `EntryTagField` | Widget | `common_widgets.dart` | 记账表单标签行 |
 | `AttachmentsEditor` | Widget | `attachments_editor.dart` | 多图片附件横向缩略图、全屏查看和逐张删除；默认自带标题与拍照/相册添加入口，记账页的轻量元数据布局通过 `showHeader:false` / `showAddButton:false` 只复用缩略图条，添加入口由页面标签触发 |
 | `TagSelectorSheet` / `pickEntryTags` | Widget / Sheet 函数 | `entry_sheets.dart` / `sheets.dart` | 交易标签多选（即时新建）/ 接 controller 的弹窗封装 |
@@ -129,7 +130,8 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `SectionLabel` | Widget | `common_widgets.dart` | 分组小标题（分区 `VeriCard` 上方的灰色标签，设置页/账户详情页分模块用） |
 | `SettingsRow` | Widget | `common_widgets.dart` | 设置行（图标+标题+trailing 文本+chevron）；`leading` 可传账户图标等自定义前置，`contentColor` 可上色（如危险操作红色） |
 | `CompactSwitchRow` | Widget | `common_widgets.dart` | 紧凑开关行（整行可点，不只点开关）；`onChanged:null` 保留原生禁用语义，表示当前平台/状态不可用 |
-| `VeriSegmentedControl<T>` | Widget | `common_widgets.dart` | **统一分段控件**（文字标签 + 滑动胶囊指示，基于 `animated_toggle_switch`）。所有「N 选一的横向口径切换」一律用它，不要再手写 Row+InkWell 分段条或裸用 Material `SegmentedButton`。颜色只走设计令牌，调用方仅可通过 `accentOf` 指定选中项的语义强调色；`compact: true` 用于卡片标题行内的小切换；`onChanged: null` 整组禁用；自带 `Semantics`（第三方控件本身无语义）。**不用它**：图标型开关（走 `CompactSwitchRow`）、超过 4 项或需要分区的单选（走 `showOptionSheet` / `VeriAnchoredChoice`）、菜单触发器（走 `FilterPill`）、左右步进器（走 `MonthSwitcher`） |
+| `VeriSegmentedControl<T>` | Widget | `common_widgets.dart` | **统一分段控件**（文字标签 + 滑动胶囊指示，基于 `animated_toggle_switch`）。所有「N 选一的横向口径切换」一律用它，不要再手写 Row+InkWell 分段条或裸用 Material `SegmentedButton`。颜色只走设计令牌，调用方仅可通过 `accentOf` 指定选中项的语义强调色；`compact: true` 用于卡片标题行内的小切换；`onChanged: null` 整组禁用；自带 `Semantics`（第三方控件本身无语义）。`keyOf` **只给选中项挂 Key**（`rolling` 会把选中项多渲染一份，全挂会撞 Key）——既有契约见记账页 `entry_type_selected_*`。**不用它**：图标型开关（走 `CompactSwitchRow`）、超过 4 项或需要分区的单选（走 `showOptionSheet` / `VeriAnchoredChoice`）、菜单触发器（走 `FilterPill`）、左右步进器（走 `MonthSwitcher`） |
+| `VeriEntryTypeToggle` | Widget | `common_widgets.dart` | **支出 / 收入口径切换**（内部就是 `VeriSegmentedControl<EntryType>`，支出红 / 收入绿，选中项挂 `dimension_toggle_<type>` Key）。看板近 7 日面板与月统计排行卡共用；新增「支出/收入切换」一律用它，不要各写一份 |
 | `DetailInfoRow` | Widget | `common_widgets.dart` | 详情页 label/value 行（可点击带 chevron） |
 | `CurrencyAmountField` | Widget | `common_widgets.dart` | 交易/退款/周期编辑器统一的货币金额行；按 ISO minor unit 格式化；`amount == null` 时显示明确缺失态。`forceUnit` **默认 `true` 且不要改**：编辑器允许临时选一个账本里还没有的币种，那一刻闸门还关着但同屏已出现两个币种，单位必须保留。只有两端币种被锁死、不可能出现第二币种的地方（退款表单）才显式传 `false` |
 | `MoneyUnitLabel` | Widget | `common_widgets.dart` | 聚合卡片的轻量「单位：¥/CNY」提示（首页支出走势卡——**仅未开启 `UNIFIED_DESIGN_PREVIEW` 的旧外观**，正式外观这里渲染的是「周／月／季／年」标签、首页预算卡、日历卡、AI 结果卡；走势设置页预览复用同一张卡）；单币种账本隐藏单位时组件自身返回 `SizedBox.shrink`——**只表示看不见，不能拿它判断单位是否显示**；把容器一起收掉的调用点（日历卡）隐藏时根本不构建，`find.byType` 是 `findsNothing`。要断言隐藏用 `find.textContaining('单位：')` |
@@ -177,7 +179,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | 金额/时间格式化 | `ledger_math.dart` | `formatAmount` `formatExpenseAmount` `formatIncomeAmount` `formatSignedAmount` `formatCompactAmount` `formatTime`（**金额文本只走这些**，勿内联手拼） |
 | 全局金额偏好 | `amount_format.dart` | 顶层量 `currencyFractionStyle`（紧凑/货币标准小数位）、`moneyUnitStyle`（符号后置/代码前置）、`hideUnitInSingleCurrency` 与 `activeBookUsesMultipleCurrencies`；**派生闸门 `activeMoneyCodeDisplay`（`none` 即隐藏单位）是唯一判断依据**，`formatUserMoney` 族与 `textCurrencyUnitHidden`（族 5）都读它，界面不要另写判断条件；Controller 单向同步，界面不直接修改顶层状态；`amountForceTwoDecimals` 仅为旧设置兼容入口 |
 | 序列/坐标轴 | `series_math.dart` | `isInMonth` `monthAxisLabels` `reportAxisLabels` `isoWeekNumber` `accountBalanceSeries` `accountMonthlyBalanceSeries` `accountMonthlyBalanceSeriesBatch` `monthlyNetAssetSeries` `balanceAxisLabels` `bookkeepingDays` |
-| 统计分析 | `report_analysis.dart` | `reportSummary` `reportMonthlyComparison` `formatChangeRatio` `reportCategoryStats` `reportCategoryStatsByOwn` `reportCategoryChildStats` `reportTagStats` `reportTrend`；`ReportRange` `ReportSummary` `ReportCategoryStat` `ReportTagStat` `ReportTrend` |
+| 统计分析（页面 `ReportAnalysisPage` 已删除并并入看板；纯函数**保留**，看板排行卡与 AI 账目查询工具共用） | `report_analysis.dart` | `reportSummary` `reportMonthlyComparison` `formatChangeRatio` `reportCategoryStats` `reportCategoryStatsByOwn` `reportCategoryChildStats` `reportTagStats` `reportTrend`；`ReportRange` `ReportSummary` `ReportCategoryStat` `ReportTagStat` `ReportTrend` |
 | 首页指标 | `home_metrics.dart` | `computeHomeMetric` `homeMetricLabel` `homeMetricGroups` `formatHomeMetric` `homeMetricColor`；`HomeMetric` `HomeMetricContext` `HomeTrendConfig` |
 | 周期记账 | `recurring.dart` | `advanceRecurring` `dueDatesFor` |
 | 信用类账户 | `credit_card.dart` | `nextDueDate` `daysUntilDue` `nextStatementDate` `currentBillingCycle` `usedCredit` `availableCredit` `billingCycleExpense`；卡号 `cardLast4Of`（在 `models.dart`） |

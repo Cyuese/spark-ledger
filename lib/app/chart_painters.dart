@@ -881,6 +881,8 @@ class VeriDonutChart extends StatelessWidget {
     this.selectedIndex,
     this.onSelected,
     this.semanticsLabel,
+    this.showPercentTitles = false,
+    this.onCenterTap,
   });
 
   final List<VeriDonutSegment> segments;
@@ -891,11 +893,23 @@ class VeriDonutChart extends StatelessWidget {
   final ValueChanged<int?>? onSelected;
   final String? semanticsLabel;
 
+  /// 在环内显示各分段占比（`fl_chart` 自带分段标题）。占比过小的分段不画文字，
+  /// 避免文字溢出到相邻分段。
+  final bool showPercentTitles;
+
+  /// 点击中心空区的回调。为 null 时中心内容忽略指针事件（沿用分类环的行为：
+  /// 点中心空区等于取消选中）；非 null 时中心变为可点，用于切换中心口径。
+  final VoidCallback? onCenterTap;
+
   @override
   Widget build(BuildContext context) {
     if (segments.isEmpty) {
       return const SizedBox.shrink();
     }
+    final totalValue = segments.fold<double>(
+      0,
+      (sum, segment) => sum + math.max(0, segment.value),
+    );
     final chart = LayoutBuilder(
       builder: (context, constraints) {
         final size = math.min(constraints.maxWidth, constraints.maxHeight);
@@ -913,7 +927,22 @@ class VeriDonutChart extends StatelessWidget {
                       ? segments[i].color
                       : segments[i].color.withValues(alpha: 0.30),
                   radius: selectedIndex == i ? ringWidth * 1.08 : ringWidth,
-                  showTitle: false,
+                  // 小占比分段的文字会溢出到相邻分段，低于 5% 不画。
+                  showTitle:
+                      showPercentTitles &&
+                      totalValue > 0 &&
+                      segments[i].value / totalValue >= 0.05,
+                  title: totalValue > 0
+                      ? '${(segments[i].value / totalValue * 100).round()}%'
+                      : '',
+                  titleStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    shadows: <Shadow>[
+                      Shadow(color: Color(0x40000000), blurRadius: 2),
+                    ],
+                  ),
                   cornerRadius: ringWidth * 0.32,
                 ),
             ],
@@ -940,7 +969,16 @@ class VeriDonutChart extends StatelessWidget {
           alignment: Alignment.center,
           children: <Widget>[
             Positioned.fill(child: pie),
-            if (center != null) Center(child: IgnorePointer(child: center)),
+            if (center != null)
+              Center(
+                child: onCenterTap == null
+                    ? IgnorePointer(child: center)
+                    : GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: onCenterTap,
+                        child: center,
+                      ),
+              ),
           ],
         );
       },
