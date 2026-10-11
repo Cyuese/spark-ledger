@@ -96,6 +96,7 @@ void main() {
   );
 
   const categoryChild = Category(
+    bookId: defaultLedgerBookId,
     id: 'cat-x',
     label: '往返分类',
     type: EntryType.income,
@@ -104,13 +105,14 @@ void main() {
   );
 
   const categoryRoot = Category(
+    bookId: defaultLedgerBookId,
     id: 'cat-parent',
     label: '顶级分类',
     type: EntryType.income,
     iconCode: 'salary',
   );
 
-  const tag = Tag(id: 'tag-1', label: '出差');
+  const tag = Tag(bookId: defaultLedgerBookId, id: 'tag-1', label: '出差');
 
   const attachment = Attachment(
     id: 'att-1',

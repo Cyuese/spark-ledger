@@ -31,6 +31,7 @@ void main() {
   group('buildImportPlan', () {
     List<Category> baseCategories() => <Category>[
       const Category(
+        bookId: 'book_default',
         id: 'cat_food',
         label: '餐饮',
         type: EntryType.expense,
@@ -87,17 +88,15 @@ void main() {
       expect(plan.entries.single.categoryId, plan.newCategories.single.id);
     });
 
-    test('分类为空的收支兜底到「未分类」固定 id，不再落空分类（issue #16）', () {
+    test('分类为空的收支兜底到「未分类」，不再落空分类（issue #16）', () {
       final plan = build(
         '日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,支出,23.5,,现金,,没写分类',
       );
       expect(plan.importedCount, 1);
-      expect(
-        plan.entries.single.categoryId,
-        uncategorizedCategoryId(EntryType.expense),
-      );
       final candidate = plan.newCategories.single;
-      expect(candidate.id, uncategorizedCategoryId(EntryType.expense));
+      // 分类 id 随机生成，语义只看 key。
+      expect(candidate.key, uncategorizedCategoryKey(EntryType.expense));
+      expect(plan.entries.single.categoryId, candidate.id);
       expect(candidate.label, '未分类');
       expect(candidate.type, EntryType.expense);
     });
@@ -110,30 +109,38 @@ void main() {
         '2026-01-05,收入,30,,现金,,c',
       );
       expect(plan.importedCount, 3);
-      expect(plan.newCategories.map((c) => c.id).toSet(), <String>{
-        uncategorizedCategoryId(EntryType.expense),
-        uncategorizedCategoryId(EntryType.income),
+      expect(plan.newCategories.map((c) => c.key).toSet(), <String>{
+        uncategorizedCategoryKey(EntryType.expense),
+        uncategorizedCategoryKey(EntryType.income),
       });
+      expect(
+        plan.newCategories.map((c) => c.id).toSet(),
+        hasLength(2),
+        reason: '收支两条「未分类」各有独立 id',
+      );
     });
 
-    test('现有「未分类」（固定 id 或用户手建同名）直接复用、不进候选', () {
+    test('现有「未分类」（带语义键或用户手建同名）直接复用、不进候选', () {
       const rows = '日期,类型,金额,分类,账户,转入账户,备注\n2026-01-05,支出,10,,现金,,x';
-      // 固定 id 已存在 → 复用。
-      final withFixed = buildImportPlan(
+      // 已有带「未分类」键的分类 → 复用。
+      const existingUncategorizedId = 'cat_uncategorized_expense';
+      final withKeyed = buildImportPlan(
         rows: parseCsv(rows),
         bookId: 'book_default',
         existingAccounts: baseAccounts(),
         existingCategories: <Category>[
           ...baseCategories(),
-          buildUncategorizedCategory(EntryType.expense, english: false),
+          buildUncategorizedCategory(
+            existingUncategorizedId,
+            'book_default',
+            EntryType.expense,
+            english: false,
+          ),
         ],
         now: DateTime(2026, 1, 5, 12),
       );
-      expect(withFixed.newCategories, isEmpty);
-      expect(
-        withFixed.entries.single.categoryId,
-        uncategorizedCategoryId(EntryType.expense),
-      );
+      expect(withKeyed.newCategories, isEmpty);
+      expect(withKeyed.entries.single.categoryId, existingUncategorizedId);
 
       // 用户手建的同名顶级分类（id 不同）→ 复用它，避免与
       // (label,type,parent) 唯一索引冲突建出重复同名分类。
@@ -143,6 +150,7 @@ void main() {
         existingAccounts: baseAccounts(),
         existingCategories: const <Category>[
           Category(
+            bookId: 'book_default',
             id: 'cat_manual',
             label: '未分类',
             type: EntryType.expense,

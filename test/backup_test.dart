@@ -411,7 +411,8 @@ void main() {
 
       final backup = source.exportDataJson();
       final root = jsonDecode(backup) as Map<String, dynamic>;
-      expect(root['version'], 3);
+      // v4：分类/标签带 bookId（账本内数据）。
+      expect(root['version'], 4);
       final data = root['data'] as Map<String, dynamic>;
       expect(data['exchangeRates'], hasLength(1));
       expect(data['currencyFractionStyle'], isNotNull);
@@ -580,26 +581,31 @@ void main() {
     expect(controller.accounts.length, greaterThanOrEqualTo(9));
     expect(controller.entries.length, greaterThanOrEqualTo(20));
     expect(controller.accountGroups.length, greaterThanOrEqualTo(4));
+    // 旧备份（v2）的分类/标签是全局的：导入时展开成每个账本各一份，id 重新随机
+    // 生成，因此断言一律按名称/层级，不写死 id。
+    final coffee = controller.categories.firstWhere(
+      (category) => category.label == '咖啡',
+    );
+    // 多级分类：样例中「咖啡」是「餐饮」的子分类，导入后层级应保留。
+    expect(controller.categoryById(coffee.parentId!).label, '餐饮');
+    // 两个账本（默认 + 旅行）各有一份分类副本。
     expect(
-      controller.categories.any((category) => category.id == 'coffee'),
+      controller
+          .categoriesForBook('book_travel')
+          .any((category) => category.label == '餐饮'),
       isTrue,
     );
-    // 多级分类：样例中「咖啡」是「餐饮」的子分类，导入后 parentId 应保留。
     expect(
-      controller.categories
-          .firstWhere((category) => category.id == 'coffee')
-          .parentId,
-      'dining',
+      controller.childCategories(coffee.parentId!).map((c) => c.label),
+      contains('咖啡'),
     );
-    expect(
-      controller.childCategories('dining').map((c) => c.id),
-      contains('coffee'),
-    );
-    // 标签系统：样例含标签，且首条交易带 tagIds，导入后应保留。
+    // 标签系统：样例含标签，且首条交易带标签，导入后应保留（标签 id 同样重新生成，
+    // 按引用关系断言）。
     expect(controller.tags.map((t) => t.label), contains('工作餐'));
+    final workMealTag = controller.tags.firstWhere((t) => t.label == '工作餐');
     expect(
       controller.entries.firstWhere((e) => e.id == 'entry_20260703_001').tagIds,
-      contains('tag_work_meal'),
+      contains(workMealTag.id),
     );
     // 图片附件：样例首条交易带一张附件，导入后应能读回。
     expect(controller.attachmentCountForEntry('entry_20260703_001'), 1);
@@ -654,13 +660,14 @@ void main() {
     );
     expect(excluded.excludedFromBudget, isTrue);
     expect(reimbursed.excludedFromBudget, isFalse);
+    // 分类预算键里嵌的是分类 id（导入后重新随机生成），按导入后的 餐饮 id 取。
     expect(
-      controller.categoryBudget(DateTime(2026, 7), 'dining'),
+      controller.categoryBudget(DateTime(2026, 7), coffee.parentId!),
       greaterThan(0),
     );
     // 默认预算（每月自动沿用）：样例带默认月预算与分类默认预算，导入后应读回。
     expect(controller.defaultMonthlyBudget, 6000);
-    expect(controller.defaultCategoryBudget('dining'), 1100);
+    expect(controller.defaultCategoryBudget(coffee.parentId!), 1100);
     // 未设单月覆盖的月份沿用默认月预算。
     expect(controller.monthlyBudget(DateTime(2026, 9)), 6000);
     expect(

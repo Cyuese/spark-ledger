@@ -49,8 +49,13 @@ AiToolContext _ctx(
   );
 }
 
-Category _cat(String id, String label) =>
-    Category(id: id, label: label, type: EntryType.expense, iconCode: 'food');
+Category _cat(String id, String label) => Category(
+  bookId: defaultLedgerBookId,
+  id: id,
+  label: label,
+  type: EntryType.expense,
+  iconCode: 'food',
+);
 
 Account _account({
   required String id,

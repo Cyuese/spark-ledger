@@ -8,12 +8,14 @@ import 'support/test_harness.dart';
 void main() {
   final categories = <Category>[
     const Category(
+      bookId: defaultLedgerBookId,
       id: 'dining',
       label: '餐饮',
       type: EntryType.expense,
       iconCode: 'dining',
     ),
     const Category(
+      bookId: defaultLedgerBookId,
       id: 'coffee',
       label: '咖啡',
       type: EntryType.expense,
@@ -21,6 +23,7 @@ void main() {
       parentId: 'dining',
     ),
     const Category(
+      bookId: defaultLedgerBookId,
       id: 'shopping',
       label: '购物',
       type: EntryType.expense,

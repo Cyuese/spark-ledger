@@ -54,6 +54,7 @@ void main() {
         context,
         categories: const <Category>[
           Category(
+            bookId: defaultLedgerBookId,
             id: 'dining',
             label: '餐饮',
             type: EntryType.expense,

@@ -3,33 +3,34 @@
 /// [accountDisplayName]，勿直接 [accountById]（空 id 会误回退首个账户）。
 library;
 
-import 'seed_data.dart';
 import 'models.dart';
 
-List<Category> categoriesFor(EntryType type, [List<Category>? categories]) {
-  return (categories ?? defaultCategories)
+/// 指定列表里该类型的分类。列表本身已按账本过滤（见 Controller.categories），
+/// 这里不再回退任何内置种子——分类属于账本，凭空造一份全局种子只会冒名。
+List<Category> categoriesFor(EntryType type, List<Category> categories) {
+  return categories
       .where((category) => category.type == type)
       .toList(growable: false);
 }
 
-Category categoryById(String id, [List<Category>? categories]) {
-  return categoryByIdFrom(categories ?? defaultCategories, id);
+Category categoryById(String id, List<Category> categories) {
+  return categoryByIdFrom(categories, id);
 }
 
 /// 未知 / 已删除分类的展示占位（id 以 `id` 参数回填，保证不同的悬空 id 仍可各自成行）。
 /// 仿 [accountById] 对缺失账户返回「已删除账户」——**绝不回退成列表首个分类**，否则
 /// 交易的悬空/孤儿分类引用会被冒名成第一个分类（默认为「餐饮」），在分类排行里渲染出
-/// 与真分类同名的「幽灵分类」（历史 bug）。
+/// 与真分类同名的「幽灵分类」（历史 bug）。占位不带账本（它不对应任何真实记录）。
 Category _deletedCategoryPlaceholder(String id) => Category(
   id: id,
+  bookId: '',
   label: '已删除分类',
   type: EntryType.expense,
   iconCode: 'category',
 );
 
 Category categoryByIdFrom(List<Category> categories, String id) {
-  final source = categories.isEmpty ? defaultCategories : categories;
-  return source.firstWhere(
+  return categories.firstWhere(
     (category) => category.id == id,
     orElse: () => _deletedCategoryPlaceholder(id),
   );
