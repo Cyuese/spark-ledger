@@ -3891,9 +3891,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'The test notification could not be sent. Check notification permission and system background restrictions, then try again.';
 
   @override
-  String get backupFileTypeLabel => 'Backup file';
-
-  @override
   String get cropAdjustHint => 'Adjust image position';
 
   @override

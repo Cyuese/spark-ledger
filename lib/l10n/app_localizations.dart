@@ -6980,12 +6980,6 @@ abstract class AppLocalizations {
   /// **'测试通知发送失败，请检查通知权限和系统后台限制后重试。'**
   String get reminderTestFailed;
 
-  /// No description provided for @backupFileTypeLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'备份文件'**
-  String get backupFileTypeLabel;
-
   /// No description provided for @cropAdjustHint.
   ///
   /// In zh, this message translates to:

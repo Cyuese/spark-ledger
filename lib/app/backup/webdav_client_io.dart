@@ -24,7 +24,6 @@ const Duration _connectTimeout = Duration(seconds: 30);
 /// [_connectTimeout] 与协调器层的兜底超时防挂死。
 const Duration _responseTimeout = Duration(seconds: 60);
 const int _maxWebdavListingBytes = 4 * 1024 * 1024;
-const int _maxWebdavDownloadBytes = 256 * 1024 * 1024;
 
 HttpClient _newClient() => HttpClient()..connectionTimeout = _connectTimeout;
 
@@ -156,31 +155,6 @@ Future<Uint8List> _readResponseLimited(
   return builder.takeBytes();
 }
 
-Future<void> webdavUpload(
-  WebdavConfig config,
-  String filename,
-  List<int> bytes,
-) async {
-  final client = _newClient();
-  try {
-    await _ensureCollection(client, config);
-    final target = Uri.parse(joinWebdavUrl(config.url, filename));
-    final request = await _open(client, 'PUT', target, config);
-    request.headers.contentType = ContentType('application', 'octet-stream');
-    request.headers.contentLength = bytes.length;
-    request.add(bytes);
-    final response = await request.close();
-    await response.drain<void>();
-    if (response.statusCode >= 400) {
-      throw WebdavException(_statusMessage(response.statusCode));
-    }
-  } catch (error) {
-    _fail(error);
-  } finally {
-    client.close(force: true);
-  }
-}
-
 Future<List<WebdavRemoteFile>> webdavList(WebdavConfig config) async {
   final client = _newClient();
   try {
@@ -238,32 +212,6 @@ Future<void> webdavDelete(WebdavConfig config, String href) async {
     if (response.statusCode >= 400 && response.statusCode != 404) {
       throw WebdavException(_statusMessage(response.statusCode));
     }
-  } catch (error) {
-    _fail(error);
-  } finally {
-    client.close(force: true);
-  }
-}
-
-Future<Uint8List> webdavDownload(WebdavConfig config, String href) async {
-  final client = _newClient();
-  try {
-    final request = await _open(
-      client,
-      'GET',
-      _resolveHref(config, href),
-      config,
-    );
-    // 只对响应头等待设超时；下载 body 可能很大，交给流自身与协调器兜底超时。
-    final response = await request.close().timeout(_responseTimeout);
-    if (response.statusCode >= 400) {
-      throw WebdavException(_statusMessage(response.statusCode));
-    }
-    return await _readResponseLimited(
-      response,
-      maxBytes: _maxWebdavDownloadBytes,
-      tooLargeMessage: 'WebDAV 备份文件过大',
-    ).timeout(_responseTimeout);
   } catch (error) {
     _fail(error);
   } finally {

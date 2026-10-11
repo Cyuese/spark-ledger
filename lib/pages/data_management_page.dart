@@ -852,7 +852,10 @@ class _DataManagementPageState extends State<DataManagementPage> {
         isCancelled: isCancelled,
       );
     } finally {
-      await BackupService.deleteCachePath(staged.path);
+      // 只删本应用为本次导入新建的临时副本；用户自己的原文件不动。
+      if (staged.owned) {
+        await BackupService.deleteCachePath(staged.path);
+      }
     }
   }
 
@@ -1834,11 +1837,10 @@ class _DataManagementPageState extends State<DataManagementPage> {
     if (!confirmed || !context.mounted) {
       return;
     }
-    final fileTypeLabel = AppLocalizations.of(context).backupFileTypeLabel;
-
     try {
-      final fileUri = await pickBackupFileUri(label: fileTypeLabel);
-      if (fileUri == null) {
+      // 只挑文件、不读字节：拿到 SAF URI 后由导入进度流程内流式复制（Issue 45）。
+      final picked = await BackupService.chooseBackupFile();
+      if (picked == null) {
         return;
       }
       if (!context.mounted) {
@@ -1851,7 +1853,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
         (isCancelled) => _importBackupFileUri(
           context,
           controller,
-          fileUri,
+          picked.uri,
           isCancelled: isCancelled,
         ),
       );

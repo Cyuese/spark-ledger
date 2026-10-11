@@ -24,10 +24,24 @@ Future<bool> deleteBackupFile(String fileUri) async {
 
 /// 流式复制到缓存后的结果（stub 版本，与 io 实现同名同形）。
 class StagedCacheFile {
-  const StagedCacheFile({required this.path, required this.byteSize});
+  const StagedCacheFile({
+    required this.path,
+    required this.byteSize,
+    this.owned = true,
+  });
 
   final String path;
   final int byteSize;
+  final bool owned;
+}
+
+/// 用户挑中的备份文件描述（stub 版本，与 io 实现同名同形）。
+class PickedBackupFile {
+  const PickedBackupFile({required this.uri, this.name, this.size});
+
+  final String uri;
+  final String? name;
+  final int? size;
 }
 
 /// 流式写出的回执（stub 版本，与 io 实现同名同形）。
@@ -40,6 +54,10 @@ class StreamedWriteReceipt {
 
 Future<StagedCacheFile?> stageBackupFileToCache(String fileUri) async {
   throw UnsupportedError('当前平台暂不支持读取备份文件');
+}
+
+Future<PickedBackupFile?> pickBackupFile() async {
+  throw UnsupportedError('当前平台暂不支持选择备份文件');
 }
 
 Future<({String uri, StreamedWriteReceipt receipt})?> writeBackupFromCacheFile({

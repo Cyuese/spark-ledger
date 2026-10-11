@@ -7,7 +7,8 @@ import 'package:path/path.dart' as p;
 import '../platform_bridge.dart';
 import 'backup_settings.dart';
 
-export '../platform_bridge.dart' show StagedCacheFile, StreamedWriteReceipt;
+export '../platform_bridge.dart'
+    show PickedBackupFile, StagedCacheFile, StreamedWriteReceipt;
 
 /// 用户选择的备份目录：Android 上 [uri] 为 SAF 树 URI，桌面上为文件系统路径。
 class PickedBackupDirectory {
@@ -82,16 +83,72 @@ Future<bool> deleteBackupFile(String fileUri) async {
 
 // ---- 大文件流式路径（不把整包放进内存）----
 
-/// 把用户选择的备份文件流式落到应用缓存目录，返回本地路径（桌面直接用原路径）。
+/// 打开备份文件选择器，只回传 URI 与元信息（不读字节）。
+///
+/// Android 用自带 SAF 选择器返回 `content://` URI：`file_selector` 会在原生侧把整份
+/// 文件读进 `byte[]` 再复制一份，GB 级备份必然 OOM（Issue 45）。桌面继续用
+/// `file_selector`（本地文件，无复制代价），返回 `file://` URI。
+Future<PickedBackupFile?> pickBackupFile() async {
+  if (Platform.isAndroid) {
+    return AppStorageBridge.pickBackupFile();
+  }
+  final file = await openFile(
+    acceptedTypeGroups: <XTypeGroup>[_backupTypeGroup],
+  );
+  if (file == null) {
+    return null;
+  }
+  return PickedBackupFile(
+    uri: Uri.file(file.path).toString(),
+    name: p.basename(file.path),
+    size: await file.length(),
+  );
+}
+
+/// 备份文件类型过滤：zip / 旧版明文与加密信封 json / 新版加密容器 verifin。
+const XTypeGroup _backupTypeGroup = XTypeGroup(
+  label: 'Veri Fin backup',
+  extensions: <String>['json', 'zip', 'verifin'],
+  mimeTypes: <String>['application/json', 'application/zip'],
+);
+
+/// 把用户选择的备份文件流式落到应用缓存目录，返回本地路径。
+///
+/// 桌面本来就拿到本地文件，不做复制，并声明 `owned:false`——调用方不得删除用户原文件。
 Future<StagedCacheFile?> stageBackupFileToCache(String fileUri) async {
   if (Platform.isAndroid) {
     return AppStorageBridge.stageBackupFile(fileUri);
   }
-  final file = File.fromUri(Uri.parse(fileUri));
+  final file = _localFileFrom(fileUri);
+  if (file == null) {
+    return null;
+  }
   if (!file.existsSync()) {
     return null;
   }
-  return StagedCacheFile(path: file.path, byteSize: file.lengthSync());
+  return StagedCacheFile(
+    path: file.path,
+    byteSize: file.lengthSync(),
+    owned: false,
+  );
+}
+
+/// 兼容传入 `file://` URI 或普通路径，解析成本地文件；其它 scheme 返回 null。
+File? _localFileFrom(String uriOrPath) {
+  // Windows 路径（`C:\...`）会被 Uri 解析成单字母 scheme，必须先按路径识别。
+  if (RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(uriOrPath) ||
+      uriOrPath.contains('\\')) {
+    return File(uriOrPath);
+  }
+  final uri = Uri.tryParse(uriOrPath);
+  final scheme = uri?.scheme.toLowerCase() ?? '';
+  if (scheme.isEmpty) {
+    return File(uriOrPath);
+  }
+  if (scheme == 'file') {
+    return File.fromUri(uri!);
+  }
+  return null;
 }
 
 /// 把缓存文件流式写入备份目录（同名覆盖），返回目标 URI 与写盘校验信息。

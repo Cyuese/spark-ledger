@@ -191,10 +191,17 @@ store、只对体积可控的 `backup.json` 用 deflate**。
 
 新增原生方法，只传路径：
 
+- `pickBackupFile() -> {uri, name, size}`：用应用自己的 `ACTION_OPEN_DOCUMENT` 选择器拿 SAF
+  `content://` URI。**恢复入口不得再用 `file_selector`**：该插件在 Android 上会把整份文件读进
+  `byte[]`、整份过平台通道送到 Dart，并再复制一份到 `cache/<uuid>/<原名>`，GB 级备份必然
+  OOM（Issue 45）。账单等小文件导入仍走 `file_selector`，读完即删插件留下的那份缓存副本。
 - `stageBackupFile(fileUri) -> cachePath`：SAF 文件流式复制到应用缓存，返回本地路径。
+  兼容直接传入本地路径 / `file://`（此时不复制，原样返回并标 `owned:false`，调用方不得删除）。
 - `writeBackupFromCache(directoryUri, filename, cachePath) -> {uri, sha256, bytes}`：
   流式复制缓存文件到备份目录，**复制过程中同步计算 SHA-256 与字节数并回传**。
 - `saveCacheFileToDownloads(filename, cachePath, mimeType) -> {sha256, bytes}`：下载目录导出同理。
+- `deleteCacheFile(path)`：只允许删除 `cacheDir` 树下的文件（含子目录），顺带清掉空壳目录；
+  客户端只删「本次操作新建」的临时副本（`StagedCacheFile.owned == true`），不碰用户原文件。
 
 Android 侧用 `ContentResolver.openInputStream/openOutputStream` 边读边写，固定缓冲区，逐步
 把 `MainActivity` 里整包缓冲的 `readLimitedBytes` / `writeBackupBytes` 替换掉。
@@ -210,7 +217,8 @@ Android 侧用 `ContentResolver.openInputStream/openOutputStream` 边读边写�
 
 ### 恢复（导入）流程
 
-1. `stageBackupFile` 把外部文件流式复制到缓存，读首部判容器类型。
+1. `pickBackupFile` 打开自带 SAF 选择器拿到 `content://` URI，`stageBackupFile` 再把它流式
+   复制到缓存；读首部判容器类型。
 2. 按类型解到暂存目录（zip 流式解包 / 流式解密后解包 / 旧明文 JSON 流式转换）。
 3. 校验完成后交给 Controller：解析 `backup.json`、重建账目数据、写附件文件、在事务内落库。
 4. 提交成功后再清理暂存与被替换的旧附件文件（孤儿回收兜底）。
@@ -243,6 +251,18 @@ Android 侧用 `ContentResolver.openInputStream/openOutputStream` 边读边写�
 旧明文 JSON 是「单个大字符串里内嵌 base64」，`dart:convert` 无法流式解析。为此引入前向遍历的
 流式 JSON 解析库（候选 `json_events`），以事件流重写文档：附件 `dataUrl` 边解析边落文件，
 其余字段原样转发。这样旧格式同样不受体积限制。
+
+### 迁移完成后的空间回收
+
+旧库里 `attachments.data_url` 这一列在迁移期必须保留（它是尚未落盘图片的唯一副本），但转换
+完成后它就是几十~上百 MB 的死空间。因此：
+
+- 读取路径从不整列取回它：`loadAttachments()` 只 SELECT 元数据列（`id/entry_id/sort_order/
+  mime_type/byte_size`）；旧字节只经 `loadAttachmentDataUrl(id)` 逐条读。
+- 整账本重建（导入/恢复/重置/删账本/启动自愈）对附件表走**保留 `data_url`** 的整替实现，
+  否则会在迁移完成前把用户的图片静默删掉；导入场景附件文件已先落盘、读取优先文件，残留列不参与展示。
+- 全部转换成功后，`dropLegacyAttachmentData()` 重建表去掉该列并 `VACUUM` 归还空间（幂等；
+  只要还有一行非空 `data_url` 就拒绝执行；失败只记日志、下次启动重试，不影响功能）。
 
 ## 四、进度与反馈
 
@@ -315,6 +335,20 @@ class BackupProgress { final BackupPhase phase; final int done; final int total;
 | 备份/恢复流式（增量 zip 写盘、流式解包、原生流式复制、SHA-256 校验） | 已实现 |
 | 加密备份流式容器 + 旧信封读取兼容 | 已实现 |
 | 旧版明文 JSON 流式重写（`json_events`） | 已实现 |
+| 冷启动只读附件元数据列（不再整列取回 `data_url`） | 已实现 |
+| 整账本重建保留未迁移的 `data_url` | 已实现 |
+| 迁移完成后的列回收（去掉 `data_url` + `VACUUM`） | 已实现 |
+| 恢复入口改为自带 SAF 选择器（不再经 `file_selector`） | 已实现 |
 | 进度条、取消、成功/失败/损坏提示 | 已实现 |
 | WebDAV 流式上传/下载 | 已实现 |
-| Android 真机与 CI release APK 验收 | 待 CI 与真机执行（本机无 Android SDK） |
+| Android 真机验收（debug APK，模拟器） | 已执行：见下方「真机验收记录」 |
+| CI release APK 验收 | 待 CI 与维护者真机执行 |
+
+### 真机验收记录（模拟器，debug 构建）
+
+- **恢复入口**：真机导出的备份 zip 经自带选择器导入成功；导入的历史数据与附件（落盘为
+  `files/attachments/<id>`）都恢复，导入后 `cache/` 里没有残留临时副本，日志不再出现
+  `No content provider`。
+- **旧库启动与迁移**：构造带 33.5 MB 内嵌 base64（24 张图片）的库覆盖安装后冷启动，Java 堆
+  稳定在 ~16 MB（不随旧字节增长）；24 张图片全部物化为文件；库体积 33.7 MB → 147 KB
+  （`data_url` 列已删除且 VACUUM 回收），元数据 24 行完整；二次启动幂等，不再重复迁移。
