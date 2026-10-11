@@ -4,7 +4,7 @@
 
 发布包外观：已评审的统一排版（16dp 有效页边距、56dp Header、16dp 卡片圆角、14/12 卡片内边距）是当前**唯一**外观，本地构建与发布包一致，不再有需要对齐的构建参数。CI 固定 Flutter 3.47.2；正式包由 CI 构建，须用户明确授权发版，禁止要求清除应用数据。
 
-界面调整必读 [统一设计与交互规范](docs/design-system.md)：集中记录布局、表面材质、设置持久化与验收约定。候选统一排版覆盖全部页面；导航静止必须显示实时文字，预算环禁止内外白线。
+界面调整必读 [统一设计与交互规范](docs/design/design-system.md)：集中记录布局、表面材质、设置持久化与验收约定。候选统一排版覆盖全部页面；导航静止必须显示实时文字，预算环禁止内外白线。
 
 ## 文档作用与工作语言
 
@@ -26,25 +26,26 @@
 
 ### 文档阅读路线
 
+文档按职能分目录：`docs/product/`（产品定位与验收清单）、`docs/design/`（界面与组件规范）、`docs/dev/`（架构、领域口径、开发流程）、`docs/fixtures/`（测试用样例备份与导入样例）、`docs/screenshots/`（公开预览图）。
+
 - `docs/dev/architecture.md`：架构与源码导航。`CLAUDE.md` 仅链接本文件，不维护第二份规范。
-- `docs/dev/components.md`：组件、弹窗、格式化与纯函数注册表；写相关代码前必读。根导航的当前约定见其中 `VeriRootNavigationStyle`、`VeriDockedRootNavigationStyle` 与 `VeriLiquidGlassRootNavigationStyle` 条目（默认停靠样式 + 可选的液态玻璃样式，样式选择页见 `NavigationStyleSettingsPage`），底栏绘制组件见 `VeriBottomBar` 条目。新增样式前另读 `docs/dev/navigation-style-decoupling-design.md`。
-- `docs/dev/attachment-storage-and-streaming-backup-design.md`：图片附件文件化存储、备份/恢复全链路流式化、加密容器与进度反馈的当前实现与验收。
-- `docs/ui-guidelines.md`：页面骨架、交互、图表和视觉规范。
+- `docs/design/components.md`：组件、弹窗、格式化与纯函数注册表；写相关代码前必读。根导航的当前约定见其中 `VeriRootNavigationStyle`、`VeriDockedRootNavigationStyle` 与 `VeriLiquidGlassRootNavigationStyle` 条目（默认停靠样式 + 可选的液态玻璃样式，样式选择页见 `NavigationStyleSettingsPage`），底栏绘制组件见 `VeriBottomBar` 条目；新增样式前先读 `docs/design/ui-guidelines.md` 的「根导航」小节与其硬约束、契约测试清单。
+- `docs/dev/attachment-storage-and-backup.md`：图片附件文件化存储、备份/恢复全链路流式化、加密容器与进度反馈的当前实现与验收。
+- `docs/design/ui-guidelines.md`：页面骨架、交互、图表和视觉规范。
 - `docs/dev/tech-decisions.md`：数据口径、备份范围和关键技术取舍；判断当前实现仍以源码、测试与工作流为准。
 - `docs/dev/known-limitations.md`：已接受的限制与技术债及触发整改的阈值。
 - `docs/dev/ai-tools.md`：AI 账目查询工具的注册和维护约定。
-- `docs/dev/category-budget-override-design.md`：分类默认预算与单期覆盖的职责与验收范围。
-- `docs/dev/multi-currency-design.md`：多币种、离线汇率、跨币种交易/退款与迁移的当前依据。
-- `docs/dev/refund-design.md`：退款（关联条目、待到账/已到账、多币种冲减）的当前口径。
-- `docs/dev/auto-capture-plan.md`、`docs/dev/i18n-verification.md`、`docs/automation.md`：截图识账与外部意图接口、多语言、自动化接入的当前约定与验收资料。
+- `docs/dev/category-budget-override.md`：分类默认预算与单期覆盖的职责与验收范围。
+- `docs/dev/multi-currency.md`：多币种、离线汇率、跨币种交易/退款与迁移的当前依据。
+- `docs/dev/refund.md`：退款（关联条目、待到账/已到账、多币种冲减）的当前口径。
+- `docs/dev/auto-capture.md`、`docs/dev/i18n-verification.md`、`docs/product/automation.md`：截图识账与外部意图接口、多语言、自动化接入的当前约定与验收资料。
 - `docs/dev/android-development.md`：真机开发、工具链检测和缺失时自动安装、日志、隔离验收及测试应用清理。
 - `docs/dev/feedback-system.md`：根级轻提示 Host 的调用、时长、操作结果、去重与优先级队列规范；新增或替换短反馈前必读。
 - `docs/dev/home-widgets.md`：桌面小组件（Jetpack Glance Provider、配置 Activity、指标投影与预览）的当前实现与验收。
-- `docs/dev/save-interaction-consistency-design.md`、`docs/dev/navigation-style-decoupling-design.md`：草稿/保存/返回语义与底部导航样式契约。
 - `docs/dev/anchored-menu.md`：锚点菜单的用法与递进子菜单约定。`docs/dev/account-icon-assets.md`：账户图标资源分组、命名与新增图标的流程。
-- `docs/dev/ui-library-adoption-plan.md`：第三方 UI 组件库的选型结论（哪些采用、哪些不采用及原因）。**打算引入新组件库前先读它**，避免重复评估已被否决的库。
-- `docs/archive/`：**已完成/已废弃的历史方案存档**，只作决策留痕，含撰写时的过时事实（如被删除的页面与旧面板目录）。不要把存档内容当成当前实现，也不要照着它写代码。
-- `README.md`、`docs/product.md`、`docs/acceptance-checklist.md`：产品定位、能力范围与验收清单。
+- `README.md`、`docs/product/product.md`、`docs/product/acceptance-checklist.md`：产品定位、能力范围与验收清单。
+
+**不保留过程记录。** `docs/` 只陈述**当前状态**：规范、口径、契约、验收清单、样例数据。方案草稿、实施计划、评审记录、决策过程、迁移中间态一律不进仓库——完成时把仍然有效的结论并入对应规范（界面交互进 `docs/design/`，技术取舍进 `docs/dev/tech-decisions.md`，领域口径进 `docs/dev/`），其余删除。`docs/dev/tech-decisions.md` 的「UI 组件库选型」等行就是被否决库的唯一记录，不要另建选型或规划文档。
 
 ## 产品原则
 
@@ -85,7 +86,7 @@
 - `LedgerEntry.accountId == ''` 表示“无账户”。展示名称用 `accountDisplayName`；不要用会回退首账户的 `accountById` 解释空 id。
 - 账户能力只通过 `supportsCardLast4`、`supportsCredit` 判断，禁止散落硬编码账户类型。`cardLast4Follows` 是持久化字段，不能从卡号和后四位反推用户选择。
 - 转账不计入收支，手续费由转出账户承担；转账分类不得留空。
-- 退款是关联原支出的独立条目；只有已到账退款影响余额和净额，原支出的 `refundedBaseAmount` 是已到账退款 `baseAmount` 之和的派生缓存。修改退款逻辑前必须阅读 `docs/dev/refund-design.md` 和 `docs/dev/multi-currency-design.md` 并以当前代码/测试为准。
+- 退款是关联原支出的独立条目；只有已到账退款影响余额和净额，原支出的 `refundedBaseAmount` 是已到账退款 `baseAmount` 之和的派生缓存。修改退款逻辑前必须阅读 `docs/dev/refund.md` 和 `docs/dev/multi-currency.md` 并以当前代码/测试为准。
 - 自定义预算周期只改变预算体系口径，统计报表仍按自然月。默认预算使用哨兵键，单月覆盖优先于默认值。
 - 「不计入预算」标记（借款、垫付等）只脱离**预算**口径。预算取数一律走 `ledger_math.dart` 的 `budgetExpenseTotal` / `countsTowardBudget`（预算总览、首页与看板预算卡、按日预算、预算趋势、桌面小组件预算、AI `budgetStatus`）；收支统计、账户余额、报表与分类统计仍走 `sumByType` / `signedAmount`，**不读该标记**。新增预算取数不要在调用点手写过滤条件。
 
@@ -160,9 +161,9 @@ dart format .
 
 ### 组件化与复用
 
-- 写任何 Widget、弹窗、对话框、格式化或计算前，先查 `docs/dev/components.md`。命中现成件就复用或参数化扩展，不复制脚手架、不新建同构变体。
+- 写任何 Widget、弹窗、对话框、格式化或计算前，先查 `docs/design/components.md`。命中现成件就复用或参数化扩展，不复制脚手架、不新建同构变体。
 - 同一 UI 片段或逻辑在两个及以上文件出现时，抽为共享件：通用组件放 `common_widgets.dart`，弹窗 helper 放 `sheets.dart`，记账组件放 `entry_sheets.dart`，纯计算放对应 `*_math` / `*_tree` /领域模块。新增、重命名或删除可复用件时同步组件清单。
-- 标准页面骨架使用 `Scaffold > SafeArea > VeriPage`，列表页面外层 `ListView` 采用统一头部 padding，并使用 `VeriHeader` / `PageHeader`；固定页脚页面单独给头部相同 padding。细节以 `docs/ui-guidelines.md` 为准。
+- 标准页面骨架使用 `Scaffold > SafeArea > VeriPage`，列表页面外层 `ListView` 采用统一头部 padding，并使用 `VeriHeader` / `PageHeader`；固定页脚页面单独给头部相同 padding。细节以 `docs/design/ui-guidelines.md` 为准。
 - 分类图标只用 `CategoryIconBox` / `CategoryGlyph`，账户图标只用 `AccountIconBox`。渲染点禁止直接调用 `iconForCode`，否则 emoji 分类会回退钱包图标。
 - Row 内“居中列 label + value [+ detail]”的标准指标块使用 `SummaryMetric`。明显不同的卡片/排行可保留局部组件，不把一个组件过度参数化成配置怪物。
 - 图表优先复用 `InteractiveTrendChart` / `InteractiveBarChart`，必须支持点按或滑动查看数据；位于可跳转卡片内时，图表区域要拦截点击，避免误触卡片跳转。
@@ -215,7 +216,7 @@ dart format .
 
 - `BackupService` 是字节格式编解码唯一入口；Controller 只接收/产出明文 JSON。未加密备份为 zip（`backup.json` + 独立附件），新版加密备份为流式加密容器（`.verifin`，密文里是同一个 zip），旧版 JSON 信封仍可读取导入；不要在 UI/Controller 复制格式判定。
 - 哪些数据进备份、哪些仅设备本地，必须以当前 `exportDataJson` / `importDataJson`、备份测试和实际字段共同核验，并同步维护 `docs/dev/tech-decisions.md` 的“备份范围”表。应用锁、备份口令、WebDAV 凭证、AI Key 等机密不得进入备份。
-- 改备份字段时同步 `exportDataJson` / `importDataJson`、初始化逻辑、旧备份兼容和 `docs/dev/verifin-sample-backup.json`，并让测试真实导入样例备份。
+- 改备份字段时同步 `exportDataJson` / `importDataJson`、初始化逻辑、旧备份兼容和 `docs/fixtures/sample-backup.json`，并让测试真实导入样例备份。
 - 第三方账单各自使用独立 parser，统一产出强类型 `RawImportRecord`；共享领域逻辑只放 `plan_builder.dart`。新增平台要同步枚举、注册表、parser、fixtures 和测试。
 - 文件解析后不得直接落库，必须进入导入预览；预览/编辑全程零落库副作用，确认后才由 Controller 创建实际被引用的账户、分类、标签和交易。
 - 不凭空编造第三方格式；解析规则必须来自真实样例，并覆盖编码、日期、金额符号、退款和账户余额等边界。
@@ -240,7 +241,7 @@ dart format .
 ## 文档、CHANGELOG 与交付
 
 - 每次修改代码、功能、配置或流程，都检查 `README.md`、`AGENTS.md`、`CLAUDE.md` 和 `docs/` 是否需要同步；影响命令、架构、交付、配置、数据口径或用户行为时，必须在同一次变更中更新相关文档。
-- 新增/改名共享组件更新 `docs/dev/components.md`；改变关键取舍更新 `docs/dev/tech-decisions.md`；新增已接受限制或调整阈值更新 `docs/dev/known-limitations.md`；AI 查询工具更新 `docs/dev/ai-tools.md`。
+- 新增/改名共享组件更新 `docs/design/components.md`；改变关键取舍更新 `docs/dev/tech-decisions.md`；新增已接受限制或调整阈值更新 `docs/dev/known-limitations.md`；AI 查询工具更新 `docs/dev/ai-tools.md`。
 - 用户可见的新功能、交互变化、修复、隐私或安全变化要写入 `CHANGELOG.md` 顶部 `## [Unreleased]` 的对应小节。纯内部重构、测试或文档改动不写 CHANGELOG。
 - UI 变化影响公开截图时检查 `docs/screenshots/`；功能完成标准变化时检查验收清单。
 - 提交信息使用简短明确的 `type: summary`，如 `feat: add login screen`、`fix: correct counter test`。提交中不得出现 `Generated by`、`Co-authored-by` 等任何 AI/Codex 署名。

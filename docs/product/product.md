@@ -1,6 +1,6 @@
 # Veri Fin 产品文档
 
-本文描述当前产品边界与核心体验。逐项验收见 `docs/acceptance-checklist.md`，工程架构见 `docs/dev/architecture.md`（`CLAUDE.md` 只链接 `AGENTS.md`，不单独维护规范），数据与技术取舍见 `docs/dev/tech-decisions.md`。
+本文描述当前产品边界与核心体验。逐项验收见 `docs/product/acceptance-checklist.md`，工程架构见 `docs/dev/architecture.md`（`CLAUDE.md` 只链接 `AGENTS.md`，不单独维护规范），数据与技术取舍见 `docs/dev/tech-decisions.md`。
 
 ## 产品定位
 

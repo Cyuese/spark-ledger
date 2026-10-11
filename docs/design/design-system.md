@@ -68,19 +68,18 @@
 
 外观偏好（主题、语言等）走设备 KV，全局不分账本、不进账目备份，恢复备份与初始化账目都保留当前设备选择。偏好改动须由 Controller 完成落盘后，再更新对应的独立 `ValueNotifier`；绘制组件不直接访问 Controller/KV。
 
-账目仍以 Android 本机 SQLite 为权威；本地优先、AI 只生成待确认草稿、Android 原生能力必须真实可用。完整工程和业务不变量仍以 [AGENTS.md](../AGENTS.md) 与 [技术决策](dev/tech-decisions.md) 为准。
+账目仍以 Android 本机 SQLite 为权威；本地优先、AI 只生成待确认草稿、Android 原生能力必须真实可用。完整工程和业务不变量仍以 [AGENTS.md](../../AGENTS.md) 与 [技术决策](../dev/tech-decisions.md) 为准。
 
 ## 修改与验收
 
-先查 [组件注册表](dev/components.md)，复用后再扩展。新增可见文案完成中英文 l10n；不为材质调整改动金额、预算或退款口径。按独立功能提交，不积压工作区，不擅自推送或发版。
+先查 [组件注册表](components.md)，复用后再扩展。新增可见文案完成中英文 l10n；不为材质调整改动金额、预算或退款口径。按独立功能提交，不积压工作区，不擅自推送或发版。
 
 widget 布局测试使用 **393×852**，补充 360dp、大字号、浅/深色和高对比度测试。实际检查保存/取消/冷启动、底栏点击/页面滑动/取消、菜单、键盘和滚动末项。运行 format、analyze、相关测试与全量测试。Android 手势、系统安全区及真实流畅度仍需真机验证，桌面截图不替代它。
 
 ## 详细资料
 
 - [页面、图表与骨架](ui-guidelines.md)
-- [公共组件目录](dev/components.md)
-- [底部导航样式契约](dev/navigation-style-decoupling-design.md)
-- [短反馈系统](dev/feedback-system.md)
-- [Android 开发与工具链](dev/android-development.md)
-- [架构、数据与备份取舍](dev/tech-decisions.md) / [已接受限制](dev/known-limitations.md)
+- [公共组件目录](components.md)
+- [短反馈系统](../dev/feedback-system.md)
+- [Android 开发与工具链](../dev/android-development.md)
+- [架构、数据与备份取舍](../dev/tech-decisions.md) / [已接受限制](../dev/known-limitations.md)
