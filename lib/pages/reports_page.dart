@@ -649,8 +649,9 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
                 ),
               ),
             ),
-            // 右上角留给支出 / 收入切换。
+            // 右上角留给支出 / 收入切换，与资产汇总的口径切换同为紧凑档。
             trailingWidget: VeriEntryTypeToggle(
+              compact: true,
               dimension: _type,
               onChanged: (type) => setState(() => _type = type),
             ),
@@ -667,6 +668,10 @@ class _RecentDailyStatsPanelState extends State<_RecentDailyStatsPanel> {
               height: 138,
               child: InteractiveBarChart(
                 values: chartValues,
+                // 柱子颜色跟着口径走：支出语义红、收入语义青，方向不只靠标题。
+                color: expense
+                    ? veriSemantic(context, veriExpense)
+                    : veriSemantic(context, veriIncome),
                 xLabels: _range == _RecentDailyRange.thisWeek
                     ? window.days
                           .map((day) => _weekdayLabel(l10n, day))

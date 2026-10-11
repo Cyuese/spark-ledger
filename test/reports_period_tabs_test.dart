@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:verifin/app/app_theme.dart';
 import 'package:verifin/app/chart_painters.dart';
 import 'package:verifin/app/common_widgets.dart';
 import 'package:verifin/app/models.dart';
@@ -92,6 +93,72 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('dimension_toggle_income')), findsOneWidget);
+  });
+
+  testWidgets('日常面板：口径切换用紧凑档，柱子按收支语义色绘制', (tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    controller
+      ..addEntry(
+        LedgerEntry(
+          id: 'daily-expense',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 80,
+          categoryId: 'dining',
+          accountId: '',
+          note: '',
+          occurredAt: now,
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'daily-income',
+          bookId: controller.activeBook.id,
+          type: EntryType.income,
+          amount: 500,
+          categoryId: 'salary',
+          accountId: '',
+          note: '',
+          occurredAt: now,
+        ),
+      )
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2); // 看板 · 日常
+    await tester.pumpAndSettle();
+
+    // 右上角口径切换与资产汇总卡的那一个同为紧凑档（30dp），不再是 40dp 的大号。
+    final toggle = find.byType(VeriEntryTypeToggle);
+    final assetSummaryToggle = find
+        .ancestor(
+          of: find.byKey(const Key('asset_summary_side_positive')),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is VeriSegmentedControl,
+          ),
+        )
+        .first;
+    expect(
+      tester.getSize(toggle).height,
+      tester.getSize(assetSummaryToggle).height,
+    );
+
+    // 柱子颜色跟着口径走：支出语义红、收入语义青。
+    final brightness = Theme.of(
+      tester.element(find.byType(InteractiveBarChart)),
+    ).brightness;
+    Color chartColor() => tester
+        .widget<InteractiveBarChart>(find.byType(InteractiveBarChart))
+        .color!;
+    expect(chartColor(), veriSemanticFor(brightness, veriExpense));
+
+    await tester.tap(
+      find.descendant(of: toggle, matching: find.text('收入')).first,
+    );
+    await tester.pumpAndSettle();
+    expect(chartColor(), veriSemanticFor(brightness, veriIncome));
   });
 
   testWidgets('资产汇总面板：正/负资产可切换，中心可切换口径', (tester) async {
