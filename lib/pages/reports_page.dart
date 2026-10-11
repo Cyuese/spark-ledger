@@ -18,8 +18,17 @@ import 'panel_settings_page.dart';
 import 'report_analysis_page.dart';
 import '../l10n/app_localizations.dart';
 
-class ReportsPage extends StatelessWidget {
+class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
+
+  @override
+  State<ReportsPage> createState() => _ReportsPageState();
+}
+
+class _ReportsPageState extends State<ReportsPage> {
+  /// 看板顶部统计口径 Tab。最终默认落在「日常」；「日常」的面板（阶段 4/5）
+  /// 落地前先停在「月统计」，否则入口打开就是空白页。
+  ReportPeriodTab _tab = ReportPeriodTab.monthly;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +81,7 @@ class ReportsPage extends StatelessWidget {
       0,
       (max, value) => value > max ? value : max,
     );
-    final panelIds = controller.enabledPanelIds(PanelPageKind.reportsMonthly);
+    final panelIds = controller.enabledPanelIds(_tab.panelPageKind);
 
     // 面板 id 对应的卡片,渲染顺序与开关由面板管理页配置。
     Widget panelFor(String id) {
@@ -305,17 +314,33 @@ class ReportsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _MonthSummaryCard(
-            income: monthIncome,
-            expense: monthExpense,
-            net: monthNet,
+          VeriSegmentedControl<ReportPeriodTab>(
+            values: ReportPeriodTab.values,
+            selected: _tab,
+            semanticLabel: l10n.statRangeLabel,
+            labelOf: (tab) => tab.label(l10n),
+            // 与记账页 `entry_type_selected_*` 同一契约：Key 只挂在选中项上
+            // （分段控件会把选中项多渲染一份用于滑动动画）。
+            keyOf: (tab) =>
+                tab == _tab ? Key('reports_tab_selected_${tab.name}') : null,
+            onChanged: (tab) => setState(() => _tab = tab),
           ),
-          for (final id in panelIds) ...<Widget>[
+          // 各 Tab 的面板清单互相独立。「日常 / 年统计 / 自定义」的内容尚未
+          // 实现，先只画 Tab 本体，不渲染任何面板与占位文案。
+          if (_tab == ReportPeriodTab.monthly) ...<Widget>[
             const SizedBox(height: 10),
-            panelFor(id),
+            _MonthSummaryCard(
+              income: monthIncome,
+              expense: monthExpense,
+              net: monthNet,
+            ),
+            for (final id in panelIds) ...<Widget>[
+              const SizedBox(height: 10),
+              panelFor(id),
+            ],
+            const SizedBox(height: 8),
+            PanelSettingsEntry(kind: _tab.panelPageKind),
           ],
-          const SizedBox(height: 8),
-          const PanelSettingsEntry(kind: PanelPageKind.reportsMonthly),
         ],
       ),
     );

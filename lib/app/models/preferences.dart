@@ -290,6 +290,42 @@ enum PanelPageKind {
   }
 }
 
+/// 看板顶部的统计口径 Tab。顺序即展示顺序；每个 Tab 对应一份独立的面板清单
+/// （见 [PanelPageKind]），当前 Tab 不做持久化，每次进入都回到默认项。
+enum ReportPeriodTab {
+  daily,
+  monthly,
+  yearly,
+  custom;
+
+  String label(AppLocalizations l10n) {
+    switch (this) {
+      case ReportPeriodTab.daily:
+        return l10n.reportTabDaily;
+      case ReportPeriodTab.monthly:
+        return l10n.reportTabMonthly;
+      case ReportPeriodTab.yearly:
+        return l10n.reportTabYearly;
+      case ReportPeriodTab.custom:
+        return l10n.reportTabCustom;
+    }
+  }
+
+  /// 该口径对应的面板清单。
+  PanelPageKind get panelPageKind {
+    switch (this) {
+      case ReportPeriodTab.daily:
+        return PanelPageKind.reportsDaily;
+      case ReportPeriodTab.monthly:
+        return PanelPageKind.reportsMonthly;
+      case ReportPeriodTab.yearly:
+        return PanelPageKind.reportsYearly;
+      case ReportPeriodTab.custom:
+        return PanelPageKind.reportsCustom;
+    }
+  }
+}
+
 /// 面板目录项:id 是持久化标识,名称与描述按 id 从 ARB 解析,用于面板管理页展示。
 class PagePanelSpec {
   const PagePanelSpec({required this.id});
