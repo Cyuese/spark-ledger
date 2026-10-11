@@ -3578,6 +3578,12 @@ abstract class AppLocalizations {
   /// **'标签'**
   String get rankGroupTag;
 
+  /// 看板排行卡:分类 / 子分类 / 标签分组切换的无障碍标签
+  ///
+  /// In zh, this message translates to:
+  /// **'排行方式'**
+  String get rankGroupingLabel;
+
   /// No description provided for @tagRankOverlapNote.
   ///
   /// In zh, this message translates to:

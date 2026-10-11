@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:verifin/app/app_theme.dart';
 import 'package:verifin/app/chart_painters.dart';
 import 'package:verifin/app/common_widgets.dart';
 import 'package:verifin/app/models.dart';
@@ -94,6 +95,107 @@ void main() {
     expect(find.byKey(const Key('dimension_toggle_income')), findsOneWidget);
   });
 
+  testWidgets('日常面板：口径切换用紧凑档，柱子按收支语义色绘制', (tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    controller
+      ..addEntry(
+        LedgerEntry(
+          id: 'daily-expense',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 80,
+          categoryId: 'dining',
+          accountId: '',
+          note: '',
+          occurredAt: now,
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'daily-income',
+          bookId: controller.activeBook.id,
+          type: EntryType.income,
+          amount: 500,
+          categoryId: 'salary',
+          accountId: '',
+          note: '',
+          occurredAt: now,
+        ),
+      )
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2); // 看板 · 日常
+    await tester.pumpAndSettle();
+
+    // 右上角口径切换与资产汇总卡的那一个同为紧凑档（30dp），不再是 40dp 的大号。
+    final toggle = find.byType(VeriEntryTypeToggle);
+    final assetSummaryToggle = find
+        .ancestor(
+          of: find.byKey(const Key('asset_summary_side_positive')),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is VeriSegmentedControl,
+          ),
+        )
+        .first;
+    expect(
+      tester.getSize(toggle).height,
+      tester.getSize(assetSummaryToggle).height,
+    );
+
+    // 柱子颜色跟着口径走：支出语义红、收入语义青。
+    final brightness = Theme.of(
+      tester.element(find.byType(InteractiveBarChart)),
+    ).brightness;
+    Color chartColor() => tester
+        .widget<InteractiveBarChart>(find.byType(InteractiveBarChart))
+        .color!;
+    expect(chartColor(), veriSemanticFor(brightness, veriExpense));
+
+    await tester.tap(
+      find.descendant(of: toggle, matching: find.text('收入')).first,
+    );
+    await tester.pumpAndSettle();
+    expect(chartColor(), veriSemanticFor(brightness, veriIncome));
+  });
+
+  testWidgets('排行卡：支出/收入在标题右上角，分组口径移到下方且同为紧凑档', (tester) async {
+    await pumpApp(tester, LocalKeyValueStore());
+    await openReportsMonthlyTab(tester);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('分类 · 标签排行'),
+      200,
+      scrollable: firstVerticalScrollable(),
+    );
+    await tester.pumpAndSettle();
+
+    final typeToggle = find.byType(VeriEntryTypeToggle);
+    final groupingToggle = find
+        .ancestor(
+          of: find.byKey(const Key('ranking_group_topCategory')),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is VeriSegmentedControl,
+          ),
+        )
+        .first;
+    final title = find.text('分类 · 标签排行');
+
+    // 支出 / 收入在标题行右侧，分组口径在它下面一行。
+    expect(
+      tester.getCenter(typeToggle).dx,
+      greaterThan(tester.getCenter(title).dx),
+    );
+    expect(
+      tester.getCenter(typeToggle).dy,
+      lessThan(tester.getCenter(groupingToggle).dy),
+    );
+    expect(tester.getSize(typeToggle).height, 30);
+    expect(tester.getSize(groupingToggle).height, 30);
+  });
+
   testWidgets('资产汇总面板：正/负资产可切换，中心可切换口径', (tester) async {
     await pumpApp(tester, LocalKeyValueStore());
     await tapBottomTab(tester, 2); // 看板 · 日常
@@ -131,6 +233,28 @@ void main() {
       scrollable: firstVerticalScrollable(),
     );
     expect(find.text('分类 · 标签排行'), findsOneWidget);
+  });
+
+  testWidgets('排行卡在窄屏（360dp）不溢出', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(360, 900);
+    addTearDown(tester.view.reset);
+
+    await pumpApp(tester, LocalKeyValueStore());
+    await openReportsMonthlyTab(tester);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('分类 · 标签排行'),
+      200,
+      scrollable: firstVerticalScrollable(),
+    );
+    await tester.pumpAndSettle();
+
+    // 标题行（标题 + 右上角口径切换）与分组切换行各自成行，卡片宽度再窄也不溢出
+    // （溢出会直接抛错让用例失败）。
+    expect(find.byKey(const Key('dimension_toggle_expense')), findsOneWidget);
+    expect(find.byKey(const Key('ranking_group_topCategory')), findsOneWidget);
+    expect(tester.getSize(find.byType(VeriEntryTypeToggle)).height, 30);
   });
 
   testWidgets('年统计热力图在窄屏（360dp）不溢出', (tester) async {
