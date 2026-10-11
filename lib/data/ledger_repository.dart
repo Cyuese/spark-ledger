@@ -62,6 +62,11 @@ abstract interface class LedgerRepository {
   Future<List<Tag>> loadTags();
   Future<void> saveTags(List<Tag> tags);
 
+  /// 附件元数据（按 sort_order 升序）。
+  ///
+  /// **只读元数据列，绝不 SELECT `data_url`**：旧库里该列可能内嵌几十~上百 MB 的
+  /// base64，整列取回会在冷启动时直接 OOM（Issue 45）。需要旧版 base64 时用
+  /// [loadAttachmentDataUrl] 逐条读取。
   Future<List<Attachment>> loadAttachments();
   Future<void> saveAttachments(List<Attachment> attachments);
 
@@ -266,7 +271,13 @@ class SqliteLedgerRepository implements LedgerRepository {
 
   @override
   Future<List<Attachment>> loadAttachments() async {
-    final rows = await _db.query('attachments', orderBy: 'sort_order ASC');
+    // 只读元数据列：`data_url` 可能还存着内嵌 base64 的历史图片，整列取回会让
+    // 冷启动内存随附件总量增长（Issue 45 的崩溃点）。旧字节只在迁移期按需逐条读。
+    final rows = await _db.query(
+      'attachments',
+      columns: _attachmentColumns,
+      orderBy: 'sort_order ASC',
+    );
     return rows.map(_attachmentFromRow).toList();
   }
 
@@ -507,9 +518,11 @@ class SqliteLedgerRepository implements LedgerRepository {
           _indexed(snapshot.categories, _categoryToRow),
         );
         await _replaceInTxn(txn, 'tags', _indexed(snapshot.tags, _tagToRow));
-        await _replaceInTxn(
+        // 附件表专用整替：整账本重建（导入/恢复/重置/删账本/启动自愈）也会保留未被
+        // 删除行的 `data_url`。其它表都是模型数据的完整投影，唯独该列可能还承载
+        // 尚未迁移的旧版 base64 图片，按普通整替重插会把用户的图片直接丢掉。
+        await _replaceAttachmentsInTxn(
           txn,
-          'attachments',
           _indexed(snapshot.attachments, _attachmentToRow),
         );
         await _replaceInTxn(txn, 'entries', snapshot.entries.map(_entryToRow));
@@ -718,10 +731,13 @@ class SqliteLedgerRepository implements LedgerRepository {
     (entry) => <String, Object?>{'scope_key': entry.key, 'amount': entry.value},
   );
 
-  /// 附件表专用整替：对外语义不变（落库后表内容 == 传入列表），但对已存在的同一 id
-  /// 只更新元数据列，**不触碰 `data_url`**。原因：迁移期附件字节可能还只在 `data_url`
-  /// 里、文件尚未生成，若按普通整表覆盖重插会把未转换的 base64 丢掉。基线为「列缺席即
-  /// 写入 NULL」，因此导入/恢复走 [replaceAllLedgerData] 的整表重建时仍会清空该列。
+  /// 附件表专用整替：对外语义不变（落库后元数据内容 == 传入列表），但对仍保留的同一
+  /// id 只更新元数据列，**不触碰 `data_url`**。原因：迁移期附件字节可能还只在
+  /// `data_url` 里、文件尚未生成，若按普通整表覆盖重插会把未转换的 base64 丢掉。
+  ///
+  /// [saveAttachments]、`saveEntryAggregate` 与 [replaceAllLedgerData] 都走这里；
+  /// 导入/恢复时附件文件已先落盘、读取优先文件，因此残留的旧 `data_url` 不参与展示，
+  /// 只在文件缺失时兜底。
   static Future<void> _replaceAttachmentsInTxn(
     Transaction txn,
     Iterable<Map<String, Object?>> rows,
@@ -856,6 +872,16 @@ class SqliteLedgerRepository implements LedgerRepository {
 
   static Tag _tagFromRow(Map<String, Object?> row) =>
       Tag(id: row['id'] as String, label: row['label'] as String);
+
+  /// 附件元数据列。**任何读取路径都不得把它换成 `SELECT *`**：`data_url` 里可能
+  /// 还留着旧版内嵌 base64 图片，整列取回会让内存随附件总量增长（Issue 45）。
+  static const List<String> _attachmentColumns = <String>[
+    'id',
+    'entry_id',
+    'sort_order',
+    'mime_type',
+    'byte_size',
+  ];
 
   static Map<String, Object?> _attachmentToRow(Attachment a, int index) =>
       <String, Object?>{
