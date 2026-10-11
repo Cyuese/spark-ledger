@@ -98,6 +98,9 @@ void main() {
       -200,
       scrollable: find.byType(Scrollable).first,
     );
+    // 没有可用账户时编辑页顶部的空状态更高，先确保餐饮芯片完全进入视口再点击。
+    await tester.ensureVisible(find.byKey(const Key('entry_category_dining')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('entry_category_dining')));
     await tester.pump();
     await _ensureNoteVisible(tester);

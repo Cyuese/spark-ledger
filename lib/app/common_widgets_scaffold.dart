@@ -396,9 +396,9 @@ class EmptyState extends StatelessWidget {
     required this.title,
     required this.description,
     this.action,
-    this.animationAsset,
   });
 
+  /// 插画镜片里的语义图标，用来说明「空的是什么」。
   final IconData icon;
   final String title;
   final String description;
@@ -406,14 +406,8 @@ class EmptyState extends StatelessWidget {
   /// 可选的操作入口（如「添加账户」）。空状态只说原因不给出口时，用户会卡在死路上。
   final Widget? action;
 
-  /// 通用空状态动画；传 null 可回退到图标方案（也用于系统减少动态效果）。
-  final String? animationAsset;
-
   @override
   Widget build(BuildContext context) {
-    final animationAsset = this.animationAsset;
-    final showAnimation =
-        animationAsset != null && !MediaQuery.of(context).disableAnimations;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 260),
@@ -422,38 +416,11 @@ class EmptyState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              if (showAnimation)
-                SizedBox(
-                  width: 96,
-                  height: 96,
-                  child: Lottie.asset(
-                    animationAsset,
-                    fit: BoxFit.contain,
-                    repeat: false,
-                  ),
-                )
-              else
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(veriRadiusMd),
-                    border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.10),
-                    ),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 24,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              const SizedBox(height: 10),
+              _EmptyStateArt(
+                key: const Key('empty_state_illustration'),
+                icon: icon,
+              ),
+              const SizedBox(height: 12),
               Text(
                 title,
                 textAlign: TextAlign.center,
@@ -481,4 +448,179 @@ class EmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 空状态插画：一张倾斜的数据卡片，右下角压着放大镜，镜片里是调用方的语义图标。
+///
+/// 用原生绘制而不是外部素材：插画跟随 `colorScheme.primary` 与浅/深主题自动适配，
+/// 不需要为素材登记许可证，也不占用 APK 体积。系统开启「减少动态效果」时只保留
+/// 静态插画，不启动循环动画。
+class _EmptyStateArt extends StatelessWidget {
+  const _EmptyStateArt({super.key, required this.icon});
+
+  final IconData icon;
+
+  /// 插画画布边长（逻辑像素）。设计尺寸固定为 96，绘制时按此等比缩放。
+  static const double extent = 96;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ExcludeSemantics(
+      child: SizedBox.square(
+        dimension: extent,
+        // 只做一次入场：空状态不需要常驻动画，减少动态效果时直接到位。
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 420),
+          curve: Curves.easeOutCubic,
+          builder: (context, entrance, _) => CustomPaint(
+            size: const Size.square(_EmptyStateArt.extent),
+            painter: _EmptyStateArtPainter(
+              entrance: entrance,
+              icon: icon,
+              primary: theme.colorScheme.primary,
+              surface: veriContentSurfaceColor(theme.brightness),
+              onSurface: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyStateArtPainter extends CustomPainter {
+  const _EmptyStateArtPainter({
+    required this.entrance,
+    required this.icon,
+    required this.primary,
+    required this.surface,
+    required this.onSurface,
+  });
+
+  /// 入场进度（0→1）：整体轻微放大并上移、放大镜再往下落到位，避免空状态「砰」地跳出来。
+  final double entrance;
+  final IconData icon;
+  final Color primary;
+  final Color surface;
+  final Color onSurface;
+
+  static const double _design = _EmptyStateArt.extent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / _design;
+    canvas.save();
+    canvas.translate(size.width / 2, size.height / 2);
+    canvas.scale(scale * (0.94 + 0.06 * entrance));
+    canvas.translate(-_design / 2, -_design / 2 + (1 - entrance) * 6);
+    _paintBackdrop(canvas);
+    _paintCard(canvas);
+    _paintLens(canvas);
+    canvas.restore();
+  }
+
+  /// 底色圆：给插画一个柔和的落点，用主题色的极低透明度实色，不是渐变。
+  void _paintBackdrop(Canvas canvas) {
+    canvas.drawCircle(
+      const Offset(48, 48),
+      37,
+      Paint()..color = primary.withValues(alpha: 0.07),
+    );
+  }
+
+  void _paintCard(Canvas canvas) {
+    canvas.save();
+    canvas.translate(42, 45);
+    canvas.rotate(-8 * math.pi / 180);
+    final card = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: Offset.zero, width: 44, height: 54),
+      const Radius.circular(9),
+    );
+    canvas.drawRRect(
+      card,
+      Paint()
+        ..color = Color.alphaBlend(primary.withValues(alpha: 0.12), surface),
+    );
+    canvas.drawRRect(
+      card,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..color = primary.withValues(alpha: 0.34),
+    );
+    // 三条宽度递减的占位行：看得出是一份「还没有内容」的记录。
+    const lineWidths = <double>[24, 19, 13];
+    const lineAlphas = <double>[0.34, 0.26, 0.18];
+    for (var i = 0; i < lineWidths.length; i++) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(-12, -11.5 + i * 9.4, lineWidths[i], 3.6),
+          const Radius.circular(1.8),
+        ),
+        Paint()..color = onSurface.withValues(alpha: lineAlphas[i]),
+      );
+    }
+    canvas.restore();
+  }
+
+  void _paintLens(Canvas canvas) {
+    canvas.save();
+    // 镜片比卡片晚一点落位，入场时有一点点「跟上来」的感觉。
+    canvas.translate(0, (1 - entrance) * 7);
+    const center = Offset(65, 65);
+    const radius = 15.5;
+    // 手柄先画、镜片后画：手柄内端被镜片盖住，看起来是从镜片伸出去的。
+    canvas.drawLine(
+      center + const Offset(radius * 0.72, radius * 0.72),
+      const Offset(87, 87),
+      Paint()
+        ..color = primary
+        ..strokeWidth = 5
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = Color.alphaBlend(primary.withValues(alpha: 0.18), surface),
+    );
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.6
+        ..color = primary,
+    );
+    _paintIcon(canvas, center);
+    canvas.restore();
+  }
+
+  void _paintIcon(Canvas canvas, Offset center) {
+    final glyph = TextPainter(
+      textDirection: TextDirection.ltr,
+      text: TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+          fontSize: 15,
+          fontFamily: icon.fontFamily,
+          package: icon.fontPackage,
+          color: primary,
+        ),
+      ),
+    )..layout();
+    glyph.paint(canvas, center - Offset(glyph.width / 2, glyph.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(_EmptyStateArtPainter oldDelegate) =>
+      oldDelegate.entrance != entrance ||
+      oldDelegate.icon != icon ||
+      oldDelegate.primary != primary ||
+      oldDelegate.surface != surface ||
+      oldDelegate.onSurface != onSurface;
 }

@@ -164,6 +164,11 @@ void main() {
       200,
       scrollable: firstVerticalScrollable(),
     );
+    // 首页空状态插画变高后入口更靠下，先确保完全进入视口再点击。
+    await tester.ensureVisible(
+      find.byKey(const Key('panel_settings_entry_home')),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('3个首页面板'), findsOneWidget);
     await tester.tap(find.byKey(const Key('panel_settings_entry_home')));
     await tester.pumpAndSettle();
