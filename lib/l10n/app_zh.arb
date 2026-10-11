@@ -328,6 +328,30 @@
       "amount": { "type": "String" }
     }
   },
+  "panelAssetSummaryLabel": "资产汇总",
+  "@panelAssetSummaryLabel": {
+    "description": "看板日常面板:资产汇总卡片标题"
+  },
+  "panelAssetSummaryDesc": "按账户占比查看正资产或负资产",
+  "@panelAssetSummaryDesc": {
+    "description": "看板日常面板:资产汇总卡片描述"
+  },
+  "assetPositive": "正资产",
+  "@assetPositive": {
+    "description": "资产汇总:只统计余额为正的账户"
+  },
+  "assetNegative": "负资产",
+  "@assetNegative": {
+    "description": "资产汇总:只统计余额为负的账户"
+  },
+  "assetSummaryAmount": "资产金额",
+  "@assetSummaryAmount": {
+    "description": "资产汇总:中心与图例显示金额"
+  },
+  "assetSummaryShare": "资产占比",
+  "@assetSummaryShare": {
+    "description": "资产汇总:中心与图例显示占比"
+  },
   "incomeAmountLabel": "收入 {amount}",
   "@incomeAmountLabel": {
     "description": "图表气泡等处的收入金额行(与 expenseAmountLabel 对称)",

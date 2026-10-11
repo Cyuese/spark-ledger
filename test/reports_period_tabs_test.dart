@@ -30,15 +30,16 @@ void main() {
     for (final label in <String>['日常', '月统计', '年统计', '自定义']) {
       expect(find.text(label), findsWidgets, reason: '缺少 Tab：$label');
     }
-    // 默认选中日常，且日常已有面板。
+    // 默认选中日常，且日常已有面板（先不滚动：滚到底部会回收顶部 Tab 条）。
     expect(selectedTab('daily'), findsOneWidget);
-    expect(dailyEntry, findsOneWidget);
+    expect(find.text('近7日统计'), findsOneWidget);
     expect(monthlyEntry, findsNothing);
 
     // 年统计 / 自定义是空 Tab：没有面板，也没有面板管理入口。
     await tester.tap(tabLabel('年统计'));
     await tester.pumpAndSettle();
     expect(selectedTab('yearly'), findsOneWidget);
+    expect(find.text('近7日统计'), findsNothing);
     expect(dailyEntry, findsNothing);
     expect(monthlyEntry, findsNothing);
 
@@ -53,6 +54,7 @@ void main() {
     await tester.tap(tabLabel('月统计'));
     await tester.pumpAndSettle();
     expect(selectedTab('monthly'), findsOneWidget);
+    expect(dailyEntry, findsNothing);
     await tester.scrollUntilVisible(
       monthlyEntry,
       200,
@@ -88,5 +90,26 @@ void main() {
     await tester.tap(find.text('收入').first);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('dimension_toggle_income')), findsOneWidget);
+  });
+
+  testWidgets('资产汇总面板：正/负资产可切换，中心可切换口径', (tester) async {
+    await pumpApp(tester, LocalKeyValueStore());
+    await tapBottomTab(tester, 2); // 看板 · 日常
+    await tester.pumpAndSettle();
+
+    expect(find.text('资产汇总'), findsOneWidget);
+    expect(
+      find.byKey(const Key('asset_summary_side_positive')),
+      findsOneWidget,
+    );
+    // 新账本账户余额为 0：正资产侧没有可展示的账户，给出空态而不是空环。
+    expect(find.textContaining('暂无'), findsWidgets);
+
+    await tester.tap(find.text('负资产').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('asset_summary_side_negative')),
+      findsOneWidget,
+    );
   });
 }

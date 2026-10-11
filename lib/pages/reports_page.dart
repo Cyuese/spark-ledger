@@ -6,6 +6,7 @@ import '../app/app_theme.dart';
 import '../app/category_tree.dart';
 import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
+import '../app/currency_math.dart';
 import '../app/model_lookup.dart';
 import '../app/ledger_math.dart';
 import '../app/models.dart';
@@ -14,6 +15,7 @@ import '../app/series_math.dart';
 import '../app/veri_fin_scope.dart';
 import 'ai_chat_page.dart';
 import 'budget_pages.dart';
+import 'currency_rates_page.dart';
 import 'panel_settings_page.dart';
 import 'report_analysis_page.dart';
 import '../l10n/app_localizations.dart';
@@ -93,6 +95,8 @@ class _ReportsPageState extends State<ReportsPage> {
       switch (id) {
         case 'recent_daily':
           return const _RecentDailyStatsPanel();
+        case 'asset_summary':
+          return const _AssetSummaryPanel();
         case 'summary':
           return _MonthSummaryPanel(
             income: monthIncome,
@@ -352,6 +356,320 @@ class _ReportsPageState extends State<ReportsPage> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// 资产汇总的口径：只统计余额为正的账户，或只统计余额为负的账户。
+enum _AssetSide { positive, negative }
+
+/// 日常 Tab 的资产汇总面板：环形图 + 图例，点中心在金额 / 占比之间切换。
+///
+/// 只统计**计入资产**且**未隐藏**的账户（与资产页净资产口径一致），否则环里
+/// 各段加不出中心数字。任一账户缺汇率时整卡退化为缺率空态，不展示部分和。
+class _AssetSummaryPanel extends StatefulWidget {
+  const _AssetSummaryPanel();
+
+  @override
+  State<_AssetSummaryPanel> createState() => _AssetSummaryPanelState();
+}
+
+class _AssetSummaryPanelState extends State<_AssetSummaryPanel> {
+  _AssetSide _side = _AssetSide.positive;
+  bool _showShare = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final baseCurrency = controller.activeBook.baseCurrencyCode;
+    final accounts = controller.accounts
+        .where((account) => account.includeInAssets && !account.hidden)
+        .toList(growable: false);
+    final valuation = controller.accountBalancesInBase(accounts: accounts);
+    final sign = _side == _AssetSide.positive ? 1.0 : -1.0;
+    final holdings = <({Account account, double amount})>[
+      for (final account in accounts)
+        if ((valuation.amountsByAccountId[account.id] ?? 0) * sign > 0)
+          (
+            account: account,
+            amount: (valuation.amountsByAccountId[account.id] ?? 0).abs(),
+          ),
+    ]..sort((a, b) => b.amount.compareTo(a.amount));
+    final total = normalizeAmount(
+      holdings.fold<double>(0, (sum, holding) => sum + holding.amount),
+    );
+
+    return VeriCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SectionTitle(
+            title: l10n.panelAssetSummaryLabel,
+            trailingWidget: VeriSegmentedControl<_AssetSide>(
+              compact: true,
+              values: const <_AssetSide>[
+                _AssetSide.positive,
+                _AssetSide.negative,
+              ],
+              selected: _side,
+              semanticLabel: l10n.panelAssetSummaryLabel,
+              labelOf: (side) => side == _AssetSide.positive
+                  ? l10n.assetPositive
+                  : l10n.assetNegative,
+              keyOf: (side) =>
+                  side == _side ? Key('asset_summary_side_${side.name}') : null,
+              onChanged: (side) => setState(() {
+                _side = side;
+              }),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (!valuation.isComplete)
+            _AssetMissingRateState(
+              affectedCount: valuation.affectedAccountIds.length,
+              currencyCodes: valuation.missingCurrencyCodes,
+            )
+          else if (holdings.isEmpty)
+            EmptyState(
+              icon: Icons.account_balance_wallet_outlined,
+              title: l10n.noDimData(
+                _side == _AssetSide.positive
+                    ? l10n.assetPositive
+                    : l10n.assetNegative,
+              ),
+              description: l10n.panelAssetSummaryDesc,
+            )
+          else
+            _AssetSummaryChart(
+              holdings: holdings,
+              total: total,
+              baseCurrency: baseCurrency,
+              showShare: _showShare,
+              onToggleMode: () => setState(() => _showShare = !_showShare),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 缺汇率：不给部分和，只说明缺哪些币种并给一个去维护汇率的入口。
+class _AssetMissingRateState extends StatelessWidget {
+  const _AssetMissingRateState({
+    required this.affectedCount,
+    required this.currencyCodes,
+  });
+
+  final int affectedCount;
+  final Set<String> currencyCodes;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final codes = (currencyCodes.toList()..sort()).join(', ');
+    return InkWell(
+      borderRadius: BorderRadius.circular(veriRadiusMd),
+      onTap: () => Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(builder: (_) => const CurrencyRatesPage()),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(
+              Icons.currency_exchange,
+              color: veriSemantic(context, veriWarning),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    l10n.assetValuationMissing(affectedCount),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.assetValuationMissingDesc(codes),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.62),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 环形图 + 图例；中心可点，用于在金额 / 占比之间切换。
+class _AssetSummaryChart extends StatefulWidget {
+  const _AssetSummaryChart({
+    required this.holdings,
+    required this.total,
+    required this.baseCurrency,
+    required this.showShare,
+    required this.onToggleMode,
+  });
+
+  final List<({Account account, double amount})> holdings;
+  final double total;
+  final String baseCurrency;
+  final bool showShare;
+  final VoidCallback onToggleMode;
+
+  @override
+  State<_AssetSummaryChart> createState() => _AssetSummaryChartState();
+}
+
+class _AssetSummaryChartState extends State<_AssetSummaryChart> {
+  int? _selectedIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final brightness = Theme.of(context).brightness;
+    final neutral = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.45);
+    final colors = <Color>[
+      Theme.of(context).colorScheme.primary,
+      veriSemanticFor(brightness, veriBlue),
+      veriCyan,
+      veriMint,
+      veriSemanticFor(brightness, veriWarning),
+      neutral,
+    ];
+    final visible = widget.holdings.take(5).toList();
+    final hidden = widget.holdings.skip(5).toList();
+    final otherAmount = hidden.fold<double>(
+      0,
+      (sum, holding) => sum + holding.amount,
+    );
+    final legend = <({String label, double amount, Color color})>[
+      for (final item in visible.indexed)
+        (
+          label: item.$2.account.name,
+          amount: item.$2.amount,
+          color: colors[item.$1 % colors.length],
+        ),
+      if (otherAmount > 0)
+        (label: l10n.othersLabel, amount: otherAmount, color: neutral),
+    ];
+    final segments = <VeriDonutSegment>[
+      for (final item in legend)
+        VeriDonutSegment(
+          label: item.label,
+          value: item.amount,
+          color: item.color,
+        ),
+    ];
+    final selected = _selectedIndex != null && _selectedIndex! < legend.length
+        ? _selectedIndex
+        : null;
+    final total = widget.total;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Center(
+          child: SizedBox(
+            width: 156,
+            height: 156,
+            child: VeriDonutChart(
+              segments: segments,
+              selectedIndex: selected,
+              onSelected: (index) => setState(() => _selectedIndex = index),
+              ringWidth: 30,
+              showPercentTitles: true,
+              onCenterTap: widget.onToggleMode,
+              semanticsLabel: l10n.panelAssetSummaryLabel,
+              center: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        widget.showShare
+                            ? l10n.assetSummaryShare
+                            : l10n.assetSummaryAmount,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.56),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Icon(
+                        Icons.swap_horiz,
+                        size: 13,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.56),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    formatUserMoney(total, widget.baseCurrency),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        for (final item in legend)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: item.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  widget.showShare || total <= 0
+                      ? '${(item.amount / (total <= 0 ? 1 : total) * 100).toStringAsFixed(1)}%'
+                      : formatUserMoney(item.amount, widget.baseCurrency),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
