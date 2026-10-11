@@ -180,6 +180,8 @@
   "assetNegative": "Negative assets",
   "assetSummaryAmount": "Amount",
   "assetSummaryShare": "Share",
+  "assetSummaryShowAll": "Show all ({count})",
+  "assetSummaryCollapse": "Show less",
   "incomeAmountLabel": "Income {amount}",
   "panelBudgetExecutionLabel": "Budget execution",
   "panelBudgetExecutionDesc": "This month's budget, spending and category budget execution",

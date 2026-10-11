@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:verifin/app/models.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 
 import 'support/test_harness.dart';
@@ -128,5 +129,56 @@ void main() {
       scrollable: firstVerticalScrollable(),
     );
     expect(find.text('分类 · 标签排行'), findsOneWidget);
+  });
+
+  testWidgets('资产汇总：负资产显示负数，账户超过 5 个可展开', (tester) async {
+    // 面板较高，给一个足够大的视口，避免展开/切换按钮落到屏幕外点不中。
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 2600);
+    addTearDown(tester.view.reset);
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    Future<void> add(String id, String name, double balance) => controller
+        .addAccountDraft(
+          Account(
+            id: id,
+            bookId: controller.activeBook.id,
+            name: name,
+            type: AccountType.onlinePayment,
+            groupId: null,
+            initialBalance: balance,
+            iconCode: 'wallet',
+            note: '',
+            includeInAssets: true,
+            hidden: false,
+            currencyCode: controller.activeBook.baseCurrencyCode,
+          ),
+        )
+        .then((_) {});
+    for (var i = 1; i <= 6; i++) {
+      await add('acc_$i', '资产账户$i', 100.0 * i);
+    }
+    // 负债账户：负资产侧必须显示成负数。
+    await add('acc_negative', '信用卡负债', -123.11);
+    controller.dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2); // 看板 · 日常
+    await tester.pumpAndSettle();
+
+    // 默认只列前 5 个账户（其余并入「其他」），并提供展开入口。
+    final expandToggle = find.byKey(const Key('asset_summary_expand_toggle'));
+    expect(expandToggle, findsOneWidget);
+    expect(find.textContaining('展开全部'), findsOneWidget);
+
+    await tester.tap(expandToggle);
+    await tester.pumpAndSettle();
+    // 展开后第 6 个账户（金额最小的）也出现在图例里。
+    expect(find.text('资产账户1'), findsOneWidget);
+
+    // 负资产侧：中心与图例都显示负数。
+    await tester.tap(find.text('负资产').first);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('-123.11'), findsWidgets);
   });
 }

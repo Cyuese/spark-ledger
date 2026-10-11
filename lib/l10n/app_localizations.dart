@@ -1166,6 +1166,18 @@ abstract class AppLocalizations {
   /// **'资产占比'**
   String get assetSummaryShare;
 
+  /// 资产汇总:图例超过 5 个账户时的展开入口
+  ///
+  /// In zh, this message translates to:
+  /// **'展开全部（{count}）'**
+  String assetSummaryShowAll(int count);
+
+  /// 资产汇总:图例展开后收起
+  ///
+  /// In zh, this message translates to:
+  /// **'收起'**
+  String get assetSummaryCollapse;
+
   /// 图表气泡等处的收入金额行(与 expenseAmountLabel 对称)
   ///
   /// In zh, this message translates to:

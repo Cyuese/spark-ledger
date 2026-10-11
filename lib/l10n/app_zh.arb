@@ -392,6 +392,17 @@
   "@assetSummaryShare": {
     "description": "资产汇总:中心与图例显示占比"
   },
+  "assetSummaryShowAll": "展开全部（{count}）",
+  "@assetSummaryShowAll": {
+    "description": "资产汇总:图例超过 5 个账户时的展开入口",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "assetSummaryCollapse": "收起",
+  "@assetSummaryCollapse": {
+    "description": "资产汇总:图例展开后收起"
+  },
   "incomeAmountLabel": "收入 {amount}",
   "@incomeAmountLabel": {
     "description": "图表气泡等处的收入金额行(与 expenseAmountLabel 对称)",

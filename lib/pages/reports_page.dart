@@ -440,6 +440,9 @@ class _AssetSummaryChart extends StatefulWidget {
 class _AssetSummaryChartState extends State<_AssetSummaryChart> {
   int? _selectedIndex;
 
+  /// 图例默认只列前 5 个账户；账户更多时提供「展开全部」，把选择权交给用户。
+  bool _showAll = false;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -455,8 +458,9 @@ class _AssetSummaryChartState extends State<_AssetSummaryChart> {
       veriSemanticFor(brightness, veriWarning),
       neutral,
     ];
-    final visible = widget.holdings.take(5).toList();
-    final hidden = widget.holdings.skip(5).toList();
+    final limit = _showAll ? widget.holdings.length : 5;
+    final visible = widget.holdings.take(limit).toList();
+    final hidden = widget.holdings.skip(limit).toList();
     final otherAmount = hidden.fold<double>(
       0,
       (sum, holding) => sum + holding.amount,
@@ -576,6 +580,34 @@ class _AssetSummaryChartState extends State<_AssetSummaryChart> {
                   ),
                 ),
               ],
+            ),
+          ),
+        if (widget.holdings.length > 5)
+          InkWell(
+            key: const Key('asset_summary_expand_toggle'),
+            borderRadius: BorderRadius.circular(veriRadiusSm),
+            onTap: () => setState(() => _showAll = !_showAll),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    _showAll
+                        ? l10n.assetSummaryCollapse
+                        : l10n.assetSummaryShowAll(widget.holdings.length),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Icon(
+                    _showAll ? Icons.expand_less : Icons.expand_more,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ],
+              ),
             ),
           ),
       ],
