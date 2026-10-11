@@ -257,6 +257,118 @@ void main() {
     await app.close();
   });
 
+  test('v18 → v19：全局分类/标签按每个账本各复制一份并改写引用', () async {
+    final path = '${tempDir.path}/v18_book_scope.db';
+    final raw = await databaseFactoryFfi.openDatabase(path);
+    for (final statement in _schemaV1) {
+      await raw.execute(statement);
+    }
+    for (var version = 2; version <= 18; version++) {
+      await AppDatabase.migrations[version]!(raw);
+    }
+    final when = DateTime(2026, 1, 10, 12).millisecondsSinceEpoch;
+    for (final (index, id) in const <String>['default', 'book_b'].indexed) {
+      await raw.insert('ledger_books', <String, Object?>{
+        'id': id,
+        'name': id,
+        'created_at': when,
+        'is_default': index == 0 ? 1 : 0,
+        'sort_order': index,
+      });
+    }
+    // 旧结构：分类/标签是全局的（没有 bookId），「咖啡」是「餐饮」的子分类。
+    await raw.insert('categories', <String, Object?>{
+      'id': 'dining',
+      'label': '餐饮',
+      'type': 'expense',
+      'icon_code': 'dining',
+      'sort_order': 0,
+    });
+    await raw.insert('categories', <String, Object?>{
+      'id': 'coffee',
+      'label': '咖啡',
+      'type': 'expense',
+      'icon_code': 'coffee',
+      'sort_order': 1,
+      'parent_id': 'dining',
+    });
+    await raw.insert('tags', <String, Object?>{
+      'id': 'tag_meal',
+      'label': '工作餐',
+      'sort_order': 0,
+    });
+    for (final bookId in const <String>['default', 'book_b']) {
+      await raw.insert('entries', <String, Object?>{
+        'id': 'entry_$bookId',
+        'book_id': bookId,
+        'type': 'expense',
+        'amount': 10.0,
+        'category_id': 'dining',
+        'account_id': '',
+        'to_account_id': null,
+        'note': '',
+        'occurred_at': when,
+        'tag_ids': '["tag_meal"]',
+      });
+    }
+    await raw.insert('category_budgets', <String, Object?>{
+      'scope_key': 'default:default:dining',
+      'amount': 500.0,
+    });
+    await raw.execute('PRAGMA user_version = 18');
+    await raw.close();
+
+    final app = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+    final repo = SqliteLedgerRepository(app);
+
+    // 每个账本各拿一份完整副本（2 账本 × 2 分类）。
+    final categories = await repo.loadCategories();
+    expect(categories, hasLength(4));
+    final diningByBook = <String, Category>{};
+    for (final bookId in const <String>['default', 'book_b']) {
+      final bookCategories = categories
+          .where((category) => category.bookId == bookId)
+          .toList();
+      expect(bookCategories, hasLength(2));
+      final dining = bookCategories.firstWhere(
+        (category) => category.key == 'dining',
+      );
+      final coffee = bookCategories.firstWhere(
+        (category) => category.label == '咖啡',
+      );
+      // 父级映射到**同一个账本**里的副本。
+      expect(coffee.parentId, dining.id);
+      // 分类 id 一律随机生成（跨账本不同），语义靠 key 保留。
+      expect(dining.key, 'dining');
+      expect(coffee.key, isNull);
+      diningByBook[bookId] = dining;
+    }
+    expect(diningByBook['default']!.id, isNot(diningByBook['book_b']!.id));
+
+    // 交易与分类预算的引用改写到各自账本（含预算键）。
+    expect(await repo.loadCategoryBudgets(), <String, double>{
+      'default:default:${diningByBook['default']!.id}': 500.0,
+    });
+
+    // 标签同样每账本一份，交易的 tagIds 指向自己账本的那条。
+    final tags = await repo.loadTags();
+    expect(tags, hasLength(2));
+    final tagByBook = <String, Tag>{for (final tag in tags) tag.bookId: tag};
+    expect(tagByBook.keys.toSet(), <String>{'default', 'book_b'});
+    expect(tagByBook['default']!.id, isNot(tagByBook['book_b']!.id));
+    for (final entry in await repo.loadEntries()) {
+      expect(
+        entry.categoryId,
+        diningByBook[entry.bookId]!.id,
+        reason: '交易必须指向自己账本的分类副本',
+      );
+      expect(entry.tagIds, <String>[
+        tagByBook[entry.bookId]!.id,
+      ], reason: '交易的标签引用必须指向自己账本的标签副本');
+    }
+    await app.close();
+  });
+
   test('v15 账户历史图标 code 升级后写回当前 SVG code', () async {
     final path = '${tempDir.path}/v15_account_icons.db';
     final app = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
