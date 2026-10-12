@@ -25,7 +25,10 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "top.talyra42.verifin"
-        testInstrumentationRunner = "top.talyra42.verifin.WidgetGlanceInstrumentationTest"
+        // 标准 runner：设备侧冒烟与 `flutter test integration_test/` 都靠它发现用例。
+        // 仪器测试不进 CI（见 .github/workflows/ci.yml 的说明），按
+        // docs/dev/android-development.md 手动执行。
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // local_auth 要求 minSdk >= 23；取二者较大值，不降低 Flutter 默认值。
@@ -108,4 +111,12 @@ dependencies {
     // 截图识账的中文离线识别库：google_mlkit_text_recognition 插件对各脚本库只
     // compileOnly，使用方必须显式引入所需脚本，否则 release 构建 R8 报缺类。
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+
+    // 仪器测试（只在设备上跑，不进 APK）：标准 runner + JUnit4 断言。
+    // 版本必须与主配置里已解析到的 androidx.test 依赖一致：Gradle 的
+    // consistent resolution 会把 androidTestClasspath 钉到 `githubDebugRuntimeClasspath`
+    // 的版本（runner 1.3.0 / rules 1.2.0，由插件传递引入），写更高版本会直接构建失败。
+    androidTestImplementation("androidx.test:runner:1.3.0")
+    androidTestImplementation("androidx.test:rules:1.2.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.2")
 }
