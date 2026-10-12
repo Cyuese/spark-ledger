@@ -57,12 +57,15 @@ void main() {
         await tester.tap(find.byTooltip('菜单检查'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 70));
-        expect(find.text('关闭菜单'), findsOneWidget);
+        // 真机上只断言**最终态**：live binding 的相邻帧间隔就是设备的真实帧间隔，
+        // 慢设备/模拟器上实测可能超过 200 ms（比 220 ms 的进场动画还长），
+        // 于是「+70 ms 时还在淡入」这类逐帧断言会假失败。
+        // 淡入淡出的连续性由 `test/anchored_menu_test.dart` 用确定性时钟覆盖。
         await tester.pumpAndSettle();
+        expect(find.text('关闭菜单'), findsOneWidget);
         await tester.tap(find.text('关闭菜单'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 70));
-        expect(find.text('关闭菜单'), findsOneWidget);
         await tester.pumpAndSettle();
         expect(find.text('关闭菜单'), findsNothing);
       }
