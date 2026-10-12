@@ -196,7 +196,12 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 ## 族 11 — AI 对话查询 UI
 
-桌面小组件只提供四个固定模板。原生渲染使用 `home_widget` 的 Jetpack Glance Provider；首次添加使用默认配置，Android Launcher 的重新配置入口启动独立 `WidgetConfigurationActivity`。Flutter 只推送账本投影，实例配置按 `appWidgetId` 存在插件共享存储。应用内页面和旧 Launcher 的 `previewImage` 都由同一套 Glance 组合渲染/导出，不维护第二套手绘样式。`widget_presentation.dart` 仅负责真实指标投影；资产曲线不得复用支出数据。验收见 `docs/dev/home-widgets.md`。
+桌面小组件只提供四个固定模板，**模板与指标 1:1**（没有独立指标词表；桌面文案全部来自原生
+`strings.xml`）。词表、投影与刷新管线在 `lib/app/widgets/`，原生渲染在 `VeriFinWidget.kt`：
+未配置的组件只显示一行「点击进入配置」（点击直接进 `WidgetConfigurationActivity`），
+已配置的按实例绑定的账本与外观渲染。应用内「桌面小组件」页与选择器预览都由同一套 Glance 组合
+渲染/导出，不维护第二套手绘样式。完整契约、状态机、预览三层与验收见
+[home-widgets.md](../dev/home-widgets.md)。
 
 | 名称 | 类型 | 位置 | 用途 |
 |---|---|---|---|
