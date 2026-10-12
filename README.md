@@ -95,7 +95,7 @@
 | 备份加密 | `cryptography`（纯 Dart AES-GCM + PBKDF2-SHA256） |
 | 云备份 | `dart:io HttpClient` 手写 WebDAV 客户端（PUT / GET / PROPFIND / MKCOL） |
 | 图表 | `fl_chart`（MIT），统一走 `lib/app/chart_painters.dart` 适配层：趋势 / 柱状（含分组双柱）/ 环形 / 预算进度环；纵轴刻度与参考线由适配层绘制以保证对齐，页面不直接依赖图表库 |
-| 平台能力 | `local_auth`（指纹解锁）、`flutter_local_notifications`（提醒）、`image_picker`（附件）、原生 `AppWidgetProvider`（桌面小组件）、MethodChannel 桥（SAF / 磁贴 / 更新检查） |
+| 平台能力 | `local_auth`（指纹解锁）、`flutter_local_notifications`（提醒）、`image_picker`（附件）、`home_widget` + Jetpack **Glance**（桌面小组件）、MethodChannel 桥（SAF / 磁贴 / 更新检查） |
 | 测试 | 按领域拆分的 widget / 单元测试（内存仓储）+ ffi 真实 SQLite、迁移矩阵、模型往返与仓储契约测试 |
 | CI / 发布 | GitHub Actions：PR / `main` 执行 format + analyze + test 并构建不交付的 debug APK 门禁；推 `vX.Y.Z` 标签构建 release APK/AAB 并创建 GitHub 预发布（真机验收后手动提升为正式版） |
 

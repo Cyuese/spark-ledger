@@ -41,7 +41,7 @@
 
 这些是**无界面上下文**的文案，专门写了按语言偏好解析的通道，需重点验证：
 
-1. **桌面小组件**：语言切到 English 后记一笔（触发推送），小组件标签应变为 "Today's spending"（中文为「今日支出」）。注意：仅在开屏 / 回前台 / 记账后刷新。
+1. **桌面小组件**：语言切到 English 后（语言偏好变化会触发一次投影推送），组件正文的指标行应变为 "Today's spending"（中文为「今日支出」），系统选择器里的模板名也应变成 Quick entry / Budget progress / Cash flow trend / Net worth。桌面文案来自原生 `strings.xml`，由投影推送携带的应用语言解析，不跟随系统语言。
 2. **记账提醒通知**：English 下设置每日提醒，到点后通知标题 / 内容应为英文（Daily reminder / Don't forget to record today's spending!）。
 3. **生物解锁系统弹窗**：English 下触发生物解锁，系统弹窗的标题、取消按钮等应为英文（中文模式下应全中文，无中英混杂）。
 4. **首启动播种**：卸载重装（或初始化数据），系统语言为英文时完成引导 → 默认账本应为 "Daily Ledger"、分类为 Dining / Transport…；系统语言中文时应为「日常账本 / 餐饮…」。

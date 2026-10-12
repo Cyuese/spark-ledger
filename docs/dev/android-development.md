@@ -91,7 +91,10 @@ dart run scripts/widget_previews.dart        # 桌面组件：构建+安装+跑 
 flutter test integration_test/ -d <device-id> --flavor diagnostic
 ```
 
-仪器测试只做冒烟与预览导出，**不能替代**下面的真机评审；模拟器点击不要并行发起。
+`integration_test/` 的用例在真机上**只断言最终态**并打印帧耗时：live binding 的相邻帧间隔
+就是设备真实帧间隔，慢设备/模拟器上一帧可能长于进场动画，逐帧动画断言会假失败——
+动画连续性由 `test/anchored_menu_test.dart` 用确定性时钟覆盖。仪器测试与帧耗时采样都只做冒烟，
+**不能替代**下面的真机评审。
 
 默认调试使用独立 applicationId `top.talyra42.verifin.graphicsdiagnostic`，显示名称
 “Veri Fin 图形诊断”；仍是正式页面、Controller、SQLite 和原生插件，数据与用户正式应用隔离。
