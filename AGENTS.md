@@ -41,7 +41,7 @@
 - `docs/dev/auto-capture.md`、`docs/dev/i18n-verification.md`、`docs/product/automation.md`：截图识账与外部意图接口、多语言、自动化接入的当前约定与验收资料。
 - `docs/dev/android-development.md`：真机开发、工具链检测和缺失时自动安装、日志、隔离验收及测试应用清理。
 - `docs/dev/feedback-system.md`：根级轻提示 Host 的调用、时长、操作结果、去重与优先级队列规范；新增或替换短反馈前必读。
-- `docs/dev/home-widgets.md`：桌面小组件（Jetpack Glance Provider、配置 Activity、指标投影与预览）的当前实现与验收。
+- `docs/dev/home-widgets.md`：桌面小组件（模板词表、投影与数字契约、三态渲染、实例外观、配置 Activity、预览三层）的当前实现与验收。
 - `docs/dev/anchored-menu.md`：锚点菜单的用法与递进子菜单约定。`docs/dev/account-icon-assets.md`：账户图标资源分组、命名与新增图标的流程。
 - `README.md`、`docs/product/product.md`、`docs/product/acceptance-checklist.md`：产品定位、能力范围与验收清单。
 
@@ -60,7 +60,7 @@
 
 - `lib/main.dart`：应用入口与根组件，负责初始化 KV、日志、SQLite 和 Controller，并挂接周期补记、备份、提醒、小组件、应用锁及生命周期。
 - `lib/pages/`：页面层，按首页、资产、看板、我的、交易、预算、账户、导入、AI、退款、应用锁等功能拆分；共享弹窗入口在 `lib/pages/sheets.dart`。
-- `lib/app/`：领域模型、Controller、主题、纯计算、通用组件、备份、AI、提醒、日志及平台适配。
+- `lib/app/`：领域模型、Controller、主题、纯计算、通用组件、备份、AI、提醒、日志及平台适配；`lib/app/widgets/` 收敛桌面小组件的词表、投影、实例配置与刷新管线。
 - `lib/app/models/`：领域模型与 JSON 映射；`lib/app/models.dart` 是稳定 barrel 入口。SQLite 行映射集中在 `lib/data/ledger_repository.dart`。
 - `lib/app/common_widgets.dart`：通用组件稳定入口，具体实现按 part 拆分。
 - `lib/data/`：`AppDatabase`、`LedgerRepository` 与 `SqliteLedgerRepository`。
@@ -147,7 +147,7 @@ dart format .
 
 - `scripts/` 下的任务脚本一律用 **Dart** 实现（`dart run scripts/<name>.dart`），不再维护 `.sh` / `.ps1` 双份：Dart 是本项目必然存在的运行时，跨平台只有一份实现，且 `dart format` 与 `flutter analyze` 会把脚本一起纳入质量门禁。shell 版本会额外依赖 bash/python3/PowerShell，且同一份源码在不同 shell/编码下行为不一致。
 - 纯逻辑放 `scripts/src/`（可被 `test/` 直接单测，如 `test/scripts_version_test.dart`），入口脚本只做编排；脚本依赖只加 `dev_dependencies`，不得影响 APK。
-- 现有脚本：`doctor.dart`（环境自检：Flutter 版本对齐 CI、Android SDK/JDK/adb/gh、工作树）、`publish.dart`（发版）、`prune_prereleases.dart`（清理预发布）、`clean.dart`（清理构建产物）。
+- 现有脚本：`doctor.dart`（环境自检：Flutter 版本对齐 CI、Android SDK/JDK/adb/gh、工作树）、`publish.dart`（发版）、`prune_prereleases.dart`（清理预发布）、`clean.dart`（清理构建产物）、`widget_previews.dart`（在设备上重导出桌面组件的选择器预览 PNG，改组件视觉后必须重跑）。
 
 ## 代码风格与工程约定
 
