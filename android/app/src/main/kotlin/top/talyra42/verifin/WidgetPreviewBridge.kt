@@ -80,9 +80,11 @@ object WidgetPreviewRenderer {
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
     suspend fun views(context: Context, template: VeriFinWidgetTemplate, width: Int, height: Int,
                       selection: WidgetInstanceSelection = WidgetInstanceSelection(), sample: Boolean = false,
-                      widgetId: Int? = null): android.widget.RemoteViews {
+                      widgetId: Int? = null,
+                      prefs: android.content.SharedPreferences = VeriFinWidgetStore.prefs(context),
+    ): android.widget.RemoteViews {
         require(width in 100..600 && height in 56..400)
-        val data = VeriFinWidgetStore.display(context, template, selection, sample)
+        val data = VeriFinWidgetStore.display(context, template, selection, sample, prefs = prefs)
         return GlanceRemoteViews().compose(context, DpSize(width.dp, height.dp)) {
             VeriFinWidgetContent(template, data,
                 widgetId?.let { widgetAction(context, it, "app", data.bookId) },
@@ -92,8 +94,10 @@ object WidgetPreviewRenderer {
         }.remoteViews
     }
     suspend fun png(context: Context, template: VeriFinWidgetTemplate, width: Int, height: Int,
-                    selection: WidgetInstanceSelection = WidgetInstanceSelection(), sample: Boolean = false): ByteArray {
-        val remote = views(context, template, width, height, selection, sample)
+                    selection: WidgetInstanceSelection = WidgetInstanceSelection(), sample: Boolean = false,
+                    prefs: android.content.SharedPreferences = VeriFinWidgetStore.prefs(context),
+    ): ByteArray {
+        val remote = views(context, template, width, height, selection, sample, prefs = prefs)
         return withContext(Dispatchers.Main) {
             val density = context.resources.displayMetrics.density
             val w = (width * density).roundToInt()

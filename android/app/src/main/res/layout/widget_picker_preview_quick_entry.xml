@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 选择器预览（Android 12–14 用 previewLayout，旧系统用 previewImage）：
+     直接用真机渲染导出的 PNG，深浅色与中英各一份变体，见
+     `dart run scripts/widget_previews.dart`。 -->
+<ImageView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:scaleType="fitCenter"
+    android:src="@drawable/widget_preview_quick_entry"
+    android:contentDescription="@string/quick_entry_widget_description" />

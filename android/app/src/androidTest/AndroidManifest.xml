@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 仪器测试自己的 Manifest。
+     androidx.test:core 的 InstrumentationActivityInvoker 带 intent-filter 却没写
+     android:exported，而本项目 targetSdk >= 31，合并测试 Manifest 时会直接失败；
+     这里显式补齐（它们只服务 ActivityScenario，本项目不用，但属性是合并期的硬要求）。 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$BootstrapActivity"
+            android:exported="true" />
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity"
+            android:exported="true" />
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$EmptyFloatingActivity"
+            android:exported="true" />
+    </application>
+</manifest>
