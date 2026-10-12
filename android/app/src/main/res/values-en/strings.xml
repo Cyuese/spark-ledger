@@ -17,7 +17,10 @@
     <string name="quick_entry_button">Add entry</string>
     <!-- Metric line rendered by each template. -->
     <string name="widget_today_expense">Today\'s spending</string>
-    <string name="widget_budget_available">Budget left this month</string>
+    <string name="widget_budget_remaining">Budget remaining</string>
+    <string name="widget_trend_period_expense">Last 30 days</string>
     <string name="widget_net_worth">Net worth</string>
-    <string name="widget_trend">Cash flow trend</string>
+    <!-- The single line shown when the widget is not configured or has no data yet. -->
+    <string name="widget_setup_required">Tap to set up</string>
+    <string name="widget_data_unavailable">Open the app to sync</string>
 </resources>

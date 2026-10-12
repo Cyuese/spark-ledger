@@ -19,7 +19,10 @@
     <string name="quick_entry_button">记一笔</string>
     <!-- 组件正文的指标行（每个模板恰好一行）。 -->
     <string name="widget_today_expense">今日支出</string>
-    <string name="widget_budget_available">本月可用预算</string>
-    <string name="widget_net_worth">资产总额</string>
-    <string name="widget_trend">收支趋势</string>
+    <string name="widget_budget_remaining">剩余预算</string>
+    <string name="widget_trend_period_expense">近 30 日支出</string>
+    <string name="widget_net_worth">净资产</string>
+    <!-- 组件在未配置 / 拿不到数据时显示的唯一一行（不展示任何金额）。 -->
+    <string name="widget_setup_required">点击进入配置</string>
+    <string name="widget_data_unavailable">打开应用同步数据</string>
 </resources>

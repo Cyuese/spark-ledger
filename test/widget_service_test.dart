@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/app/widgets/widget_instance_config.dart';
+import 'package:verifin/app/widgets/widget_projection.dart';
 import 'package:verifin/app/widgets/widget_service.dart';
 
 import 'support/test_harness.dart';
@@ -107,6 +108,7 @@ void main() {
 
     final snapshots =
         jsonDecode(saved[widgetSnapshotsKey]!) as Map<String, dynamic>;
+    expect(snapshots['version'], widgetSnapshotVersion);
     final book = controller.activeBook;
     final bookSnapshot = snapshots[book.id] as Map<String, dynamic>;
     expect(bookSnapshot['date'], isNotNull);
