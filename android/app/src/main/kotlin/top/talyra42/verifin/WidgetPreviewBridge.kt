@@ -53,12 +53,15 @@ class WidgetPreviewBridge(private val context: Context) {
                         val info = requireNotNull(AppWidgetManager.getInstance(context).getAppWidgetInfo(id))
                         require(info.provider.packageName == context.packageName)
                         val template = VeriFinWidgetTemplate.fromProvider(info.provider.className)
-                        result.success(mapOf("template" to template.key, "provider" to info.provider.className, "metric" to template.metric))
+                        result.success(mapOf("template" to template.key, "provider" to info.provider.className))
                     }
                     "renderWidgetPreview" -> result.success(WidgetPreviewRenderer.png(context,
                         VeriFinWidgetTemplate.fromKey(requireNotNull(call.argument<String>("template"))),
                         call.argument<Int>("widthDp") ?: 168, call.argument<Int>("heightDp") ?: 168,
-                        WidgetInstanceSelection(call.argument<String>("bookId").orEmpty(), call.argument<String>("metric").orEmpty()),
+                        WidgetInstanceSelection(
+                            call.argument<String>("bookId").orEmpty(),
+                            WidgetAppearance.fromKey(call.argument<String>("appearance")),
+                        ),
                         call.argument<Boolean>("sample") ?: false))
                     else -> result.notImplemented()
                 }
@@ -83,7 +86,9 @@ object WidgetPreviewRenderer {
         return GlanceRemoteViews().compose(context, DpSize(width.dp, height.dp)) {
             VeriFinWidgetContent(template, data,
                 widgetId?.let { widgetAction(context, it, "app", data.bookId) },
-                widgetId?.let { widgetAction(context, it, "entry", data.bookId) }, widgetId)
+                widgetId?.let { widgetAction(context, it, "entry", data.bookId) },
+                widgetId?.let { widgetSetupAction(context, it) },
+                widgetId)
         }.remoteViews
     }
     suspend fun png(context: Context, template: VeriFinWidgetTemplate, width: Int, height: Int,

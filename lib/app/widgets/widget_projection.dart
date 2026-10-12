@@ -65,6 +65,9 @@ class WidgetBookProjection {
 /// 无法计算时的占位符（与界面其它「缺失态」一致）。
 const String widgetMissingAmount = '—';
 
+/// 投影快照的结构版本；与原生 `widgetSnapshotVersion` 必须成对修改。
+const int widgetSnapshotVersion = 2;
+
 String widgetDateKey(DateTime value) =>
     '${value.year.toString().padLeft(4, '0')}-'
     '${value.month.toString().padLeft(2, '0')}-'

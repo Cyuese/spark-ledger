@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/widgets/widget_catalog.dart';
+import 'package:verifin/app/widgets/widget_projection.dart';
 
 void main() {
   test('模板线上 key 与 Provider 映射稳定', () {
@@ -38,5 +41,16 @@ void main() {
 
   test('曲线窗口固定 30 个日历日', () {
     expect(widgetChartDays, 30);
+  });
+
+  test('投影快照版本与原生渲染层一致', () {
+    final kotlin = File(
+      'android/app/src/main/kotlin/top/talyra42/verifin/VeriFinWidget.kt',
+    ).readAsStringSync();
+    expect(
+      kotlin,
+      contains('const val SNAPSHOT_VERSION = $widgetSnapshotVersion'),
+      reason: '快照结构改版时必须同时更新原生侧版本号',
+    );
   });
 }

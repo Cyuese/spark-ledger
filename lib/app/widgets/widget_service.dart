@@ -103,7 +103,12 @@ _encodePayload(VeriFinController controller) {
         entry.key.key: entry.value.toJson(),
     };
   }
-  final snapshotsJson = jsonEncode(snapshots);
+  // 版本号让原生侧能识别「旧版形状的快照」并退回「打开应用同步数据」，而不是把
+  // 读不到的字段渲染成缺失值。改快照形状必须同时改 Kotlin 的 SNAPSHOT_VERSION。
+  final snapshotsJson = jsonEncode(<String, Object?>{
+    'version': widgetSnapshotVersion,
+    ...snapshots,
+  });
   final booksJson = jsonEncode(<Map<String, String>>[
     for (final book in controller.ledgerBooks)
       <String, String>{'id': book.id, 'name': book.name},
