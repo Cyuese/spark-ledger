@@ -14,6 +14,16 @@ mixin _ControllerState on ChangeNotifier {
   /// SQLite 落库失败时回调（由 UI 层挂钩弹出「保存失败」提示）。
   void Function(Object error)? onPersistError;
 
+  /// 影响桌面小组件投影的账目类数据变化时回调：交易、账户、账本、汇率、预算与
+  /// 预算周期。只在真正会改变投影的落库咽喉点触发——主题、折叠状态等偏好不参与
+  /// 投影，所以**不挂在整个 [notifyListeners] 上**，否则每次界面状态变化都会重算
+  /// 所有账本的投影并刷新桌面组件。
+  VoidCallback? onWidgetDataChanged;
+
+  /// 通知一次「桌面投影依赖的数据已变化」。分类、标签、账户分组与附件不参与投影，
+  /// 它们的变化**不**调用这里；去抖与平台调用由 `main` 的挂钩负责。
+  void _markWidgetProjectionChanged() => onWidgetDataChanged?.call();
+
   /// 备份/恢复进度（null = 空闲）。阻塞进度对话框订阅它，不直接读服务层状态。
   final ValueNotifier<BackupProgress?> backupProgressListenable =
       ValueNotifier<BackupProgress?>(null);
@@ -27,10 +37,6 @@ mixin _ControllerState on ChangeNotifier {
   void reportBackupProgress(BackupProgress? progress) {
     backupProgressListenable.value = progress;
   }
-
-  /// 任一 Controller 状态变化后通知根组件刷新桌面小组件投影。根组件负责去抖与
-  /// 平台调用；Controller 不直接依赖 Android Bridge。
-  VoidCallback? onWidgetProjectionInvalidated;
 
   /// 应用锁开关变化时回调（由 main 挂钩，据此开关 Android FLAG_SECURE）。
   void Function(bool appLockEnabled)? onAppLockChanged;
@@ -112,7 +118,6 @@ mixin _ControllerState on ChangeNotifier {
   void notifyListeners() {
     _syncAmountFormatContext();
     _invalidateDerivedViews();
-    onWidgetProjectionInvalidated?.call();
     super.notifyListeners();
   }
 
@@ -235,9 +240,10 @@ mixin _ControllerState on ChangeNotifier {
   void _persistBudgetCycleStartDays() {
     if (_budgetCycleStartDays.isEmpty) {
       _store.delete(_budgetCycleKey);
-      return;
+    } else {
+      _store.write(_budgetCycleKey, jsonEncode(_budgetCycleStartDays));
     }
-    _store.write(_budgetCycleKey, jsonEncode(_budgetCycleStartDays));
+    _markWidgetProjectionChanged();
   }
 
   /// 删除账户时，清掉任何指向它的默认付款账户设置。
@@ -322,20 +328,14 @@ mixin _ControllerState on ChangeNotifier {
         .where((item) => item.id == _activeBookId)
         .firstOrNull;
     if (book == null) return false;
-    final base = book.baseCurrencyCode;
-    return _accounts.any(
-          (account) =>
-              account.bookId == book.id && account.currencyCode != base,
-        ) ||
-        _entries.any(
-          (entry) => entry.bookId == book.id && entry.currencyCode != base,
-        ) ||
-        _recurringRules.any(
-          (rule) => rule.bookId == book.id && rule.currencyCode != base,
-        ) ||
-        _exchangeRates.any(
-          (rate) => rate.bookId == book.id && rate.currencyCode != base,
-        );
+    return bookUsesMultipleCurrencies(
+      bookId: book.id,
+      baseCurrencyCode: book.baseCurrencyCode,
+      accounts: _accounts,
+      entries: _entries,
+      rules: _recurringRules,
+      rates: _exchangeRates,
+    );
   }
 
   void _syncAmountFormatContext() {
@@ -923,6 +923,7 @@ mixin _ControllerState on ChangeNotifier {
 
   void _persistEntries() {
     _trackWrite(_repository.saveEntries(List<LedgerEntry>.of(_entries)));
+    _markWidgetProjectionChanged();
   }
 
   // 记录最近一次 SQLite 写入，供测试等待其落库。写入按连接串行，等待最新即可。
@@ -995,10 +996,12 @@ mixin _ControllerState on ChangeNotifier {
 
   void _persistLedgerBooks() {
     _trackWrite(_repository.saveBooks(List<LedgerBook>.of(_ledgerBooks)));
+    _markWidgetProjectionChanged();
   }
 
   void _persistAccounts() {
     _trackWrite(_repository.saveAccounts(List<Account>.of(_accounts)));
+    _markWidgetProjectionChanged();
   }
 
   void _persistAccountGroups() {
@@ -1142,12 +1145,14 @@ mixin _ControllerState on ChangeNotifier {
     _trackWrite(
       _repository.saveExchangeRates(List<ExchangeRate>.of(_exchangeRates)),
     );
+    _markWidgetProjectionChanged();
   }
 
   void _persistBudgets() {
     _trackWrite(
       _repository.saveMonthlyBudgets(Map<String, double>.of(_monthlyBudgets)),
     );
+    _markWidgetProjectionChanged();
   }
 
   void _persistCategoryBudgets() {
@@ -1202,6 +1207,7 @@ mixin _ControllerState on ChangeNotifier {
         await _collectAttachmentOrphans();
       }),
     );
+    _markWidgetProjectionChanged();
   }
 
   /// 删除不再被任何附件元数据引用的文件。

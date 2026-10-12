@@ -1,37 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Widget-facing copy. Keep in sync with values/strings.xml: the template names must
+     match lib/l10n/app_*.arb (enforced by test/widget_string_parity_test.dart). -->
 <resources>
-    <string name="quick_entry_tile_label">Quick entry</string>
-    <string name="quick_entry_button">Add entry</string>
+    <!-- Template names: also the labels shown in the Android widget picker. -->
+    <string name="widget_template_quick_entry">Quick entry</string>
+    <string name="widget_template_budget">Budget progress</string>
+    <string name="widget_template_trend">Cash flow trend</string>
+    <string name="widget_template_net_worth">Net worth</string>
+    <!-- Picker and system widget settings descriptions. -->
     <string name="quick_entry_widget_description">Today spending and quick entry</string>
     <string name="budget_widget_description">Budget remaining this period</string>
     <string name="net_worth_widget_description">Total assets across accounts</string>
-    <string name="widget_today_expense">Today spending</string>
-    <string name="widget_quick_entry_title">Today spending + quick entry</string>
+    <string name="trend_widget_description">Spending over the last 30 days</string>
+    <!-- Quick entry tile label and the "add entry" button inside the widget. -->
+    <string name="quick_entry_tile_label">Quick entry</string>
+    <string name="quick_entry_button">Add entry</string>
+    <!-- Metric line rendered by each template. -->
+    <string name="widget_today_expense">Today\'s spending</string>
     <string name="widget_budget_available">Budget left this month</string>
     <string name="widget_net_worth">Net worth</string>
-    <string name="widget_refresh_required">Open app to refresh</string>
-    <string name="trend_widget_description">Income and spending trend with configurable metrics</string>
-    <string name="widget_trend">Income and spending trend</string>
-    <string name="widget_chart_content_description">Trend chart</string>
-    <string name="widget_budget_ring_content_description">Budget usage</string>
-    <string name="user_widget_description">My widget with custom finance data and background</string>
-    <string name="user_widget_picker_label">VeriFin</string>
-    <string name="user_widget_choose_design">Choose my widget</string>
-    <string name="user_widget_add">Add to home screen</string>
-    <string name="user_widget_default_name">My finance overview</string>
-    <string name="user_widget_empty">Open the app and tap + in My widgets to create a widget first.</string>
-    <string name="widget_instance_config_title">Configure widget</string>
-    <string name="widget_instance_book">Ledger</string>
-    <string name="widget_instance_primary">Primary metric</string>
-    <string name="widget_instance_secondary">Secondary metric</string>
-    <string name="widget_instance_chart">Chart</string>
-    <string name="widget_instance_range">Chart range</string>
-    <string name="widget_instance_background">Background</string>
-    <string name="widget_instance_hide_amounts">Hide amounts</string>
-    <string name="widget_instance_save">Save settings</string>
-    <string name="widget_instance_none">None</string>
-    <string name="widget_template_quick_entry">Quick entry</string>
-    <string name="widget_template_budget">Budget progress</string>
-    <string name="widget_template_trend">Spending trend</string>
-    <string name="widget_template_net_worth">Net worth</string>
+    <string name="widget_trend">Cash flow trend</string>
 </resources>

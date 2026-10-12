@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import 'platform_bridge.dart';
+import 'widgets/widget_catalog.dart';
 import '../l10n/app_localizations.dart';
 
 /// Displays the actual Glance composition. Draft changes only render pixels;
@@ -14,7 +15,7 @@ class NativeWidgetPreview extends StatefulWidget {
     required this.width,
     required this.height,
     this.bookId = '',
-    this.metric = '',
+    this.appearance = WidgetAppearance.system,
     this.sample = false,
     required this.semanticLabel,
   });
@@ -22,7 +23,7 @@ class NativeWidgetPreview extends StatefulWidget {
   final int width;
   final int height;
   final String bookId;
-  final String metric;
+  final WidgetAppearance appearance;
   final bool sample;
   final String semanticLabel;
   @override
@@ -44,7 +45,7 @@ class _NativeWidgetPreviewState extends State<NativeWidgetPreview> {
         oldWidget.width != widget.width ||
         oldWidget.height != widget.height ||
         oldWidget.bookId != widget.bookId ||
-        oldWidget.metric != widget.metric ||
+        oldWidget.appearance != widget.appearance ||
         oldWidget.sample != widget.sample) {
       _load();
     }
@@ -56,7 +57,7 @@ class _NativeWidgetPreviewState extends State<NativeWidgetPreview> {
       widthDp: widget.width,
       heightDp: widget.height,
       bookId: widget.bookId,
-      metric: widget.metric,
+      appearance: widget.appearance.key,
       sample: widget.sample,
     );
   }

@@ -6,8 +6,8 @@
 ///   分享/外部采集内容消费；
 /// - [AppUpdateBridge]（platform_bridge_update.dart）：GitHub Release 更新
 ///   检查与下载；
-/// - [AppWidgetBridge]（platform_bridge_widget.dart）：桌面小组件数据推送与
-///   一键固定；
+/// - [AppWidgetBridge]（platform_bridge_widget.dart）：桌面小组件预览渲染、
+///   实例计数与点击路由；
 /// - [AppStorageBridge]（platform_bridge_storage.dart）：系统下载目录写出、
 ///   备份目录 SAF 读写；
 /// - [AppSecurityBridge]（本文件）：FLAG_SECURE 防截屏。

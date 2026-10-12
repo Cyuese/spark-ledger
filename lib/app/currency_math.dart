@@ -5,6 +5,33 @@ import 'calendar_days.dart';
 import 'currency_catalog.dart';
 import 'models.dart';
 
+/// 账本是否实际涉及多个币种：账户、交易、周期规则或已维护汇率中出现非本位币即为多币种。
+///
+/// 「单币种隐藏单位」的判定在活动账本（`amount_format` 全局闸门）和桌面小组件
+/// （按实例所属账本）两处共用这一份口径，避免各写一套导致显示不一致。
+bool bookUsesMultipleCurrencies({
+  required String bookId,
+  required String baseCurrencyCode,
+  required Iterable<Account> accounts,
+  required Iterable<LedgerEntry> entries,
+  required Iterable<RecurringRule> rules,
+  required Iterable<ExchangeRate> rates,
+}) =>
+    accounts.any(
+      (account) =>
+          account.bookId == bookId && account.currencyCode != baseCurrencyCode,
+    ) ||
+    entries.any(
+      (entry) =>
+          entry.bookId == bookId && entry.currencyCode != baseCurrencyCode,
+    ) ||
+    rules.any(
+      (rule) => rule.bookId == bookId && rule.currencyCode != baseCurrencyCode,
+    ) ||
+    rates.any(
+      (rate) => rate.bookId == bookId && rate.currencyCode != baseCurrencyCode,
+    );
+
 /// 将金额规整到 [currencyCode] 的 ISO 4217 minor unit，并消除 `-0`。
 double normalizeCurrencyAmount(num value, String currencyCode) {
   if (!value.isFinite) {

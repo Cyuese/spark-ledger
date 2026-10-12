@@ -11,20 +11,28 @@ import 'support/test_harness.dart';
 void main() {
   useTestDatabases();
 
-  test('Controller 状态变化统一使桌面小组件投影失效', () async {
+  test('桌面小组件投影只在影响它的落库路径上失效', () async {
     final controller = await makeController();
-    var invalidations = 0;
-    controller.onWidgetProjectionInvalidated = () => invalidations++;
+    var changes = 0;
+    controller.onWidgetDataChanged = () => changes++;
 
     controller.setDefaultMonthlyBudget(123);
-    expect(invalidations, 1);
+    expect(changes, 1);
 
     await controller.saveExchangeRateDraft(
       currencyCode: 'USD',
       effectiveDate: DateTime(2026, 8, 25),
       rateToBase: 7.2,
     );
-    expect(invalidations, 2);
+    expect(changes, 2);
+
+    // 预算周期改变预算窗口，属于投影口径。
+    controller.setBudgetCycleStartDay(15);
+    expect(changes, 3);
+
+    // 主题等外观偏好不参与投影：组件外观是实例级设置，不该重算账本数据。
+    controller.setThemePreference(ThemePreference.dark);
+    expect(changes, 3);
   });
 
   test('交易聚合保存返回稳定的校验失败原因', () async {

@@ -58,6 +58,8 @@ class MainActivity : FlutterFragmentActivity() {
         channel?.setMethodCallHandler { call, result ->
             when (call.method) {
                 "renderWidgetPreview" -> widgetPreview!!.handle(call, result)
+                "widgetInstanceCounts" -> widgetPreview!!.handle(call, result)
+                "openApp" -> widgetPreview!!.handle(call, result)
                 "consumeQuickEntryIntent" -> {
                     val shouldOpen = pendingQuickEntryIntent
                     pendingQuickEntryIntent = false
