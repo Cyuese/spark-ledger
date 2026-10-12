@@ -1,7 +1,6 @@
 package top.talyra42.verifin
 
 import android.content.Context
-import android.net.Uri
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 
@@ -9,10 +8,6 @@ import es.antonborri.home_widget.HomeWidgetLaunchIntent
  * The drawable contains the rounded pixels, so software-rendered previews and
  * Android <31 do not depend on RenderNode outline clipping. */
 object QuickWidgetContent {
-    fun uri(id: Int, route: String, bookId: String): Uri = Uri.Builder()
-        .scheme("verifin").authority("widget").appendPath(id.toString()).appendPath(route)
-        .appendQueryParameter("bookId", bookId).build()
-
     fun views(context: Context, data: WidgetDisplay, widgetId: Int? = null): RemoteViews {
         val localized = VeriFinWidgetStore.localized(context, VeriFinWidgetStore.prefs(context))
         return RemoteViews(context.packageName, R.layout.quick_widget_content).apply {
@@ -24,8 +19,12 @@ object QuickWidgetContent {
             setTextColor(R.id.quick_widget_amount, if (data.dark) 0xFFF5F5F7.toInt() else 0xFF111827.toInt())
             setContentDescription(R.id.quick_widget_add, localized.getString(R.string.quick_entry_button))
             if (widgetId != null) {
-                val open = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri(widgetId, "app", data.bookId))
-                val entry = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri(widgetId, "entry", data.bookId))
+                val open = HomeWidgetLaunchIntent.getActivity(
+                    context, MainActivity::class.java, widgetUri(widgetId, "app", data.bookId),
+                )
+                val entry = HomeWidgetLaunchIntent.getActivity(
+                    context, MainActivity::class.java, widgetUri(widgetId, "entry", data.bookId),
+                )
                 // Explicit siblings: no inherited Glance click target can turn
                 // the whole weighted data column into the add button.
                 listOf(R.id.quick_widget_card, R.id.quick_widget_data, R.id.quick_widget_label, R.id.quick_widget_amount)

@@ -1,37 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 桌面小组件：**桌面上显示的文字**只在这里维护（values 与 values-en 各一份），
+     应用内文案在 lib/l10n/app_*.arb。模板规范名两处都有，由
+     test/widget_string_parity_test.dart 强制一致；这里每个条目都必须被原生代码或
+     清单引用，否则同一文件的「无死资源」用例会失败。 -->
 <resources>
-    <string name="quick_entry_widget_description">今日支出概览与快速记账入口</string>
-    <string name="budget_widget_description">本月可用预算概览</string>
-    <string name="net_worth_widget_description">全部账户资产总额</string>
-    <string name="quick_entry_tile_label">快速记账</string>
-    <string name="quick_entry_button">记一笔</string>
-    <string name="widget_today_expense">今日支出</string>
-    <string name="widget_quick_entry_title">今日支出 + 记一笔</string>
-    <string name="widget_budget_available">本月可用预算</string>
-    <string name="widget_net_worth">资产总额</string>
-    <string name="widget_refresh_required">打开应用刷新</string>
-    <string name="trend_widget_description">收支趋势与可配置指标</string>
-    <string name="widget_trend">收支趋势</string>
-    <string name="widget_chart_content_description">趋势图</string>
-    <string name="widget_budget_ring_content_description">预算使用率</string>
-    <string name="user_widget_description">我的小组件：自定义财务数据与背景</string>
-    <string name="user_widget_picker_label">VeriFin</string>
-    <string name="user_widget_choose_design">选择我的小组件</string>
-    <string name="user_widget_add">添加到桌面</string>
-    <string name="user_widget_default_name">我的财务概览</string>
-    <string name="user_widget_empty">请先打开应用，在“我的小组件”右上角点击加号创建小组件。</string>
-    <string name="widget_instance_config_title">设置小组件</string>
-    <string name="widget_instance_book">账本</string>
-    <string name="widget_instance_primary">主指标</string>
-    <string name="widget_instance_secondary">辅助指标</string>
-    <string name="widget_instance_chart">图表</string>
-    <string name="widget_instance_range">图表范围</string>
-    <string name="widget_instance_background">背景</string>
-    <string name="widget_instance_hide_amounts">隐藏金额</string>
-    <string name="widget_instance_save">保存设置</string>
-    <string name="widget_instance_none">不显示</string>
+    <!-- 模板规范名：同时是选择器里显示的组件名（Manifest receiver label）。 -->
     <string name="widget_template_quick_entry">快速记账</string>
     <string name="widget_template_budget">预算进度</string>
     <string name="widget_template_trend">收支趋势</string>
-    <string name="widget_template_net_worth">资产概览</string>
+    <string name="widget_template_net_worth">净资产</string>
+    <!-- 选择器与系统小组件设置页的说明。 -->
+    <string name="quick_entry_widget_description">今日支出概览与快速记账入口</string>
+    <string name="budget_widget_description">本期可用预算概览</string>
+    <string name="net_worth_widget_description">全部账户资产总额</string>
+    <string name="trend_widget_description">近 30 日支出趋势</string>
+    <!-- 快速记账磁贴标签与组件内的「记一笔」按钮。 -->
+    <string name="quick_entry_tile_label">快速记账</string>
+    <string name="quick_entry_button">记一笔</string>
+    <!-- 组件正文的指标行（每个模板恰好一行）。 -->
+    <string name="widget_today_expense">今日支出</string>
+    <string name="widget_budget_remaining">剩余预算</string>
+    <string name="widget_trend_period_expense">近 30 日支出</string>
+    <string name="widget_net_worth">净资产</string>
+    <!-- 组件在未配置 / 拿不到数据时显示的唯一一行（不展示任何金额）。 -->
+    <string name="widget_setup_required">点击进入配置</string>
+    <string name="widget_data_unavailable">打开应用同步数据</string>
 </resources>
