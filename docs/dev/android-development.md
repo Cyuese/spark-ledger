@@ -82,6 +82,17 @@ $env:JAVA_TOOL_OPTIONS='-Djava.io.tmpdir=C:/Dev/java-tmp -Djdk.net.unixdomain.tm
 flutter run -d <device-id> --flavor diagnostic
 ```
 
+设备侧仪器测试（CI 跑不了、需要真机/模拟器，`testInstrumentationRunner` 是标准
+`androidx.test.runner.AndroidJUnitRunner`）：
+
+```powershell
+dart run scripts/widget_previews.dart        # 桌面组件：构建+安装+跑 WidgetGlanceInstrumentationTest，
+                                             # 并把选择器预览 PNG 拉回 res/（改组件视觉后必须重跑）
+flutter test integration_test/ -d <device-id> --flavor diagnostic
+```
+
+仪器测试只做冒烟与预览导出，**不能替代**下面的真机评审；模拟器点击不要并行发起。
+
 默认调试使用独立 applicationId `top.talyra42.verifin.graphicsdiagnostic`，显示名称
 “Veri Fin 图形诊断”；仍是正式页面、Controller、SQLite 和原生插件，数据与用户正式应用隔离。
 debug 支持 hot reload；最终图形/OCR/插件行为必须另外用 release/R8 检查。

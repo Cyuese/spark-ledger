@@ -1,42 +1,113 @@
 # 桌面小组件
 
-Veri Fin 提供四个固定模板的 Android 桌面小组件：快速记账（`quickEntry`）、预算进度（`budget`）、收支趋势（`trend`）、净资产（`netWorth`）。渲染走 `home_widget` 插件的 Jetpack Glance Provider，桌面进程不需要启动 Flutter。
+Veri Fin 提供四个固定模板的 Android 桌面小组件：快速记账（`quick_entry`）、预算进度（`budget`）、
+收支趋势（`trend`）、净资产（`net_worth`）。渲染走 `home_widget` 插件的 Jetpack Glance Provider，
+桌面进程不需要启动 Flutter。
+
+**模板与指标是 1:1 的**：一个模板恰好展示一个指标、一种呈现方式，因此本项目没有独立的指标词表。
+桌面上出现的文字（模板名、指标行、状态行）全部来自
+`android/app/src/main/res/values*/strings.xml`，Flutter 只推送数字。
+
+| 模板 key | Provider | 选择器/应用内名称 | 桌面指标行 | 尺寸 | 呈现 |
+| --- | --- | --- | --- | --- | --- |
+| `quick_entry` | `QuickEntryWidgetProvider` | 快速记账 | 今日支出 | 2×1 | 指标行 + 金额 + 记一笔按钮 |
+| `budget` | `BudgetWidgetProvider` | 预算进度 | 剩余预算 | 2×2 | 指标行 + 金额 + 使用率环 |
+| `trend` | `TrendWidgetProvider` | 收支趋势 | 近 30 日支出 | 4×2 | 指标行 + 金额 + 30 点曲线 |
+| `net_worth` | `NetWorthWidgetProvider` | 净资产 | 净资产 | 2×2 | 指标行 + 金额 + 30 点曲线 |
+
+模板名同时存在于 Android `strings.xml`（选择器要用的原生资源）与 `lib/l10n/app_*.arb`
+（应用内宫格与说明），由 `test/widget_string_parity_test.dart` 强制一致；该测试同时保证
+原生资源里没有死文案。
 
 ## 实现结构
 
-- 四个 Glance Provider（`QuickEntryWidgetProvider` / `BudgetWidgetProvider` / `TrendWidgetProvider` / `NetWorthWidgetProvider`）都是 `HomeWidgetGlanceWidgetReceiver`，共用同一个原生配置 Activity。
-- Flutter 侧只发布投影：`lib/app/home_widget_service.dart` 的 `pushWidgetData` 为每个账本生成一份快照（`date`、`currency` 与四个指标），经 `HomeWidget.saveWidgetData` 写入插件共享存储，再用 `HomeWidget.updateWidget` 刷新四个 Provider。
-- 指标计算集中在 `lib/app/widget_presentation.dart` 的 `buildWidgetPresentation`（纯函数，输入 `WidgetLedgerSnapshot`）。指标词表（`WidgetTemplate` / `WidgetMetric` / `WidgetChartMetric` / `WidgetDateRange`）定义在 `lib/app/widget_config.dart`。
-- 每个桌面实例的配置（账本 `bookId` + 主指标 `metric`）按 Android `appWidgetId` 保存在 home_widget 共享存储；配置页保存经 `WidgetConfigurationSession.save`，只接受账本列表内的账本与基础指标集合内的指标。
-- 应用内「桌面小组件」页通过 MethodChannel `renderWidgetPreview` 请求同一套 Glance 组合渲染的像素，不维护第二套手绘卡片。
+- `lib/app/widgets/widget_catalog.dart`：唯一词表（模板 key、Provider 类名、外观枚举、应用内名称）。
+- `lib/app/widgets/widget_projection.dart`：纯函数投影与快照编码、快照结构版本 `widgetSnapshotVersion`。
+- `lib/app/widgets/widget_service.dart`：刷新管线（失效信号、三道闸门、写入与排程）。
+- `lib/app/widgets/widget_instance_config.dart`：实例配置与配置会话（读账本列表、保存并校验）。
+- `lib/app/native_widget_preview.dart` + `lib/app/platform_bridge_widget.dart`：应用内预览与通道。
+- 原生：`VeriFinWidget.kt`（Store、三态、渲染、图形、Provider）、`WidgetPreviewBridge.kt`
+  （预览渲染、实例计数、打开应用）、`WidgetConfigurationActivity.kt`、`QuickWidgetContent.kt`
+  （快速记账横条的 RemoteViews 叶子，TextView 自动缩放、保留完整金额）。
 
-## 交互行为
+## 数据契约（home_widget 共享存储，设备本地、不进备份）
 
-- 首次添加到桌面直接使用默认配置，不自动打开配置页；Provider XML 使用 `configuration_optional|reconfigurable`，长按菜单与「重新配置」由 Android Launcher 提供，应用不监听长按。
-- 重新配置页由独立 `WidgetConfigurationActivity` 启动 Flutter 的 `configureMain` entrypoint：上方显示当前实例的原生预览，下方选择账本与主指标。
-- 快速记账横条的数值/标签区域只打开应用，加号区域才进入快速记账；内容使用原生 `TextView` 自动缩放并保持金额完整，不用省略号。
-- 其余模板整卡点击通过 `widgetAction` 打开应用。
+| key | 内容 |
+| --- | --- |
+| `verifin.widget.snapshots` | `{"version":2,"<bookId>":{"date":"yyyy-MM-dd","quick_entry":{"amount":"…"},"budget":{"amount":"…","usage":0.37},"trend":{"amount":"…","points":[…30 点]},"net_worth":{"amount":"…","points":[…30 点]}}}` |
+| `verifin.widget.books` | `[{"id","name"}]`，配置页选择账本用 |
+| `verifin.widget.locale` | 应用语言，原生按它解析桌面文案（不与系统语言混用） |
+| `verifin.widget.config.<appWidgetId>` | 实例配置 `{"bookId":"…","appearance":"system/light/dark"}` |
 
-## 刷新与自愈
+- `amount` 是 Dart 按**该实例所属账本**的单位口径格式化好的字符串（单币种 + 「隐藏单位」时不含单位）；
+  无法计算（缺汇率、未设预算）时为缺失占位符 `—`。
+- `points` 固定 30 个日历日、以投影当天收尾；有缺失点时整个 `points` 不下发（不画半张图）。
+- Dart 的 `widgetSnapshotVersion` 与 Kotlin 的 `SNAPSHOT_VERSION` 必须成对修改，
+  由 `test/widget_catalog_test.dart` 强制一致；形状不匹配时组件退回「打开应用同步数据」而不是渲染缺失值。
 
-- Flutter 每次投影刷新时用 `HomeWidget.scheduleWidgetUpdates` 重新安排下一次本地午夜；插件的 `HomeWidgetScheduledUpdateReceiver` 负责闹钟、开机和应用更新后的重排，时区变化在下一次前台刷新时重新计算。
-- Glance 渲染器按快照日期自愈：今日支出在跨天后直接渲染为 `0`，不显示“打开应用刷新”。
-- 账目、预算、汇率、账户和账本变化后由 Flutter 重新发布投影并刷新所有 Provider。
+## 状态机
 
-## 预览
+| 条件 | 表现 | 点击行为 |
+| --- | --- | --- |
+| 没有实例配置，或配置里的账本已不在 `verifin.widget.books` | 整卡一行「点击进入配置」，**不显示任何金额** | 打开 `WidgetConfigurationActivity`（`ACTION_APPWIDGET_CONFIGURE` + `EXTRA_APPWIDGET_ID` + 带实例 id 的 data） |
+| 已配置，但该账本的快照缺失或版本不符 | 一行「打开应用同步数据」 | 打开应用 |
+| 已配置且有快照 | 指标行 + 金额 + 环/曲线 | 整卡打开应用（并切到该实例的账本）；快速记账的 `+` 区域进入快速记账 |
 
-- Android 15+ 的系统选择器预览使用 Glance 的 `providePreview` 与 home_widget 的预览更新机制。
-- Android 12–14 使用各 Provider XML 的中性 `previewLayout`；旧 Launcher 使用由同一套 Glance 组合导出的 `previewImage`。
-- 预览不读取用户账目，避免系统选择器缓存敏感数据；桌面与系统选择器预览的权威渲染结果只能在 Android 设备或模拟器上验证。
+「点击进入配置」的动作必须同时满足两点：带 `ACTION_APPWIDGET_CONFIGURE` 与
+`EXTRA_APPWIDGET_ID`（home_widget 的 `initiallyLaunchedFromHomeWidgetConfigure` 按这两个值取实例 id），
+以及 data 里带实例 id（`Intent` 的 extras 不参与 `filterEquals`，只有 data 不同才能保证每个实例的
+`PendingIntent` 互不覆盖）。已配置组件的点击继续沿用 `verifin://widget/<id>/<route>?bookId=…` 路由。
+
+## 外观与金额口径
+
+- 外观是**实例级**设置：`system`（默认，跟随设备深色模式）/`light`/`dark`。设备级主题推送已删除。
+- 表面色与设计令牌镜像：浅色 `#FFFFFF` + 描边 `#E5E7EB`，深色 `#1A1F27` + 描边 `#30353D`。
+- 金额单位按**实例所属账本**判定：单币种账本 + 「单币种隐藏单位」时省略单位，多币种账本照常显示；
+  不再读活动账本的全局闸门。
+
+## 刷新管线
+
+- 失效信号（`VeriFinController.onWidgetDataChanged`）只挂在真正影响投影的落库咽喉点：
+  交易、账户、账本、汇率、预算、预算周期，以及语言偏好（桌面文案随语言）。
+  **不挂在整个 `notifyListeners()` 上**——改主题、折叠分区这类无关变化不再重算。
+  `test/widget_projection_signal_test.dart` 逐条走过这些入口，防止新增写入点漏通知。
+- 三道闸门，按代价从低到高：①同一数据版本已推送过 → 直接返回；②桌面上没有任何实例
+  （数据变更触发时）→ 连投影都不算；③推送内容与上次完全相同 → 不写共享存储、不刷 Provider、不排闹钟。
+- 冷启动与回前台强制推一次，保证用户之后新添加的实例第一次渲染就能读到数据。
+- 投影是纯函数：一次遍历得到逐日支出与账户余额增量，净资产曲线按「期初余额 + 逐日前缀和」推进，
+  复杂度 `O(交易数 + 账户数 × 天数)`。护栏见 `test/widget_projection_perf_test.dart`
+  （20 账户 × 5000 笔，四模板合计上限 40 ms；旧实现同机 145 ms）。
+- 跨天：Flutter 每次推送用 `HomeWidget.scheduleWidgetUpdates` 重新安排下一次本地午夜，
+  插件的 Receiver 负责闹钟、开机与应用更新后的重排；原生渲染按快照日期把「今日支出」直接归零。
+
+## 预览（三层，同一套 Glance 组合）
+
+| 层 | 适用 | 实现 |
+| --- | --- | --- |
+| 生成预览 | API 35+ | `providePreview`（样例态，不读用户账目）；指纹 = 应用版本 + 模板 + 深浅色 + 语言，随发版自动失效，不再手写版本号 |
+| 选择器预览 | API 31–34 | 四个模板各自的 `previewLayout`（`res/layout/widget_picker_preview_<template>.xml`，内容就是预览 PNG），配 `-night` / `-en` 变体 |
+| 旧启动器 | API <31 | `previewImage` PNG（同样的变体） |
+
+- 16 张预览 PNG（4 模板 × 浅/深 × 中/英）由**真机渲染器**产出：
+  `dart run scripts/widget_previews.dart`（需要一台已授权设备）。改组件视觉后必须重跑，
+  PNG 是构建产物，见 [known-limitations.md](known-limitations.md) L10。
+- 样例态金额显示 `0`（不虚构用户金额），曲线/环也用零值，因此预览与真机同构、不含任何用户数据。
+- 应用内「我的 → 桌面小组件」页通过通道 `renderWidgetPreview` 请求同一套 Glance 组合渲染的像素，
+  页面保持只读（添加、长按重新配置、删除都由 Android Launcher 负责）。
 
 ## 备份边界
 
-小组件实例配置只存在设备原生共享存储中（按 `appWidgetId`），**不属于备份范围**；导出/导入不会创建或修改桌面实例。恢复账本后，已有实例在下一次刷新时按自己的设备本地配置读取数据；删除实例时原生 Receiver 清理对应配置。
+小组件实例配置只存在设备原生共享存储中（按 `appWidgetId`），**不属于备份范围**；导出/导入不会创建或
+修改桌面实例。恢复账本后，已有实例在下一次刷新时按自己的设备本地配置读取数据；删除实例时原生
+Receiver 清理对应配置。
 
 ## 验收
 
-1. API 31：选择器预览、首次添加、长按重新配置、配置取消与保存。
-2. API 35：生成预览、主题切换、语言切换和预览更新。
-3. 强停 Flutter 应用后桌面仍能显示快照；跨天后今日支出显示 `0`。
-4. 两个实例选择不同账本时互不串数据；删除实例后配置被清理。
-5. 运行 `WidgetGlanceInstrumentationTest`，确认四个 Provider 和配置 Activity 可以加载。
+1. API 31：选择器四张预览互不相同、深浅色正确；添加（不配置）→ 桌面显示「点击进入配置」→
+   点击进配置页 → 选账本 + 选外观（预览同步切换）→ 保存 → 组件立即显示真实数据。
+2. API 35+：生成预览随语言、深浅色与版本变化更新。
+3. 强停 Flutter 应用后桌面仍显示快照；跨天后今日支出显示 `0`。
+4. 两个实例选择不同账本/不同外观互不串数据；删除实例后配置被清理；配置里的账本被删除时组件回到
+   「点击进入配置」。
+5. 桌面无实例时改账目：不产生 Provider 刷新与闹钟重排（`test/widget_service_test.dart` 的闸门用例）。
+6. 运行 `dart run scripts/widget_previews.dart`：仪器测试全绿并重导出 16 张预览图。

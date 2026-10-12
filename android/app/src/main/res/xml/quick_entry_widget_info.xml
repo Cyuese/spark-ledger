@@ -10,7 +10,7 @@
     android:targetCellHeight="1"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/glance_default_loading_layout"
-    android:previewLayout="@layout/widget_picker_preview_glance"
+    android:previewLayout="@layout/widget_picker_preview_quick_entry"
     android:previewImage="@drawable/widget_preview_quick_entry"
     android:resizeMode="none"
     android:widgetCategory="home_screen"

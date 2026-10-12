@@ -6818,101 +6818,35 @@ abstract class AppLocalizations {
   /// **'长按桌面空白处 → 选择「小组件」→ 找到 Veri Fin → 拖动想要的小组件到桌面。'**
   String get widgetHowToAddDesc;
 
-  /// No description provided for @widgetQuickEntryName.
+  /// No description provided for @widgetConfigureHint.
   ///
   /// In zh, this message translates to:
-  /// **'今日支出 + 记一笔'**
-  String get widgetQuickEntryName;
+  /// **'添加到桌面后若显示「点击进入配置」，点一下就能选账本和外观。'**
+  String get widgetConfigureHint;
 
-  /// No description provided for @widgetBudgetName.
+  /// No description provided for @widgetTemplateQuickEntry.
   ///
   /// In zh, this message translates to:
-  /// **'本月可用预算'**
-  String get widgetBudgetName;
+  /// **'快速记账'**
+  String get widgetTemplateQuickEntry;
 
-  /// No description provided for @widgetNetWorthName.
+  /// No description provided for @widgetTemplateBudget.
   ///
   /// In zh, this message translates to:
-  /// **'资产总额'**
-  String get widgetNetWorthName;
+  /// **'预算进度'**
+  String get widgetTemplateBudget;
 
-  /// No description provided for @widgetTrendName.
+  /// No description provided for @widgetTemplateTrend.
   ///
   /// In zh, this message translates to:
   /// **'收支趋势'**
-  String get widgetTrendName;
+  String get widgetTemplateTrend;
 
-  /// No description provided for @widgetMetricTodayExpense.
-  ///
-  /// In zh, this message translates to:
-  /// **'今日支出'**
-  String get widgetMetricTodayExpense;
-
-  /// No description provided for @widgetMetricPeriodExpense.
-  ///
-  /// In zh, this message translates to:
-  /// **'本期支出'**
-  String get widgetMetricPeriodExpense;
-
-  /// No description provided for @widgetMetricPeriodIncome.
-  ///
-  /// In zh, this message translates to:
-  /// **'本期收入'**
-  String get widgetMetricPeriodIncome;
-
-  /// No description provided for @widgetMetricBudgetRemaining.
-  ///
-  /// In zh, this message translates to:
-  /// **'剩余预算'**
-  String get widgetMetricBudgetRemaining;
-
-  /// No description provided for @widgetMetricBudgetUsed.
-  ///
-  /// In zh, this message translates to:
-  /// **'已用预算'**
-  String get widgetMetricBudgetUsed;
-
-  /// No description provided for @widgetMetricBudgetRate.
-  ///
-  /// In zh, this message translates to:
-  /// **'预算使用率'**
-  String get widgetMetricBudgetRate;
-
-  /// No description provided for @widgetMetricNetWorth.
+  /// No description provided for @widgetTemplateNetWorth.
   ///
   /// In zh, this message translates to:
   /// **'净资产'**
-  String get widgetMetricNetWorth;
-
-  /// No description provided for @widgetMetricTotalAssets.
-  ///
-  /// In zh, this message translates to:
-  /// **'总资产'**
-  String get widgetMetricTotalAssets;
-
-  /// No description provided for @widgetMetricTotalLiabilities.
-  ///
-  /// In zh, this message translates to:
-  /// **'总负债'**
-  String get widgetMetricTotalLiabilities;
-
-  /// No description provided for @widgetMetricBalance.
-  ///
-  /// In zh, this message translates to:
-  /// **'账户余额'**
-  String get widgetMetricBalance;
-
-  /// No description provided for @widgetMetricTransactionCount.
-  ///
-  /// In zh, this message translates to:
-  /// **'交易笔数'**
-  String get widgetMetricTransactionCount;
-
-  /// No description provided for @widgetMetricSavingsRate.
-  ///
-  /// In zh, this message translates to:
-  /// **'储蓄率'**
-  String get widgetMetricSavingsRate;
+  String get widgetTemplateNetWorth;
 
   /// No description provided for @widgetConfigTitle.
   ///
@@ -6932,11 +6866,29 @@ abstract class AppLocalizations {
   /// **'账本'**
   String get widgetBook;
 
-  /// No description provided for @widgetPrimaryMetric.
+  /// No description provided for @widgetAppearance.
   ///
   /// In zh, this message translates to:
-  /// **'主指标'**
-  String get widgetPrimaryMetric;
+  /// **'外观'**
+  String get widgetAppearance;
+
+  /// No description provided for @widgetBookPlaceholder.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择账本'**
+  String get widgetBookPlaceholder;
+
+  /// No description provided for @widgetNoLedgerYet.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有可选的账本。请先打开一次 Veri Fin 应用创建设置，再回来配置这个小组件。'**
+  String get widgetNoLedgerYet;
+
+  /// No description provided for @widgetOpenApp.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开应用'**
+  String get widgetOpenApp;
 
   /// No description provided for @widgetPreview.
   ///

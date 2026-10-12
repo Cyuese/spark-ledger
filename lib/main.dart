@@ -10,7 +10,6 @@ import 'app/app_theme.dart';
 import 'app/attachments/attachment_store.dart';
 import 'app/backup/backup_coordinator.dart';
 import 'app/feedback.dart';
-import 'app/home_widget_service.dart';
 import 'app/l10n_outside_context.dart';
 import 'app/logging/app_logger.dart';
 import 'app/models.dart';
@@ -19,6 +18,7 @@ import 'app/reminder/notification_scheduler.dart';
 import 'app/reminder/reminder_settings.dart';
 import 'app/veri_fin_controller.dart';
 import 'app/veri_fin_scope.dart';
+import 'app/widgets/widget_service.dart';
 import 'data/app_database.dart';
 import 'data/ledger_repository.dart';
 import 'l10n/app_localizations.dart';
@@ -203,7 +203,10 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     // 记账后自动备份挂钩；应用打开时按配置尝试一次自动备份。
     _controller.onEntryAdded = _handleEntryAdded;
-    _controller.onWidgetProjectionInvalidated = _scheduleWidgetRefresh;
+    // 桌面小组件投影：只在账目类数据落库后重算（防抖），语言变化也要重推
+    // （桌面文案跟随应用语言）。
+    _controller.onWidgetDataChanged = _scheduleWidgetRefresh;
+    _controller.localePreferenceListenable.addListener(_scheduleWidgetRefresh);
     // 落库失败时弹出「保存失败」提示，避免用户以为已保存。
     _controller.onPersistError = _handlePersistError;
     // 应用锁开关变化时同步 FLAG_SECURE；开屏按当前状态对齐一次。
@@ -216,8 +219,9 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
       l10n: l10nForPreference(_controller.localePreference),
     );
     BackupCoordinator.maybeBackupOnOpen(_controller);
-    // 打开应用时刷新桌面小组件「今日支出」。
-    pushWidgetData(_controller);
+    // 打开应用时刷新桌面小组件：这里强制推一次，保证用户之后新添加的实例
+    // 第一次渲染就能读到数据（即使此刻桌面上还没有实例）。
+    pushWidgetProjection(_controller, force: true);
     // 附件维护（孤儿回收 / 清理中断的暂存）与存量 base64 迁移都在启动后后台执行：
     // 迁移可中断、读取路径有 base64 兜底，期间记账与查看不受影响。
     unawaited(_runAttachmentMaintenance());
@@ -257,7 +261,7 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
   void _scheduleWidgetRefresh() {
     _widgetRefreshTimer?.cancel();
     _widgetRefreshTimer = Timer(const Duration(milliseconds: 250), () {
-      unawaited(pushWidgetData(_controller));
+      unawaited(pushWidgetProjection(_controller));
     });
   }
 
@@ -288,7 +292,8 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
   Future<void> _postDueRecurringAndRefresh() async {
     await _controller.applyDueRecurring(DateTime.now());
     await BackupCoordinator.maybeBackupOnOpen(_controller);
-    await pushWidgetData(_controller);
+    // 回前台强制推一次：补记后的数据、以及可能在后台期间新添加的实例都要对齐。
+    await pushWidgetProjection(_controller, force: true);
   }
 
   @override
@@ -316,7 +321,12 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     _widgetRefreshTimer?.cancel();
-    _controller.onWidgetProjectionInvalidated = null;
+    _controller.localePreferenceListenable.removeListener(
+      _scheduleWidgetRefresh,
+    );
+    if (_controller.onWidgetDataChanged == _scheduleWidgetRefresh) {
+      _controller.onWidgetDataChanged = null;
+    }
     WidgetsBinding.instance.removeObserver(this);
     if (_controller.onEntryAdded == _handleEntryAdded) {
       _controller.onEntryAdded = null;

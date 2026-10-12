@@ -2,6 +2,7 @@ package top.talyra42.verifin
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
@@ -24,6 +25,15 @@ class WidgetPreviewBridge(private val context: Context) {
         scope.launch {
             try {
                 when (call.method) {
+                    "widgetInstanceCounts" -> result.success(VeriFinWidgetTemplate.instanceCounts(context))
+                    // 配置页在应用从未启动过时给用户一个出口：直接打开主应用生成账本。
+                    "openApp" -> {
+                        context.startActivity(
+                            Intent(context, MainActivity::class.java)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        )
+                        result.success(null)
+                    }
                     "refreshWidgetInstance" -> {
                         val id = requireNotNull(call.argument<Int>("widgetId"))
                         val manager = AppWidgetManager.getInstance(context)
@@ -43,12 +53,15 @@ class WidgetPreviewBridge(private val context: Context) {
                         val info = requireNotNull(AppWidgetManager.getInstance(context).getAppWidgetInfo(id))
                         require(info.provider.packageName == context.packageName)
                         val template = VeriFinWidgetTemplate.fromProvider(info.provider.className)
-                        result.success(mapOf("template" to template.key, "provider" to info.provider.className, "metric" to template.metric))
+                        result.success(mapOf("template" to template.key, "provider" to info.provider.className))
                     }
                     "renderWidgetPreview" -> result.success(WidgetPreviewRenderer.png(context,
                         VeriFinWidgetTemplate.fromKey(requireNotNull(call.argument<String>("template"))),
                         call.argument<Int>("widthDp") ?: 168, call.argument<Int>("heightDp") ?: 168,
-                        WidgetInstanceSelection(call.argument<String>("bookId").orEmpty(), call.argument<String>("metric").orEmpty()),
+                        WidgetInstanceSelection(
+                            call.argument<String>("bookId").orEmpty(),
+                            WidgetAppearance.fromKey(call.argument<String>("appearance")),
+                        ),
                         call.argument<Boolean>("sample") ?: false))
                     else -> result.notImplemented()
                 }
@@ -67,18 +80,24 @@ object WidgetPreviewRenderer {
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
     suspend fun views(context: Context, template: VeriFinWidgetTemplate, width: Int, height: Int,
                       selection: WidgetInstanceSelection = WidgetInstanceSelection(), sample: Boolean = false,
-                      widgetId: Int? = null): android.widget.RemoteViews {
+                      widgetId: Int? = null,
+                      prefs: android.content.SharedPreferences = VeriFinWidgetStore.prefs(context),
+    ): android.widget.RemoteViews {
         require(width in 100..600 && height in 56..400)
-        val data = VeriFinWidgetStore.display(context, template, selection, sample)
+        val data = VeriFinWidgetStore.display(context, template, selection, sample, prefs = prefs)
         return GlanceRemoteViews().compose(context, DpSize(width.dp, height.dp)) {
             VeriFinWidgetContent(template, data,
                 widgetId?.let { widgetAction(context, it, "app", data.bookId) },
-                widgetId?.let { widgetAction(context, it, "entry", data.bookId) }, widgetId)
+                widgetId?.let { widgetAction(context, it, "entry", data.bookId) },
+                widgetId?.let { widgetSetupAction(context, it) },
+                widgetId)
         }.remoteViews
     }
     suspend fun png(context: Context, template: VeriFinWidgetTemplate, width: Int, height: Int,
-                    selection: WidgetInstanceSelection = WidgetInstanceSelection(), sample: Boolean = false): ByteArray {
-        val remote = views(context, template, width, height, selection, sample)
+                    selection: WidgetInstanceSelection = WidgetInstanceSelection(), sample: Boolean = false,
+                    prefs: android.content.SharedPreferences = VeriFinWidgetStore.prefs(context),
+    ): ByteArray {
+        val remote = views(context, template, width, height, selection, sample, prefs = prefs)
         return withContext(Dispatchers.Main) {
             val density = context.resources.displayMetrics.density
             val w = (width * density).roundToInt()
