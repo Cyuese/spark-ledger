@@ -2,6 +2,7 @@ package top.talyra42.verifin
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
@@ -24,6 +25,15 @@ class WidgetPreviewBridge(private val context: Context) {
         scope.launch {
             try {
                 when (call.method) {
+                    "widgetInstanceCounts" -> result.success(VeriFinWidgetTemplate.instanceCounts(context))
+                    // 配置页在应用从未启动过时给用户一个出口：直接打开主应用生成账本。
+                    "openApp" -> {
+                        context.startActivity(
+                            Intent(context, MainActivity::class.java)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        )
+                        result.success(null)
+                    }
                     "refreshWidgetInstance" -> {
                         val id = requireNotNull(call.argument<Int>("widgetId"))
                         val manager = AppWidgetManager.getInstance(context)

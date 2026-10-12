@@ -3,27 +3,40 @@ part of 'veri_fin_controller.dart';
 /// 控制器的「领域操作」层：交易/账户/分组/账本/分类/标签/预算/偏好/备份/
 /// 导入导出等所有对外方法。字段与持久化在 [_ControllerState]。
 mixin _ControllerOps on ChangeNotifier, _ControllerState {
-  WidgetLedgerSnapshot? widgetLedgerSnapshot(
-    String? selectedBookId,
-    DateTime now,
-  ) {
+  /// 组装某个账本的桌面小组件投影输入；账本不存在时返回 `null`。
+  ///
+  /// 只读：不切换活动账本、不改写任何数据，供投影服务为每个账本各取一份快照。
+  WidgetBookSnapshot? widgetBookSnapshot(String? selectedBookId, DateTime now) {
     final id = selectedBookId ?? _activeBookId;
     final book = ledgerBooks.where((item) => item.id == id).firstOrNull;
     if (book == null) return null;
     final startDay = _budgetCycleStartDays[id] ?? naturalMonthStartDay;
     final keyMonth = budgetCycleKeyMonthFor(now, startDay);
-    return WidgetLedgerSnapshot(
+    final accounts = List<Account>.unmodifiable(
+      _accounts.where((item) => item.bookId == id),
+    );
+    final entries = entriesForBook(id);
+    final rates = List<ExchangeRate>.unmodifiable(
+      _exchangeRates.where((item) => item.bookId == id),
+    );
+    return WidgetBookSnapshot(
       book: book,
-      entries: entriesForBook(id),
-      accounts: List.unmodifiable(_accounts.where((item) => item.bookId == id)),
-      rates: List.unmodifiable(
-        _exchangeRates.where((item) => item.bookId == id),
-      ),
+      entries: entries,
+      accounts: accounts,
+      rates: rates,
       budgetWindow: budgetCycleOfKeyMonth(keyMonth, startDay),
       budget:
           _monthlyBudgets['$id:${_monthKey(keyMonth)}'] ??
           _monthlyBudgets[_defaultMonthlyBudgetKey(id)] ??
           0,
+      usesMultipleCurrencies: bookUsesMultipleCurrencies(
+        bookId: id,
+        baseCurrencyCode: book.baseCurrencyCode,
+        accounts: accounts,
+        entries: entries,
+        rules: _recurringRules.where((rule) => rule.bookId == id),
+        rates: rates,
+      ),
     );
   }
 
@@ -468,6 +481,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _exchangeRates
       ..clear()
       ..addAll(next);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return true;
   }
@@ -487,6 +501,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _exchangeRates
       ..clear()
       ..addAll(next);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return true;
   }
@@ -669,6 +684,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _recurringRules
       ..clear()
       ..addAll(nextRules);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return generated;
   }
@@ -1196,6 +1212,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _budgetCycleStartDays
       ..clear()
       ..addAll(nextCycleDays);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return true;
   }
@@ -2161,6 +2178,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     if (removedAttachmentIds.isNotEmpty) {
       await _attachmentStore.deleteMany(removedAttachmentIds);
     }
+    _markWidgetProjectionChanged();
     notifyListeners();
     if (hasNewEntry) {
       onEntryAdded?.call();
@@ -2714,6 +2732,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _attachments
       ..clear()
       ..addAll(nextAttachments);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return true;
   }
@@ -2808,6 +2827,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _exchangeRates
       ..clear()
       ..addAll(nextRates);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return true;
   }
@@ -2904,6 +2924,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _exchangeRates
       ..clear()
       ..addAll(nextRates);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return true;
   }
@@ -3016,6 +3037,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _attachments
       ..clear()
       ..addAll(nextAttachments);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return true;
   }
@@ -3167,6 +3189,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _entries
       ..clear()
       ..addAll(nextEntries);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return BatchAccountChangeResult(
       status: BatchAccountChangeStatus.success,
@@ -3224,6 +3247,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       return false;
     }
     _accounts.add(normalized);
+    _markWidgetProjectionChanged();
     notifyListeners();
     return true;
   }
@@ -3269,6 +3293,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       return false;
     }
     _accounts[index] = normalized;
+    _markWidgetProjectionChanged();
     notifyListeners();
     return true;
   }
@@ -3368,6 +3393,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       ..clear()
       ..addAll(nextDefaults);
     await _persistAccountDeletionPreferences();
+    _markWidgetProjectionChanged();
     notifyListeners();
     return affected;
   }

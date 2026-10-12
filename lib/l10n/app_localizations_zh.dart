@@ -3706,52 +3706,19 @@ class AppLocalizationsZh extends AppLocalizations {
       '长按桌面空白处 → 选择「小组件」→ 找到 Veri Fin → 拖动想要的小组件到桌面。';
 
   @override
-  String get widgetQuickEntryName => '今日支出 + 记一笔';
+  String get widgetConfigureHint => '添加到桌面后若显示「点击进入配置」，点一下就能选账本和外观。';
 
   @override
-  String get widgetBudgetName => '本月可用预算';
+  String get widgetTemplateQuickEntry => '快速记账';
 
   @override
-  String get widgetNetWorthName => '资产总额';
+  String get widgetTemplateBudget => '预算进度';
 
   @override
-  String get widgetTrendName => '收支趋势';
+  String get widgetTemplateTrend => '收支趋势';
 
   @override
-  String get widgetMetricTodayExpense => '今日支出';
-
-  @override
-  String get widgetMetricPeriodExpense => '本期支出';
-
-  @override
-  String get widgetMetricPeriodIncome => '本期收入';
-
-  @override
-  String get widgetMetricBudgetRemaining => '剩余预算';
-
-  @override
-  String get widgetMetricBudgetUsed => '已用预算';
-
-  @override
-  String get widgetMetricBudgetRate => '预算使用率';
-
-  @override
-  String get widgetMetricNetWorth => '净资产';
-
-  @override
-  String get widgetMetricTotalAssets => '总资产';
-
-  @override
-  String get widgetMetricTotalLiabilities => '总负债';
-
-  @override
-  String get widgetMetricBalance => '账户余额';
-
-  @override
-  String get widgetMetricTransactionCount => '交易笔数';
-
-  @override
-  String get widgetMetricSavingsRate => '储蓄率';
+  String get widgetTemplateNetWorth => '净资产';
 
   @override
   String get widgetConfigTitle => '配置小组件';
@@ -3763,7 +3730,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetBook => '账本';
 
   @override
-  String get widgetPrimaryMetric => '主指标';
+  String get widgetAppearance => '外观';
+
+  @override
+  String get widgetBookPlaceholder => '请选择账本';
+
+  @override
+  String get widgetNoLedgerYet => '还没有可选的账本。请先打开一次 Veri Fin 应用创建设置，再回来配置这个小组件。';
+
+  @override
+  String get widgetOpenApp => '打开应用';
 
   @override
   String get widgetPreview => '预览';

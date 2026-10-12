@@ -3807,52 +3807,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Long-press an empty spot on your home screen → choose Widgets → find Veri Fin → drag the widget you want onto the screen.';
 
   @override
-  String get widgetQuickEntryName => 'Today\'s spending + quick entry';
+  String get widgetConfigureHint =>
+      'After adding it, tap \"Tap to set up\" on the widget to choose a book and an appearance.';
 
   @override
-  String get widgetBudgetName => 'Budget left this month';
+  String get widgetTemplateQuickEntry => 'Quick entry';
 
   @override
-  String get widgetNetWorthName => 'Total assets';
+  String get widgetTemplateBudget => 'Budget progress';
 
   @override
-  String get widgetTrendName => 'Cash flow trend';
+  String get widgetTemplateTrend => 'Cash flow trend';
 
   @override
-  String get widgetMetricTodayExpense => 'Today\'s spending';
-
-  @override
-  String get widgetMetricPeriodExpense => 'Period spending';
-
-  @override
-  String get widgetMetricPeriodIncome => 'Period income';
-
-  @override
-  String get widgetMetricBudgetRemaining => 'Budget remaining';
-
-  @override
-  String get widgetMetricBudgetUsed => 'Budget used';
-
-  @override
-  String get widgetMetricBudgetRate => 'Budget usage';
-
-  @override
-  String get widgetMetricNetWorth => 'Net worth';
-
-  @override
-  String get widgetMetricTotalAssets => 'Total assets';
-
-  @override
-  String get widgetMetricTotalLiabilities => 'Total liabilities';
-
-  @override
-  String get widgetMetricBalance => 'Account balance';
-
-  @override
-  String get widgetMetricTransactionCount => 'Transactions';
-
-  @override
-  String get widgetMetricSavingsRate => 'Savings rate';
+  String get widgetTemplateNetWorth => 'Net worth';
 
   @override
   String get widgetConfigTitle => 'Configure widget';
@@ -3864,7 +3832,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get widgetBook => 'Book';
 
   @override
-  String get widgetPrimaryMetric => 'Primary metric';
+  String get widgetAppearance => 'Appearance';
+
+  @override
+  String get widgetBookPlaceholder => 'Choose a book';
+
+  @override
+  String get widgetNoLedgerYet =>
+      'No book is available yet. Open the Veri Fin app once to create your book, then come back to configure this widget.';
+
+  @override
+  String get widgetOpenApp => 'Open app';
 
   @override
   String get widgetPreview => 'Preview';

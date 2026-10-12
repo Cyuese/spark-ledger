@@ -42,6 +42,27 @@ enum class VeriFinWidgetTemplate(val key: String, val metric: String, val labelR
             "TrendWidgetProvider" -> TREND
             else -> error("Unknown widget provider")
         }
+
+        /** 模板对应的 Provider 类（选择器条目与桌面实例计数都按它查询）。 */
+        fun providerClass(template: VeriFinWidgetTemplate): Class<*> = when (template) {
+            QUICK_ENTRY -> QuickEntryWidgetProvider::class.java
+            BUDGET -> BudgetWidgetProvider::class.java
+            NET_WORTH -> NetWorthWidgetProvider::class.java
+            TREND -> TrendWidgetProvider::class.java
+        }
+
+        /**
+         * 桌面上各模板的实例数。Flutter 侧据此跳过「一个实例都没有」时的投影刷新与排程，
+         * 避免用户没放组件也要算账、发广播、排闹钟。
+         */
+        fun instanceCounts(context: Context): Map<String, Int> {
+            val manager = AppWidgetManager.getInstance(context)
+            return entries.associate { template ->
+                template.key to manager.getAppWidgetIds(
+                    android.content.ComponentName(context, providerClass(template)),
+                ).size
+            }
+        }
     }
 }
 
