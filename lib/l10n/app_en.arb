@@ -176,6 +176,7 @@
   "panelRankingLabel": "Categories & tags",
   "panelRankingDesc": "Rank by top category, subcategory or tag; tap a row to drill down",
   "panelYearSummaryLabel": "This year",
+  "panelYearSummaryPeriodLabel": "Income & spending",
   "panelYearSummaryDesc": "Income, spending and balance for this year",
   "metricYearIncome": "This year income",
   "metricYearExpense": "This year spending",

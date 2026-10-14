@@ -351,6 +351,10 @@
   "@panelYearSummaryLabel": {
     "description": "看板年统计面板:本年收支摘要卡片标题"
   },
+  "panelYearSummaryPeriodLabel": "年收支",
+  "@panelYearSummaryPeriodLabel": {
+    "description": "看板年统计面板:查看历史年份时的收支摘要卡片标题(年份放在右上角)"
+  },
   "panelYearSummaryDesc": "本年收入、支出与结余合计",
   "@panelYearSummaryDesc": {
     "description": "看板年统计面板:本年收支摘要卡片描述"

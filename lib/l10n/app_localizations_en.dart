@@ -558,6 +558,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get panelYearSummaryLabel => 'This year';
 
   @override
+  String get panelYearSummaryPeriodLabel => 'Income & spending';
+
+  @override
   String get panelYearSummaryDesc =>
       'Income, spending and balance for this year';
 
