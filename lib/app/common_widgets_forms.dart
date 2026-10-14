@@ -2,8 +2,8 @@ part of 'common_widgets.dart';
 
 // 表单域：设置行、选择字段、紧凑开关行、交易标签选择、卡号输入组。
 
-/// 支出 / 收入 口径切换。看板近 7 日面板与统计分析页共用同一套语义与配色
-/// （支出用语义红、收入用语义绿）。
+/// 支出 / 收入 口径切换。看板的近 7 日面板、排行卡与收支热力卡共用同一套语义与
+/// 配色（支出用语义红、收入用语义绿）。
 class VeriEntryTypeToggle extends StatelessWidget {
   const VeriEntryTypeToggle({
     super.key,

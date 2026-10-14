@@ -3905,7 +3905,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardDoneDesc.
   ///
   /// In zh, this message translates to:
-  /// **'点击首页右下角的「+」即可快速记一笔。\n\n在「我的」页可以管理账本、分类、标签、周期记账，查看统计分析，设置记账提醒与数据备份。\n\n祝你记账愉快！'**
+  /// **'点击首页右下角的「+」即可快速记一笔。\n\n在「我的」页可以管理账本、分类、标签、周期记账，设置记账提醒与数据备份；收支统计与各种图表都在底部的「看板」页。\n\n祝你记账愉快！'**
   String get onboardDoneDesc;
 
   /// No description provided for @legalUpdated.
