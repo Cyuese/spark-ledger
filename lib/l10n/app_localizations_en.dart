@@ -2160,7 +2160,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardDoneDesc =>
-      'Tap the + button at the bottom right of Home to record an entry.\n\nOn the Me page you can manage ledgers, categories, tags and recurring entries, view analytics, and set reminders and backups.\n\nHappy budgeting!';
+      'Tap the + button at the bottom right of Home to record an entry.\n\nOn the Me page you can manage ledgers, categories, tags and recurring entries, and set reminders and backups. Income and expense stats and every chart live in the Reports tab at the bottom.\n\nHappy budgeting!';
 
   @override
   String legalUpdated(String date) {

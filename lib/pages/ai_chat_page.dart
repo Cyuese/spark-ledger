@@ -398,7 +398,7 @@ class _AiChatPageState extends State<AiChatPage> {
         child: VeriPage(
           child: Column(
             children: <Widget>[
-              // 与统计分析/收支统计等页保持一致：头部套 fromLTRB(14, 8, 14, 0) 内边距，
+              // 与收支统计等页保持一致：头部套 fromLTRB(14, 8, 14, 0) 内边距，
               // 使返回箭头/标题的位置和其它页对齐（VeriHeader 自身无横向内边距）。
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
