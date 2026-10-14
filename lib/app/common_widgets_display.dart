@@ -425,3 +425,91 @@ class VeriSectionAction extends StatelessWidget {
     );
   }
 }
+
+/// 前后翻页 + 中间标签的通用期间切换器（预算页按月、收支统计页按周/月/季/年、
+/// 看板按月或按年）。
+///
+/// [onPrevious] / [onNext] 传 `null` 表示已到可选范围边界：箭头保持可见但禁用，
+/// 比「点上去没反应」更容易理解（看板不允许翻到未来，也不越过早于首笔记账的时间）。
+/// [onLabelTap] 非空时中间标签变成可点入口（带下拉箭头提示），用于打开更细的
+/// 时间选择弹层。
+class MonthSwitcher extends StatelessWidget {
+  const MonthSwitcher({
+    super.key,
+    required this.label,
+    this.onPrevious,
+    this.onNext,
+    this.onLabelTap,
+    this.labelKey,
+    this.labelTooltip,
+    this.previousTooltip,
+    this.nextTooltip,
+  });
+
+  final String label;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+  final VoidCallback? onLabelTap;
+
+  /// 可点标签的稳定 key，供测试与无障碍按 key 定位入口。
+  final Key? labelKey;
+
+  final String? labelTooltip;
+  final String? previousTooltip;
+  final String? nextTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final labelText = Text(
+      label,
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+    );
+    Widget labelSlot = labelText;
+    if (onLabelTap != null) {
+      final content = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            labelText,
+            const SizedBox(width: 2),
+            Icon(
+              Icons.expand_more,
+              size: 18,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.60),
+            ),
+          ],
+        ),
+      );
+      labelSlot = InkWell(
+        key: labelKey,
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        onTap: onLabelTap,
+        child: labelTooltip == null
+            ? content
+            : Tooltip(message: labelTooltip!, child: content),
+      );
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        IconButton(
+          tooltip: previousTooltip ?? l10n.calendarPrevMonth,
+          onPressed: onPrevious,
+          icon: const Icon(Icons.chevron_left),
+        ),
+        labelSlot,
+        IconButton(
+          tooltip: nextTooltip ?? l10n.calendarNextMonth,
+          onPressed: onNext,
+          icon: const Icon(Icons.chevron_right),
+        ),
+      ],
+    );
+  }
+}
