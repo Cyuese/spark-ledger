@@ -556,45 +556,6 @@ class _BudgetOverviewPageState extends State<BudgetOverviewPage> {
   }
 }
 
-/// 前后翻页 + 中间标签的通用切换器（预算页按月，收支统计页按周/月/季/年）。
-class MonthSwitcher extends StatelessWidget {
-  const MonthSwitcher({
-    super.key,
-    required this.label,
-    required this.onPrevious,
-    required this.onNext,
-  });
-
-  final String label;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        IconButton(
-          tooltip: AppLocalizations.of(context).calendarPrevMonth,
-          onPressed: onPrevious,
-          icon: const Icon(Icons.chevron_left),
-        ),
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        IconButton(
-          tooltip: AppLocalizations.of(context).calendarNextMonth,
-          onPressed: onNext,
-          icon: const Icon(Icons.chevron_right),
-        ),
-      ],
-    );
-  }
-}
-
 class BudgetHistoryPage extends StatelessWidget {
   const BudgetHistoryPage({super.key, required this.anchorMonth});
 
