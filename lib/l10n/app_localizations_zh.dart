@@ -576,9 +576,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get panelDailyTrendDesc => '近 7 天每日支出趋势';
 
   @override
-  String get panelMonthlyStructureDesc => '今年每月支出结构柱状图';
-
-  @override
   String panelCountLabel(int count, String page) {
     return '$count个$page面板';
   }
@@ -1908,9 +1905,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get okLabel => '确定';
-
-  @override
-  String get monthlyTrendTitle => '月度趋势';
 
   @override
   String get rankGroupCategory => '分类';

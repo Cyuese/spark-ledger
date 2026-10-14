@@ -596,10 +596,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get panelDailyTrendDesc => 'Daily spending trend for the last 7 days';
 
   @override
-  String get panelMonthlyStructureDesc =>
-      'Bar chart of monthly spending this year';
-
-  @override
   String panelCountLabel(int count, String page) {
     return '$count $page panels';
   }
@@ -1954,9 +1950,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get okLabel => 'OK';
-
-  @override
-  String get monthlyTrendTitle => 'Monthly trend';
 
   @override
   String get rankGroupCategory => 'Category';

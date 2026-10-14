@@ -101,7 +101,7 @@ void main() {
       find.byKey(const Key('panel_settings_entry_reportsMonthly')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('5个月统计面板'), findsOneWidget);
+    expect(find.text('4个月统计面板'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const Key('panel_settings_entry_reportsMonthly')),
@@ -112,7 +112,7 @@ void main() {
     // 进入排序模式后出现拖动手柄,拖动第一个面板到第二位。
     await tester.tap(find.byKey(const Key('panel_sort_toggle')));
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.drag_indicator), findsNWidgets(5));
+    expect(find.byIcon(Icons.drag_indicator), findsNWidgets(4));
 
     final firstHandle = tester.getCenter(
       find.byIcon(Icons.drag_indicator).first,
@@ -295,7 +295,7 @@ void main() {
     'panel normalization inserts new specs at their catalog position',
     () async {
       final store = LocalKeyValueStore();
-      // 模拟旧版本的清单：缺少 tag_stats（目录下标 3）。
+      // 模拟旧版本的清单：缺少 summary（目录下标 0），且带着已下线的旧面板。
       store.write(
         'verifin.report_panels.v1',
         jsonEncode(<Map<String, Object?>>[
@@ -312,13 +312,7 @@ void main() {
         controller
             .panelSettings(PanelPageKind.reportsMonthly)
             .map((panel) => panel.id),
-        <String>[
-          'summary',
-          'budget_execution',
-          'ranking',
-          'daily_trend',
-          'monthly_structure',
-        ],
+        <String>['summary', 'budget_execution', 'ranking', 'daily_trend'],
       );
       controller.dispose();
     },

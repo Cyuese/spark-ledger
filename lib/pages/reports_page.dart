@@ -64,11 +64,6 @@ class _ReportsPageState extends State<ReportsPage> {
       0,
       (max, value) => value > max ? value : max,
     );
-    final monthlyValues = monthlyExpenseValues(entries);
-    final monthlyMax = monthlyValues.fold<double>(
-      0,
-      (max, value) => value > max ? value : max,
-    );
     final panelIds = controller.enabledPanelIds(_tab.panelPageKind);
 
     // 面板 id 对应的卡片,渲染顺序与开关由面板管理页配置。
@@ -153,62 +148,6 @@ class _ReportsPageState extends State<ReportsPage> {
                           ],
                         );
                       },
-                    ),
-                  ),
-              ],
-            ),
-          );
-        case 'monthly_structure':
-          return VeriCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                SectionTitle(
-                  // 面板只有支出序列（monthlyExpenseValues），不能沿用面板管理页
-                  // 里的「月度收支」名称；标题口径与描述「今年每月支出结构柱状图」一致。
-                  title: l10n.monthlyTrendTitle,
-                  trailing: l10n.thisYearLabel,
-                ),
-                const SizedBox(height: 16),
-                if (monthlyMax <= 0)
-                  EmptyState(
-                    icon: Icons.bar_chart_outlined,
-                    title: l10n.noDimData(l10n.entryTypeExpense),
-                    description: l10n.noDimDesc(l10n.entryTypeExpense),
-                  )
-                else
-                  SizedBox(
-                    height: 146,
-                    child: InteractiveBarChart(
-                      values: monthlyValues,
-                      xLabels: const <String>[
-                        '1',
-                        '2',
-                        '3',
-                        '4',
-                        '5',
-                        '6',
-                        '7',
-                        '8',
-                        '9',
-                        '10',
-                        '11',
-                        '12',
-                      ],
-                      yLabels: reportAxisLabels(monthlyMax),
-                      labelColor: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.50),
-                      tooltipOf: (index) => ChartTooltip(
-                        title: l10n.monthNumber(index + 1),
-                        lines: <ChartTooltipLine>[
-                          ChartTooltipLine(
-                            text: l10n.expenseAmountLabel(
-                              formatExpenseAmount(monthlyValues[index]),
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
               ],
