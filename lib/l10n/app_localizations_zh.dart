@@ -156,6 +156,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get calendarNextMonth => '下个月';
 
   @override
+  String get calendarPrevYear => '上一年';
+
+  @override
+  String get calendarNextYear => '下一年';
+
+  @override
+  String get periodPickMonthTitle => '选择月份';
+
+  @override
+  String get periodPickYearTitle => '选择年份';
+
+  @override
   String get weekdayMon => '一';
 
   @override
@@ -403,6 +415,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get metricMonthNet => '本月结余';
+
+  @override
+  String get metricIncome => '收入';
+
+  @override
+  String get metricExpense => '支出';
+
+  @override
+  String get metricNet => '结余';
 
   @override
   String get metricDailyAvgExpense => '日均消费';
@@ -1599,6 +1620,14 @@ class AppLocalizationsZh extends AppLocalizations {
     final String monthString = monthDateFormat.format(month);
 
     return '$monthString';
+  }
+
+  @override
+  String yearNumber(DateTime year) {
+    final intl.DateFormat yearDateFormat = intl.DateFormat('y年', localeName);
+    final String yearString = yearDateFormat.format(year);
+
+    return '$yearString';
   }
 
   @override

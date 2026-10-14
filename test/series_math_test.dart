@@ -98,6 +98,17 @@ void main() {
     expect(balances['r'], 50);
   });
 
+  group('earliestEntryDate', () {
+    test('空账本没有下界，否则取最早一笔的发生时间', () {
+      expect(earliestEntryDate(<LedgerEntry>[]), isNull);
+      final entries = <LedgerEntry>[
+        _expense('later', 10, 'cash', DateTime(2026, 5, 3)),
+        _expense('earliest', 10, 'cash', DateTime(2024, 12, 31, 23, 40)),
+      ];
+      expect(earliestEntryDate(entries), DateTime(2024, 12, 31, 23, 40));
+    });
+  });
+
   group('余额纵轴刻度', () {
     test('同一根轴的三个刻度同档：千位以上统一取整，0 只显示 0', () async {
       // 保留固定小数位的金额偏好会暴露混排问题：旧实现把最小值按整数、0 按

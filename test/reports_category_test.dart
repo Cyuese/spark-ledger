@@ -82,6 +82,15 @@ void main() {
     await openReportsMonthlyTab(tester);
     await tester.pumpAndSettle();
 
+    // 期间栏占了页面顶部一行，排行卡在 800dp 测试视口里落到首屏之外，
+    // 先滚到卡片再操作它内部的分组切换。
+    await tester.scrollUntilVisible(
+      find.text('分类 · 标签排行'),
+      250,
+      scrollable: firstVerticalScrollable(),
+    );
+    await tester.pumpAndSettle();
+
     // 排行卡默认按顶级分类分组，切到「标签」分组。
     await tester.tap(find.text('标签').first);
     await tester.pumpAndSettle();

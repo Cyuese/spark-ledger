@@ -38,3 +38,9 @@ DateTime addCalendarDays(DateTime date, int days) {
     date.microsecond,
   );
 }
+
+/// 月份序号（`年 × 12 + 月`），用于比较两个月份、判断期间先后。
+///
+/// 直接比较 `DateTime` 会带上「日」：拿「7 月 1 日」与「6 月 30 日」比大小没问题，
+/// 但把月初与月末当作同一个「月」来比较就会算错。序号只取年月，天数不参与。
+int monthIndexOf(DateTime date) => date.year * 12 + date.month;

@@ -5,6 +5,7 @@ import 'package:verifin/app/chart_painters.dart';
 import 'package:verifin/app/common_widgets.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/local_storage/local_storage.dart';
+import 'package:verifin/pages/sheets.dart';
 
 import 'support/test_harness.dart';
 
@@ -475,4 +476,243 @@ void main() {
     expect(find.text('负债账户1'), findsOneWidget);
     expect(find.text('其他'), findsNothing);
   });
+
+  testWidgets('月统计期间栏：翻到上个月后摘要卡换口径，可一键回本月', (tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    final lastMonth = DateTime(now.year, now.month - 1);
+    controller
+      ..addEntry(
+        LedgerEntry(
+          id: 'period-last-month',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 120,
+          categoryId: 'dining',
+          accountId: '',
+          note: '',
+          occurredAt: DateTime(lastMonth.year, lastMonth.month, 12),
+        ),
+      )
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await openReportsMonthlyTab(tester);
+    await tester.pumpAndSettle();
+
+    final thisMonthLabel = '${now.year}年${now.month}月';
+    final lastMonthLabel = '${lastMonth.year}年${lastMonth.month}月';
+
+    // 默认停在本月：往前可以翻，往后不能（未来没有数据），也不需要回跳入口。
+    expect(find.byKey(const Key('reports_period_label')), findsOneWidget);
+    expect(find.text(thisMonthLabel), findsOneWidget);
+    expect(periodArrow(tester, '上个月').onPressed, isNotNull);
+    expect(periodArrow(tester, '下个月').onPressed, isNull);
+    expect(find.byKey(const Key('reports_period_jump')), findsNothing);
+    expect(find.text('本月收支'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('上个月'));
+    await tester.pumpAndSettle();
+
+    // 期间栏与摘要卡标题同时切到上个月，指标不再写「本月」。
+    expect(find.text(lastMonthLabel), findsNWidgets(2));
+    expect(find.text('本月收支'), findsNothing);
+    expect(find.text('本月收入'), findsNothing);
+    expect(find.text('收入'), findsWidgets);
+
+    await tester.tap(find.byKey(const Key('reports_period_jump')));
+    await tester.pumpAndSettle();
+    expect(find.text(thisMonthLabel), findsOneWidget);
+    expect(find.text('本月收支'), findsOneWidget);
+    expect(find.byKey(const Key('reports_period_jump')), findsNothing);
+  });
+
+  testWidgets('月统计期间栏：点标签打开「选择月份」弹层并选中历史月份', (tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    final target = DateTime(now.year, now.month - 2);
+    controller
+      ..addEntry(
+        LedgerEntry(
+          id: 'period-picked',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 88,
+          categoryId: 'dining',
+          accountId: '',
+          note: '',
+          occurredAt: DateTime(target.year, target.month, 3),
+        ),
+      )
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await openReportsMonthlyTab(tester);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('reports_period_label')));
+    await tester.pumpAndSettle();
+    expect(find.text('选择月份'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(Key('period_month_${target.year}_${target.month}')),
+    );
+    await tester.pumpAndSettle();
+
+    // 弹层关闭，期间栏与摘要卡都落到选中的月份，摘要金额是那一期的支出。
+    expect(find.text('选择月份'), findsNothing);
+    expect(find.text('${target.year}年${target.month}月'), findsNWidgets(2));
+    expect(find.textContaining('88'), findsWidgets);
+  });
+
+  testWidgets('年统计期间栏：退到上一年、年份弹层可选、可回今年', (tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final now = DateTime.now();
+    final lastYear = now.year - 1;
+    final firstYear = now.year - 2;
+    controller
+      ..addEntry(
+        LedgerEntry(
+          id: 'year-entry',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 66,
+          categoryId: 'dining',
+          accountId: '',
+          note: '',
+          occurredAt: DateTime(lastYear, 5, 20),
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'year-entry-oldest',
+          bookId: controller.activeBook.id,
+          type: EntryType.expense,
+          amount: 33,
+          categoryId: 'dining',
+          accountId: '',
+          note: '',
+          occurredAt: DateTime(firstYear, 3, 10),
+        ),
+      )
+      ..dispose();
+
+    await pumpApp(tester, store);
+    await tapBottomTab(tester, 2); // 看板
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('年统计').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('${now.year}年'), findsOneWidget);
+    expect(periodArrow(tester, '上一年').onPressed, isNotNull);
+    expect(periodArrow(tester, '下一年').onPressed, isNull);
+    expect(find.text('本年收支'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('上一年'));
+    await tester.pumpAndSettle();
+
+    // 摘要卡标题从「本年收支」换成明确的年份，指标同样换中性口径。
+    expect(find.text('$lastYear年'), findsNWidgets(2));
+    expect(find.text('本年收支'), findsNothing);
+    expect(find.text('本年收入'), findsNothing);
+    // 「收支统计」卡不再挂着「今年」角标（看 2025 年时它已经是错的口径）。
+    expect(
+      tester
+          .widget<SectionTitle>(
+            find
+                .ancestor(
+                  of: find.text('收支统计'),
+                  matching: find.byType(SectionTitle),
+                )
+                .first,
+          )
+          .trailing,
+      isNull,
+    );
+
+    // 年份弹层只列出「首笔记账年 → 今年」，可直接跳到更早的年份。
+    await tester.tap(find.byKey(const Key('reports_period_label')));
+    await tester.pumpAndSettle();
+    expect(find.text('选择年份'), findsOneWidget);
+    expect(find.byKey(Key('period_year_$firstYear')), findsOneWidget);
+    expect(find.byKey(Key('period_year_${firstYear - 1}')), findsNothing);
+    await tester.tap(find.byKey(Key('period_year_$firstYear')));
+    await tester.pumpAndSettle();
+    expect(find.text('$firstYear年'), findsNWidgets(2));
+    // 到最早一年后不再往前翻。
+    expect(periodArrow(tester, '上一年').onPressed, isNull);
+
+    await tester.tap(find.byKey(const Key('reports_period_jump')));
+    await tester.pumpAndSettle();
+    expect(find.text('本年收支'), findsOneWidget);
+    expect(find.text('${now.year}年'), findsOneWidget);
+  });
+
+  testWidgets('期间选择弹层：范围外的月份与年份禁用，出界时间点不可选', (tester) async {
+    DateTime? pickedMonth;
+    await tester.pumpWidget(
+      zhMaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Builder(
+              builder: (context) => TextButton(
+                onPressed: () async {
+                  pickedMonth = await showMonthPickerSheet(
+                    context: context,
+                    selected: DateTime(2024, 6),
+                    firstDate: DateTime(2023, 3, 12),
+                    today: DateTime(2024, 9, 5),
+                  );
+                },
+                child: const Text('open-month'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open-month'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('选择月份'), findsOneWidget);
+    for (var month = 1; month <= 12; month++) {
+      expect(find.byKey(Key('period_month_2024_$month')), findsOneWidget);
+    }
+    // 上界是 2024-09：10 月之后（含）不可选。
+    expect(periodCellTap(tester, 'period_month_2024_9'), isNotNull);
+    expect(periodCellTap(tester, 'period_month_2024_10'), isNull);
+
+    // 退到 2023 年：3 月之前早于首笔记账日，同样不可选。
+    await tester.tap(find.byTooltip('上一年'));
+    await tester.pumpAndSettle();
+    expect(find.text('2023年'), findsOneWidget);
+    expect(periodCellTap(tester, 'period_month_2023_2'), isNull);
+    expect(periodCellTap(tester, 'period_month_2023_3'), isNotNull);
+
+    // 回到 2024 年选中 5 月：弹层回传该月 1 号。
+    await tester.tap(find.byTooltip('下一年'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('period_month_2024_5')));
+    await tester.pumpAndSettle();
+    expect(pickedMonth, DateTime(2024, 5));
+  });
 }
+
+/// 期间栏箭头：按 tooltip 取到 [IconButton]，`onPressed` 为 null 即到边界禁用。
+IconButton periodArrow(WidgetTester tester, String tooltip) =>
+    tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byTooltip(tooltip),
+        matching: find.byType(IconButton),
+      ),
+    );
+
+/// 期间网格里的选项：取内部 [InkWell] 的 `onTap`，null 表示当前不可选。
+VoidCallback? periodCellTap(WidgetTester tester, String key) => tester
+    .widget<InkWell>(
+      find.descendant(of: find.byKey(Key(key)), matching: find.byType(InkWell)),
+    )
+    .onTap;

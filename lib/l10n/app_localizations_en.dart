@@ -162,6 +162,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarNextMonth => 'Next month';
 
   @override
+  String get calendarPrevYear => 'Previous year';
+
+  @override
+  String get calendarNextYear => 'Next year';
+
+  @override
+  String get periodPickMonthTitle => 'Pick a month';
+
+  @override
+  String get periodPickYearTitle => 'Pick a year';
+
+  @override
   String get weekdayMon => 'Mon';
 
   @override
@@ -414,6 +426,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get metricMonthNet => 'This month balance';
+
+  @override
+  String get metricIncome => 'Income';
+
+  @override
+  String get metricExpense => 'Spending';
+
+  @override
+  String get metricNet => 'Balance';
 
   @override
   String get metricDailyAvgExpense => 'Daily avg spending';
@@ -1642,6 +1663,14 @@ class AppLocalizationsEn extends AppLocalizations {
     final String monthString = monthDateFormat.format(month);
 
     return '$monthString';
+  }
+
+  @override
+  String yearNumber(DateTime year) {
+    final intl.DateFormat yearDateFormat = intl.DateFormat.y(localeName);
+    final String yearString = yearDateFormat.format(year);
+
+    return '$yearString';
   }
 
   @override

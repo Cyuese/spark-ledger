@@ -142,6 +142,10 @@
   "calendarTitle": "日历",
   "calendarPrevMonth": "上个月",
   "calendarNextMonth": "下个月",
+  "calendarPrevYear": "上一年",
+  "calendarNextYear": "下一年",
+  "periodPickMonthTitle": "选择月份",
+  "periodPickYearTitle": "选择年份",
   "weekdayMon": "一",
   "@weekdayMon": {
     "description": "日历星期表头(短)"
@@ -257,6 +261,9 @@
   "metricMonthExpense": "本月支出",
   "metricMonthIncome": "本月收入",
   "metricMonthNet": "本月结余",
+  "metricIncome": "收入",
+  "metricExpense": "支出",
+  "metricNet": "结余",
   "metricDailyAvgExpense": "日均消费",
   "metricDailyAvgIncome": "日均收入",
   "metricTodayExpense": "今日支出",
@@ -1050,6 +1057,17 @@
       "month": {
         "type": "DateTime",
         "format": "y年M月",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "yearNumber": "{year}",
+  "@yearNumber": {
+    "description": "年份标签(如 2026年)",
+    "placeholders": {
+      "year": {
+        "type": "DateTime",
+        "format": "y年",
         "isCustomDateFormat": "true"
       }
     }
