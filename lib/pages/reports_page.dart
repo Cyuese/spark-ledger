@@ -96,10 +96,14 @@ class _ReportsPageState extends State<ReportsPage> {
         case 'year_summary':
           return _PeriodSummaryPanel(
             window: yearWindow,
+            // 看今年沿用「本年收支」；看历史年份时标题去掉「本」、把年份放到右上角
+            // 角标——标题位置写一个光秃秃的「2025年」既不像卡片标题，也丢了「收支」。
             title: isCurrentYear
                 ? l10n.panelYearSummaryLabel
+                : l10n.panelYearSummaryPeriodLabel,
+            trailing: isCurrentYear
+                ? l10n.timeYear
                 : l10n.yearNumber(DateTime(_yearFocus)),
-            trailing: isCurrentYear ? l10n.timeYear : null,
             incomeLabel: isCurrentYear
                 ? l10n.metricYearIncome
                 : l10n.metricIncome,
@@ -122,8 +126,10 @@ class _ReportsPageState extends State<ReportsPage> {
         case 'year_trend':
           return _YearTrendPanel(
             year: _yearFocus,
-            // 角标只在看今年时写「今年」；看历史年份时标题行不必再重复年份。
-            trailing: isCurrentYear ? l10n.thisYearLabel : null,
+            // 角标写当前看的年份：今年是「今年」，其余年份直接写年份。
+            trailing: isCurrentYear
+                ? l10n.thisYearLabel
+                : l10n.yearNumber(DateTime(_yearFocus)),
           );
         case 'year_heatmap':
           return _YearHeatmapPanel(year: _yearFocus);
@@ -283,22 +289,24 @@ class _ReportsPageState extends State<ReportsPage> {
               _pickPeriod(context, firstDate: firstDate, today: now),
         ),
         const Spacer(),
-        if (monthly && monthIndexOf(_monthFocus) != monthIndexOf(thisMonth))
-          _jumpToCurrent(
-            l10n.thisMonth,
-            () => setState(() => _monthFocus = thisMonth),
-          )
-        else if (!monthly && _yearFocus != now.year)
-          _jumpToCurrent(
-            l10n.thisYearLabel,
-            () => setState(() => _yearFocus = now.year),
-          ),
+        // 回跳入口常显：在本期时置灰（Material 禁用态）而不是整块消失，否则右侧
+        // 会空出一块，期间栏看起来像断了一截。
+        _jumpToCurrent(
+          monthly ? l10n.thisMonth : l10n.thisYearLabel,
+          monthly
+              ? (monthIndexOf(_monthFocus) == monthIndexOf(thisMonth)
+                    ? null
+                    : () => setState(() => _monthFocus = thisMonth))
+              : (_yearFocus == now.year
+                    ? null
+                    : () => setState(() => _yearFocus = now.year)),
+        ),
       ],
     );
   }
 
-  /// 回跳按钮：只在离开本期时出现，与首页日历切走后提供的「本月」快捷入口一致。
-  Widget _jumpToCurrent(String label, VoidCallback onPressed) {
+  /// 回跳按钮：回到本月 / 今年；已在本期时传 `onPressed: null`，按钮保持可见但禁用。
+  Widget _jumpToCurrent(String label, VoidCallback? onPressed) {
     return TextButton(
       key: const Key('reports_period_jump'),
       style: TextButton.styleFrom(

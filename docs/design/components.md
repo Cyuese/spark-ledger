@@ -158,7 +158,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `showLedgerBookEditorSheet` | Sheet 函数 | `sheets.dart` | 新建账本统一表单，同时收集名称与本位币，返回命名 record；取消返回 `null` |
 | `confirmLegacyLedgerCurrency` | Sheet/Dialog 流程 | `sheets.dart` | 旧单币种账本的一次性确认/重解释流程：选币、展示影响数量、二次确认，并调用 Controller 原子迁移；取消或失败返回 `false` |
 | `showMonthlyBudgetOverrideSheet` | Sheet 函数 | `sheets.dart` | 总预算的单期覆盖管理；按自然月/自定义周期显示“本月/本期”，可设置或调整所选期额度，有覆盖时可清除并恢复默认；内部复用 `showOptionSheet` + `showNumberPadSheet` |
-| `showMonthPickerSheet` / `showYearPickerSheet` | Sheet 函数 | `sheets.dart` | 看板期间栏的期间选择弹层：月份弹层上面一行年份步进、下面是正向 1–12 月的等宽网格（44dp 触控高度），年份弹层正向列出范围内所有年份。`firstDate` 是下界（账本最早的记账日）、`today` 是上界（默认现在），范围外的月份与年份直接禁用——不提供未来期间，也不提供早于首笔记账的期间。取消返回 `null` |
+| `showMonthPickerSheet` / `showYearPickerSheet` | 选择器封装 | `sheets.dart` | 看板期间栏的期间选择入口，**直接用系统日期选择器**（`showDatePicker`，与记账 / 交易编辑页选日期是同一个对话框，语言与深浅色跟随平台）：选月份只回传年月，选年份用 `initialDatePickerMode: DatePickerMode.year` 直接落在年份网格、只回传年份。`firstDate` 是下界（账本最早的记账日）、`today` 是上界（默认现在），范围外的时间由选择器自己置灰或裁剪；调用方传进来的焦点期间若早于下界会被夹回范围内（`showDatePicker` 要求 `initialDate` 在区间内）。取消返回 `null`。**不要**再自绘月份 / 年份网格 |
 | `runWithLoadingDialog<T>` | Dialog 函数 | `common_widgets.dart` | 不可关闭加载态，任务完成自动关并返回结果 |
 | `confirmCleartextIfRisky` | Dialog 函数 | `sheets.dart` | 明文 http 凭证风险确认 |
 

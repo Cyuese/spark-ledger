@@ -1148,6 +1148,12 @@ abstract class AppLocalizations {
   /// **'本年收支'**
   String get panelYearSummaryLabel;
 
+  /// 看板年统计面板:查看历史年份时的收支摘要卡片标题(年份放在右上角)
+  ///
+  /// In zh, this message translates to:
+  /// **'年收支'**
+  String get panelYearSummaryPeriodLabel;
+
   /// 看板年统计面板:本年收支摘要卡片描述
   ///
   /// In zh, this message translates to:

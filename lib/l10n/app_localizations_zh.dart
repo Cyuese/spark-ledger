@@ -542,6 +542,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get panelYearSummaryLabel => '本年收支';
 
   @override
+  String get panelYearSummaryPeriodLabel => '年收支';
+
+  @override
   String get panelYearSummaryDesc => '本年收入、支出与结余合计';
 
   @override
