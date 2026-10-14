@@ -556,29 +556,15 @@ void main() {
 
     await tester.tap(find.byKey(const Key('reports_period_label')));
     await tester.pumpAndSettle();
-    // 用的是系统日期选择器（与记账页选日期同一个对话框），不是自绘弹层。
-    expect(find.byType(DatePickerDialog), findsOneWidget);
+    // 月份对话框只列 1–12 月：不再要求用户选具体哪一天。
     expect(find.text('选择月份'), findsOneWidget);
 
-    // 往前翻一个月再确认：期间栏只取回年月。
-    await tester.tap(
-      find.descendant(
-        of: find.byType(DatePickerDialog),
-        matching: find.byTooltip('上个月'),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(
-      find.descendant(
-        of: find.byType(DatePickerDialog),
-        matching: find.text('15'),
-      ),
-    );
+    await tester.tap(find.text('${lastMonth.month}月'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('确定'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(DatePickerDialog), findsNothing);
+    expect(find.text('选择月份'), findsNothing);
     expect(
       find.text('${lastMonth.year}年${lastMonth.month}月'),
       findsNWidgets(2),
@@ -655,21 +641,16 @@ void main() {
     );
     expect(jumpToCurrentEnabled(tester), isTrue);
 
-    // 年份选择走系统日期选择器的年份网格，范围是「首笔记账日 → 现在」。
+    // 年份对话框只列年份，点一年不会再掉进月份 / 日期。
     await tester.tap(find.byKey(const Key('reports_period_label')));
     await tester.pumpAndSettle();
-    expect(find.byType(DatePickerDialog), findsOneWidget);
     expect(find.text('选择年份'), findsOneWidget);
-    // 早于首笔记账的年份在网格里是禁用态（选择器自己按 firstDate 裁剪）。
-    expect(dialogYearEnabled(tester, firstYear - 1), isFalse);
-    expect(dialogYearEnabled(tester, firstYear), isTrue);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(DatePickerDialog),
-        matching: find.text('$firstYear年'),
-      ),
-    );
+    // 年份按钮内部有一份用于滑动动画的重复渲染，取最后一个（可见的那一份）。
+    await tester.tap(find.text('$firstYear年').last);
     await tester.pumpAndSettle();
+    // 选完年份仍在年份对话框里（不会跳去选月份 / 日期）。
+    expect(find.text('选择年份'), findsOneWidget);
+    expect(find.text('选择月份'), findsNothing);
     await tester.tap(find.text('确定'));
     await tester.pumpAndSettle();
     expect(find.text('$firstYear年'), findsNWidgets(3));
@@ -683,10 +664,10 @@ void main() {
     expect(jumpToCurrentEnabled(tester), isFalse);
   });
 
-  testWidgets('期间选择入口：范围外的日期交给系统选择器裁剪，只回传年月 / 年份', (tester) async {
+  testWidgets('期间选择入口：只回传年月 / 年份，焦点早于下界也不出错', (tester) async {
     DateTime? pickedMonth;
     int? pickedYear;
-    // 焦点月份早于首笔记账日：入口必须把它夹回可选范围，否则 showDatePicker 直接断言失败。
+    // 焦点月份早于首笔记账日：入口必须把它夹回可选范围，否则对话框会显示一个越界的初始月。
     await tester.pumpWidget(
       zhMaterialApp(
         home: Scaffold(
@@ -727,26 +708,22 @@ void main() {
 
     await tester.tap(find.text('open-month'));
     await tester.pumpAndSettle();
-    expect(find.byType(DatePickerDialog), findsOneWidget);
     expect(find.text('选择月份'), findsOneWidget);
-    // 焦点早于首笔记账日时落在 2023-03：3 月 12 日之前（与 9 月 5 日之后）不可选。
-    expect(dialogDayEnabled(tester, 11), isFalse);
-    expect(dialogDayEnabled(tester, 12), isTrue);
+    // 焦点被夹到 2023-03：头部显示的就是被夹回来的月份。
+    expect(find.text('2023年3月'), findsOneWidget);
+    expect(find.text('5月'), findsOneWidget);
+    await tester.tap(find.text('5月'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('确定'));
     await tester.pumpAndSettle();
-    expect(pickedMonth, DateTime(2023, 3));
+    expect(pickedMonth!.year, 2023);
+    expect(pickedMonth!.month, 5);
 
     await tester.tap(find.text('open-year'));
     await tester.pumpAndSettle();
-    // 年份入口直接落在年份网格上。
-    expect(find.byType(DatePickerDialog), findsOneWidget);
     expect(find.text('选择年份'), findsOneWidget);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(DatePickerDialog),
-        matching: find.text('2024年'),
-      ),
-    );
+    expect(find.text('2023年'), findsWidgets);
+    await tester.tap(find.text('2024年').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('确定'));
     await tester.pumpAndSettle();
@@ -769,26 +746,3 @@ IconButton periodArrow(WidgetTester tester, String tooltip) =>
         matching: find.byType(IconButton),
       ),
     );
-
-/// 系统日期选择器里某一天是否可选（禁用日的 `InkResponse.onTap` 为 null）。
-bool dialogDayEnabled(WidgetTester tester, int day) =>
-    _dialogCellHasTapTarget(tester, '$day', InkResponse);
-
-/// 年份网格同理：不可选的年份不包 `InkWell`。
-bool dialogYearEnabled(WidgetTester tester, int year) =>
-    _dialogCellHasTapTarget(tester, '$year年', InkWell);
-
-bool _dialogCellHasTapTarget(
-  WidgetTester tester,
-  String label,
-  Type tapTarget,
-) => find
-    .descendant(
-      of: find.byType(DatePickerDialog),
-      matching: find.ancestor(
-        of: find.text(label),
-        matching: find.byType(tapTarget),
-      ),
-    )
-    .evaluate()
-    .isNotEmpty;
