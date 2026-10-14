@@ -158,6 +158,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `showLedgerBookEditorSheet` | Sheet 函数 | `sheets.dart` | 新建账本统一表单，同时收集名称与本位币，返回命名 record；取消返回 `null` |
 | `confirmLegacyLedgerCurrency` | Sheet/Dialog 流程 | `sheets.dart` | 旧单币种账本的一次性确认/重解释流程：选币、展示影响数量、二次确认，并调用 Controller 原子迁移；取消或失败返回 `false` |
 | `showMonthlyBudgetOverrideSheet` | Sheet 函数 | `sheets.dart` | 总预算的单期覆盖管理；按自然月/自定义周期显示“本月/本期”，可设置或调整所选期额度，有覆盖时可清除并恢复默认；内部复用 `showOptionSheet` + `showNumberPadSheet` |
+| `showMonthPickerSheet` / `showYearPickerSheet` | Sheet 函数 | `sheets.dart` | 看板期间栏的期间选择弹层：月份弹层上面一行年份步进、下面是正向 1–12 月的等宽网格（44dp 触控高度），年份弹层正向列出范围内所有年份。`firstDate` 是下界（账本最早的记账日）、`today` 是上界（默认现在），范围外的月份与年份直接禁用——不提供未来期间，也不提供早于首笔记账的期间。取消返回 `null` |
 | `runWithLoadingDialog<T>` | Dialog 函数 | `common_widgets.dart` | 不可关闭加载态，任务完成自动关并返回结果 |
 | `confirmCleartextIfRisky` | Dialog 函数 | `sheets.dart` | 明文 http 凭证风险确认 |
 
@@ -178,11 +179,11 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 | 模块 | 位置 | 关键函数 |
 |---|---|---|
-| 日历日算术 | `calendar_days.dart`（经 `ledger_math.dart` re-export） | `calendarDaysBetween` `addCalendarDays`——**「相隔几天」「往后推 N 天」一律走这两个，禁止裸用 `difference().inDays` / `add(Duration(days:))`**：那是绝对时间，跨夏令时会差一小时→错一天（CI 在 UTC 恒绿，只在欧美时区暴露） |
+| 日历日算术 | `calendar_days.dart`（经 `ledger_math.dart` re-export） | `calendarDaysBetween` `addCalendarDays` `monthIndexOf`（月份序号 `年 × 12 + 月`，判断「哪个月更早」用它；直接比 `DateTime` 会带上「日」）——**「相隔几天」「往后推 N 天」一律走前两个，禁止裸用 `difference().inDays` / `add(Duration(days:))`**：那是绝对时间，跨夏令时会差一小时→错一天（CI 在 UTC 恒绿，只在欧美时区暴露） |
 | 账目数学 | `ledger_math.dart` | `signedAmount` `accountDeltaForEntry` `entryTouchesAccount` `colorForType` `sumByType` `isZeroAmount` `normalizeAmount`（金额按分规整）；`dateOnly` `cumulativeWeekWindowFor` `monthWindowFor` `weekWindowFor` `quarterWindowFor` `quarterOfMonth` `entriesInWindow` `valuesForTypeInWindow` `dayExpenseTotal` `dayBudgetExpenseTotal` `monthlyExpenseValues` `monthlyNetValuesForType`；`DateWindow` |
 | 金额/时间格式化 | `ledger_math.dart` | `formatAmount` `formatExpenseAmount` `formatIncomeAmount` `formatSignedAmount` `formatCompactAmount` `formatTime`（**金额文本只走这些**，勿内联手拼）。`formatExpenseAmount` 与 `formatIncomeAmount` 对称、**只给绝对值**；符号只出现在混合类型列表（`formatSignedAmount` / `formatSignedUserMoney`）和「负值即信息」的剩余/超出（`formatAmount`）——不要写 `formatExpenseAmount(x.abs())` |
 | 全局金额偏好 | `amount_format.dart` | 顶层量 `currencyFractionStyle`（紧凑/货币标准小数位）、`moneyUnitStyle`（符号后置/代码前置）、`hideUnitInSingleCurrency` 与 `activeBookUsesMultipleCurrencies`；**派生闸门 `activeMoneyCodeDisplay`（`none` 即隐藏单位）是唯一判断依据**，`formatUserMoney` 族与 `textCurrencyUnitHidden`（族 5）都读它，界面不要另写判断条件；Controller 单向同步，界面不直接修改顶层状态（`currencyFractionStyle` 落 KV `verifin.currency_fraction_style.v1`，旧的 `verifin.amount_format.v1` 只做一次性读入） |
-| 序列/坐标轴 | `series_math.dart` | `monthAxisLabels` `reportAxisLabels` `isoWeekNumber` `accountBalanceSeries` `accountMonthlyBalanceSeries` `accountMonthlyBalanceSeriesBatch` `monthlyNetAssetSeries` `balanceAxisLabels` `bookkeepingDays` |
+| 序列/坐标轴 | `series_math.dart` | `monthAxisLabels` `reportAxisLabels` `isoWeekNumber` `accountBalanceSeries` `accountMonthlyBalanceSeries` `accountMonthlyBalanceSeriesBatch` `monthlyNetAssetSeries` `balanceAxisLabels` `bookkeepingDays` `earliestEntryDate`（最早记账日，期间选择范围的下界） |
 | 统计分析（页面 `ReportAnalysisPage` 已删除并并入看板；纯函数**保留**，看板排行卡与 AI 账目查询工具共用） | `report_analysis.dart` | `reportSummary` `reportMonthlyComparison` `formatChangeRatio` `reportCategoryStats` `reportCategoryStatsByOwn` `reportCategoryChildStats` `reportTagStats` `reportTrend`；`ReportRange` `ReportSummary` `ReportCategoryStat` `ReportTagStat` `ReportTrend` |
 | 首页指标 | `home_metrics.dart` | `computeHomeMetric` `homeMetricLabel` `homeMetricGroups` `formatHomeMetric` `homeMetricColor`；`HomeMetric` `HomeMetricContext` `HomeTrendConfig` |
 | 周期记账 | `recurring.dart` | `advanceRecurring` `dueDatesFor` |

@@ -392,6 +392,30 @@ abstract class AppLocalizations {
   /// **'下个月'**
   String get calendarNextMonth;
 
+  /// No description provided for @calendarPrevYear.
+  ///
+  /// In zh, this message translates to:
+  /// **'上一年'**
+  String get calendarPrevYear;
+
+  /// No description provided for @calendarNextYear.
+  ///
+  /// In zh, this message translates to:
+  /// **'下一年'**
+  String get calendarNextYear;
+
+  /// No description provided for @periodPickMonthTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择月份'**
+  String get periodPickMonthTitle;
+
+  /// No description provided for @periodPickYearTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择年份'**
+  String get periodPickYearTitle;
+
   /// 日历星期表头(短)
   ///
   /// In zh, this message translates to:
@@ -877,6 +901,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'本月结余'**
   String get metricMonthNet;
+
+  /// No description provided for @metricIncome.
+  ///
+  /// In zh, this message translates to:
+  /// **'收入'**
+  String get metricIncome;
+
+  /// No description provided for @metricExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'支出'**
+  String get metricExpense;
+
+  /// No description provided for @metricNet.
+  ///
+  /// In zh, this message translates to:
+  /// **'结余'**
+  String get metricNet;
 
   /// No description provided for @metricDailyAvgExpense.
   ///
@@ -3067,6 +3109,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'{month}'**
   String yearMonth(DateTime month);
+
+  /// 年份标签(如 2026年)
+  ///
+  /// In zh, this message translates to:
+  /// **'{year}'**
+  String yearNumber(DateTime year);
 
   /// No description provided for @budgetUsed.
   ///

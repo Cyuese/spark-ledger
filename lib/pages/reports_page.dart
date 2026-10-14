@@ -29,14 +29,30 @@ class _ReportsPageState extends State<ReportsPage> {
   /// 看板顶部统计口径 Tab。默认落在「日常」；不做持久化，每次进入都回到它。
   ReportPeriodTab _tab = ReportPeriodTab.daily;
 
+  /// 月统计 / 年统计的焦点期间，默认本月 / 今年。
+  ///
+  /// 与当前 Tab 一样属于临时界面状态：不持久化、不进备份、不改动任何账目，
+  /// 离开看板后下次进入回到默认期间。
+  DateTime _monthFocus = DateTime.now();
+  int _yearFocus = DateTime.now().year;
+
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
     final l10n = AppLocalizations.of(context);
     final entries = controller.entries;
     final now = DateTime.now();
+    final thisMonth = DateTime(now.year, now.month);
+    final monthWindow = monthWindowFor(_monthFocus);
+    final yearWindow = _yearWindow(_yearFocus);
+    final isCurrentMonth = monthIndexOf(_monthFocus) == monthIndexOf(thisMonth);
+    final isCurrentYear = _yearFocus == now.year;
     // 预算执行卡按预算周期取数（键月 + 周期窗口）；看板其余统计仍按自然月。
-    final budgetKeyMonth = controller.budgetKeyMonthFor(now);
+    // 「本月」取当前正在跑的那一期（自定义周期起始日时它可能落在上一个键月），
+    // 选定某个过去月份则直接以该月为键月——用户点的是月份，不是日期。
+    final budgetKeyMonth = isCurrentMonth
+        ? controller.budgetKeyMonthFor(now)
+        : _monthFocus;
     final budgetEntries = entriesInWindow(
       entries,
       controller.budgetWindow(budgetKeyMonth),
@@ -50,20 +66,6 @@ class _ReportsPageState extends State<ReportsPage> {
       month: budgetKeyMonth,
       monthEntries: budgetEntries,
     );
-    final trendWindow = cumulativeWeekWindowFor(DateTime.now());
-    final trendValues = valuesForTypeInWindow(
-      entries,
-      trendWindow,
-      EntryType.expense,
-    );
-    final trendExpense = trendValues.fold<double>(
-      0,
-      (sum, value) => sum + value,
-    );
-    final trendMax = trendValues.fold<double>(
-      0,
-      (max, value) => value > max ? value : max,
-    );
     final panelIds = controller.enabledPanelIds(_tab.panelPageKind);
 
     // 面板 id 对应的卡片,渲染顺序与开关由面板管理页配置。
@@ -75,21 +77,36 @@ class _ReportsPageState extends State<ReportsPage> {
           return const _AssetSummaryPanel();
         case 'summary':
           return _PeriodSummaryPanel(
-            window: monthWindowFor(now),
-            title: l10n.panelSummaryLabel,
-            trailing: l10n.monthNumber(now.month),
-            incomeLabel: l10n.metricMonthIncome,
-            expenseLabel: l10n.metricMonthExpense,
-            netLabel: l10n.metricMonthNet,
+            window: monthWindow,
+            // 默认（本月）沿用「本月收支」；切到历史月份时标题直接写明那一期。
+            title: isCurrentMonth
+                ? l10n.panelSummaryLabel
+                : l10n.yearMonth(_monthFocus),
+            trailing: isCurrentMonth
+                ? l10n.monthNumber(_monthFocus.month)
+                : null,
+            incomeLabel: isCurrentMonth
+                ? l10n.metricMonthIncome
+                : l10n.metricIncome,
+            expenseLabel: isCurrentMonth
+                ? l10n.metricMonthExpense
+                : l10n.metricExpense,
+            netLabel: isCurrentMonth ? l10n.metricMonthNet : l10n.metricNet,
           );
         case 'year_summary':
           return _PeriodSummaryPanel(
-            window: _yearWindow(now),
-            title: l10n.panelYearSummaryLabel,
-            trailing: l10n.timeYear,
-            incomeLabel: l10n.metricYearIncome,
-            expenseLabel: l10n.metricYearExpense,
-            netLabel: l10n.metricYearNet,
+            window: yearWindow,
+            title: isCurrentYear
+                ? l10n.panelYearSummaryLabel
+                : l10n.yearNumber(DateTime(_yearFocus)),
+            trailing: isCurrentYear ? l10n.timeYear : null,
+            incomeLabel: isCurrentYear
+                ? l10n.metricYearIncome
+                : l10n.metricIncome,
+            expenseLabel: isCurrentYear
+                ? l10n.metricYearExpense
+                : l10n.metricExpense,
+            netLabel: isCurrentYear ? l10n.metricYearNet : l10n.metricNet,
           );
         case 'budget_execution':
           return _BudgetExecutionCard(
@@ -100,15 +117,35 @@ class _ReportsPageState extends State<ReportsPage> {
           );
         case 'ranking':
           return _RankingPanel(
-            window: _tab == ReportPeriodTab.yearly
-                ? _yearWindow(now)
-                : monthWindowFor(now),
+            window: _tab == ReportPeriodTab.yearly ? yearWindow : monthWindow,
           );
         case 'year_trend':
-          return _YearTrendPanel(year: now.year);
+          return _YearTrendPanel(
+            year: _yearFocus,
+            // 角标只在看今年时写「今年」；看历史年份时标题行不必再重复年份。
+            trailing: isCurrentYear ? l10n.thisYearLabel : null,
+          );
         case 'year_heatmap':
-          return _YearHeatmapPanel(year: now.year);
+          return _YearHeatmapPanel(year: _yearFocus);
         case 'daily_trend':
+          // 本月用累积展开窗口（1–7、1–14……只画到今天，不把未来日期塞进横轴）；
+          // 看历史月份时那一个月已经走完，直接给整月窗口。
+          final trendWindow = isCurrentMonth
+              ? cumulativeWeekWindowFor(now)
+              : monthWindow;
+          final trendValues = valuesForTypeInWindow(
+            entries,
+            trendWindow,
+            EntryType.expense,
+          );
+          final trendExpense = trendValues.fold<double>(
+            0,
+            (sum, value) => sum + value,
+          );
+          final trendMax = trendValues.fold<double>(
+            0,
+            (max, value) => value > max ? value : max,
+          );
           return VeriCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,6 +226,11 @@ class _ReportsPageState extends State<ReportsPage> {
                 tab == _tab ? Key('reports_tab_selected_${tab.name}') : null,
             onChanged: (tab) => setState(() => _tab = tab),
           ),
+          // 期间栏只服务月统计与年统计：「日常」是当下快照，没有可切换的期间。
+          if (_tab != ReportPeriodTab.daily) ...<Widget>[
+            const SizedBox(height: 8),
+            _buildPeriodBar(context, l10n),
+          ],
           // 各 Tab 的面板清单互相独立，顺序与开关由面板管理页配置。
           // 没有面板的 Tab 只画 Tab 本体，不渲染占位文案。
           for (final id in panelIds) ...<Widget>[
@@ -202,6 +244,108 @@ class _ReportsPageState extends State<ReportsPage> {
         ],
       ),
     );
+  }
+
+  /// 期间栏：`‹ 2026年9月 ›` 步进 + 点标签打开选择弹层 + 非本期时的「本月 / 今年」回跳。
+  ///
+  /// 范围由账本自己界定：下界是首笔记账，上界是本月的当前时刻，两头都不会翻到
+  /// 未来或空白期间，到边界时箭头禁用。期间不写 Controller，也不进备份。
+  Widget _buildPeriodBar(BuildContext context, AppLocalizations l10n) {
+    final now = DateTime.now();
+    final thisMonth = DateTime(now.year, now.month);
+    final entries = VeriFinScope.of(context).entries;
+    final firstDate = earliestEntryDate(entries) ?? thisMonth;
+    final monthly = _tab == ReportPeriodTab.monthly;
+    final atStart = monthly
+        ? monthIndexOf(_monthFocus) <=
+              monthIndexOf(DateTime(firstDate.year, firstDate.month))
+        : _yearFocus <= firstDate.year;
+    final atEnd = monthly
+        ? monthIndexOf(_monthFocus) >= monthIndexOf(thisMonth)
+        : _yearFocus >= now.year;
+    return Row(
+      children: <Widget>[
+        MonthSwitcher(
+          label: monthly
+              ? l10n.yearMonth(_monthFocus)
+              : l10n.yearNumber(DateTime(_yearFocus)),
+          labelKey: const Key('reports_period_label'),
+          labelTooltip: monthly
+              ? l10n.periodPickMonthTitle
+              : l10n.periodPickYearTitle,
+          previousTooltip: monthly
+              ? l10n.calendarPrevMonth
+              : l10n.calendarPrevYear,
+          nextTooltip: monthly ? l10n.calendarNextMonth : l10n.calendarNextYear,
+          onPrevious: atStart ? null : () => setState(() => _shiftPeriod(-1)),
+          onNext: atEnd ? null : () => setState(() => _shiftPeriod(1)),
+          onLabelTap: () =>
+              _pickPeriod(context, firstDate: firstDate, today: now),
+        ),
+        const Spacer(),
+        if (monthly && monthIndexOf(_monthFocus) != monthIndexOf(thisMonth))
+          _jumpToCurrent(
+            l10n.thisMonth,
+            () => setState(() => _monthFocus = thisMonth),
+          )
+        else if (!monthly && _yearFocus != now.year)
+          _jumpToCurrent(
+            l10n.thisYearLabel,
+            () => setState(() => _yearFocus = now.year),
+          ),
+      ],
+    );
+  }
+
+  /// 回跳按钮：只在离开本期时出现，与首页日历切走后提供的「本月」快捷入口一致。
+  Widget _jumpToCurrent(String label, VoidCallback onPressed) {
+    return TextButton(
+      key: const Key('reports_period_jump'),
+      style: TextButton.styleFrom(
+        minimumSize: const Size(44, 36),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        visualDensity: VisualDensity.compact,
+      ),
+      onPressed: onPressed,
+      child: Text(label),
+    );
+  }
+
+  /// 步进一期。月份用 `DateTime` 的溢出规则跨年（1 月往前是上一年 12 月）。
+  void _shiftPeriod(int direction) {
+    if (_tab == ReportPeriodTab.monthly) {
+      _monthFocus = DateTime(_monthFocus.year, _monthFocus.month + direction);
+    } else {
+      _yearFocus += direction;
+    }
+  }
+
+  Future<void> _pickPeriod(
+    BuildContext context, {
+    required DateTime firstDate,
+    required DateTime today,
+  }) async {
+    if (_tab == ReportPeriodTab.monthly) {
+      final picked = await showMonthPickerSheet(
+        context: context,
+        selected: _monthFocus,
+        firstDate: firstDate,
+        today: today,
+      );
+      if (picked != null && mounted) {
+        setState(() => _monthFocus = picked);
+      }
+      return;
+    }
+    final picked = await showYearPickerSheet(
+      context: context,
+      selected: _yearFocus,
+      firstDate: firstDate,
+      today: today,
+    );
+    if (picked != null && mounted) {
+      setState(() => _yearFocus = picked);
+    }
   }
 }
 
@@ -725,10 +869,8 @@ class _RecentStatLine extends StatelessWidget {
 }
 
 /// 整年窗口（1 月 1 日到 12 月 31 日），用于年统计 Tab。
-DateWindow _yearWindow(DateTime now) => DateWindow(
-  start: DateTime(now.year, 1, 1),
-  end: DateTime(now.year, 12, 31),
-);
+DateWindow _yearWindow(int year) =>
+    DateWindow(start: DateTime(year, 1, 1), end: DateTime(year, 12, 31));
 
 /// 期间收支摘要面板：窗口内的收入 / 支出 / 结余（各带笔数）。
 /// 月统计用整月窗口、年统计用整年窗口；原先是页面顶部无法关闭的固定条，
@@ -745,7 +887,7 @@ class _PeriodSummaryPanel extends StatelessWidget {
 
   final DateWindow window;
   final String title;
-  final String trailing;
+  final String? trailing;
   final String incomeLabel;
   final String expenseLabel;
   final String netLabel;
@@ -1364,9 +1506,10 @@ class _RankRow extends StatelessWidget {
 
 /// 年统计的月度收支卡：本年 12 个月的收入 / 支出双柱对比。
 class _YearTrendPanel extends StatelessWidget {
-  const _YearTrendPanel({required this.year});
+  const _YearTrendPanel({required this.year, this.trailing});
 
   final int year;
+  final String? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -1393,10 +1536,7 @@ class _YearTrendPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SectionTitle(
-            title: l10n.panelYearTrendLabel,
-            trailing: l10n.thisYearLabel,
-          ),
+          SectionTitle(title: l10n.panelYearTrendLabel, trailing: trailing),
           const SizedBox(height: 8),
           Row(
             children: <Widget>[

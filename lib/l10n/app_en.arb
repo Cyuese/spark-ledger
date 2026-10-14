@@ -49,6 +49,10 @@
   "calendarTitle": "Calendar",
   "calendarPrevMonth": "Previous month",
   "calendarNextMonth": "Next month",
+  "calendarPrevYear": "Previous year",
+  "calendarNextYear": "Next year",
+  "periodPickMonthTitle": "Pick a month",
+  "periodPickYearTitle": "Pick a year",
   "weekdayMon": "Mon",
   "weekdayTue": "Tue",
   "weekdayWed": "Wed",
@@ -130,6 +134,9 @@
   "metricMonthExpense": "This month spending",
   "metricMonthIncome": "This month income",
   "metricMonthNet": "This month balance",
+  "metricIncome": "Income",
+  "metricExpense": "Spending",
+  "metricNet": "Balance",
   "metricDailyAvgExpense": "Daily avg spending",
   "metricDailyAvgIncome": "Daily avg income",
   "metricTodayExpense": "Today spending",
@@ -545,6 +552,16 @@
       "month": {
         "type": "DateTime",
         "format": "MMM y",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "yearNumber": "{year}",
+  "@yearNumber": {
+    "placeholders": {
+      "year": {
+        "type": "DateTime",
+        "format": "y",
         "isCustomDateFormat": "true"
       }
     }

@@ -237,13 +237,22 @@ List<String> yearMonthAxisLabels() {
   return List<String>.generate(12, (index) => '${index + 1}');
 }
 
-int bookkeepingDays(List<LedgerEntry> entries) {
+/// 账本里最早的记账日（无交易返回 `null`）。期间选择器用它作为可选范围的下界：
+/// 不给出早于「开始记账」的月份与年份。
+DateTime? earliestEntryDate(List<LedgerEntry> entries) {
   if (entries.isEmpty) {
-    return 0;
+    return null;
   }
-  final first = entries
+  return entries
       .map((entry) => entry.occurredAt)
       .reduce((a, b) => a.isBefore(b) ? a : b);
+}
+
+int bookkeepingDays(List<LedgerEntry> entries) {
+  final first = earliestEntryDate(entries);
+  if (first == null) {
+    return 0;
+  }
   return calendarDaysBetween(first, DateTime.now()) + 1;
 }
 

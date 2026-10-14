@@ -1884,3 +1884,304 @@ Future<List<String>?> pickEntryTags({
     ),
   );
 }
+
+/// 看板期间栏的「选择月份」弹层：上面一行年份步进，下面是该年 1–12 月的正向网格。
+///
+/// [selected] 是当前焦点月份，[firstDate] 是可选范围下界（账本最早的记账日），
+/// [today] 是上界（默认现在）。范围之外的月份与年份直接禁用——不给用户选未来，
+/// 也不给早于首笔记录的期间。选中回传该月 1 号；取消返回 `null`。
+Future<DateTime?> showMonthPickerSheet({
+  required BuildContext context,
+  required DateTime selected,
+  required DateTime firstDate,
+  DateTime? today,
+}) {
+  final upperLimit = dateOnly(today ?? DateTime.now());
+  return showVeriModalSheet<DateTime>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
+    ),
+    builder: (sheetContext) => SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.72,
+        ),
+        child: _MonthPickerSheet(
+          selected: selected,
+          firstMonth: DateTime(firstDate.year, firstDate.month),
+          lastMonth: DateTime(upperLimit.year, upperLimit.month),
+        ),
+      ),
+    ),
+  );
+}
+
+/// 看板期间栏的「选择年份」弹层：正向列出 [firstDate] 所在年到 [today] 所在年。
+/// 选中回传年份；取消返回 `null`。
+Future<int?> showYearPickerSheet({
+  required BuildContext context,
+  required int selected,
+  required DateTime firstDate,
+  DateTime? today,
+}) {
+  final lastYear = (today ?? DateTime.now()).year;
+  return showVeriModalSheet<int>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(veriRadiusLg)),
+    ),
+    builder: (sheetContext) => SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.72,
+        ),
+        child: _YearPickerSheet(
+          selected: selected,
+          firstYear: firstDate.year,
+          lastYear: lastYear,
+        ),
+      ),
+    ),
+  );
+}
+
+/// 月份选择：年份可步进，月份固定 1–12 正向排列，当前选中项用主色高亮。
+class _MonthPickerSheet extends StatefulWidget {
+  const _MonthPickerSheet({
+    required this.selected,
+    required this.firstMonth,
+    required this.lastMonth,
+  });
+
+  final DateTime selected;
+  final DateTime firstMonth;
+  final DateTime lastMonth;
+
+  @override
+  State<_MonthPickerSheet> createState() => _MonthPickerSheetState();
+}
+
+class _MonthPickerSheetState extends State<_MonthPickerSheet> {
+  late int _year = widget.selected.year;
+
+  bool _isSelectable(int month) {
+    final index = monthIndexOf(DateTime(_year, month));
+    return index >= monthIndexOf(widget.firstMonth) &&
+        index <= monthIndexOf(widget.lastMonth);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        _PeriodSheetTitle(title: l10n.periodPickMonthTitle),
+        Center(
+          child: MonthSwitcher(
+            label: l10n.yearNumber(DateTime(_year)),
+            onPrevious: _year <= widget.firstMonth.year
+                ? null
+                : () => setState(() => _year -= 1),
+            onNext: _year >= widget.lastMonth.year
+                ? null
+                : () => setState(() => _year += 1),
+            previousTooltip: l10n.calendarPrevYear,
+            nextTooltip: l10n.calendarNextYear,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(13, 0, 13, 16),
+            child: _PeriodGrid(
+              itemCount: 12,
+              columns: 4,
+              labelOf: (index) => l10n.monthNumber(index + 1),
+              selectedIndexOf: (index) =>
+                  monthIndexOf(DateTime(_year, index + 1)) ==
+                  monthIndexOf(widget.selected),
+              enabledIndexOf: (index) => _isSelectable(index + 1),
+              keyOf: (index) => Key('period_month_${_year}_${index + 1}'),
+              onTap: (index) =>
+                  Navigator.of(context).pop(DateTime(_year, index + 1)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 年份选择：正向列出范围内所有年份。
+class _YearPickerSheet extends StatelessWidget {
+  const _YearPickerSheet({
+    required this.selected,
+    required this.firstYear,
+    required this.lastYear,
+  });
+
+  final int selected;
+  final int firstYear;
+  final int lastYear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final count = lastYear - firstYear + 1;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        _PeriodSheetTitle(title: l10n.periodPickYearTitle),
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(13, 0, 13, 16),
+            child: _PeriodGrid(
+              itemCount: count,
+              columns: 3,
+              labelOf: (index) => l10n.yearNumber(DateTime(firstYear + index)),
+              selectedIndexOf: (index) => firstYear + index == selected,
+              enabledIndexOf: (index) => true,
+              keyOf: (index) => Key('period_year_${firstYear + index}'),
+              onTap: (index) => Navigator.of(context).pop(firstYear + index),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PeriodSheetTitle extends StatelessWidget {
+  const _PeriodSheetTitle({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+      ),
+    );
+  }
+}
+
+/// 期间选择的等宽网格：按 [columns] 分行，每格最小 44dp 触控高度。
+class _PeriodGrid extends StatelessWidget {
+  const _PeriodGrid({
+    required this.itemCount,
+    required this.columns,
+    required this.labelOf,
+    required this.selectedIndexOf,
+    required this.enabledIndexOf,
+    required this.keyOf,
+    required this.onTap,
+  });
+
+  final int itemCount;
+  final int columns;
+  final String Function(int index) labelOf;
+  final bool Function(int index) selectedIndexOf;
+  final bool Function(int index) enabledIndexOf;
+  final Key Function(int index) keyOf;
+  final void Function(int index) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var start = 0; start < itemCount; start += columns) {
+      final cells = <Widget>[];
+      for (var column = 0; column < columns; column++) {
+        final index = start + column;
+        if (index >= itemCount) {
+          // 末行不足 columns 项时用等宽空位占住，避免最后一格被拉宽。
+          cells.add(const Expanded(child: SizedBox.shrink()));
+          continue;
+        }
+        cells.add(
+          Expanded(
+            child: _PeriodCell(
+              key: keyOf(index),
+              label: labelOf(index),
+              selected: selectedIndexOf(index),
+              onTap: enabledIndexOf(index) ? () => onTap(index) : null,
+            ),
+          ),
+        );
+      }
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(children: cells),
+        ),
+      );
+    }
+    return Column(mainAxisSize: MainAxisSize.min, children: rows);
+  }
+}
+
+/// 期间网格里的单个选项：选中用主色实底，不可选用弱化文字且不响应点击。
+class _PeriodCell extends StatelessWidget {
+  const _PeriodCell({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final enabled = onTap != null;
+    final foreground = selected
+        ? scheme.onPrimary
+        : enabled
+        ? scheme.onSurface
+        : scheme.onSurface.withValues(alpha: 0.32);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Material(
+        color: selected
+            ? scheme.primary
+            : scheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(veriRadiusSm),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(veriRadiusSm),
+          onTap: onTap,
+          child: SizedBox(
+            height: 44,
+            child: Center(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: foreground,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
