@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart' as month_picker;
 
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
@@ -1885,50 +1886,46 @@ Future<List<String>?> pickEntryTags({
   );
 }
 
-/// 看板期间栏的「选择月份」入口：直接用系统日期选择器（与记账 / 交易编辑页选日期是
-/// 同一个对话框，语言、深浅色与触控都跟随平台），只取回年月，忽略具体选了哪一天。
+/// 看板期间栏的「选择月份」入口（自绘弹层与系统日期选择器都试过，[问题反馈] 里
+/// 用户要求用现成组件库）：走 `month_picker_dialog` 的月份对话框，**只选年月、不再
+/// 让用户选日**，点月份即关闭。
 ///
 /// [firstDate] 是可选范围下界（账本最早的记账日）、[today] 是上界（默认现在）：
-/// 范围外的时间由日期选择器自己置灰，用户选不到未来，也选不到早于首笔记账的期间。
-/// 取消返回 `null`。
+/// 范围外的月份由组件自己禁用。取消返回 `null`。
 Future<DateTime?> showMonthPickerSheet({
   required BuildContext context,
   required DateTime selected,
   required DateTime firstDate,
   DateTime? today,
-}) async {
+}) {
   final min = dateOnly(firstDate);
   final max = dateOnly(today ?? DateTime.now());
-  final picked = await showDatePicker(
+  return month_picker.showMonthPicker(
     context: context,
     initialDate: _clampDay(dateOnly(selected), min, max),
     firstDate: min,
     lastDate: max,
-    helpText: AppLocalizations.of(context).periodPickMonthTitle,
+    headerTitle: Text(AppLocalizations.of(context).periodPickMonthTitle),
   );
-  return picked == null ? null : DateTime(picked.year, picked.month);
 }
 
-/// 看板期间栏的「选择年份」入口：同样走系统日期选择器，直接落在年份网格上
-/// （与在日期选择器里点标题切到年份视图是同一条路径），只取回年份。
+/// 看板期间栏的「选择年份」入口：同一个组件库的年份对话框，**只选年、点一年即关闭**。
 /// 取消返回 `null`。
 Future<int?> showYearPickerSheet({
   required BuildContext context,
   required int selected,
   required DateTime firstDate,
   DateTime? today,
-}) async {
+}) {
   final min = dateOnly(firstDate);
   final max = dateOnly(today ?? DateTime.now());
-  final picked = await showDatePicker(
+  return month_picker.showYearPicker(
     context: context,
     initialDate: _clampDay(DateTime(selected, 1, 1), min, max),
     firstDate: min,
     lastDate: max,
-    initialDatePickerMode: DatePickerMode.year,
-    helpText: AppLocalizations.of(context).periodPickYearTitle,
+    headerTitle: Text(AppLocalizations.of(context).periodPickYearTitle),
   );
-  return picked?.year;
 }
 
 /// 把 [value] 夹在 `[min, max]` 之间。日期选择器要求 `initialDate` 落在可选范围内，
