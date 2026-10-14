@@ -1208,12 +1208,6 @@ abstract class AppLocalizations {
   /// **'近 7 天每日支出趋势'**
   String get panelDailyTrendDesc;
 
-  /// No description provided for @panelMonthlyStructureDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'今年每月支出结构柱状图'**
-  String get panelMonthlyStructureDesc;
-
   /// 面板管理入口:开启数量
   ///
   /// In zh, this message translates to:
@@ -3553,12 +3547,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'确定'**
   String get okLabel;
-
-  /// No description provided for @monthlyTrendTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'月度趋势'**
-  String get monthlyTrendTitle;
 
   /// No description provided for @rankGroupCategory.
   ///

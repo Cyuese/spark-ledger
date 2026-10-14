@@ -414,7 +414,6 @@
   "panelBudgetExecutionDesc": "本月预算、支出与分类预算执行情况",
   "panelDailyTrendLabel": "日趋势",
   "panelDailyTrendDesc": "近 7 天每日支出趋势",
-  "panelMonthlyStructureDesc": "今年每月支出结构柱状图",
   "panelCountLabel": "{count}个{page}面板",
   "@panelCountLabel": {
     "description": "面板管理入口:开启数量",
@@ -1378,7 +1377,6 @@
     }
   },
   "okLabel": "确定",
-  "monthlyTrendTitle": "月度趋势",
   "rankGroupCategory": "分类",
   "rankGroupSubCategory": "子分类",
   "rankGroupTag": "标签",

@@ -338,9 +338,6 @@ class PagePanelSpec {
         return l10n.panelSummaryLabel;
       case 'daily_trend':
         return l10n.panelDailyTrendLabel;
-      case 'monthly_structure':
-        // 该面板只有支出序列，标题与看板卡片保持一致，不写成「月度收支」。
-        return l10n.monthlyTrendTitle;
       case 'recent_daily':
         return l10n.panelRecentDailyLabel;
       case 'asset_summary':
@@ -373,8 +370,6 @@ class PagePanelSpec {
         return l10n.panelSummaryDesc;
       case 'daily_trend':
         return l10n.panelDailyTrendDesc;
-      case 'monthly_structure':
-        return l10n.panelMonthlyStructureDesc;
       case 'recent_daily':
         return l10n.panelRecentDailyDesc;
       case 'asset_summary':
@@ -406,7 +401,6 @@ const List<PagePanelSpec> reportMonthlyPanelSpecs = <PagePanelSpec>[
   PagePanelSpec(id: 'budget_execution'),
   PagePanelSpec(id: 'ranking'),
   PagePanelSpec(id: 'daily_trend'),
-  PagePanelSpec(id: 'monthly_structure'),
 ];
 
 /// 看板「日常」Tab 的面板目录：近 7 日统计 + 资产汇总。
