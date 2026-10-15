@@ -476,6 +476,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.20.3"
+  jdenticon_dart:
+    dependency: "direct main"
+    description:
+      path: "third_party/jdenticon_dart"
+      relative: true
+    source: path
+    version: "2.0.0+verifin.1"
   jni:
     dependency: transitive
     description:
