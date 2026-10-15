@@ -2446,6 +2446,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSectionAbout => '关于';
 
   @override
+  String get creditsTitle => '鸣谢';
+
+  @override
+  String get creditsIntro => '感谢这些人的支持，Veri Fin 才能一直免费、干净地做下去。';
+
+  @override
+  String creditsSupporterCount(int count) {
+    return '$count 位';
+  }
+
+  @override
+  String get creditsSupportNote => '这里没有会员特权，也没有解锁内容——你支持的是这款软件本身能继续做下去。';
+
+  @override
+  String get creditsSupportAction => '在爱发电支持 Veri Fin';
+
+  @override
+  String get creditsOpenFailed => '没能打开浏览器，请稍后再试。';
+
+  @override
   String get themeMode => '主题模式';
 
   @override

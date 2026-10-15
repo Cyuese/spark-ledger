@@ -6,6 +6,7 @@ import '../app/app_theme.dart';
 import '../app/app_version.dart';
 import '../app/build_config.dart';
 import '../app/common_widgets.dart';
+import '../app/credits.dart';
 import '../app/feedback.dart';
 import '../app/legal_content.dart';
 import '../l10n/app_localizations.dart';
@@ -16,6 +17,7 @@ import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import 'ai_settings_page.dart';
 import 'app_lock_page.dart';
+import 'credits_page.dart';
 import 'legal_pages.dart';
 import 'navigation_style_settings_page.dart';
 import 'reminder_settings_page.dart';
@@ -519,6 +521,22 @@ class _SettingsPageState extends State<SettingsPage> {
                           },
                         ),
                       ],
+                      const Divider(height: 1),
+                      SettingsRow(
+                        icon: Icons.volunteer_activism_outlined,
+                        title: AppLocalizations.of(context).creditsTitle,
+                        trailing: AppLocalizations.of(
+                          context,
+                        ).creditsSupporterCount(creditsSupporters.length),
+                        trailingIcon: Icons.chevron_right,
+                        onTap: () {
+                          Navigator.of(context).push<void>(
+                            MaterialPageRoute<void>(
+                              builder: (context) => const CreditsPage(),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),

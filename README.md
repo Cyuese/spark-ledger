@@ -174,9 +174,11 @@ Veri Fin 是一款**完全免费、无广告、不商业化你数据**的应用�
 
 > 爱发电主页：https://afdian.com/a/talyra42
 
+通过爱发电支持的每一位，都记在应用内的「设置 → 关于 → 鸣谢」里——名单写在软件里，不联网拉取。
+
 ## 📄 许可证
 
-Veri Fin 是自由软件，基于 **GNU 通用公共许可证 v3.0 或更高版本（GPL-3.0-or-later）** 发布，完整条款见 [`LICENSE`](LICENSE)。
+Veri Fin 是自由软件，基于 **GNU 通用公共许可证 v3.0 或更高版本（GPL-3.0-or-later）** 发布，完整条款见 [`LICENSE`](LICENSE)。第三方组件保留各自许可证：应用依赖见 `pubspec.yaml`，本地 vendor 的源码在 `third_party/` 下各自附带上游 LICENSE 与差异说明（如 `third_party/jdenticon_dart` 为 MIT，与 GPL-3.0 兼容）。
 
 > Copyright (C) 2026 Talyra42
 >
