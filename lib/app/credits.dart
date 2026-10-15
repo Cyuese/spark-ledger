@@ -28,7 +28,7 @@ class CreditsSupporter {
   /// 可选的附注，通常是平台账号（如 `@wh3286`），渲染在称呼下方。
   final String? handle;
 
-  /// 真实头像资源路径；为空则按 [avatarSeed] 生成点阵头像。
+  /// 真实头像资源路径；为空则按 [avatarSeed] 生成 jdenticon 头像。
   final String? avatarAsset;
 
   /// 头像种子；为空时取 [name]。改了展示名又想保住原头像时显式指定。
