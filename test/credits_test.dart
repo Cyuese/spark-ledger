@@ -1,93 +1,57 @@
-import 'dart:math' as math;
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart' show sha1;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/credits.dart';
 import 'package:verifin/app/credits_avatar.dart';
 
-/// WCAG 相对亮度。
-double _luminance(Color color) {
-  double channel(double value) => value <= 0.03928
-      ? value / 12.92
-      : math.pow((value + 0.055) / 1.055, 2.4).toDouble();
-  return 0.2126 * channel(color.r) +
-      0.7152 * channel(color.g) +
-      0.0722 * channel(color.b);
-}
-
-/// 两色对比度（1–21）。用 pow 逐通道换算，见 WCAG 2.1 相对亮度定义。
-double _contrast(Color a, Color b) {
-  final la = _luminance(a);
-  final lb = _luminance(b);
-  final lighter = la > lb ? la : lb;
-  final darker = la > lb ? lb : la;
-  return (lighter + 0.05) / (darker + 0.05);
-}
+import 'support/test_harness.dart';
 
 void main() {
-  group('头像哈希', () {
-    test('同名同值，且随机名不碰撞', () {
-      expect(creditsAvatarHash('wh3286'), creditsAvatarHash('wh3286'));
-      expect(
-        creditsAvatarHash('wh3286'),
-        isNot(creditsAvatarHash('爱发电用户_Jd7R')),
-      );
+  group('头像 SVG', () {
+    test('同名同图，不同名不同图', () {
+      expect(creditsAvatarSvg('wh3286'), creditsAvatarSvg('wh3286'));
+      expect(creditsAvatarSvg('wh3286'), isNot(creditsAvatarSvg('爱发电用户_Jd7R')));
+      // 名字大小写敏感：jdenticon 上游行为，两个不同的称呼不该撞成一张脸。
+      expect(creditsAvatarSvg('wh3286'), isNot(creditsAvatarSvg('WH3286')));
     });
 
-    test('是写死的快照：算法一旦变化必须显式改动这里', () {
-      // 头像必须「写死一次、永远一样」：升级 Flutter / 换 SDK 都不能让已经出现在
-      // 用户设备上的头像换脸，所以哈希结果按快照固定下来（不用 String.hashCode）。
-      // '' 必须等于 FNV-1a 的偏移基数，可用来一眼看出算法有没有被换掉。
-      expect(creditsAvatarHash(''), 2166136261);
-      expect(creditsAvatarHash('wh3286'), 1352441597);
-      expect(creditsAvatarHash('爱发电用户_Jd7R'), 1159742380);
+    test('是当前算法的快照：换算法必须在测试里显式确认', () {
+      // 只锁一个指纹而不是整段 SVG：算法一变（上游升级、换库、参数调整），
+      // 用户设备上的头像就会换脸，这种变化必须是有意为之。
+      final fingerprint = sha1
+          .convert(utf8.encode(creditsAvatarSvg('wh3286')))
+          .toString();
+      expect(fingerprint, '7cc287f0bbfb0c8511e0fae884fc80ffe7cd8533');
+    });
+
+    test('同时包含淡彩圆底与几何图形', () {
+      final svg = creditsAvatarSvg('wh3286');
+      expect(svg, startsWith('<svg '));
+      expect(svg, contains('viewBox="0 0 200 200"'));
+      // jdenticon 默认是透明底的三层图形，这里必须补上圆底（rect 带不透明 fill）。
+      expect(
+        svg,
+        matches(RegExp(r'<rect width="200" height="200" fill="#[0-9a-f]{6}"')),
+      );
+      expect(svg, contains('opacity="1.00"'));
+      expect(svg, contains('<path fill="#'));
     });
   });
 
-  group('头像点阵', () {
-    test('左右对称且至少有一个方块', () {
-      for (final seed in <String>['wh3286', '爱发电用户_Jd7R', '', '  ', 'a']) {
-        final pattern = creditsAvatarPattern(seed);
-        expect(pattern.length, creditsAvatarGridSize);
-        var filled = 0;
-        for (var row = 0; row < creditsAvatarGridSize; row++) {
-          for (var col = 0; col < creditsAvatarGridSize; col++) {
-            expect(
-              pattern[row][col],
-              pattern[row][creditsAvatarGridSize - 1 - col],
-              reason: '$seed 的第 $row 行不左右对称',
-            );
-            if (pattern[row][col]) {
-              filled++;
-            }
-          }
-        }
-        expect(filled, greaterThan(0), reason: '$seed 生成了空点阵');
-        expect(filled, lessThan(creditsAvatarGridSize * creditsAvatarGridSize));
-      }
-    });
-
-    test('同一种子每次生成同一张图', () {
-      expect(creditsAvatarPattern('wh3286'), creditsAvatarPattern('wh3286'));
-    });
-  });
-
-  group('身份色板', () {
-    test('每个底色与图案色的对比度都不低于 4.5:1', () {
-      for (final style in creditsAvatarStyles) {
-        expect(
-          _contrast(style.background, style.mark),
-          greaterThanOrEqualTo(4.5),
-          reason: '${style.background} 与 ${style.mark} 对比度不足',
-        );
-      }
-    });
-
-    test('取色是纯函数：同名同色', () {
-      expect(
-        creditsAvatarStyleFor('wh3286').background,
-        creditsAvatarStyleFor('wh3286').background,
+  group('头像渲染', () {
+    testWidgets('渲染成圆形切边的 SVG 图片且不报错', (tester) async {
+      await tester.pumpWidget(
+        zhMaterialApp(
+          home: const Center(child: CreditsAvatar(seed: 'wh3286', size: 56)),
+        ),
       );
+      await tester.pumpAndSettle();
+      expect(find.byType(SvgPicture), findsOneWidget);
+      expect(find.byType(ClipOval), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 

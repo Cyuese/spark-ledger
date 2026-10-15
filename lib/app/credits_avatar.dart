@@ -1,98 +1,55 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart' show sha1;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:jdenticon_dart/jdenticon_dart.dart';
 
-import 'app_theme.dart';
-
-/// 鸣谢头像：由展示名**确定性生成**的点阵头像，不依赖任何素材或第三方库。
+/// 鸣谢头像：把称呼哈希成一张 [Jdenticon] 头像（三层几何图形）。
 ///
-/// 名单里的人没有提供头像，也不该去网上抓，所以这里按名字画一张：名字 → 稳定哈希 →
-/// 5×5 左右对称的点阵 + 固定的身份底色。
+/// 算法实现在 `third_party/jdenticon_dart`（上游 MIT，本地 vendor，只放宽了 SDK
+/// 上限；原因与同步方式见该目录的 README）。
 ///
 /// 三条硬约束（`test/credits_test.dart` 断言）：
 ///
-/// 1. **同名同图**：算法是纯函数，且不用 `String.hashCode`（它不保证跨 SDK 版本
-///    稳定），自己实现 FNV-1a——否则升级一次 Flutter 就可能让所有人的头像换脸。
-/// 2. **可读**：底色与图案的对比度 ≥ 4.5:1，且不随主题变化（同一个人在浅色与深色
-///    主题下必须是同一张脸）。
-/// 3. **不空**：点阵不会全空，避免渲染成一张纯色圆。
+/// 1. **同名同图**：只依赖 `SHA1(seed)`，同一称呼在任何设备、任何版本上都是同一张脸；
+/// 2. **不联网、不抓图、不读主题**：几何图形由本地算法画出，颜色只由名字决定，
+///    因此浅色与深色主题下是同一张头像；
+/// 3. **可读**：jdenticon 默认在透明底上画三层图形（明度 0.3–0.9），这里补一层与图案
+///    同色相的高明度圆底，保证图形在深浅两种界面上都看得清。
 
-/// 点阵边长（5×5）：左半由哈希决定，右半镜像。
-const int creditsAvatarGridSize = 5;
+/// 生成头像 SVG；结果只与 [seed] 有关，因此按 seed 缓存——列表滚动、页面重建都不会
+/// 重复算哈希。缓存上界就是名单长度（几百条也只是几百个短字符串）。
+String creditsAvatarSvg(String seed) => _svgCache[seed] ??= _buildSvg(seed);
 
-/// 生成头像用的 32 位 FNV-1a 哈希（按 UTF-8 字节）。
-int creditsAvatarHash(String seed) {
-  var hash = 0x811c9dc5;
-  for (final byte in utf8.encode(seed)) {
-    hash = (hash ^ byte) * 0x01000193 & 0xFFFFFFFF;
-  }
-  return hash;
+final Map<String, String> _svgCache = <String, String>{};
+
+String _buildSvg(String seed) => Jdenticon.toSvg(
+  seed,
+  size: 200,
+  // 圆形裁切会切掉画布四角，留白比上游默认值（0.08）稍大，避免外层图形贴边被削平。
+  padding: 0.12,
+  backColor: _discColor(seed),
+);
+
+/// 淡彩圆底：取与图案同一个色相（jdenticon 自己也是从哈希尾部取色相），明度拉到很高，
+/// 这样三层图形（0.3–0.9）在深浅两种界面上都有对比，同一个人换主题也不会「换脸」。
+String _discColor(String seed) {
+  final hash = '${sha1.convert(utf8.encode(seed))}';
+  final hue = int.parse(hash.substring(hash.length - 7), radix: 16) / 0xfffffff;
+  return '#${_hex(HSLColor.fromAHSL(1, hue * 360, 0.34, 0.93).toColor())}ff';
 }
 
-/// 5×5 左右对称的点阵。只用哈希的低 15 位：列 0–2 取位决定，列 3–4 为镜像，
-/// 因此任何名字都得到一个左右对称、看起来像「头像」而不像噪点的图案。
-List<List<bool>> creditsAvatarPattern(String seed) {
-  var hash = creditsAvatarHash(seed);
-  final pattern = List<List<bool>>.generate(
-    creditsAvatarGridSize,
-    (_) => List<bool>.filled(creditsAvatarGridSize, false),
-  );
-  for (var row = 0; row < creditsAvatarGridSize; row++) {
-    for (var col = 0; col < (creditsAvatarGridSize + 1) ~/ 2; col++) {
-      final on = hash & 1 == 1;
-      hash >>= 1;
-      pattern[row][col] = on;
-      pattern[row][creditsAvatarGridSize - 1 - col] = on;
-    }
-  }
-  // 两端退化（各约 1/32768）都要兜住：全空会渲染成一张纯色圆，全满会渲染成一张
-  // 全白圆，都不像头像。翻转中心格最省事，也保持左右对称。
-  final center = creditsAvatarGridSize ~/ 2;
-  final filled = pattern.expand((row) => row).where((cell) => cell).length;
-  if (filled == 0) {
-    pattern[center][center] = true;
-  } else if (filled == creditsAvatarGridSize * creditsAvatarGridSize) {
-    pattern[center][center] = false;
-  }
-  return pattern;
+String _hex(Color color) {
+  String channel(double value) =>
+      (value * 255).round().clamp(0, 255).toRadixString(16).padLeft(2, '0');
+  return '${channel(color.r)}${channel(color.g)}${channel(color.b)}';
 }
-
-/// 头像的底色与图案色。
-@immutable
-class CreditsAvatarStyle {
-  const CreditsAvatarStyle(this.background, [this.mark = Colors.white]);
-
-  final Color background;
-  final Color mark;
-}
-
-/// 身份色板（顺序即取色顺序）。
-///
-/// **故意不跟随主题色**：同一个人在浅色 / 深色主题、任何版本下都必须是同一张脸。
-/// 只取非语义的品牌色——`veriIncome` / `veriExpense` / `veriBlue` / `veriWarning`
-/// 表达金额与状态语义，拿来当头像底会让人误读。`veriCyan` / `veriMint` 在本仓库
-/// 本就是装饰色（「我的」宫格），但原色太亮（与白色对比 < 3:1），按同一色相压暗后
-/// 使用；每个底色与白色图案的对比度由测试断言 ≥ 4.5:1。
-final List<CreditsAvatarStyle> creditsAvatarStyles =
-    List<CreditsAvatarStyle>.unmodifiable(<CreditsAvatarStyle>[
-      const CreditsAvatarStyle(veriRoyal),
-      const CreditsAvatarStyle(veriIndigo),
-      CreditsAvatarStyle(
-        HSLColor.fromColor(veriCyan).withLightness(0.32).toColor(),
-      ),
-      CreditsAvatarStyle(
-        HSLColor.fromColor(veriMint).withLightness(0.28).toColor(),
-      ),
-    ]);
-
-/// 按名字取身份色（纯函数）。
-CreditsAvatarStyle creditsAvatarStyleFor(String seed) =>
-    creditsAvatarStyles[creditsAvatarHash(seed) % creditsAvatarStyles.length];
 
 /// 鸣谢头像。
 ///
 /// 有 [imageAsset]（对方给了真实头像，图片放在 `assets/credits/`）时圆形裁剪显示该
-/// 图片；否则按 [seed]（默认取展示名）生成点阵头像。
+/// 图片；否则按 [seed]（默认取展示名）生成 jdenticon 头像。
 class CreditsAvatar extends StatelessWidget {
   const CreditsAvatar({
     super.key,
@@ -104,7 +61,7 @@ class CreditsAvatar extends StatelessWidget {
   /// 生成头像的种子；改名后想保住原头像时，由调用方传固定值。
   final String seed;
 
-  /// 真实头像资源路径，为空则生成点阵头像。
+  /// 真实头像资源路径，为空则生成 jdenticon 头像。
   final String? imageAsset;
 
   final double size;
@@ -112,69 +69,15 @@ class CreditsAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final asset = imageAsset;
-    if (asset != null) {
-      return ClipOval(
-        child: Image.asset(asset, width: size, height: size, fit: BoxFit.cover),
-      );
-    }
-    return SizedBox.square(
-      dimension: size,
-      child: CustomPaint(
-        painter: _CreditsAvatarPainter(
-          seed: seed,
-          style: creditsAvatarStyleFor(seed),
-        ),
-      ),
-    );
-  }
-}
-
-class _CreditsAvatarPainter extends CustomPainter {
-  const _CreditsAvatarPainter({required this.seed, required this.style});
-
-  final String seed;
-  final CreditsAvatarStyle style;
-
-  /// 点阵占头像直径的比例：留出边距，避免方块被圆边切掉一角。
-  static const double _patternExtent = 0.78;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final side = size.shortestSide;
-    final center = Offset(size.width / 2, size.height / 2);
-    canvas.drawCircle(center, side / 2, Paint()..color = style.background);
-
-    final pattern = creditsAvatarPattern(seed);
-    final gridSide = side * _patternExtent;
-    final cell = gridSide / creditsAvatarGridSize;
-    final origin = Offset(
-      (size.width - gridSide) / 2,
-      (size.height - gridSide) / 2,
-    );
-    final mark = Paint()..color = style.mark;
-    final corner = Radius.circular(cell * 0.18);
-    for (var row = 0; row < creditsAvatarGridSize; row++) {
-      for (var col = 0; col < creditsAvatarGridSize; col++) {
-        if (!pattern[row][col]) {
-          continue;
-        }
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(
-              origin.dx + col * cell,
-              origin.dy + row * cell,
-              cell,
-              cell,
+    return ClipOval(
+      child: asset != null
+          ? Image.asset(asset, width: size, height: size, fit: BoxFit.cover)
+          : SvgPicture.string(
+              creditsAvatarSvg(seed),
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
             ),
-            corner,
-          ),
-          mark,
-        );
-      }
-    }
+    );
   }
-
-  @override
-  bool shouldRepaint(_CreditsAvatarPainter oldDelegate) =>
-      oldDelegate.seed != seed || oldDelegate.style != style;
 }

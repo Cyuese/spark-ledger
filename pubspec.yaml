@@ -81,6 +81,10 @@ dependencies:
   # Android 侧就是 Intent.ACTION_VIEW 的官方封装；全项目只经
   # lib/app/external_links.dart 调用，走系统默认浏览器。
   url_launcher: ^6.3.3
+  # 鸣谢页的确定性头像（jdenticon：名字 → SHA1 → SVG）。上游 SDK 上限停在 <3.0.0，
+  # 故本地 vendor 并只放宽 SDK 约束，见 third_party/jdenticon_dart/README.md。
+  jdenticon_dart:
+    path: third_party/jdenticon_dart
 dev_dependencies:
   integration_test:
     sdk: flutter
