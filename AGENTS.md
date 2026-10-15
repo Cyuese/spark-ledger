@@ -136,6 +136,13 @@ dart format .
 6. 下载 CI 生成的预发布 APK 真机验收；通过后在 GitHub 上把该 Release **提升为正式版并标记 Latest**（`prerelease` 去掉）。
 7. 清理没被提升的预发布（见下）。
 
+**Release 标题与说明（规范）：**
+
+- **标题固定等于标签名**：`vX.Y.Z`，不加「· 中文摘要」之类后缀。CI 建预发布时用的就是标签名，提升为正式版时不要再改标题（历史上有过带后缀的标题，不再沿用）。
+- **说明正文由 `CHANGELOG.md` 的对应版本段落自动生成**，模板在 `.github/workflows/flutter.yml` 的 `Compose release notes` 步骤里，只补固定文案：预发布时期的验收提示、「直接覆盖安装 + 更新前先备份」提示。
+- **不写安装包自身的说明**：架构 / ABI / 体积 / 机型限制属于构建与分发口径，只记在 `README.md` 与 `docs/dev/tech-decisions.md`，不进 Release 说明。
+- 提升为正式版：`gh release edit vX.Y.Z --prerelease=false --latest`（不动 git 标签与附件），完成后回读 `gh release view` / `gh release list` 确认 `isPrerelease=false` 且 Latest 已指向它。
+
 ### 版本归档与预发布清理
 
 - GitHub Releases 只保留**正式版**（推荐 Latest 指向最新正式版）；预发布只是「待真机验收」的临时状态，验收通过就应该提升为正式版，而不是长期留存。
