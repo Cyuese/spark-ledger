@@ -1,0 +1,15 @@
+# 上游包：jdenticon_dart 2.0.0（https://pub.dev/packages/jdenticon_dart，MIT）。
+#
+# 本地 vendor 的唯一原因：上游 pubspec 把 SDK 上限写死在 `<3.0.0`，而本项目跑 Dart 3，
+# pub 无法解析它（包本身在 Dart 3 下可正常编译）。除下面的 `environment.sdk` 与
+# `crypto` 下限外，`lib/` 与 `LICENSE` 与上游发布包逐字节一致——同步上游时就 diff 得快。
+name: jdenticon_dart
+description: Vendored copy of jdenticon_dart 2.0.0 (MIT), only the SDK bound widened for Dart 3.
+version: 2.0.0+verifin.1
+homepage: https://github.com/VergillR/jdenticon-dart
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  crypto: ^3.0.6
