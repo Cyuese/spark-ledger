@@ -1753,6 +1753,20 @@
   "settingsSectionGeneral": "通用",
   "settingsSectionBookkeeping": "记账",
   "settingsSectionAbout": "关于",
+  "creditsTitle": "鸣谢",
+  "creditsIntro": "感谢这些人的支持，Veri Fin 才能一直免费、干净地做下去。",
+  "creditsSupporterCount": "{count} 位",
+  "@creditsSupporterCount": {
+    "description": "Settings row trailing text: how many supporters the thanks list holds",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "creditsSupportNote": "这里没有会员特权，也没有解锁内容——你支持的是这款软件本身能继续做下去。",
+  "creditsSupportAction": "在爱发电支持 Veri Fin",
+  "creditsOpenFailed": "没能打开浏览器，请稍后再试。",
   "themeMode": "主题模式",
   "themeColorLabel": "主题色",
   "themeColorDefault": "默认主题色",

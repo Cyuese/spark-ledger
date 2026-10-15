@@ -6,6 +6,7 @@ import 'package:verifin/app/app_theme.dart';
 import 'package:verifin/app/common_widgets.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/pages/budget_pages.dart';
+import 'package:verifin/pages/credits_page.dart';
 import 'package:verifin/pages/data_management_page.dart';
 import 'package:verifin/pages/profile_pages.dart';
 import 'package:verifin/pages/transactions_pages.dart';
@@ -43,6 +44,7 @@ void main() {
           const CategoryManagementPage(),
           const TagManagementPage(),
           const DataManagementPage(),
+          const CreditsPage(),
         ]) {
           // 路由返回在下方显式执行，不能先等待 push 完成。
           unawaited(

@@ -2497,6 +2497,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSectionAbout => 'About';
 
   @override
+  String get creditsTitle => 'Credits';
+
+  @override
+  String get creditsIntro =>
+      'Veri Fin stays free and clean thanks to these people.';
+
+  @override
+  String creditsSupporterCount(int count) {
+    return '$count people';
+  }
+
+  @override
+  String get creditsSupportNote =>
+      'No memberships, no locked features — you are supporting the software itself.';
+
+  @override
+  String get creditsSupportAction => 'Support Veri Fin on Afdian';
+
+  @override
+  String get creditsOpenFailed =>
+      'Could not open the browser. Please try again.';
+
+  @override
   String get themeMode => 'Theme';
 
   @override
