@@ -67,6 +67,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `iconForCode` | 纯函数 | `icon_catalog.dart` | code→`IconData`（**底层，渲染点勿直接调，走上面的盒子**，否则 emoji 会回退成钱包图标） |
 | `isEmojiIconCode` / `emojiOfIconCode` / `emojiIconCode` | 纯函数 | `icon_catalog.dart` | emoji 图标编解码 |
 | `iconLabelForCode` | 纯函数 | `icon_catalog.dart` | 图标 code→本地化名称 |
+| `CreditsAvatar` | Widget | `credits_avatar.dart` | 鸣谢头像：没有素材时由展示名**确定性生成**（FNV-1a 哈希 + 5×5 左右对称点阵 + 固定身份底色）；有 `imageAsset` 时圆形裁剪真实头像。底色**故意不跟随主题色**（同一个人在任何主题/版本下都是同一张脸），与白色图案的对比度 ≥4.5:1 由 `test/credits_test.dart` 断言。渲染点不要再手写点阵或圆形裁剪 |
 
 ## 族 3 — 账户相关
 
