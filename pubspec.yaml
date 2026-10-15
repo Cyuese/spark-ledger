@@ -77,6 +77,10 @@ dependencies:
   animated_toggle_switch: ^0.8.7
   home_widget: 0.10.0
   month_picker_dialog: ^6.7.3
+  # 打开外部链接（鸣谢页的爱发电赞助入口）。Flutter 官方 flutter/packages 维护，
+  # Android 侧就是 Intent.ACTION_VIEW 的官方封装；全项目只经
+  # lib/app/external_links.dart 调用，走系统默认浏览器。
+  url_launcher: ^6.3.3
 dev_dependencies:
   integration_test:
     sdk: flutter

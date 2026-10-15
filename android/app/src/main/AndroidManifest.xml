@@ -21,6 +21,16 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- Android 11+ 的包可见性：只声明「打开 https 链接」这一种意图，供
+         url_launcher 判断系统里是否有能处理它的浏览器（见插件 README 的
+         android-queries 要求）。不声明具体浏览器包名，避免把可见性扩大到无关应用。 -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
     <application
         android:label="VeriFin"
         android:name="${applicationName}"
