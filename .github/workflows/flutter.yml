@@ -75,7 +75,7 @@ jobs:
         # GitHub 自分发包：github flavor，保留应用内一键自更新（REQUEST_INSTALL_PACKAGES）。
         # 只构建 arm64-v8a：2019 年后的安卓机几乎全是 arm64，一个包覆盖 99%+ 设备，
         # 相比 universal（打包 armeabi-v7a/arm64/x86_64 三套原生库）体积约减半。
-        # 极老的 32 位机型装不了——已在 Release 说明中告知。
+        # 极老的 32 位机型装不了；这条限制只记录在这里与 README，不再写进 Release 说明。
         run: flutter build apk --release --target-platform android-arm64 --flavor github
 
       - name: Build release App Bundle (play flavor)
@@ -129,8 +129,6 @@ jobs:
           fi
           {
             echo "⚠️ 预发布（待验证）：此版本由 CI 自动构建，尚未经真机验收。"
-            echo
-            echo "📦 安装包为 **arm64-v8a** 架构，覆盖 2019 年后绝大多数安卓机型。极少数 32 位老设备可能无法安装。"
             echo
             printf '%s\n' "$section"
             echo
