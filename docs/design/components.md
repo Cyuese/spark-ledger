@@ -55,6 +55,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `VeriAnchoredMenuAnchor` / `VeriAnchoredMenuButton` / `VeriAnchoredChoice<T>` / `VeriMenuItem` / `VeriMenuDivider` | Widget / 菜单模型 | `common_widgets.dart` | Veri Fin 锚点菜单：图标、标题、副标题、分割线、选中/禁用态、根/默认子菜单/单项子菜单独立宽度、从点击行原位展开的容器变换，以及缩放/压暗但不丢失的完整祖先卡片栈；任意触发器用 `Anchor`，Header 图标入口用 `Button`，2–8 项静态受控单选优先用 `Choice`；完整用法见 [anchored-menu.md](../dev/anchored-menu.md) |
 | `SaveHeaderAction` | Widget | `common_widgets.dart` | 全屏编辑页统一保存动作；固定软碟语义的 `Icons.save_outlined` 和本地化 tooltip，支持禁用态 |
 | `SortModeHeaderActions` | Widget | `common_widgets.dart` | 管理页显式排序模式的统一 Header 动作；普通态进入排序，排序态提供取消与软碟保存，未改动时禁用保存 |
+| `CreditsPage` | 页面 Widget | `credits_page.dart` | 鸣谢名单页（设置 → 关于 → 鸣谢）：头像墙（`CreditsAvatar` + 常显称呼，分组标题只在有分组时渲染）+ 底部赞助入口。名单与头像都是包内静态内容（`credits.dart`），页面不读账目状态，只在打开浏览器失败时记日志并给轻提示；赞助链接统一经 `external_links.dart`（`ExternalLinks.donationUrl`）打开系统浏览器，不要在页面里直接调插件或硬写 URL |
 
 ## 族 2 — 图标渲染（统一入口，勿绕过）
 

@@ -4496,6 +4496,42 @@ abstract class AppLocalizations {
   /// **'关于'**
   String get settingsSectionAbout;
 
+  /// No description provided for @creditsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'鸣谢'**
+  String get creditsTitle;
+
+  /// No description provided for @creditsIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'感谢这些人的支持，Veri Fin 才能一直免费、干净地做下去。'**
+  String get creditsIntro;
+
+  /// Settings row trailing text: how many supporters the thanks list holds
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 位'**
+  String creditsSupporterCount(int count);
+
+  /// No description provided for @creditsSupportNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'这里没有会员特权，也没有解锁内容——你支持的是这款软件本身能继续做下去。'**
+  String get creditsSupportNote;
+
+  /// No description provided for @creditsSupportAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'在爱发电支持 Veri Fin'**
+  String get creditsSupportAction;
+
+  /// No description provided for @creditsOpenFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能打开浏览器，请稍后再试。'**
+  String get creditsOpenFailed;
+
   /// No description provided for @themeMode.
   ///
   /// In zh, this message translates to:
