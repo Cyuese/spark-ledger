@@ -118,6 +118,7 @@ flutter:
 
   assets:
     - assets/account_icons/
+    - assets/credits/
     - assets/import_icons/
 
   shaders:
