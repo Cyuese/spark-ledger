@@ -29,6 +29,8 @@ class TransactionDetailPage extends StatefulWidget {
   State<TransactionDetailPage> createState() => _TransactionDetailPageState();
 }
 
+enum _NoAccountTransferCurrencyChoice { convert, reinterpret }
+
 class _TransactionDetailPageState extends State<TransactionDetailPage> {
   final EditorExitController _exitController = EditorExitController();
   LedgerEntry? _initialEntry;
@@ -1019,6 +1021,38 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       balanceOf: VeriFinScope.of(context).accountBalance,
     );
     if (selected != null && mounted) {
+      final previous = _findAccount(accounts, _toAccountId);
+      if (_type == EntryType.transfer &&
+          _accountId.isEmpty &&
+          previous != null &&
+          previous.currencyCode != selected.currencyCode) {
+        final oldAmount = _toAccountAmount ?? _amount;
+        final choice = await _chooseNoAccountTransferCurrencyChange(
+          previous: previous,
+          next: selected,
+          amount: oldAmount,
+        );
+        if (!mounted || choice == null) return;
+        setState(() {
+          _toAccountId = selected.id;
+          _currencyCode = selected.currencyCode;
+          _amount = normalizeCurrencyAmount(
+            choice.convertedAmount ?? oldAmount,
+            selected.currencyCode,
+          );
+          _accountAmount = null;
+          _toAccountAmount = _amount;
+          _toAccountAmountTouched = true;
+          _baseAmount = 0;
+          _baseAmountTouched = false;
+          _accountAmountTouched = false;
+          _missingRateCodes.clear();
+          _conversionSource = choice.convertedAmount != null
+              ? ConversionSource.rateTable
+              : ConversionSource.manual;
+        });
+        return;
+      }
       setState(() {
         _toAccountId = selected.id;
         _toAccountAmountTouched = false;
@@ -1029,6 +1063,59 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
         );
       });
     }
+  }
+
+  Future<({_NoAccountTransferCurrencyChoice choice, double? convertedAmount})?>
+  _chooseNoAccountTransferCurrencyChange({
+    required Account previous,
+    required Account next,
+    required double amount,
+  }) async {
+    final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final result = controller.convertAmount(
+      amount: amount,
+      sourceCurrencyCode: previous.currencyCode,
+      targetCurrencyCode: next.currencyCode,
+      date: _occurredAt,
+    );
+    final convertedAmount = result is ConvertedCurrencyAmount
+        ? result.amount
+        : null;
+    final choices = <_NoAccountTransferCurrencyChoice>[
+      if (convertedAmount != null) _NoAccountTransferCurrencyChoice.convert,
+      _NoAccountTransferCurrencyChoice.reinterpret,
+    ];
+    final choice = await showOptionSheet<_NoAccountTransferCurrencyChoice>(
+      context: context,
+      title: convertedAmount == null
+          ? l10n.noAccountTransferNoRateTitle(
+              previous.currencyCode,
+              next.currencyCode,
+            )
+          : l10n.noAccountTransferCurrencyChangeTitle(
+              previous.currencyCode,
+              next.currencyCode,
+            ),
+      values: choices,
+      selected: choices.first,
+      showSelectedMarker: false,
+      labelOf: (value) => switch (value) {
+        _NoAccountTransferCurrencyChoice.convert =>
+          l10n.noAccountTransferConvert(
+            formatUserMoney(convertedAmount!, next.currencyCode),
+          ),
+        _NoAccountTransferCurrencyChoice.reinterpret =>
+          l10n.noAccountTransferReinterpret(next.currencyCode),
+      },
+    );
+    if (choice == null) return null;
+    return (
+      choice: choice,
+      convertedAmount: choice == _NoAccountTransferCurrencyChoice.convert
+          ? convertedAmount
+          : null,
+    );
   }
 
   void _normalizeTransferAccounts(List<Account> accounts) {

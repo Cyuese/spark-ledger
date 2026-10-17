@@ -1057,6 +1057,44 @@
   "pickTypeTitle": "选择类型",
   "noteEditTitle": "编辑备注",
   "transferNeedsTwoAccounts": "转账需要两个不同的账户,请先添加转入账户。",
+  "noAccountTransferCurrencyChangeTitle": "转入币种由 {from} 改为 {to}",
+  "@noAccountTransferCurrencyChangeTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountTransferNoRateTitle": "缺少 {from} → {to} 汇率",
+  "@noAccountTransferNoRateTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountTransferConvert": "按汇率换算为 {amount}",
+  "@noAccountTransferConvert": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountTransferReinterpret": "保留原金额数字，按 {currency} 重新解释",
+  "@noAccountTransferReinterpret": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
   "deleteEntryTitle": "删除此交易？",
   "deleteEntryMessage": "删除后无法恢复，本地保存的这笔记录会被移除。",
   "todayLabel": "今天",
