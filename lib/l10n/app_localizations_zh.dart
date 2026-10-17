@@ -4214,6 +4214,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exchangeRateStale => '可能已过期';
 
   @override
+  String get exchangeRateNotEffective => '未生效';
+
+  @override
+  String exchangeRateFutureCount(int count) {
+    return '另有 $count 条未生效';
+  }
+
+  @override
   String get exchangeRateSourceManual => '手动维护';
 
   @override

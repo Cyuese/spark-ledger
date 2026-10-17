@@ -4,6 +4,7 @@ import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../app/common_widgets.dart';
+import '../app/calendar_days.dart';
 import '../app/currency_catalog.dart';
 import '../app/currency_math.dart';
 import '../app/feedback.dart';
@@ -216,13 +217,23 @@ class _CurrencyRateRow extends StatelessWidget {
     final rates = controller.exchangeRates
         .where((rate) => rate.currencyCode == currencyCode)
         .toList();
-    final latest = rates.isEmpty ? null : rates.first;
-    final stale = latest != null && isExchangeRateStale(latest, DateTime.now());
-    final status = latest == null
+    final today = DateTime.now();
+    final current = controller.exchangeRateFor(currencyCode, today);
+    final future =
+        rates
+            .where((rate) => calendarDaysBetween(today, rate.effectiveDate) > 0)
+            .toList()
+          ..sort((a, b) => a.effectiveDate.compareTo(b.effectiveDate));
+    final displayed = current ?? (future.isEmpty ? null : future.first);
+    final stale = current != null && isExchangeRateStale(current, today);
+    final status = displayed == null
         ? null
         : <String>[
-            exchangeRateSourceLabel(l10n, latest.source),
-            if (stale) l10n.exchangeRateStale,
+            exchangeRateSourceLabel(l10n, displayed.source),
+            if (displayed == current && stale) l10n.exchangeRateStale,
+            if (displayed != current) l10n.exchangeRateNotEffective,
+            if (current != null && future.isNotEmpty)
+              l10n.exchangeRateFutureCount(future.length),
           ].join(' · ');
     return Material(
       color: Colors.transparent,
@@ -239,21 +250,21 @@ class _CurrencyRateRow extends StatelessWidget {
           ),
         ),
         title: Text(
-          latest == null
+          displayed == null
               ? currency.nameForLocale(
                   Localizations.localeOf(context).toLanguageTag(),
                 )
               : l10n.exchangeRateEquation(
                   currencyCode,
-                  formatRateValue(latest.rateToBase),
+                  formatRateValue(displayed.rateToBase),
                   controller.activeBook.baseCurrencyCode,
                 ),
         ),
         subtitle: Text(
-          latest == null
+          displayed == null
               ? l10n.exchangeRateNotSet
               : l10n.exchangeRateDateAndStatus(
-                  l10n.dateYearMonthDay(latest.effectiveDate),
+                  l10n.dateYearMonthDay(displayed.effectiveDate),
                   status!,
                 ),
         ),
@@ -341,6 +352,7 @@ class _RateHistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final future = calendarDaysBetween(DateTime.now(), rate.effectiveDate) > 0;
     return Material(
       color: Colors.transparent,
       child: ListTile(
@@ -355,7 +367,10 @@ class _RateHistoryRow extends StatelessWidget {
         subtitle: Text(
           l10n.exchangeRateDateAndStatus(
             l10n.dateYearMonthDay(rate.effectiveDate),
-            exchangeRateSourceLabel(l10n, rate.source),
+            <String>[
+              exchangeRateSourceLabel(l10n, rate.source),
+              if (future) l10n.exchangeRateNotEffective,
+            ].join(' · '),
           ),
         ),
         onTap: () => editExchangeRate(
