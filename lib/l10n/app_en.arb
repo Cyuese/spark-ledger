@@ -1832,7 +1832,15 @@
   "@assetValuationMissingDesc": {
     "placeholders": {"currencies": {"type": "String"}}
   },
-  "assetTrendMissingRate": "Historical asset trend needs exchange rates. Add local rates for the affected dates to show it.",
+  "assetTrendMissingRate": "There is no exchange rate available for valuation yet. Set a rate for today or earlier to show the asset trend.",
+  "assetTrendPartialMissing": "Some months are missing {currencies} rates ({months}); those months are not drawn. Add rates for those months or earlier to show them.",
+  "@assetTrendPartialMissing": {
+    "placeholders": {
+      "currencies": {"type": "String"},
+      "months": {"type": "String"}
+    }
+  },
+  "exchangeRateSetAction": "Set rate",
   "baseCurrencyAmountLabel": "Base currency {currency}",
   "@baseCurrencyAmountLabel": {
     "placeholders": {"currency": {"type": "String"}}

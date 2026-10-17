@@ -7973,8 +7973,20 @@ abstract class AppLocalizations {
   /// No description provided for @assetTrendMissingRate.
   ///
   /// In zh, this message translates to:
-  /// **'历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。'**
+  /// **'还没有可用于折算的历史汇率，设置今天或更早的汇率后显示资产走势。'**
   String get assetTrendMissingRate;
+
+  /// No description provided for @assetTrendPartialMissing.
+  ///
+  /// In zh, this message translates to:
+  /// **'部分月份缺少 {currencies} 汇率（{months}），这些月份未绘制；补上这些月份或更早的汇率后显示。'**
+  String assetTrendPartialMissing(String currencies, String months);
+
+  /// No description provided for @exchangeRateSetAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置汇率'**
+  String get exchangeRateSetAction;
 
   /// No description provided for @baseCurrencyAmountLabel.
   ///
