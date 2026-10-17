@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -237,7 +238,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                           value: _type.label(AppLocalizations.of(context)),
                         )
                       else
-                        VeriAnchoredChoice<EntryType>(
+                        AnchoredMenuChoice<EntryType>(
                           key: const Key('transaction_type_choice'),
                           values: EntryType.userSelectable,
                           selected: _type,
