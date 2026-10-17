@@ -417,6 +417,53 @@ void main() {
     expect(find.byType(InteractiveTrendChart), findsOneWidget);
   });
 
+  testWidgets('账户报告页在多币种下不在页头声明单一单位', (WidgetTester tester) async {
+    final controller = await makeController();
+    final bookId = controller.activeBook.id;
+    final account = Account(
+      id: 'usd-report-account',
+      bookId: bookId,
+      name: '美元现金',
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 10,
+      iconCode: 'cash',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+      currencyCode: 'USD',
+    );
+    controller
+      ..addAccount(account)
+      ..addEntry(
+        LedgerEntry(
+          id: 'usd-report-entry',
+          bookId: bookId,
+          type: EntryType.expense,
+          amount: 10,
+          currencyCode: 'USD',
+          accountAmount: 10,
+          baseAmount: 72,
+          categoryId: controller.categoriesForType(EntryType.expense).first.id,
+          accountId: account.id,
+          note: '',
+          occurredAt: DateTime.now(),
+        ),
+      );
+
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: AccountReportPage(account: account)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('单位：'), findsNothing);
+    expect(find.textContaining('10 \$'), findsWidgets);
+    expect(find.textContaining('72 ¥'), findsWidgets);
+  });
+
   testWidgets('shows empty state on account groups page', (
     WidgetTester tester,
   ) async {
