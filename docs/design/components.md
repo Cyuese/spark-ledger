@@ -49,8 +49,8 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `SectionTitle` | Widget | `common_widgets.dart` | 区块标题 + 可选 trailing（**文字**）；需要在标题行右侧放自定义控件（如紧凑分段控件）时用 `trailingWidget`，它优先于 `trailing` |
 | `EmptyState` | Widget | `common_widgets.dart` | 空状态（插画 + 标题 + 描述 + 可选 `action` 操作入口）；插画是原生绘制（倾斜卡片 + 放大镜，镜片里放调用方的语义 `icon`），随 `colorScheme.primary` 与浅/深主题自动适配，不用外部素材；系统开启「减少动态效果」时停在静态插画，不跑循环动画 |
 | `AssetMissingRateNotice` | Widget | `common_widgets_scaffold.dart` | 「缺汇率」提示：受影响账户数 + 缺失币种，点按跳 `CurrencyRatesPage`。裸用（看板资产汇总卡）传 `onTap` 时自带点击区与 8dp 纵向内边距；已放在可点卡片里（资产页缺率卡）不要传，避免嵌套点击区 |
-| `HeaderAction` / `HeaderTextAction` / `HeaderInline` / `VeriSectionAction` | Widget | `common_widgets.dart` | 页眉动作族（图标钮/文字钮/宽度约束/填充色小图标钮）；需要弹出操作菜单时使用 `VeriAnchoredMenuButton` |
-| `VeriAnchoredMenuAnchor` / `VeriAnchoredMenuButton` / `VeriAnchoredChoice<T>` / `VeriMenuItem` / `VeriMenuDivider` | Widget / 菜单模型 | `common_widgets.dart` | Veri Fin 锚点菜单：图标、标题、副标题、分割线、选中/禁用态、根/默认子菜单/单项子菜单独立宽度、从点击行原位展开的容器变换，以及缩放/压暗但不丢失的完整祖先卡片栈；任意触发器用 `Anchor`，Header 图标入口用 `Button`，2–8 项静态受控单选优先用 `Choice`；完整用法见 [anchored-menu.md](../dev/anchored-menu.md) |
+| `HeaderAction` / `HeaderTextAction` / `HeaderInline` / `VeriSectionAction` | Widget | `common_widgets.dart` | 页眉动作族（图标钮/文字钮/宽度约束/填充色小图标钮）；需要弹出操作菜单时使用外部库的 `AnchoredMenuButton` |
+| `AnchoredMenuAnchor` / `AnchoredMenuButton` / `AnchoredMenuChoice<T>` / `AnchoredMenuItem` / `AnchoredMenuDivider` | Widget / 菜单模型 | `package:anchored_menu/anchored_menu.dart` | 外部锚点菜单库：图标、标题、副标题、分割线、选中/禁用态、内容自适应宽度、从点击行原位展开的容器变换、完整祖先卡片栈、键盘与 RTL 支持；任意触发器用 `Anchor`，Header 图标入口用 `Button`，2–8 项静态受控单选优先用 `Choice`。应用在 `app_theme.dart` 桥接视觉令牌；完整约定见 [anchored-menu.md](../dev/anchored-menu.md) |
 | `SaveHeaderAction` | Widget | `common_widgets.dart` | 全屏编辑页统一保存动作；固定软碟语义的 `Icons.save_outlined` 和本地化 tooltip，支持禁用态 |
 | `SortModeHeaderActions` | Widget | `common_widgets.dart` | 管理页显式排序模式的统一 Header 动作；普通态进入排序，排序态提供取消与软碟保存，未改动时禁用保存 |
 | `CreditsPage` | 页面 Widget | `credits_page.dart` | 鸣谢名单页（设置 → 关于 → 鸣谢）：头像墙（`CreditsAvatar` + 常显称呼，分组标题只在有分组时渲染）+ 底部赞助入口。名单是包内常量（`credits.dart`），页面不读账目状态，只在打开浏览器失败时记日志并给轻提示；赞助链接统一经 `external_links.dart`（`ExternalLinks.donationUrl`）打开系统浏览器，不要在页面里直接调插件或硬写 URL |
@@ -133,7 +133,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `SectionLabel` | Widget | `common_widgets.dart` | 分组小标题（分区 `VeriCard` 上方的灰色标签，设置页/账户详情页分模块用） |
 | `SettingsRow` | Widget | `common_widgets.dart` | 设置行（图标+标题+trailing 文本+chevron）；`leading` 可传账户图标等自定义前置，`contentColor` 可上色（如危险操作红色） |
 | `CompactSwitchRow` | Widget | `common_widgets.dart` | 紧凑开关行（整行可点，不只点开关）；`onChanged:null` 保留原生禁用语义，表示当前平台/状态不可用 |
-| `VeriSegmentedControl<T>` | Widget | `common_widgets.dart` | **统一分段控件**（文字标签 + 滑动胶囊指示，基于 `animated_toggle_switch`）。所有「N 选一的横向口径切换」一律用它，不要再手写 Row+InkWell 分段条或裸用 Material `SegmentedButton`。颜色只走设计令牌，调用方仅可通过 `accentOf` 指定选中项的语义强调色；`compact: true` 用于卡片标题行内的小切换；`onChanged: null` 整组禁用；自带 `Semantics`（第三方控件本身无语义）。`keyOf` **只给选中项挂 Key**（`rolling` 会把选中项多渲染一份，全挂会撞 Key）——既有契约见记账页 `entry_type_selected_*`。**不用它**：图标型开关（走 `CompactSwitchRow`）、超过 4 项或需要分区的单选（走 `showOptionSheet` / `VeriAnchoredChoice`）、菜单触发器（走 `FilterPill`）、左右步进器（走 `MonthSwitcher`） |
+| `VeriSegmentedControl<T>` | Widget | `common_widgets.dart` | **统一分段控件**（文字标签 + 滑动胶囊指示，基于 `animated_toggle_switch`）。所有「N 选一的横向口径切换」一律用它，不要再手写 Row+InkWell 分段条或裸用 Material `SegmentedButton`。颜色只走设计令牌，调用方仅可通过 `accentOf` 指定选中项的语义强调色；`compact: true` 用于卡片标题行内的小切换；`onChanged: null` 整组禁用；自带 `Semantics`（第三方控件本身无语义）。`keyOf` **只给选中项挂 Key**（`rolling` 会把选中项多渲染一份，全挂会撞 Key）——既有契约见记账页 `entry_type_selected_*`。**不用它**：图标型开关（走 `CompactSwitchRow`）、超过 4 项或需要分区的单选（走 `showOptionSheet` / `AnchoredMenuChoice`）、菜单触发器（走 `FilterPill`）、左右步进器（走 `MonthSwitcher`） |
 | `VeriEntryTypeToggle` | Widget | `common_widgets.dart` | **支出 / 收入口径切换**（内部就是 `VeriSegmentedControl<EntryType>`，支出红 / 收入绿，选中项挂 `dimension_toggle_<type>` Key）。看板近 7 日面板、收支热力卡与月/年排行卡共用；**放在卡片标题行时一律 `compact: true`**（与资产汇总、收支热力右上角同档，卡片内不要混用两种大小）。新增「支出/收入切换」一律用它，不要各写一份 |
 | `MonthSwitcher` | Widget | `common_widgets.dart` | **期间步进器**：`‹ 标签 ›` 前后翻页，预算总览（按月/周期）、收支统计（按周/月/季/年）与看板（按月/按年）共用。`onPrevious` / `onNext` 传 `null` 表示已到边界，箭头保持可见但禁用；`onLabelTap` 非空时中间标签变成可点入口（带下拉箭头，`labelKey` 给测试定位），用于打开「选择月份 / 选择年份」弹层。新增期间切换一律用它，不要另写 Row+IconButton |
 | `DetailInfoRow` | Widget | `common_widgets.dart` | 详情页 label/value 行（可点击带 chevron） |
@@ -153,7 +153,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `showUnsavedChangesDialog` / `EditorExitDecision` | Dialog 函数 / 枚举 | `common_widgets.dart` | 未保存修改的“保存 / 不保存 / 取消”三操作对话框；点遮罩或系统返回视为取消 |
 | `UnsavedChangesGuard` / `EditorExitController` | Widget / Controller | `common_widgets.dart` | 统一拦截编辑页 Header、系统与预测性返回；仅 `onSave` 成功后放行，未修改时不拦截；显式保存成功后用 `EditorExitController.exit()` 走同一受控退出路径，避免同帧旧 dirty 状态拦截程序化返回 |
 | `showTextInputDialog` | Dialog 函数 | `sheets.dart` | **统一文本输入**；`allowEmpty`、`keyboardType`；返回 trim 后 `String?` |
-| `showOptionSheet<T>` | Sheet 函数 | `sheets.dart` | 动态、较长或需 `sectionOf` 分区的通用单选底部弹窗；2–8 项静态受控单选优先用 `VeriAnchoredChoice<T>`；返回 `T?` |
+| `showOptionSheet<T>` | Sheet 函数 | `sheets.dart` | 动态、较长或需 `sectionOf` 分区的通用单选底部弹窗；2–8 项静态受控单选优先用 `AnchoredMenuChoice<T>`；返回 `T?` |
 | `showVeriModalSheet<T>` | Sheet 函数 | `sheets.dart` | 领域弹窗的统一 chrome 入口；页面需要自定义内容时使用它，不得直接调用 `showModalBottomSheet`；支持拖拽把手、滚动控制、安全区、表面色和泛型返回值 |
 | `showLedgerBookEditorSheet` | Sheet 函数 | `sheets.dart` | 新建账本统一表单，同时收集名称与本位币，返回命名 record；取消返回 `null` |
 | `confirmLegacyLedgerCurrency` | Sheet/Dialog 流程 | `sheets.dart` | 旧单币种账本的一次性确认/重解释流程：选币、展示影响数量、二次确认，并调用 Controller 原子迁移；取消或失败返回 `false` |
