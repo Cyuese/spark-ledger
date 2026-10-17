@@ -2,6 +2,8 @@
 
 <!-- 这个 PR 做了什么、为什么。关联 issue：Closes #___ -->
 
+> 外部功能 PR 只提交代码、测试、本地化资源与测试 fixture，不直接修改 `README.md`、`AGENTS.md`、`CLAUDE.md`、`CONTRIBUTING.md`、`CHANGELOG.md`、`docs/` 或 `.github/` 下的模板/工作流。请在下方说明文档影响与建议 release note，由维护者统一更新。
+
 ## 类型
 
 - [ ] feat（新功能）
@@ -15,9 +17,16 @@
 - [ ] `flutter analyze` 无告警
 - [ ] `flutter test` 全绿（改了功能已补 / 改测试）
 - [ ] 新用户可见文案已进 `app_zh.arb` + `app_en.arb`，未硬编码中文
-- [ ] 写新组件前查过 `docs/design/components.md`，优先复用；新增件已登记
-- [ ] 用户可见改动已加 `CHANGELOG.md` 的 `## [Unreleased]`
-- [ ] 相关文档（README / AGENTS / docs）已同步
+- [ ] 写新组件前查过 `docs/design/components.md`，优先复用；新增或改名件已在变更说明中列出，等待维护者登记
+- [ ] 数据结构、命令、架构、配置或用户行为变化的影响已在下方说明
+
+## 文档影响
+
+<!-- 不需要更新时写“无”。需要更新时列明位置与原因，由维护者处理。 -->
+
+## 建议 release note
+
+<!-- 用户可见改动提供一条简短说明；纯内部重构、测试或文档改动留空。维护者合并或发版时统一写入 CHANGELOG。 -->
 
 ## 截图 / 录屏
 
