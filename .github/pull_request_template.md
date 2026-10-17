@@ -2,7 +2,7 @@
 
 <!-- 这个 PR 做了什么、为什么。关联 issue：Closes #___ -->
 
-> 外部功能 PR 只提交代码、测试、本地化资源与测试 fixture，不直接修改 `README.md`、`AGENTS.md`、`CLAUDE.md`、`CONTRIBUTING.md`、`CHANGELOG.md`、`docs/` 或 `.github/` 下的模板/工作流。请在下方说明文档影响与建议 release note，由维护者统一更新。
+> PR 仅限维护者和受邀协作者创建。外部贡献请先提交 Issue，不要直接提交实现。受邀 PR 在下方说明文档影响与建议 release note，由维护者统一更新。
 
 ## 类型
 
