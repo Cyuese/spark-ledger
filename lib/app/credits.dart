@@ -55,6 +55,7 @@ class CreditsGroup {
 const List<CreditsSupporter> creditsSupporters = <CreditsSupporter>[
   CreditsSupporter('wh3286'),
   CreditsSupporter('RunRunxka', avatarAsset: 'assets/credits/runrunxka.jpg'),
+  CreditsSupporter('Rise0223', avatarAsset: 'assets/credits/rise0223.png'),
 ];
 
 /// 按分组标签首次出现的顺序分组。
