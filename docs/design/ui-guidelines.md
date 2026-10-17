@@ -201,7 +201,7 @@ Toast。提示宽度根据正文、重复计数和操作文字的实际排版自
 
 所有数据图表都必须支持交互，后续新增图表同样遵守。数据图表一律走 `lib/app/chart_painters.dart` 适配层（内部使用 `fl_chart`），**页面不得直接 import 图表库，也不得新增自绘数据图表**：
 
-- `InteractiveTrendChart`：折线趋势，平滑曲线 + 曲线下方渐隐填充，只有曲线没有节点圆点；
+- `InteractiveTrendChart`：折线趋势，平滑曲线 + 曲线下方渐隐填充；默认只有曲线，缺率断点或有效点不超过 2 个时用少量小圆点标出可估值位置；
 - `InteractiveBarChart`：柱状；单序列传 `values`，多序列传 `series`（同一插槽内并排成组，用于预算 vs 支出的双柱比较）；
 - `VeriDonutChart`：环形分段；`VeriBudgetRing`：预算/额度进度环。
 
