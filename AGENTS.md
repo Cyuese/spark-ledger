@@ -1,6 +1,6 @@
 # Veri Fin Agent 开发指南
 
-材质规范：卡片、导航、快捷按钮、菜单与弹层一律使用**不透明实色**表面，页面背景为单一纯色；界面目标是高效率、干净直接。唯一例外是底部导航的**可选液态玻璃样式**，其实现必须局部化在 `root_navigation_liquid_glass.dart`、`liquid_glass_surface.dart`、`liquid_glass_lens.dart`、`liquid_glass_material.dart` 与 `shaders/liquid_glass_lens.frag`，不得扩散到卡片、菜单、弹层或页面背景，并在透镜着色器不可用时降级为不含折射的玻璃面板；其余样式与界面禁止引入背景模糊、折射、片元着色器滤镜或整屏渐变。
+材质规范：卡片、导航、快捷按钮、菜单与弹层一律使用**不透明实色**表面，页面背景为单一纯色；界面目标是高效率、干净直接。唯一例外是底部导航的**可选液态玻璃样式**：应用侧只允许在 `root_navigation_liquid_glass.dart` 中适配本地 vendor 的 `third_party/liquid_glass_widgets`（`GlassTabBar.bottom`），`main.dart` 只负责库初始化和主题亮度桥接；第三方玻璃代码不得扩散到卡片、菜单、弹层或页面背景。其余样式与界面禁止引入背景模糊、折射、片元着色器滤镜或整屏渐变。
 
 发布包外观：已评审的统一排版（16dp 有效页边距、56dp Header、16dp 卡片圆角、14/12 卡片内边距）是当前**唯一**外观，本地构建与发布包一致，不再有需要对齐的构建参数。CI 固定 Flutter 3.47.2；正式包由 CI 构建，须用户明确授权发版，禁止要求清除应用数据。
 
