@@ -87,6 +87,8 @@ dependencies:
     path: third_party/jdenticon_dart
   liquid_glass_widgets:
     path: third_party/liquid_glass_widgets
+  # 锚点菜单统一使用外部组件库；应用只负责把设计令牌桥接到 ThemeExtension。
+  anchored_menu: ^0.1.2
 dev_dependencies:
   integration_test:
     sdk: flutter
