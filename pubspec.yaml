@@ -85,6 +85,8 @@ dependencies:
   # 故本地 vendor 并只放宽 SDK 约束，见 third_party/jdenticon_dart/README.md。
   jdenticon_dart:
     path: third_party/jdenticon_dart
+  liquid_glass_widgets:
+    path: third_party/liquid_glass_widgets
 dev_dependencies:
   integration_test:
     sdk: flutter
@@ -120,9 +122,6 @@ flutter:
     - assets/account_icons/
     - assets/credits/
     - assets/import_icons/
-
-  shaders:
-    - shaders/liquid_glass_lens.frag
 
   # To add assets to your application, add an assets section, like this:
   # assets:
