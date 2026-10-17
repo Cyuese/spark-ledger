@@ -1,5 +1,6 @@
 import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/app_theme.dart';
 
@@ -150,6 +151,39 @@ void main() {
 
     expect(selected, isTrue);
     expect(find.text('卡片'), findsNothing);
+  });
+
+  testWidgets('触摸打开不预高亮首项，方向键导航后才显示高亮', (tester) async {
+    await tester.pumpWidget(
+      const _MenuTestApp(
+        entries: <AnchoredMenuEntry>[
+          AnchoredMenuItem(id: 'first', title: '第一项', onPressed: _noop),
+          AnchoredMenuItem(id: 'second', title: '第二项', onPressed: _noop),
+        ],
+      ),
+    );
+
+    Color rowColor(String id) {
+      final material = tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byKey(ValueKey<String>('anchored_menu_item_$id')),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      return material.color!;
+    }
+
+    await tester.tap(find.byTooltip('更多'));
+    await tester.pumpAndSettle();
+    expect(rowColor('first'), Colors.transparent);
+    expect(rowColor('second'), Colors.transparent);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(rowColor('first'), Colors.transparent);
+    expect(rowColor('second'), isNot(Colors.transparent));
   });
 
   testWidgets('choice adapter maps controlled option state and callbacks', (
