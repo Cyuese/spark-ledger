@@ -1644,6 +1644,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Transfers need two different accounts; add a destination account first.';
 
   @override
+  String noAccountTransferCurrencyChangeTitle(String from, String to) {
+    return 'Destination currency changes from $from to $to';
+  }
+
+  @override
+  String noAccountTransferNoRateTitle(String from, String to) {
+    return 'Missing $from → $to rate';
+  }
+
+  @override
+  String noAccountTransferConvert(String amount) {
+    return 'Convert to $amount';
+  }
+
+  @override
+  String noAccountTransferReinterpret(String currency) {
+    return 'Keep the number and reinterpret it as $currency';
+  }
+
+  @override
   String get deleteEntryTitle => 'Delete this transaction?';
 
   @override

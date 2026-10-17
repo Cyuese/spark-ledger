@@ -3068,6 +3068,30 @@ abstract class AppLocalizations {
   /// **'转账需要两个不同的账户,请先添加转入账户。'**
   String get transferNeedsTwoAccounts;
 
+  /// No description provided for @noAccountTransferCurrencyChangeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'转入币种由 {from} 改为 {to}'**
+  String noAccountTransferCurrencyChangeTitle(String from, String to);
+
+  /// No description provided for @noAccountTransferNoRateTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'缺少 {from} → {to} 汇率'**
+  String noAccountTransferNoRateTitle(String from, String to);
+
+  /// No description provided for @noAccountTransferConvert.
+  ///
+  /// In zh, this message translates to:
+  /// **'按汇率换算为 {amount}'**
+  String noAccountTransferConvert(String amount);
+
+  /// No description provided for @noAccountTransferReinterpret.
+  ///
+  /// In zh, this message translates to:
+  /// **'保留原金额数字，按 {currency} 重新解释'**
+  String noAccountTransferReinterpret(String currency);
+
   /// No description provided for @deleteEntryTitle.
   ///
   /// In zh, this message translates to:

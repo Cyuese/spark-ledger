@@ -1605,6 +1605,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get transferNeedsTwoAccounts => '转账需要两个不同的账户,请先添加转入账户。';
 
   @override
+  String noAccountTransferCurrencyChangeTitle(String from, String to) {
+    return '转入币种由 $from 改为 $to';
+  }
+
+  @override
+  String noAccountTransferNoRateTitle(String from, String to) {
+    return '缺少 $from → $to 汇率';
+  }
+
+  @override
+  String noAccountTransferConvert(String amount) {
+    return '按汇率换算为 $amount';
+  }
+
+  @override
+  String noAccountTransferReinterpret(String currency) {
+    return '保留原金额数字，按 $currency 重新解释';
+  }
+
+  @override
   String get deleteEntryTitle => '删除此交易？';
 
   @override
