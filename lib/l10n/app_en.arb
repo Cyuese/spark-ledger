@@ -21,7 +21,7 @@
   "navigationStyleDockedName": "Docked bar",
   "navigationStyleDockedDesc": "Full-width opaque bar pinned to the bottom; icons sweep as you switch",
   "navigationStyleLiquidGlassName": "Liquid glass",
-  "navigationStyleLiquidGlassDesc": "Floating capsule with a blurred glass surface and a sliding highlight",
+  "navigationStyleLiquidGlassDesc": "Floating capsule with live backdrop blur and refraction",
   "quickEntry": "Quick Entry",
   "pressBackAgainToExit": "Press back again to exit",
   "settingsLanguage": "Language",

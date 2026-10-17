@@ -81,7 +81,7 @@
   "@navigationStyleLiquidGlassName": {
     "description": "液态玻璃底栏样式名称"
   },
-  "navigationStyleLiquidGlassDesc": "浮动胶囊，背景模糊并轻微折射，内容从玻璃下滚过",
+  "navigationStyleLiquidGlassDesc": "浮动胶囊，真实采样背景并折射，内容从玻璃下滚过",
   "@navigationStyleLiquidGlassDesc": {
     "description": "液态玻璃底栏样式说明"
   },
