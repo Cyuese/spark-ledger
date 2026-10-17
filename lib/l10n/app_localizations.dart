@@ -1520,6 +1520,12 @@ abstract class AppLocalizations {
   /// **'{date}'**
   String dateMonthDay(DateTime date);
 
+  /// 需要区分年份的完整日期
+  ///
+  /// In zh, this message translates to:
+  /// **'{date}'**
+  String dateYearMonthDay(DateTime date);
+
   /// 首页预算卡标题(某月预算)
   ///
   /// In zh, this message translates to:
@@ -3061,6 +3067,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'转账需要两个不同的账户,请先添加转入账户。'**
   String get transferNeedsTwoAccounts;
+
+  /// No description provided for @noAccountTransferCurrencyChangeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'转入币种由 {from} 改为 {to}'**
+  String noAccountTransferCurrencyChangeTitle(String from, String to);
+
+  /// No description provided for @noAccountTransferNoRateTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'缺少 {from} → {to} 汇率'**
+  String noAccountTransferNoRateTitle(String from, String to);
+
+  /// No description provided for @noAccountTransferConvert.
+  ///
+  /// In zh, this message translates to:
+  /// **'按汇率换算为 {amount}'**
+  String noAccountTransferConvert(String amount);
+
+  /// No description provided for @noAccountTransferReinterpret.
+  ///
+  /// In zh, this message translates to:
+  /// **'保留原金额数字，按 {currency} 重新解释'**
+  String noAccountTransferReinterpret(String currency);
 
   /// No description provided for @deleteEntryTitle.
   ///
@@ -7682,6 +7712,18 @@ abstract class AppLocalizations {
   /// **'可能已过期'**
   String get exchangeRateStale;
 
+  /// No description provided for @exchangeRateNotEffective.
+  ///
+  /// In zh, this message translates to:
+  /// **'未生效'**
+  String get exchangeRateNotEffective;
+
+  /// No description provided for @exchangeRateFutureCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'另有 {count} 条未生效'**
+  String exchangeRateFutureCount(int count);
+
   /// No description provided for @exchangeRateSourceManual.
   ///
   /// In zh, this message translates to:
@@ -7931,8 +7973,20 @@ abstract class AppLocalizations {
   /// No description provided for @assetTrendMissingRate.
   ///
   /// In zh, this message translates to:
-  /// **'历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。'**
+  /// **'还没有可用于折算的历史汇率，设置今天或更早的汇率后显示资产走势。'**
   String get assetTrendMissingRate;
+
+  /// No description provided for @assetTrendPartialMissing.
+  ///
+  /// In zh, this message translates to:
+  /// **'部分月份缺少 {currencies} 汇率（{months}），这些月份未绘制；补上这些月份或更早的汇率后显示。'**
+  String assetTrendPartialMissing(String currencies, String months);
+
+  /// No description provided for @exchangeRateSetAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置汇率'**
+  String get exchangeRateSetAction;
 
   /// No description provided for @baseCurrencyAmountLabel.
   ///

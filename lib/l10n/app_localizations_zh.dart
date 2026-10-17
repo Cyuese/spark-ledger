@@ -745,6 +745,17 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String dateYearMonthDay(DateTime date) {
+    final intl.DateFormat dateDateFormat = intl.DateFormat(
+      'yyyy年M月d日',
+      localeName,
+    );
+    final String dateString = dateDateFormat.format(date);
+
+    return '$dateString';
+  }
+
+  @override
   String monthBudgetTitle(DateTime month) {
     final intl.DateFormat monthDateFormat = intl.DateFormat('M月', localeName);
     final String monthString = monthDateFormat.format(month);
@@ -1592,6 +1603,26 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get transferNeedsTwoAccounts => '转账需要两个不同的账户,请先添加转入账户。';
+
+  @override
+  String noAccountTransferCurrencyChangeTitle(String from, String to) {
+    return '转入币种由 $from 改为 $to';
+  }
+
+  @override
+  String noAccountTransferNoRateTitle(String from, String to) {
+    return '缺少 $from → $to 汇率';
+  }
+
+  @override
+  String noAccountTransferConvert(String amount) {
+    return '按汇率换算为 $amount';
+  }
+
+  @override
+  String noAccountTransferReinterpret(String currency) {
+    return '保留原金额数字，按 $currency 重新解释';
+  }
 
   @override
   String get deleteEntryTitle => '删除此交易？';
@@ -4203,6 +4234,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exchangeRateStale => '可能已过期';
 
   @override
+  String get exchangeRateNotEffective => '未生效';
+
+  @override
+  String exchangeRateFutureCount(int count) {
+    return '另有 $count 条未生效';
+  }
+
+  @override
   String get exchangeRateSourceManual => '手动维护';
 
   @override
@@ -4348,7 +4387,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get assetTrendMissingRate => '历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。';
+  String get assetTrendMissingRate => '还没有可用于折算的历史汇率，设置今天或更早的汇率后显示资产走势。';
+
+  @override
+  String assetTrendPartialMissing(String currencies, String months) {
+    return '部分月份缺少 $currencies 汇率（$months），这些月份未绘制；补上这些月份或更早的汇率后显示。';
+  }
+
+  @override
+  String get exchangeRateSetAction => '设置汇率';
 
   @override
   String baseCurrencyAmountLabel(String currency) {

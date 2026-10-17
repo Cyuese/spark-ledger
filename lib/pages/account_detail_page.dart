@@ -211,6 +211,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                           yLabels: balanceAxisLabels(
                             balanceTrendValues,
                             AppLocalizations.of(context),
+                            currencyCode: currentAccount.currencyCode,
                           ),
                           labelColor: Theme.of(
                             context,
@@ -994,11 +995,7 @@ class AccountReportPage extends StatelessWidget {
             children: <Widget>[
               VeriHeader(
                 title: AppLocalizations.of(context).accountReportTitle,
-                subtitle: currencyUnitSubtitle(
-                  AppLocalizations.of(context),
-                  currentAccount.name,
-                  controller.activeBook.baseCurrencyCode,
-                ),
+                subtitle: currentAccount.name,
                 showBack: true,
               ),
               const SizedBox(height: 10),
@@ -1061,6 +1058,7 @@ class AccountReportPage extends StatelessWidget {
                         yLabels: balanceAxisLabels(
                           reportBalanceValues,
                           AppLocalizations.of(context),
+                          currencyCode: currentAccount.currencyCode,
                         ),
                         labelColor: Theme.of(
                           context,

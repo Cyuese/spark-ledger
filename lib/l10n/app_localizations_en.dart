@@ -767,6 +767,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String dateYearMonthDay(DateTime date) {
+    final intl.DateFormat dateDateFormat = intl.DateFormat(
+      'MMM d, yyyy',
+      localeName,
+    );
+    final String dateString = dateDateFormat.format(date);
+
+    return '$dateString';
+  }
+
+  @override
   String monthBudgetTitle(DateTime month) {
     final intl.DateFormat monthDateFormat = intl.DateFormat.MMM(localeName);
     final String monthString = monthDateFormat.format(month);
@@ -1631,6 +1642,26 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get transferNeedsTwoAccounts =>
       'Transfers need two different accounts; add a destination account first.';
+
+  @override
+  String noAccountTransferCurrencyChangeTitle(String from, String to) {
+    return 'Destination currency changes from $from to $to';
+  }
+
+  @override
+  String noAccountTransferNoRateTitle(String from, String to) {
+    return 'Missing $from → $to rate';
+  }
+
+  @override
+  String noAccountTransferConvert(String amount) {
+    return 'Convert to $amount';
+  }
+
+  @override
+  String noAccountTransferReinterpret(String currency) {
+    return 'Keep the number and reinterpret it as $currency';
+  }
 
   @override
   String get deleteEntryTitle => 'Delete this transaction?';
@@ -4330,6 +4361,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exchangeRateStale => 'May be outdated';
 
   @override
+  String get exchangeRateNotEffective => 'Not yet effective';
+
+  @override
+  String exchangeRateFutureCount(int count) {
+    return 'Plus $count future rate(s)';
+  }
+
+  @override
   String get exchangeRateSourceManual => 'Manual';
 
   @override
@@ -4482,7 +4521,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assetTrendMissingRate =>
-      'Historical asset trend needs exchange rates. Add local rates for the affected dates to show it.';
+      'There is no exchange rate available for valuation yet. Set a rate for today or earlier to show the asset trend.';
+
+  @override
+  String assetTrendPartialMissing(String currencies, String months) {
+    return 'Some months are missing $currencies rates ($months); those months are not drawn. Add rates for those months or earlier to show them.';
+  }
+
+  @override
+  String get exchangeRateSetAction => 'Set rate';
 
   @override
   String baseCurrencyAmountLabel(String currency) {
