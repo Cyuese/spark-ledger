@@ -1,3 +1,4 @@
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
@@ -100,7 +101,7 @@ class _TagManagementPageState extends State<TagManagementPage> {
                             sorting: true,
                           );
                         }
-                        return VeriAnchoredMenuAnchor(
+                        return AnchoredMenuAnchor(
                           key: ValueKey<String>(tag.id),
                           entries: _tagMenuEntries(tag),
                           semanticLabel: tag.label,
@@ -205,17 +206,17 @@ class _TagManagementPageState extends State<TagManagementPage> {
     VeriFinScope.of(context).addTag(label);
   }
 
-  List<VeriMenuEntry> _tagMenuEntries(Tag tag) {
+  List<AnchoredMenuEntry> _tagMenuEntries(Tag tag) {
     final l10n = AppLocalizations.of(context);
-    return <VeriMenuEntry>[
-      VeriMenuItem(
+    return <AnchoredMenuEntry>[
+      AnchoredMenuItem(
         id: 'tag_rename',
         icon: Icons.drive_file_rename_outline,
         title: l10n.commonRename,
         onPressed: () async => _renameTag(tag),
       ),
-      const VeriMenuDivider(),
-      VeriMenuItem(
+      const AnchoredMenuDivider(),
+      AnchoredMenuItem(
         id: 'tag_delete',
         icon: Icons.delete_outline,
         title: l10n.deleteTag,

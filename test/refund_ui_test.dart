@@ -128,7 +128,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.byKey(
-        const ValueKey<String>('veri_menu_item_transaction_detail_type_income'),
+        const ValueKey<String>(
+          'anchored_menu_item_transaction_detail_type_income',
+        ),
       ),
       findsOneWidget,
     );

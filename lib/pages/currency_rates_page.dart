@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../app/common_widgets.dart';
@@ -361,11 +362,11 @@ class _RateHistoryRow extends StatelessWidget {
           currencyCode: rate.currencyCode,
           existing: rate,
         ),
-        trailing: VeriAnchoredMenuButton(
+        trailing: AnchoredMenuButton(
           icon: Icons.more_vert,
           tooltip: l10n.exchangeRateHistory(rate.currencyCode),
-          entries: <VeriMenuEntry>[
-            VeriMenuItem(
+          entries: <AnchoredMenuEntry>[
+            AnchoredMenuItem(
               id: 'rate_edit',
               icon: Icons.edit_outlined,
               title: l10n.commonEdit,
@@ -375,8 +376,8 @@ class _RateHistoryRow extends StatelessWidget {
                 existing: rate,
               ),
             ),
-            const VeriMenuDivider(),
-            VeriMenuItem(
+            const AnchoredMenuDivider(),
+            AnchoredMenuItem(
               id: 'rate_delete',
               icon: Icons.delete_outline,
               title: l10n.commonDelete,

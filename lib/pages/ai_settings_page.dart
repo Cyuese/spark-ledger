@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../app/ai/ai_capabilities.dart';
@@ -352,7 +353,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      VeriAnchoredChoice<AiToolCallMode>(
+                      AnchoredMenuChoice<AiToolCallMode>(
                         values: AiToolCallMode.values,
                         selected: _toolCallMode,
                         idOf: (value) => 'ai_tool_mode_${value.name}',

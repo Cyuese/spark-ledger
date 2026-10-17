@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
@@ -204,7 +205,7 @@ class _WidgetConfigurationPageState extends State<WidgetConfigurationPage> {
                           onTap: _saving ? null : () => _pickBook(session),
                         ),
                         const Divider(height: 1),
-                        VeriAnchoredChoice<WidgetAppearance>(
+                        AnchoredMenuChoice<WidgetAppearance>(
                           values: WidgetAppearance.values,
                           selected: _appearance,
                           idOf: (value) => 'widget_appearance_${value.key}',

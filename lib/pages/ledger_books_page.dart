@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -146,17 +147,17 @@ class _LedgerBookRow extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                   size: 18,
                 ),
-              VeriAnchoredMenuButton(
+              AnchoredMenuButton(
                 icon: Icons.more_vert,
                 tooltip: l10n.bookActions,
-                entries: <VeriMenuEntry>[
-                  VeriMenuItem(
+                entries: <AnchoredMenuEntry>[
+                  AnchoredMenuItem(
                     id: 'book_rename',
                     icon: Icons.drive_file_rename_outline,
                     title: l10n.commonRename,
                     onPressed: () async => _renameBook(context),
                   ),
-                  VeriMenuItem(
+                  AnchoredMenuItem(
                     id: 'book_currency',
                     icon: Icons.currency_exchange_outlined,
                     title: l10n.ledgerBaseCurrency,
@@ -166,8 +167,8 @@ class _LedgerBookRow extends StatelessWidget {
                     enabled: !currencyLocked,
                     onPressed: () async => _editBookCurrency(context),
                   ),
-                  const VeriMenuDivider(),
-                  VeriMenuItem(
+                  const AnchoredMenuDivider(),
+                  AnchoredMenuItem(
                     id: 'book_delete',
                     icon: Icons.delete_outline,
                     title: l10n.commonDelete,
