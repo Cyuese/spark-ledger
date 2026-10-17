@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -971,7 +972,7 @@ class _IncomeExpenseStatsPageState extends State<IncomeExpenseStatsPage> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  VeriAnchoredChoice<EntryType>(
+                  AnchoredMenuChoice<EntryType>(
                     values: EntryType.userSelectable,
                     selected: _type,
                     idOf: (value) => 'stats_type_${value.name}',

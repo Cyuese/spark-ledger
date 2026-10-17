@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -157,7 +158,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
                   VeriCard(
                     child: Column(
                       children: <Widget>[
-                        VeriAnchoredChoice<BackupFrequency>(
+                        AnchoredMenuChoice<BackupFrequency>(
                           values: BackupFrequency.values,
                           selected: _draftFrequency,
                           idOf: (value) => 'backup_frequency_${value.name}',
@@ -190,7 +191,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
                         if (_draftFrequency ==
                             BackupFrequency.everyNHours) ...<Widget>[
                           const Divider(),
-                          VeriAnchoredChoice<int>(
+                          AnchoredMenuChoice<int>(
                             values: _backupIntervalOptions,
                             selected:
                                 _backupIntervalOptions.contains(
@@ -222,7 +223,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
                           ),
                         ],
                         const Divider(),
-                        VeriAnchoredChoice<int>(
+                        AnchoredMenuChoice<int>(
                           values: _backupRetentionOptions,
                           selected:
                               _backupRetentionOptions.contains(_draftRetention)
