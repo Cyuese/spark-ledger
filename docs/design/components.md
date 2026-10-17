@@ -26,7 +26,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 `VeriPage`、`VeriHeader` / `PageHeader` 与 `VeriCard` 支持显式 `compact` 参数。
 开启设计预览时所有公共骨架默认 compact=true：16dp **有效**页边距（页面容器写 14dp，`VeriPage` 再补 2dp）、56dp Header 最小高度、16dp 卡片圆角，默认内边距
-横向 14dp、纵向 12dp；`VeriCard.padding` 显式传入时仍优先。默认构建仍保持已发布几何参数；候选构建的管理页、设置页和根页面不再分两套密度。
+横向 14dp、纵向 12dp；`VeriCard.padding` 显式传入时仍优先。公共页面骨架、管理页、设置页和根页面共用同一套密度。
 
 > **新建页面的标准骨架与头部对齐规则见 `docs/design/ui-guidelines.md`「顶部 Header 与页面骨架」**：`Scaffold > SafeArea > VeriPage > ListView(padding: fromLTRB(14,8,14,…))` + `VeriHeader`；`VeriHeader` 自身无横向内边距，头部缩进全靠外层 padding，带固定页脚的页面须单独给头部套 `Padding(fromLTRB(14,8,14,0))`。
 
@@ -34,7 +34,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 |---|---|---|---|
 | `VeriPage` | Widget | `common_widgets.dart` | 纯色背景 + 居中 + `maxWidth` 约束的页根容器 |
 | `VeriCard` | Widget | `common_widgets.dart` | 统一圆角/描边/阴影卡片，可点击（`quietTap` 长按吞噬变体） |
-| `VeriHeader` | Widget | `common_widgets.dart` | 页眉（标题+副标题+返回+actions，最小高度 52、候选构建 56；用最小高度而非固定高度，系统字号放大时两行标题不会被裁掉） |
+| `VeriHeader` | Widget | `common_widgets.dart` | 页眉（标题+副标题+返回+actions，最小高度 56；用最小高度而非固定高度，系统字号放大时两行标题不会被裁掉） |
 | `PageHeader` | Widget | `common_widgets.dart` | `VeriHeader` 的薄封装（单 trailing）；`subtitle` 为 `String?`，`null` 时整行不渲染；副标题里带「单位：x」必须用 `currencyUnitSubtitle`（族 7）——隐藏单位且无上下文时它返回 `null`，直接传进去即可整段省略 |
 | `VeriRootNavigationStyle` / `VeriRootNavigationLayout` / `VeriRootNavigationSpec` / `VeriRootNavigationHost` / `VeriRootNavigationBody` / `VeriNavigationDestination` / `veriRootPageListPadding` | 契约接口 / 值类 / Widget / 布局 helper | `root_navigation.dart` | 根导航的**样式契约**：样式只声明几何事实（`extendBody`、`occupiedHeight`、`listBottomGap`，避让高度由 `contentBottomPadding` 统一推导）和选中动效时长，并实现 `buildBar` 画栏；`buildBar` 只吃纯数据 `spec`，不接触 Controller/KV/Navigator，因此同一实现同时服务真实壳层与样式选择页预览（预览把 `onSelect` 置空）。每个样式必须产出 `keyOf('bottom_nav')`、`keyOf('nav_bar')` 与 `keyOf('nav_item_<下标>')` 稳定 key，测试与无障碍按 key 定位、不依赖几何。壳层经 `VeriRootNavigationHost` 渲染，测试从这里读 `spec`。契约不含记账按钮（按钮与导航栏解耦，硬约束与契约测试清单见 `docs/design/ui-guidelines.md` 的「根导航」）。切页动画被用户交互打断时由 `_finishTabSwitch` 按页面实际落点对齐底栏，不能写死点击目标 |
 | `VeriRootNavigationStyles` 注册表（`veriRootNavigationStyles` / `veriRootDefaultNavigationStyle` / `veriRootNavigationStyleFor`） | 常量 / 查表函数 | `root_navigation_styles.dart` | 样式注册表：顺序即样式选择列表顺序；`veriRootNavigationStyleFor` 对缺失/未知标识一律回退默认样式。新增样式须同时加同名 `NavigationStylePreference` 枚举值 |
