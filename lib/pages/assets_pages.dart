@@ -545,8 +545,15 @@ List<double>? _baseCurrencyAssetTrend({
     final monthEnd = DateTime(now.year, monthIndex + 2, 0);
     var total = 0.0;
     for (final account in accounts) {
+      final nativeBalance = nativeSeries[account.id]![monthIndex];
+      // 零余额不需要汇率：任何币种的 0 折算后仍是 0。这里与
+      // convertAccountBalancesToBase 的零余额口径保持一致，避免新加的空外币账户
+      // 把整条历史走势误判为缺率。
+      if (isZeroCurrencyAmount(nativeBalance, account.currencyCode)) {
+        continue;
+      }
       final conversion = convert(
-        amount: nativeSeries[account.id]![monthIndex],
+        amount: nativeBalance,
         currencyCode: account.currencyCode,
         date: monthEnd,
       );

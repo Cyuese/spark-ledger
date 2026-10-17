@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/app_theme.dart';
+import 'package:verifin/app/chart_painters.dart';
 import 'package:verifin/app/common_widgets.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/app/veri_fin_scope.dart';
@@ -349,6 +350,7 @@ void main() {
     await tapBottomTab(tester, 1);
 
     expect(find.text('有 1 个账户待设置汇率'), findsOneWidget);
+    expect(find.text('历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('美元现金'),
       260,
@@ -368,9 +370,51 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('有 1 个账户待设置汇率'), findsNothing);
+    expect(find.text('历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。'), findsNothing);
     expect(find.text('172 ¥'), findsNWidgets(2));
     expect(find.text('10 \$'), findsOneWidget);
     expect(find.text('资产估值最旧汇率：2020年1月 · 可能已过期'), findsOneWidget);
+  });
+
+  testWidgets('零余额外币账户不要求汇率，历史资产走势仍显示', (WidgetTester tester) async {
+    final controller = await pumpApp(tester);
+    final bookId = controller.activeBook.id;
+    controller
+      ..addAccount(
+        Account(
+          id: 'cny-zero-rate-account',
+          bookId: bookId,
+          name: '人民币现金',
+          type: AccountType.cash,
+          groupId: null,
+          initialBalance: 100,
+          iconCode: 'cash',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+          currencyCode: 'CNY',
+        ),
+      )
+      ..addAccount(
+        Account(
+          id: 'usd-zero-balance-account',
+          bookId: bookId,
+          name: '美元现金',
+          type: AccountType.cash,
+          groupId: null,
+          initialBalance: 0,
+          iconCode: 'cash',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+          currencyCode: 'USD',
+        ),
+      );
+    await tester.pump();
+    await tapBottomTab(tester, 1);
+
+    expect(find.text('历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。'), findsNothing);
+    expect(find.byType(InteractiveTrendChart), findsOneWidget);
   });
 
   testWidgets('shows empty state on account groups page', (
