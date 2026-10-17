@@ -1520,6 +1520,12 @@ abstract class AppLocalizations {
   /// **'{date}'**
   String dateMonthDay(DateTime date);
 
+  /// 需要区分年份的完整日期
+  ///
+  /// In zh, this message translates to:
+  /// **'{date}'**
+  String dateYearMonthDay(DateTime date);
+
   /// 首页预算卡标题(某月预算)
   ///
   /// In zh, this message translates to:

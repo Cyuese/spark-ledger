@@ -204,6 +204,34 @@ void main() {
     expect(find.text('删除'), findsOneWidget);
   });
 
+  testWidgets('汇率历史显示年份和来源，手工编辑后来源变为手动', (tester) async {
+    final controller = await makeController();
+    await controller.saveExchangeRateDraft(
+      currencyCode: 'USD',
+      effectiveDate: DateTime(2000, 1, 1),
+      rateToBase: 7,
+      source: ExchangeRateSource.imported,
+    );
+    await pumpPage(tester, controller, const CurrencyRatesPage());
+
+    expect(find.text('2000年1月1日 · 导入 · 可能已过期'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('currency_rate_USD')));
+    await tester.pumpAndSettle();
+    expect(find.text('2000年1月1日 · 导入'), findsOneWidget);
+    expect(find.textContaining('可能已过期'), findsNothing);
+
+    await tester.tap(find.text('1 USD = 7 CNY'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('number_pad_ok')));
+    await tester.pumpAndSettle();
+
+    expect(controller.exchangeRates.single.source, ExchangeRateSource.manual);
+    expect(find.text('2000年1月1日 · 手动维护'), findsOneWidget);
+  });
+
   testWidgets('旧账本从货币页完成一次性无换算重解释', (tester) async {
     final repository = InMemoryLedgerRepository();
     await repository.saveBooks(<LedgerBook>[

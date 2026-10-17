@@ -514,6 +514,17 @@
       }
     }
   },
+  "dateYearMonthDay": "{date}",
+  "@dateYearMonthDay": {
+    "description": "需要区分年份的完整日期",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yyyy年M月d日",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
   "monthBudgetTitle": "{month}预算",
   "@monthBudgetTitle": {
     "description": "首页预算卡标题(某月预算)",
