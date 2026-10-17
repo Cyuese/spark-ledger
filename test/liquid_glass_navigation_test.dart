@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'package:verifin/app/app_theme.dart';
 import 'package:verifin/app/root_navigation.dart';
 import 'package:verifin/app/root_navigation_liquid_glass.dart';
 import 'package:verifin/app/root_navigation_styles.dart';
 
-/// 液态玻璃底栏样式：几何声明、条目契约与降级行为。
-///
-/// widget 测试环境没有 Impeller，`ImageFilter.isShaderFilterSupported` 为 false，
-/// 因此这里覆盖的正是「着色器不可用时仍保留模糊玻璃与全部交互」这条路径。
+/// 液态玻璃底栏样式：几何声明、条目契约与交互行为。
 void main() {
   test('液态玻璃样式已注册，且与偏好枚举一一对应', () {
     const style = VeriLiquidGlassRootNavigationStyle();
@@ -60,8 +58,14 @@ void main() {
         findsWidgets,
       );
     }
-    // 玻璃样式是唯一绘制背景模糊的已注册样式。
-    expect(find.byType(BackdropFilter), findsWidgets);
+    // 玻璃样式复用第三方 `GlassTabBar.bottom`，不在应用层另画玻璃面板。
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('main_bottom_nav')),
+        matching: find.byType(GlassTabBar),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('液态玻璃底栏向读屏暴露选中态，并回调正确下标', (tester) async {
@@ -71,11 +75,11 @@ void main() {
       await tester.pumpWidget(_LiquidGlassHarness(onSelected: selected.add));
 
       expect(
-        tester.getSemantics(find.text('首页')),
+        tester.getSemantics(find.bySemanticsLabel('首页')),
         isSemantics(label: '首页', isSelected: true, hasTapAction: true),
       );
       expect(
-        tester.getSemantics(find.text('看板')),
+        tester.getSemantics(find.bySemanticsLabel('看板')),
         isSemantics(label: '看板', isSelected: false, hasTapAction: true),
       );
 

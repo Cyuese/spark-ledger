@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -38,6 +39,8 @@ Future<void> main() async {
     runZonedGuarded(
       () async {
         WidgetsFlutterBinding.ensureInitialized();
+        // 预加载可选液态玻璃底栏所需的着色器；初始化只做异步资源读取。
+        await LiquidGlassWidgets.initialize(enablePerformanceMonitor: false);
         final store = await LocalKeyValueStore.create();
         final logger = AppLogger(store);
         // 未捕获的框架错误与异步错误都记入软件日志，便于用户反馈时提供诊断线索。
@@ -81,7 +84,12 @@ Future<void> main() async {
         }
         // 打开应用时补记到期的周期交易。
         await controller.applyDueRecurring(DateTime.now());
-        runApp(VeriFinApp(controller: controller));
+        runApp(
+          LiquidGlassWidgets.wrap(
+            child: VeriFinApp(controller: controller),
+            brightnessResolver: Theme.maybeBrightnessOf,
+          ),
+        );
       },
       (error, stack) {
         // runZonedGuarded 兜底：此时 logger 可能尚未创建（极早期崩溃），仅调试打印。
@@ -376,12 +384,15 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
                       Brightness.dark,
                       colorPreference: themeColorPreference,
                     ),
-                    builder: (context, child) => PrivacyConsentGate(
-                      child: AppLockGate(
-                        child: OnboardingGate(
-                          child: VeriFeedbackHost(
-                            controller: _feedbackController,
-                            child: child ?? const SizedBox.shrink(),
+                    builder: (context, child) => Material(
+                      type: MaterialType.transparency,
+                      child: PrivacyConsentGate(
+                        child: AppLockGate(
+                          child: OnboardingGate(
+                            child: VeriFeedbackHost(
+                              controller: _feedbackController,
+                              child: child ?? const SizedBox.shrink(),
+                            ),
                           ),
                         ),
                       ),
