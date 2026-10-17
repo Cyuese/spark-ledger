@@ -70,6 +70,11 @@ class VeriLiquidGlassRootNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // 预览是静态的，不承载交互；premium 玻璃层的 shader 在父级滚动时
+    // 仍会沿用上一帧的位置。预览改用库的无 shader 降级路径，避免背景
+    // 面板在滚动时与图标分离。真实底栏仍使用 premium。
+    final isPreview = spec.onSelect == null;
     final tabs = <GlassTab>[
       for (var index = 0; index < spec.destinations.length; index++)
         GlassTab(
@@ -110,7 +115,12 @@ class VeriLiquidGlassRootNavigation extends StatelessWidget {
         selectedLabelColor: scheme.primary,
         unselectedLabelColor: veriNavigationUnselected,
         adaptiveBrightness: false,
-        quality: GlassQuality.premium,
+        // 默认底栏玻璃会使用 24% 白色底；深色模式改用库文档定义的
+        // ios27Dark 材质，让玻璃压暗而不是发白。浅色模式保持原默认材质。
+        settings: isDark ? LiquidGlassSettings.ios27Dark : null,
+        indicatorColor: isDark ? Colors.white.withValues(alpha: 0.06) : null,
+        quality: isPreview ? GlassQuality.minimal : GlassQuality.premium,
+        backgroundQuality: isPreview ? GlassQuality.minimal : null,
       ),
     );
   }

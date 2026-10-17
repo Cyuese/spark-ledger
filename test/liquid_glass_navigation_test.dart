@@ -108,12 +108,25 @@ void main() {
     expect(selected, isNotEmpty, reason: '拖动松手后应把目标下标交给 Shell');
     expect(selected.last, inInclusiveRange(1, 3));
   });
+
+  testWidgets('深色模式使用压暗的 ios27Dark 玻璃材质', (tester) async {
+    await tester.pumpWidget(
+      _LiquidGlassHarness(theme: buildVeriFinTheme(Brightness.dark)),
+    );
+
+    final bar = tester.widget<GlassTabBar>(find.byType(GlassTabBar));
+    expect(bar.settings?.glassColor, LiquidGlassSettings.ios27Dark.glassColor);
+    expect(bar.settings?.bodyShade, LiquidGlassSettings.ios27Dark.bodyShade);
+    expect(bar.settings?.frost, LiquidGlassSettings.ios27Dark.frost);
+    expect(bar.indicatorColor?.a, closeTo(0.06, 0.001));
+  });
 }
 
 class _LiquidGlassHarness extends StatefulWidget {
-  const _LiquidGlassHarness({this.onSelected});
+  const _LiquidGlassHarness({this.onSelected, this.theme});
 
   final ValueChanged<int>? onSelected;
+  final ThemeData? theme;
 
   @override
   State<_LiquidGlassHarness> createState() => _LiquidGlassHarnessState();
@@ -148,7 +161,7 @@ class _LiquidGlassHarnessState extends State<_LiquidGlassHarness> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: buildVeriFinTheme(Brightness.light),
+      theme: widget.theme ?? buildVeriFinTheme(Brightness.light),
       home: Scaffold(
         extendBody: true,
         body: const SizedBox.expand(),

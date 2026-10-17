@@ -15,6 +15,8 @@
 
 第二个已注册样式是**液态玻璃**，由本地 vendor 的 `third_party/liquid_glass_widgets` 中的 `GlassTabBar.bottom` 实现，应用侧只在 `root_navigation_liquid_glass.dart` 做适配：浮动胶囊（高 60、左右 12、底部留白 24）会对底栏后面的页面内容做真实背景采样、模糊与折射；按下、拖动、松手吸附和指示器动画都由该组件处理。它声明 `extendBody: true`，页面内容从胶囊下方滚过；着色器不可用时库自行降级，条目、标签与读屏语义不受影响。其他样式与界面不得直接引用该第三方包。
 
+> 样式选择页的液态玻璃预览使用组件库的无 shader `minimal` 路径，避免父级滚动时 premium shader 沿用旧位置；真实根导航仍使用 premium。
+
 **记账按钮与导航栏无关**：它是右下角的独立浮动圆角方形，只在首页显示，由 Shell 自己渲染；样式不参与，也不得占用它的区域（内容延伸到栏背后时，Shell 按样式声明的 `occupiedHeight` 把按钮抬到栏上方）。
 
 承载根导航的 Shell 取当前样式的 `layout` 决定 `Scaffold.extendBody`（停靠底栏不透明，内容延伸到它背后会被盖住半截）与列表避让，并关闭 body 外层 `SafeArea` 的 bottom 裁切。PageView 外必须套 `VeriRootNavigationBody`，隔离 Scaffold 注入的 bottom padding，避免页面内未显式 padding 的 GridView（日历、功能宫格等）被底栏高度撑大。停靠样式的条目内容用 `SafeArea(minimum: 12, maintainBottomViewPadding: true)` 让开系统导航条；根页面列表用 `veriRootPageListPadding(context)` 取统一内边距。

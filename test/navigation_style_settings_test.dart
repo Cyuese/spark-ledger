@@ -194,6 +194,17 @@ void main() {
       ),
       findsOneWidget,
     );
+    final liquidBar = tester.widget<GlassTabBar>(
+      find.descendant(
+        of: find.byKey(const ValueKey<String>('navigation_style_liquidGlass')),
+        matching: find.byType(GlassTabBar),
+      ),
+    );
+    expect(
+      liquidBar.quality,
+      GlassQuality.minimal,
+      reason: '预览必须避开 premium shader 的滚动位置缓存',
+    );
     // 玻璃预览同样复用 buildBar：四个条目与常显标签一起渲染。
     for (final label in <String>['首页', '资产', '看板', '我的']) {
       expect(
