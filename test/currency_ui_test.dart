@@ -184,6 +184,33 @@ void main() {
     expect(find.textContaining('应用不会联网'), findsNothing);
   });
 
+  testWidgets('汇率管理页列出仅被周期规则使用的币种', (tester) async {
+    final controller = await makeController();
+    final incomeCategory = controller.categories.firstWhere(
+      (category) => category.type == EntryType.income,
+    );
+    final rule = RecurringRule(
+      id: 'eur-rule',
+      bookId: controller.activeBook.id,
+      type: EntryType.income,
+      amount: 10,
+      currencyCode: 'EUR',
+      baseAmount: 78,
+      ratePolicy: RecurringRatePolicy.latestAvailable,
+      categoryId: incomeCategory.id,
+      accountId: '',
+      note: '',
+      frequency: RecurringFrequency.monthly,
+      startDate: DateTime(2030, 1, 1),
+      nextRunDate: DateTime(2030, 1, 1),
+    );
+    expect(await controller.saveRecurringRuleDraft(rule, isNew: true), isTrue);
+
+    await pumpPage(tester, controller, const CurrencyRatesPage());
+
+    expect(find.byKey(const Key('currency_rate_EUR')), findsOneWidget);
+  });
+
   testWidgets('汇率历史行使用锚点菜单提供编辑和删除', (tester) async {
     final controller = await makeController();
     await controller.saveExchangeRateDraft(

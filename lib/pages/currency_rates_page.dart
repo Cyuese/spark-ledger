@@ -49,6 +49,8 @@ class _CurrencyRatesPageState extends State<CurrencyRatesPage> {
         if (account.currencyCode != book.baseCurrencyCode) account.currencyCode,
       for (final entry in controller.entries)
         if (entry.currencyCode != book.baseCurrencyCode) entry.currencyCode,
+      for (final rule in controller.recurringRules)
+        if (rule.currencyCode != book.baseCurrencyCode) rule.currencyCode,
       for (final rate in controller.exchangeRates) rate.currencyCode,
     }.toList()..sort();
 
