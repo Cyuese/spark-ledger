@@ -9,26 +9,36 @@ import 'package:verifin/app/credits_avatar.dart';
 
 import 'support/test_harness.dart';
 
+const String _avatarSeedA = 'fixture-avatar-seed-a';
+const String _avatarSeedB = 'fixture-avatar-seed-b';
+
 void main() {
   group('头像 SVG', () {
     test('同名同图，不同名不同图', () {
-      expect(creditsAvatarSvg('wh3286'), creditsAvatarSvg('wh3286'));
-      expect(creditsAvatarSvg('wh3286'), isNot(creditsAvatarSvg('爱发电用户_Jd7R')));
+      expect(creditsAvatarSvg(_avatarSeedA), creditsAvatarSvg(_avatarSeedA));
+      expect(
+        creditsAvatarSvg(_avatarSeedA),
+        isNot(creditsAvatarSvg(_avatarSeedB)),
+      );
       // 名字大小写敏感：jdenticon 上游行为，两个不同的称呼不该撞成一张脸。
-      expect(creditsAvatarSvg('wh3286'), isNot(creditsAvatarSvg('WH3286')));
+      expect(
+        creditsAvatarSvg(_avatarSeedA),
+        isNot(creditsAvatarSvg(_avatarSeedA.toUpperCase())),
+      );
     });
 
     test('是当前算法的快照：换算法必须在测试里显式确认', () {
       // 只锁一个指纹而不是整段 SVG：算法一变（上游升级、换库、参数调整），
-      // 用户设备上的头像就会换脸，这种变化必须是有意为之。
+      // 生成头像就会换脸，这种变化必须是有意为之。这里使用合成 seed，
+      // 不绑定具体贡献者的名称或头像资源。
       final fingerprint = sha1
-          .convert(utf8.encode(creditsAvatarSvg('wh3286')))
+          .convert(utf8.encode(creditsAvatarSvg(_avatarSeedA)))
           .toString();
-      expect(fingerprint, '7cc287f0bbfb0c8511e0fae884fc80ffe7cd8533');
+      expect(fingerprint, '15c9c0f82b64e93557c14b70f3142a432e227a93');
     });
 
     test('同时包含淡彩圆底与几何图形', () {
-      final svg = creditsAvatarSvg('wh3286');
+      final svg = creditsAvatarSvg(_avatarSeedA);
       expect(svg, startsWith('<svg '));
       expect(svg, contains('viewBox="0 0 200 200"'));
       // jdenticon 默认是透明底的三层图形，这里必须补上圆底（rect 带不透明 fill）。
@@ -45,7 +55,9 @@ void main() {
     testWidgets('渲染成圆形切边的 SVG 图片且不报错', (tester) async {
       await tester.pumpWidget(
         zhMaterialApp(
-          home: const Center(child: CreditsAvatar(seed: 'wh3286', size: 56)),
+          home: const Center(
+            child: CreditsAvatar(seed: _avatarSeedA, size: 56),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -56,14 +68,18 @@ void main() {
   });
 
   group('名单分组', () {
-    test('当前名单只有一个默认组，且不产生组标题', () {
-      final groups = creditsGroups();
+    test('默认组不产生组标题，且保持传入顺序', () {
+      final groups = creditsGroups(
+        supporters: const <CreditsSupporter>[
+          CreditsSupporter('fixture-a'),
+          CreditsSupporter('fixture-b'),
+        ],
+      );
       expect(groups.length, 1);
       expect(groups.single.title, isNull);
-      expect(groups.single.members.length, creditsSupporters.length);
       expect(groups.single.members.map((member) => member.name), <String>[
-        'wh3286',
-        '爱发电用户_Jd7R',
+        'fixture-a',
+        'fixture-b',
       ]);
     });
 
@@ -88,9 +104,9 @@ void main() {
     });
 
     test('头像种子默认取展示名，可用 seed 固定', () {
-      const withSeed = CreditsSupporter('新名字', seed: 'wh3286');
-      expect(withSeed.avatarSeed, 'wh3286');
-      expect(const CreditsSupporter('wh3286').avatarSeed, 'wh3286');
+      const withSeed = CreditsSupporter('new-name', seed: 'stable-seed');
+      expect(withSeed.avatarSeed, 'stable-seed');
+      expect(const CreditsSupporter('fixture-name').avatarSeed, 'fixture-name');
     });
   });
 }
