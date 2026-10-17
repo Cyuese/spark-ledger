@@ -248,6 +248,16 @@
       }
     }
   },
+  "dateYearMonthDay": "{date}",
+  "@dateYearMonthDay": {
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "MMM d, yyyy",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
   "monthBudgetTitle": "{month} budget",
   "@monthBudgetTitle": {
     "placeholders": {
@@ -539,6 +549,44 @@
   "pickTypeTitle": "Choose type",
   "noteEditTitle": "Edit note",
   "transferNeedsTwoAccounts": "Transfers need two different accounts; add a destination account first.",
+  "noAccountTransferCurrencyChangeTitle": "Destination currency changes from {from} to {to}",
+  "@noAccountTransferCurrencyChangeTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountTransferNoRateTitle": "Missing {from} → {to} rate",
+  "@noAccountTransferNoRateTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountTransferConvert": "Convert to {amount}",
+  "@noAccountTransferConvert": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountTransferReinterpret": "Keep the number and reinterpret it as {currency}",
+  "@noAccountTransferReinterpret": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
   "deleteEntryTitle": "Delete this transaction?",
   "deleteEntryMessage": "This cannot be undone; the locally saved record will be removed.",
   "todayLabel": "Today",
@@ -1688,6 +1736,15 @@
     }
   },
   "exchangeRateStale": "May be outdated",
+  "exchangeRateNotEffective": "Not yet effective",
+  "exchangeRateFutureCount": "Plus {count} future rate(s)",
+  "@exchangeRateFutureCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "exchangeRateSourceManual": "Manual",
   "exchangeRateSourceImported": "Imported",
   "exchangeRateHistory": "{currency} rate history",
@@ -1775,7 +1832,15 @@
   "@assetValuationMissingDesc": {
     "placeholders": {"currencies": {"type": "String"}}
   },
-  "assetTrendMissingRate": "Historical asset trend needs exchange rates. Add local rates for the affected dates to show it.",
+  "assetTrendMissingRate": "There is no exchange rate available for valuation yet. Set a rate for today or earlier to show the asset trend.",
+  "assetTrendPartialMissing": "Some months are missing {currencies} rates ({months}); those months are not drawn. Add rates for those months or earlier to show them.",
+  "@assetTrendPartialMissing": {
+    "placeholders": {
+      "currencies": {"type": "String"},
+      "months": {"type": "String"}
+    }
+  },
+  "exchangeRateSetAction": "Set rate",
   "baseCurrencyAmountLabel": "Base currency {currency}",
   "@baseCurrencyAmountLabel": {
     "placeholders": {"currency": {"type": "String"}}

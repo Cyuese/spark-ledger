@@ -38,6 +38,13 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.byKey(
+        const ValueKey<String>('anchored_menu_item_stats_type_transfer'),
+      ),
+      findsNothing,
+    );
+    expect(find.text('转账'), findsNothing);
     await tester.tap(find.text('收入').last);
     await tester.pumpAndSettle();
 

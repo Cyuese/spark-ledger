@@ -514,6 +514,17 @@
       }
     }
   },
+  "dateYearMonthDay": "{date}",
+  "@dateYearMonthDay": {
+    "description": "需要区分年份的完整日期",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yyyy年M月d日",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
   "monthBudgetTitle": "{month}预算",
   "@monthBudgetTitle": {
     "description": "首页预算卡标题(某月预算)",
@@ -1046,6 +1057,44 @@
   "pickTypeTitle": "选择类型",
   "noteEditTitle": "编辑备注",
   "transferNeedsTwoAccounts": "转账需要两个不同的账户,请先添加转入账户。",
+  "noAccountTransferCurrencyChangeTitle": "转入币种由 {from} 改为 {to}",
+  "@noAccountTransferCurrencyChangeTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountTransferNoRateTitle": "缺少 {from} → {to} 汇率",
+  "@noAccountTransferNoRateTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountTransferConvert": "按汇率换算为 {amount}",
+  "@noAccountTransferConvert": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountTransferReinterpret": "保留原金额数字，按 {currency} 重新解释",
+  "@noAccountTransferReinterpret": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
   "deleteEntryTitle": "删除此交易？",
   "deleteEntryMessage": "删除后无法恢复，本地保存的这笔记录会被移除。",
   "todayLabel": "今天",
@@ -2737,6 +2786,15 @@
     }
   },
   "exchangeRateStale": "可能已过期",
+  "exchangeRateNotEffective": "未生效",
+  "exchangeRateFutureCount": "另有 {count} 条未生效",
+  "@exchangeRateFutureCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "exchangeRateSourceManual": "手动维护",
   "exchangeRateSourceImported": "导入",
   "exchangeRateHistory": "{currency} 汇率历史",
@@ -2824,7 +2882,15 @@
   "@assetValuationMissingDesc": {
     "placeholders": {"currencies": {"type": "String"}}
   },
-  "assetTrendMissingRate": "历史资产走势缺少汇率，补齐相应日期的本地汇率后显示。",
+  "assetTrendMissingRate": "还没有可用于折算的历史汇率，设置今天或更早的汇率后显示资产走势。",
+  "assetTrendPartialMissing": "部分月份缺少 {currencies} 汇率（{months}），这些月份未绘制；补上这些月份或更早的汇率后显示。",
+  "@assetTrendPartialMissing": {
+    "placeholders": {
+      "currencies": {"type": "String"},
+      "months": {"type": "String"}
+    }
+  },
+  "exchangeRateSetAction": "设置汇率",
   "baseCurrencyAmountLabel": "本位币 {currency}",
   "@baseCurrencyAmountLabel": {
     "placeholders": {"currency": {"type": "String"}}

@@ -26,6 +26,16 @@ void main() {
       final rows = parseCsv('a,b\n\n\n1,2\n');
       expect(rows.length, 2);
     });
+
+    test('CSV 模板每行列数与表头一致', () {
+      final rows = parseCsv(transactionCsvTemplate());
+      expect(rows.first, contains('记录编号'));
+      expect(rows.first, contains('原支出编号'));
+      expect(rows.first, contains('到账日期'));
+      for (final row in rows.skip(1)) {
+        expect(row.length, rows.first.length);
+      }
+    });
   });
 
   group('buildImportPlan', () {
