@@ -1,6 +1,6 @@
 # 锚点菜单（anchored_menu）
 
-Veri Fin 的锚点菜单使用 pub.dev 外部组件库 [anchored_menu](https://pub.dev/packages/anchored_menu)，当前依赖为 `^0.1.2`，直接导入：
+Veri Fin 的锚点菜单使用 pub.dev 外部组件库 [anchored_menu](https://pub.dev/packages/anchored_menu)，当前依赖为 `^0.1.3`，直接导入：
 
 ```dart
 import 'package:anchored_menu/anchored_menu.dart';
