@@ -77,7 +77,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navigationStyleLiquidGlassDesc =>
-      'Floating capsule with a blurred glass surface and a sliding highlight';
+      'Floating capsule with live backdrop blur and refraction';
 
   @override
   String get quickEntry => 'Quick Entry';

@@ -13,7 +13,7 @@
 
 四个根页面使用同一条底部导航，样式经 `VeriRootNavigationStyle` 注册、由 `VeriRootNavigationHost` 渲染。当前默认样式是**停靠式**：整宽、不透明、贴底，条目由自有的 `VeriBottomBar` 绘制（未选中线框图标、选中填充图标，中文标签常显）。选中项用 `colorScheme.primary`（默认 Veri Royal）强调，底栏表面和未选中项保持中性，不给整条导航背景染色。
 
-第二个已注册样式是**液态玻璃**（`root_navigation_liquid_glass.dart` + `liquid_glass_surface.dart` + `liquid_glass_lens.dart`）：浮动胶囊（高 60、左右 12、底部留白 24）+ 背景模糊 + 沿边方向高光，透镜只在拖动/按压时对导航自身内容做形变。它声明 `extendBody: true`，页面内容从胶囊下方滚过；按下即滑向目标、拖动跟手、松手吸附最近一项，纯点击与拖动都会把目标交给 Shell。`ImageFilter.shader` 只在 Impeller 下可用，不可用时自动降级为不含折射的玻璃面板，条目、标签与读屏语义不受影响。玻璃实现必须留在该样式自己的文件与着色器内，其他样式与界面不得引用。
+第二个已注册样式是**液态玻璃**，由本地 vendor 的 `third_party/liquid_glass_widgets` 中的 `GlassTabBar.bottom` 实现，应用侧只在 `root_navigation_liquid_glass.dart` 做适配：浮动胶囊（高 60、左右 12、底部留白 24）会对底栏后面的页面内容做真实背景采样、模糊与折射；按下、拖动、松手吸附和指示器动画都由该组件处理。它声明 `extendBody: true`，页面内容从胶囊下方滚过；着色器不可用时库自行降级，条目、标签与读屏语义不受影响。其他样式与界面不得直接引用该第三方包。
 
 **记账按钮与导航栏无关**：它是右下角的独立浮动圆角方形，只在首页显示，由 Shell 自己渲染；样式不参与，也不得占用它的区域（内容延伸到栏背后时，Shell 按样式声明的 `occupiedHeight` 把按钮抬到栏上方）。
 
@@ -25,7 +25,7 @@
 
 导航触发 PageView 跨页动画时，Shell 只认最终目的地，不得用 `onPageChanged` 途经的中间页覆盖导航状态；用户直接左右滑动 PageView 时才逐页同步。否则跨页动画会被中间页重启，看起来像选中态从原 Tab 重新出发。
 
-新增或替换导航样式的硬约束：样式只声明几何事实（`extendBody`、`occupiedHeight`、`listBottomGap`，避让高度由 `contentBottomPadding` 统一推导）与选中动效时长，并实现一个只吃纯数据 `spec` 的 `buildBar`（不接触 Controller/KV/Navigator，样式选择页预览因此复用同一实现）。四个根目的地、切页状态机、返回键与小组件路由在所有样式下完全一致；选中态取 `colorScheme.primary`；尊重系统安全区下限；用 `Semantics(selected:)` 上报选中态；每个样式产出 `<前缀>_bottom_nav` / `<前缀>_nav_bar` / `<前缀>_nav_item_<下标>` 稳定 key；切页动画被用户交互打断时按页面实际落点对齐底栏。新增样式须同时加 `NavigationStylePreference` 枚举值与注册项（测试断言两者一一对应），并通过契约测试：非玻璃样式不出现 `BackdropFilter`、玻璃样式覆盖无着色器降级、360dp 与 393×852 不溢出、避让值与实际占用高度自洽、切换样式后当前 Tab 与 `PageController` 状态不丢、记账按钮在任一样式下不与导航栏重叠且仍只在首页显示。
+新增或替换导航样式的硬约束：样式只声明几何事实（`extendBody`、`occupiedHeight`、`listBottomGap`，避让高度由 `contentBottomPadding` 统一推导）与选中动效时长，并实现一个只吃纯数据 `spec` 的 `buildBar`（不接触 Controller/KV/Navigator，样式选择页预览因此复用同一实现）。四个根目的地、切页状态机、返回键与小组件路由在所有样式下完全一致；选中态取 `colorScheme.primary`；尊重系统安全区下限；用 `Semantics(selected:)` 上报选中态；每个样式产出 `<前缀>_bottom_nav` / `<前缀>_nav_bar` / `<前缀>_nav_item_<下标>` 稳定 key；切页动画被用户交互打断时按页面实际落点对齐底栏。新增样式须同时加 `NavigationStylePreference` 枚举值与注册项（测试断言两者一一对应），并通过契约测试：非玻璃样式不出现玻璃组件或模糊、玻璃样式覆盖无着色器降级、360dp 与 393×852 不溢出、避让值与实际占用高度自洽、切换样式后当前 Tab 与 `PageController` 状态不丢、记账按钮在任一样式下不与导航栏重叠且仍只在首页显示。
 
 ## 顶部 Header 与页面骨架
 **副标题放什么**：`subtitle` 只承载与标题互补的上下文——账本名、账户名/类型、日期或统计区间。要带「单位：x」时必须经 `currencyUnitSubtitle(l10n, prefix, code)` 拼接，不要在调用点手写 `'$prefix · 单位：¥'`。该 helper 在隐藏单位时只返回前缀；没有前缀时返回 `null`，`subtitle` 为 `null` 时整行不渲染，所以直接把返回值交过去即可，不要传空串、也不要留下只剩「·」的残句。完整口径（含卡片角标、AI 结果卡与豁免清单）见 [设计与交互规范](design-system.md) 的「货币单位的显示口径」。
