@@ -5,6 +5,7 @@ import 'package:verifin/app/models.dart';
 import 'package:verifin/app/veri_fin_scope.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 import 'package:verifin/pages/pending_refunds_page.dart';
+import 'package:verifin/pages/refund_editor.dart';
 import 'package:verifin/pages/transaction_detail_page.dart';
 
 import 'support/test_harness.dart';
@@ -191,6 +192,131 @@ void main() {
     await tester.tap(find.text('类型'));
     await tester.pumpAndSettle();
     expect(find.text('收入'), findsNothing);
+  });
+
+  testWidgets('已有跨账户外币退款只改发起日期时保持实际到账金额', (WidgetTester tester) async {
+    final controller = await makeController();
+    final bookId = controller.activeBook.id;
+    controller
+      ..addAccount(
+        Account(
+          id: 'usd-refund-account',
+          bookId: bookId,
+          name: '美元现金',
+          type: AccountType.cash,
+          groupId: null,
+          initialBalance: 100,
+          iconCode: 'cash',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+          currencyCode: 'USD',
+        ),
+      )
+      ..addAccount(
+        Account(
+          id: 'eur-refund-account',
+          bookId: bookId,
+          name: '欧元现金',
+          type: AccountType.cash,
+          groupId: null,
+          initialBalance: 100,
+          iconCode: 'cash',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+          currencyCode: 'EUR',
+        ),
+      );
+    await controller.saveExchangeRateDraft(
+      currencyCode: 'USD',
+      effectiveDate: DateTime(2026, 1, 1),
+      rateToBase: 7.2,
+    );
+    await controller.saveExchangeRateDraft(
+      currencyCode: 'EUR',
+      effectiveDate: DateTime(2026, 1, 1),
+      rateToBase: 8,
+    );
+    await controller.saveExchangeRateDraft(
+      currencyCode: 'USD',
+      effectiveDate: DateTime(2026, 1, 2),
+      rateToBase: 7.5,
+    );
+    await controller.saveExchangeRateDraft(
+      currencyCode: 'EUR',
+      effectiveDate: DateTime(2026, 1, 2),
+      rateToBase: 7.5,
+    );
+    controller.addEntry(
+      LedgerEntry(
+        id: 'usd-refund-expense',
+        bookId: bookId,
+        type: EntryType.expense,
+        amount: 100,
+        currencyCode: 'USD',
+        accountAmount: 100,
+        baseAmount: 720,
+        categoryId: controller.categoriesForType(EntryType.expense).first.id,
+        accountId: 'usd-refund-account',
+        note: '',
+        occurredAt: DateTime(2026, 1, 1),
+      ),
+    );
+    final refund = controller.addRefund(
+      expenseId: 'usd-refund-expense',
+      amount: 50,
+      accountId: 'eur-refund-account',
+      initiatedAt: DateTime(2026, 1, 1),
+      settledAt: DateTime(2026, 1, 1),
+      accountAmount: 46,
+      baseAmount: 360,
+      conversionSource: ConversionSource.manual,
+    )!;
+
+    RefundEditResult? result;
+    await tester.binding.setSurfaceSize(const Size(460, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => FilledButton(
+                onPressed: () async {
+                  final expense = controller.entries.firstWhere(
+                    (entry) => entry.id == 'usd-refund-expense',
+                  );
+                  result = await showRefundSheet(
+                    context: context,
+                    expense: expense,
+                    refunds: controller.refundsForEntry(expense.id),
+                    existing: refund,
+                  );
+                },
+                child: const Text('打开退款'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('打开退款'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('发起日期'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('2').last);
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '保存'));
+    await tester.pumpAndSettle();
+
+    expect(result, isNotNull);
+    expect(result!.refund!.occurredAt, DateTime(2026, 1, 2));
+    expect(result!.refund!.accountAmount, 46);
+    expect(result!.refund!.baseAmount, 360);
   });
 
   testWidgets('待退款清单：显示待到账退款并可标记已到账', (WidgetTester tester) async {

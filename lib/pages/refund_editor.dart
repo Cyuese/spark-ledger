@@ -502,7 +502,11 @@ class _RefundSheetState extends State<_RefundSheet> {
         _settledAt = picked;
       } else {
         _initiatedAt = picked;
-        _resolveAmounts();
+        // 已有退款的三层金额是已保存的历史事实。只改发起日期时不能重新查汇率
+        // 覆盖实际到账金额；新建退款的预计金额才随日期重新计算。
+        if (widget.existing == null) {
+          _resolveAmounts();
+        }
       }
     });
   }
