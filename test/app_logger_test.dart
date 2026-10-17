@@ -21,17 +21,43 @@ void main() {
     final store = LocalKeyValueStore();
     final logger = AppLogger(store);
     logger.info('first');
-    logger.error('boom', source: 'persist', error: StateError('disk full'));
+    logger.error(
+      'boom',
+      source: 'persist',
+      error: StateError('disk full'),
+      stackTrace: StackTrace.fromString(
+        '#0      persist (package:verifin/controller.dart:42:9)',
+      ),
+    );
 
     expect(logger.records.length, 2);
     expect(logger.records.first.level, AppLogLevel.error);
     expect(logger.records.first.message, contains('disk full'));
+    expect(logger.records.first.stack, contains('controller.dart:42:9'));
+    expect(
+      logger.exportText(),
+      contains('#0      persist (package:verifin/controller.dart:42:9)'),
+    );
     expect(logger.records.last.message, 'first');
 
     // 新实例从同一 KV 恢复。
     final restored = AppLogger(store);
     expect(restored.records.length, 2);
     expect(restored.records.first.message, contains('boom'));
+    expect(restored.records.first.stack, contains('controller.dart:42:9'));
+  });
+
+  test('旧日志没有 stack 字段时仍可恢复', () {
+    final store = LocalKeyValueStore();
+    store.write(
+      'verifin.logs.v1',
+      '[{"time":"2026-10-01T12:00:00.000","level":"error",'
+          '"message":"legacy","source":"flutter"}]',
+    );
+
+    final restored = AppLogger(store);
+    expect(restored.records.single.message, 'legacy');
+    expect(restored.records.single.stack, isNull);
   });
 
   test('超过上限时丢弃最旧记录', () {

@@ -29,18 +29,21 @@ class AppLogRecord {
     required this.level,
     required this.message,
     this.source,
+    this.stack,
   });
 
   final DateTime time;
   final AppLogLevel level;
   final String message;
   final String? source;
+  final String? stack;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'time': time.toIso8601String(),
     'level': level.storageValue,
     'message': message,
     if (source != null && source!.isNotEmpty) 'source': source,
+    if (stack != null && stack!.isNotEmpty) 'stack': stack,
   };
 
   static AppLogRecord? fromJson(Object? raw) {
@@ -53,6 +56,7 @@ class AppLogRecord {
       level: AppLogLevel.fromStorage(raw['level'] as String?),
       message: message,
       source: raw['source'] as String?,
+      stack: raw['stack'] as String?,
     );
   }
 }
@@ -67,6 +71,7 @@ class AppLogger extends ChangeNotifier {
 
   static const String _storageKey = 'verifin.logs.v1';
   static const int _maxRecords = 200;
+  static const int _maxStackCharacters = 12000;
 
   final LocalKeyValueStore _store;
 
@@ -86,12 +91,28 @@ class AppLogger extends ChangeNotifier {
       log(AppLogLevel.warning, message, source: source);
 
   /// 记录一条错误；可附带原始异常对象（会拼接到消息末尾）。
-  void error(String message, {String? source, Object? error}) {
+  void error(
+    String message, {
+    String? source,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
     final text = error == null ? message : '$message: $error';
-    log(AppLogLevel.error, text, source: source);
+    log(AppLogLevel.error, text, source: source, stackTrace: stackTrace);
   }
 
-  void log(AppLogLevel level, String message, {String? source}) {
+  void log(
+    AppLogLevel level,
+    String message, {
+    String? source,
+    StackTrace? stackTrace,
+  }) {
+    final rawStack = stackTrace?.toString().trimRight();
+    final stack = rawStack == null || rawStack.isEmpty
+        ? null
+        : rawStack.length <= _maxStackCharacters
+        ? rawStack
+        : '${rawStack.substring(0, _maxStackCharacters)}\n[stack truncated]';
     _records.insert(
       0,
       AppLogRecord(
@@ -99,6 +120,7 @@ class AppLogger extends ChangeNotifier {
         level: level,
         message: message,
         source: source,
+        stack: stack,
       ),
     );
     if (_records.length > _maxRecords) {
@@ -117,15 +139,23 @@ class AppLogger extends ChangeNotifier {
 
   /// 导出为可复制/分享的纯文本，最新在前。
   String exportText() {
-    return _records
-        .map((r) {
-          final ts = r.time.toIso8601String();
-          final src = (r.source == null || r.source!.isEmpty)
-              ? ''
-              : ' [${r.source}]';
-          return '$ts ${r.level.name.toUpperCase()}$src ${r.message}';
-        })
-        .join('\n');
+    final buffer = StringBuffer();
+    for (var i = 0; i < _records.length; i += 1) {
+      if (i > 0) buffer.writeln();
+      final r = _records[i];
+      final ts = r.time.toIso8601String();
+      final src = (r.source == null || r.source!.isEmpty)
+          ? ''
+          : ' [${r.source}]';
+      buffer.writeln('$ts ${r.level.name.toUpperCase()}$src ${r.message}');
+      final stack = r.stack;
+      if (stack != null && stack.isNotEmpty) {
+        for (final line in stack.split('\n')) {
+          buffer.writeln('  $line');
+        }
+      }
+    }
+    return buffer.toString().trimRight();
   }
 
   void _load() {
