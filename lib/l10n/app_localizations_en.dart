@@ -767,6 +767,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String dateYearMonthDay(DateTime date) {
+    final intl.DateFormat dateDateFormat = intl.DateFormat(
+      'MMM d, yyyy',
+      localeName,
+    );
+    final String dateString = dateDateFormat.format(date);
+
+    return '$dateString';
+  }
+
+  @override
   String monthBudgetTitle(DateTime month) {
     final intl.DateFormat monthDateFormat = intl.DateFormat.MMM(localeName);
     final String monthString = monthDateFormat.format(month);

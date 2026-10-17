@@ -218,6 +218,12 @@ class _CurrencyRateRow extends StatelessWidget {
         .toList();
     final latest = rates.isEmpty ? null : rates.first;
     final stale = latest != null && isExchangeRateStale(latest, DateTime.now());
+    final status = latest == null
+        ? null
+        : <String>[
+            exchangeRateSourceLabel(l10n, latest.source),
+            if (stale) l10n.exchangeRateStale,
+          ].join(' · ');
     return Material(
       color: Colors.transparent,
       child: ListTile(
@@ -247,10 +253,8 @@ class _CurrencyRateRow extends StatelessWidget {
           latest == null
               ? l10n.exchangeRateNotSet
               : l10n.exchangeRateDateAndStatus(
-                  l10n.dateMonthDay(latest.effectiveDate),
-                  stale
-                      ? l10n.exchangeRateStale
-                      : exchangeRateSourceLabel(l10n, latest.source),
+                  l10n.dateYearMonthDay(latest.effectiveDate),
+                  status!,
                 ),
         ),
         trailing: const Icon(Icons.chevron_right),
@@ -337,7 +341,6 @@ class _RateHistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final stale = isExchangeRateStale(rate, DateTime.now());
     return Material(
       color: Colors.transparent,
       child: ListTile(
@@ -351,10 +354,8 @@ class _RateHistoryRow extends StatelessWidget {
         ),
         subtitle: Text(
           l10n.exchangeRateDateAndStatus(
-            l10n.dateMonthDay(rate.effectiveDate),
-            stale
-                ? l10n.exchangeRateStale
-                : exchangeRateSourceLabel(l10n, rate.source),
+            l10n.dateYearMonthDay(rate.effectiveDate),
+            exchangeRateSourceLabel(l10n, rate.source),
           ),
         ),
         onTap: () => editExchangeRate(
@@ -448,7 +449,9 @@ Future<void> editExchangeRate({
     currencyCode: currencyCode,
     effectiveDate: date,
     rateToBase: amount,
-    source: existing?.source ?? ExchangeRateSource.manual,
+    // 用户只要在编辑器里确认保存，这条记录就已经是手工维护的值；不能再把
+    // 手工修改后的结果标成“导入”。
+    source: ExchangeRateSource.manual,
   );
   if (!context.mounted) return;
   if (!saved) {

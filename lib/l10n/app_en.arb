@@ -248,6 +248,16 @@
       }
     }
   },
+  "dateYearMonthDay": "{date}",
+  "@dateYearMonthDay": {
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "MMM d, yyyy",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
   "monthBudgetTitle": "{month} budget",
   "@monthBudgetTitle": {
     "placeholders": {
