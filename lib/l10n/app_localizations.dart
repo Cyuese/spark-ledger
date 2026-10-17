@@ -7688,6 +7688,18 @@ abstract class AppLocalizations {
   /// **'可能已过期'**
   String get exchangeRateStale;
 
+  /// No description provided for @exchangeRateNotEffective.
+  ///
+  /// In zh, this message translates to:
+  /// **'未生效'**
+  String get exchangeRateNotEffective;
+
+  /// No description provided for @exchangeRateFutureCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'另有 {count} 条未生效'**
+  String exchangeRateFutureCount(int count);
+
   /// No description provided for @exchangeRateSourceManual.
   ///
   /// In zh, this message translates to:

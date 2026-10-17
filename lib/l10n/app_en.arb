@@ -1698,6 +1698,15 @@
     }
   },
   "exchangeRateStale": "May be outdated",
+  "exchangeRateNotEffective": "Not yet effective",
+  "exchangeRateFutureCount": "Plus {count} future rate(s)",
+  "@exchangeRateFutureCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "exchangeRateSourceManual": "Manual",
   "exchangeRateSourceImported": "Imported",
   "exchangeRateHistory": "{currency} rate history",

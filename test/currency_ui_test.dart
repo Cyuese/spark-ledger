@@ -206,19 +206,22 @@ void main() {
 
   testWidgets('汇率历史显示年份和来源，手工编辑后来源变为手动', (tester) async {
     final controller = await makeController();
+    final effectiveDate = DateTime.now().subtract(const Duration(days: 400));
     await controller.saveExchangeRateDraft(
       currencyCode: 'USD',
-      effectiveDate: DateTime(2000, 1, 1),
+      effectiveDate: effectiveDate,
       rateToBase: 7,
       source: ExchangeRateSource.imported,
     );
     await pumpPage(tester, controller, const CurrencyRatesPage());
 
-    expect(find.text('2000年1月1日 · 导入 · 可能已过期'), findsOneWidget);
+    expect(find.textContaining('${effectiveDate.year}年'), findsOneWidget);
+    expect(find.textContaining('导入 · 可能已过期'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('currency_rate_USD')));
     await tester.pumpAndSettle();
-    expect(find.text('2000年1月1日 · 导入'), findsOneWidget);
+    expect(find.textContaining('${effectiveDate.year}年'), findsOneWidget);
+    expect(find.textContaining('导入'), findsOneWidget);
     expect(find.textContaining('可能已过期'), findsNothing);
 
     await tester.tap(find.text('1 USD = 7 CNY'));
@@ -229,7 +232,33 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(controller.exchangeRates.single.source, ExchangeRateSource.manual);
-    expect(find.text('2000年1月1日 · 手动维护'), findsOneWidget);
+    expect(find.textContaining('手动维护'), findsOneWidget);
+  });
+
+  testWidgets('未来汇率不冒充当前有效汇率', (tester) async {
+    final controller = await makeController();
+    final currentDate = DateTime.now();
+    await controller.saveExchangeRateDraft(
+      currencyCode: 'USD',
+      effectiveDate: currentDate,
+      rateToBase: 7,
+    );
+    await controller.saveExchangeRateDraft(
+      currencyCode: 'USD',
+      effectiveDate: currentDate.add(const Duration(days: 10)),
+      rateToBase: 7.2,
+    );
+    await pumpPage(tester, controller, const CurrencyRatesPage());
+
+    expect(find.text('1 USD = 7 CNY'), findsOneWidget);
+    expect(find.text('1 USD = 7.2 CNY'), findsNothing);
+    expect(find.textContaining('另有 1 条未生效'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('currency_rate_USD')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 USD = 7.2 CNY'), findsOneWidget);
+    expect(find.textContaining('未生效'), findsWidgets);
   });
 
   testWidgets('旧账本从货币页完成一次性无换算重解释', (tester) async {

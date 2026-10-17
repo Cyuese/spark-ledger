@@ -4341,6 +4341,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exchangeRateStale => 'May be outdated';
 
   @override
+  String get exchangeRateNotEffective => 'Not yet effective';
+
+  @override
+  String exchangeRateFutureCount(int count) {
+    return 'Plus $count future rate(s)';
+  }
+
+  @override
   String get exchangeRateSourceManual => 'Manual';
 
   @override

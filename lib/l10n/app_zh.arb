@@ -2748,6 +2748,15 @@
     }
   },
   "exchangeRateStale": "可能已过期",
+  "exchangeRateNotEffective": "未生效",
+  "exchangeRateFutureCount": "另有 {count} 条未生效",
+  "@exchangeRateFutureCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "exchangeRateSourceManual": "手动维护",
   "exchangeRateSourceImported": "导入",
   "exchangeRateHistory": "{currency} 汇率历史",
