@@ -2,6 +2,7 @@
 // 信用卡还款日横幅与迷你分段切换控件。
 import 'dart:async';
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter/services.dart';
@@ -328,7 +329,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
                 VeriCard(
                   child: Column(
                     children: <Widget>[
-                      VeriAnchoredChoice<AccountType>(
+                      AnchoredMenuChoice<AccountType>(
                         key: const Key('account_detail_type_choice'),
                         values: AccountType.values,
                         selected: currentAccount.type,

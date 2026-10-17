@@ -39,7 +39,7 @@ void main() {
     await tester.tap(find.text('记一笔按钮'));
     await tester.pumpAndSettle();
     expect(
-      find.byKey(const ValueKey<String>('veri_menu_item_settings_fab_ai')),
+      find.byKey(const ValueKey<String>('anchored_menu_item_settings_fab_ai')),
       findsOneWidget,
     );
     await tester.tap(find.text('AI 记账').last);

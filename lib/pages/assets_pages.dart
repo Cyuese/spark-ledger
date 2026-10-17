@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
@@ -180,7 +181,7 @@ class _AssetsPageState extends State<AssetsPage> {
                 : AppLocalizations.of(
                     context,
                   ).baseCurrencyAmountLabel(baseUnit),
-            trailing: VeriAnchoredMenuButton(
+            trailing: AnchoredMenuButton(
               icon: Icons.add,
               tooltip: AppLocalizations.of(context).assetsActions,
               entries: _assetActionMenuEntries(context),
@@ -476,10 +477,10 @@ class _AssetsPageState extends State<AssetsPage> {
     );
   }
 
-  List<VeriMenuEntry> _assetActionMenuEntries(BuildContext context) {
+  List<AnchoredMenuEntry> _assetActionMenuEntries(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return <VeriMenuEntry>[
-      VeriMenuItem(
+    return <AnchoredMenuEntry>[
+      AnchoredMenuItem(
         id: 'asset_add_account',
         icon: Icons.add_card_outlined,
         title: l10n.accountAdd,
@@ -491,7 +492,7 @@ class _AssetsPageState extends State<AssetsPage> {
           ),
         ),
       ),
-      VeriMenuItem(
+      AnchoredMenuItem(
         id: 'asset_manage_groups',
         icon: Icons.folder_outlined,
         title: l10n.groupManage,
@@ -503,7 +504,7 @@ class _AssetsPageState extends State<AssetsPage> {
           ),
         ),
       ),
-      VeriMenuItem(
+      AnchoredMenuItem(
         id: 'asset_display_settings',
         icon: Icons.tune_rounded,
         title: l10n.assetDisplaySettingsTitle,

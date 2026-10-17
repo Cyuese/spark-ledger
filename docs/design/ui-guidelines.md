@@ -92,7 +92,7 @@ SafeArea(child: VeriPage(child: Column(children: [
 应用图标源文件位于 `assets/brand/verifin_icon.svg`，当前使用 tessera 风格的浅色圆角底和三层半透明色块。Android launcher 图标应从同一源文件生成，避免不同尺寸出现不一致的图标风格。
 
 ## 选择器
-项目内 2–8 项、静态、受控且无需搜索/分区的短单选默认使用 `VeriAnchoredChoice<T>`，贴近 `SettingsRow`、`FilterPill`、`SelectField` 或 `DetailInfoRow` 展开；动态、较长或需要分区的简单列表继续使用底部弹出的 `showOptionSheet`，账户、分类、货币、标签等领域选择使用各自的 `show*PickerSheet`。除非选项需要持续可见且高频切换，否则不要新增页面内分段按钮；连续输入与系统日期时间继续使用专用控件。
+项目内 2–8 项、静态、受控且无需搜索/分区的短单选默认使用外部库的 `AnchoredMenuChoice<T>`，贴近 `SettingsRow`、`FilterPill`、`SelectField` 或 `DetailInfoRow` 展开；动态、较长或需要分区的简单列表继续使用底部弹出的 `showOptionSheet`，账户、分类、货币、标签等领域选择使用各自的 `show*PickerSheet`。除非选项需要持续可见且高频切换，否则不要新增页面内分段按钮；连续输入与系统日期时间继续使用专用控件。
 
 底部选择器标题保持简短，选项使用 44px 以上触控高度，当前选项显示蓝色弱背景和对勾。资产页右上角操作、账本/分类/标签/汇率历史行操作，以及设置、备份、AI、周期规则、交易筛选、收支统计、账户/交易编辑、个人资料、附件来源和资产显示设置里的短选择使用锚点菜单；资产背景的在线预设通过同一卡片的递进子菜单选择。动态长列表、标签分区筛选、账单日/周期起始日、导入映射和安全确认不得为了形式统一而迁移。
 
@@ -113,11 +113,11 @@ SafeArea(child: VeriPage(child: Column(children: [
 
 ### 锚点菜单
 
-与当前页面上下文强相关、选项数量较少的显示方式、排序、筛选和更多操作，可使用 `VeriAnchoredMenuAnchor` / `VeriAnchoredMenuButton` 贴近触发器展示；静态受控单选优先使用其轻量适配层 `VeriAnchoredChoice<T>`。菜单项支持图标、标题、副标题、分割线和选中/禁用状态；存在下一级时，右侧用箭头提示，点击后以更高层圆角卡片覆盖原卡片并保留可见层级边缘，系统返回优先退回上一级。点击菜单外部关闭整个菜单。
+与当前页面上下文强相关、选项数量较少的显示方式、排序、筛选和更多操作，可使用 `package:anchored_menu` 的 `AnchoredMenuAnchor` / `AnchoredMenuButton` 贴近触发器展示；静态受控单选优先使用其轻量适配层 `AnchoredMenuChoice<T>`。菜单项支持图标、标题、副标题、分割线和选中/禁用状态；存在下一级时，右侧用箭头提示，点击后以更高层圆角卡片覆盖原卡片并保留可见层级边缘，系统返回优先退回上一级。点击菜单外部关闭整个菜单。
 
 菜单只承载轻量操作和少量枚举选项；账户、分类、长列表、搜索、连续输入、危险确认及需要完整草稿保存的设置仍使用各自 Sheet、Dialog 或全屏编辑页。菜单文案与状态由调用方提供，组件不得依赖具体业务 Controller。
 
-菜单保持紧凑：根菜单默认宽度 224、子菜单默认宽度 232，调用方可分别通过 `width` / `submenuWidth` 配置，单个父项还能用 `VeriMenuItem.submenuWidth` 覆盖自己的子菜单宽度；允许收窄到 168。主标题使用项目 `titleSmall`（13px），副标题使用 `labelMedium`（11px），单行操作的实际触控高度不低于 44px。Web/桌面 Hover 必须是与面板四边留出一致间距的圆角矩形，不能把整行铺成横条。
+菜单保持紧凑：默认按内容自适应，最小宽度 168；确需固定宽度时才通过 `width` / `submenuWidth` 配置，单个父项还能用 `AnchoredMenuItem.submenuWidth` 覆盖自己的子菜单宽度。主标题使用项目 `titleSmall`（13px），副标题使用 `labelMedium`（11px），单行操作的实际触控高度不低于 44px。Web/桌面 Hover 必须是与面板四边留出一致间距的圆角矩形，不能把整行铺成横条。视觉令牌由 `app_theme.dart` 的 `AnchoredMenuThemeData` 统一提供，页面不要覆写样式。
 
 图标占位按菜单项自身决定：有图标的项才预留图标列，纯文本项直接从统一内容左边距开始，不得因为同组标题或其他项带图标就人为缩进。
 
