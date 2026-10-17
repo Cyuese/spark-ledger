@@ -34,6 +34,7 @@ import 'pages/widget_configuration_page.dart';
 Future<void> configureMain() => runWidgetConfiguration();
 
 Future<void> main() async {
+  AppLogger? logger;
   // 应用运行的顶层 zone，故意不 await（fire-and-forget）；未捕获错误交给下方 onError。
   unawaited(
     runZonedGuarded(
@@ -42,14 +43,17 @@ Future<void> main() async {
         // 预加载可选液态玻璃底栏所需的着色器；初始化只做异步资源读取。
         await LiquidGlassWidgets.initialize(enablePerformanceMonitor: false);
         final store = await LocalKeyValueStore.create();
-        final logger = AppLogger(store);
+        final appLogger = AppLogger(store);
+        logger = appLogger;
         // 未捕获的框架错误与异步错误都记入软件日志，便于用户反馈时提供诊断线索。
         final previousOnError = FlutterError.onError;
         FlutterError.onError = (details) {
-          logger.error(
+          appLogger.error(
             details.exceptionAsString(),
-            source: 'flutter',
-            error: details.exception,
+            source: details.library == null || details.library!.isEmpty
+                ? 'flutter'
+                : 'flutter/${details.library}',
+            stackTrace: details.stack,
           );
           previousOnError?.call(details);
         };
@@ -74,7 +78,7 @@ Future<void> main() async {
           // 数据库损坏或版本降级（用户安装了更旧 APK）时打开会抛异常。不做破坏性
           // 处理（绝不删库），而是展示可诊断的错误页，明确告知用户数据很可能仍在、
           // 不要清除应用数据，避免「白屏 → 误以为数据丢了 → 清数据 → 真丢」。
-          logger.error(
+          appLogger.error(
             'Database open failed: $error',
             source: 'startup',
             error: error,
@@ -92,7 +96,13 @@ Future<void> main() async {
         );
       },
       (error, stack) {
-        // runZonedGuarded 兜底：此时 logger 可能尚未创建（极早期崩溃），仅调试打印。
+        // runZonedGuarded 兜底：logger 尚未创建时（极早期崩溃）仅调试打印。
+        logger?.error(
+          'Uncaught zone error',
+          source: 'zone',
+          error: error,
+          stackTrace: stack,
+        );
         debugPrint('Uncaught zone error: $error');
       },
     ),

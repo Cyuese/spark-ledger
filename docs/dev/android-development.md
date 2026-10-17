@@ -122,6 +122,7 @@ debug 支持 hot reload；最终图形/OCR/插件行为必须另外用 release/R
   （`root_navigation_liquid_glass.dart` 适配的本地 vendor `GlassTabBar.bottom`）是唯一例外。其他位置出现背景模糊、渐变或 Shader 滤镜即为回归。
 - 提交前 format、analyze、全量测试及发布外观专项；数据库相关改动跑 ffi 持久化/迁移矩阵。
 - 正式 APK/AAB 只由授权后的 CI 发布生成。本地 APK 是诊断证据，不作为正式交付。
+- GitHub 自分发 APK 由 CI 校验：原生库只能包含 `arm64-v8a`，且 `versionCode` 必须与 `pubspec.yaml` 的 build number 一致；ABI 拆分不得恢复默认的 versionCode 偏移，否则 GitHub / Play 渠道间无法正常覆盖升级。
 - CI 成功后下载同签名、更高 versionCode APK 覆盖安装，保留账目；用户验收后才提升 Latest。
 - 应用内检查预发布需开启“包含预发布版本（Beta）”；发布后核对 releases 列表中的版本与 APK 元数据。
   用户要求自行通过应用更新时，不代替用户安装或触发下载。
