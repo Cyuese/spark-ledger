@@ -97,7 +97,7 @@
 | 图表 | `fl_chart`（MIT），统一走 `lib/app/chart_painters.dart` 适配层：趋势 / 柱状（含分组双柱）/ 环形 / 预算进度环；纵轴刻度与参考线由适配层绘制以保证对齐，页面不直接依赖图表库 |
 | 平台能力 | `local_auth`（指纹解锁）、`flutter_local_notifications`（提醒）、`image_picker`（附件）、`home_widget` + Jetpack **Glance**（桌面小组件）、MethodChannel 桥（SAF / 磁贴 / 更新检查） |
 | 测试 | 按领域拆分的 widget / 单元测试（内存仓储）+ ffi 真实 SQLite、迁移矩阵、模型往返与仓储契约测试 |
-| CI / 发布 | GitHub Actions：PR / `main` 执行 format + analyze + test 并构建不交付的 debug APK 门禁；推 `vX.Y.Z` 标签构建 release APK/AAB 并创建 GitHub 预发布（真机验收后手动提升为正式版） |
+| CI / 发布 | GitHub Actions：push 到 `main` 执行 format + analyze + test 并构建不交付的 debug APK 门禁；推 `vX.Y.Z` 标签构建 release APK/AAB 并创建 GitHub 预发布（真机验收后手动提升为正式版） |
 
 ## 🚀 快速开始
 
@@ -113,6 +113,8 @@ flutter run -d <android-device-id> --flavor github  # Android 模拟器或真机
 flutter analyze && flutter test      # 静态检查 + 全部测试
 ```
 
+本仓库不启用 GitHub Pull Request 功能，也不接受外部 PR。问题与功能建议请通过 [Issues](https://github.com/LumiDesk/verifin/issues) 提交；代码由维护者确认范围后直接实施。
+
 真机调试、缺失工具自动安装和隔离验收见 [Android 开发说明](docs/dev/android-development.md)。
 界面只有一套已评审的排版（见 [统一设计规范](docs/design/design-system.md)），本地构建与发布包完全一致，不需要任何额外构建参数。
 
@@ -120,7 +122,7 @@ Android 包名 `top.talyra42.verifin`。本地不构建交付 APK——正式安
 
 ## 📦 构建与发布
 
-- 质量 CI（`.github/workflows/ci.yml`）在每个 PR 和每次 push 到 `main` 时执行格式检查、静态分析、全量测试、统一设计专项测试，并构建一个不交付的 `github` debug APK 作为 Kotlin / Manifest / 原生桥编译门禁。`integration_test/` 需要真实引擎，不在 CI 跑，按 [Android 开发](docs/dev/android-development.md) 在真机或本地模拟器手动执行。
+- 质量 CI（`.github/workflows/ci.yml`）在每次 push 到 `main` 时执行格式检查、静态分析、全量测试、统一设计专项测试，并构建一个不交付的 `github` debug APK 作为 Kotlin / Manifest / 原生桥编译门禁。`integration_test/` 需要真实引擎，不在 CI 跑，按 [Android 开发](docs/dev/android-development.md) 在真机或本地模拟器手动执行。
 `flutter build apk --release --target-platform android-arm64 --flavor github` + `flutter build appbundle --release --flavor play --dart-define=SELF_UPDATE=false` → 创建 GitHub **预发布**（APK 命名 `verifin-vX.Y.Z-arm64-短提交号.apk`，AAB 命名 `verifin-vX.Y.Z-短提交号.aab`；真机验收通过后由维护者手动提升为正式版与 Latest）。自建分发的**安装包只出 arm64-v8a 单架构 APK**（覆盖 2019 年后绝大多数机型、比 universal 约减半；极老 32 位设备装不了）；AAB 含全部 ABI，供 Google Play 上架用（由 Play 按设备分发）。release 开启 R8 代码/资源裁剪，反射依赖点由 `android/app/proguard-rules.pro` 的 keep 规则保护。
 - **分发渠道 flavor（`github` / `play`）**：应用内自更新（下载 GitHub Release 安装包自动更新）只用于 GitHub 自分发的 `github` flavor；Google Play 政策禁止应用自下载 APK 更新，故 `play` flavor 移除 `REQUEST_INSTALL_PACKAGES` 权限并隐藏「检查更新」入口。**本地 Android 构建/运行需带 `--flavor github`。**
 - 发版前先提升并提交 `CHANGELOG.md` 的 `Unreleased`，确认位于 `main` 且工作树完全干净；随后运行 Dart 发布脚本（脚本会先校验本机 Flutter 版本与 CI 固定版本一致，不一致会直接失败）：
