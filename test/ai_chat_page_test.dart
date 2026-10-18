@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:verifin/app/ai/ai_agent_engine.dart';
 import 'package:verifin/app/ai/ai_completion_event.dart';
 import 'package:verifin/app/ai/ai_error.dart';
@@ -463,8 +464,9 @@ void main() {
 
     expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
     stream.add(const AiContentDelta('已经收到的正文'));
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
     expect(find.text('已经收到的正文'), findsOneWidget);
+    expect(find.byType(GptMarkdown), findsNothing);
 
     await tester.tap(find.byIcon(Icons.stop_rounded));
     await tester.pump();
@@ -472,6 +474,7 @@ void main() {
     expect(find.byIcon(Icons.arrow_upward_rounded), findsOneWidget);
     expect(find.byIcon(Icons.stop_rounded), findsNothing);
     expect(find.text('已经收到的正文'), findsOneWidget);
+    expect(find.byType(GptMarkdown), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
     unawaited(stream.close());
