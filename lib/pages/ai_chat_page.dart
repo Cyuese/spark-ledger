@@ -4,6 +4,7 @@
 // 网络传输默认使用结构化 Agent SSE；debug transport 供测试注入，避免真实网络。
 import 'dart:async';
 
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 
@@ -25,7 +26,6 @@ import '../l10n/app_localizations.dart';
 import 'ai_agent_step_view.dart';
 import 'ai_result_view.dart';
 import 'ai_settings_page.dart';
-import 'sheets.dart';
 
 enum _Role { user, assistant }
 
@@ -75,6 +75,7 @@ class AiChatPage extends StatefulWidget {
 class _AiChatPageState extends State<AiChatPage> {
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final TextEditingController _input = TextEditingController();
+  final FocusNode _inputFocus = FocusNode();
   final ScrollController _scroll = ScrollController();
   final AiAgentEngine _engine = AiAgentEngine(tools: buildAiQueryTools());
   String? _selectedBookId;
@@ -88,6 +89,7 @@ class _AiChatPageState extends State<AiChatPage> {
     super.initState();
     // 输入内容变化时刷新发送按钮的可用态（空内容不可发送）。
     _input.addListener(_onInputChanged);
+    _inputFocus.addListener(_onInputFocusChanged);
   }
 
   @override
@@ -98,11 +100,15 @@ class _AiChatPageState extends State<AiChatPage> {
 
   void _onInputChanged() => setState(() {});
 
+  void _onInputFocusChanged() => setState(() {});
+
   @override
   void dispose() {
     _requestSerial += 1;
     _activeCancellation?.cancel();
     _input.removeListener(_onInputChanged);
+    _inputFocus.removeListener(_onInputFocusChanged);
+    _inputFocus.dispose();
     _input.dispose();
     _scroll.dispose();
     super.dispose();
@@ -117,22 +123,11 @@ class _AiChatPageState extends State<AiChatPage> {
         scope.activeBook;
   }
 
-  Future<void> _chooseBook() async {
-    final scope = VeriFinScope.of(context);
-    final l10n = AppLocalizations.of(context);
-    final current = _bookForScope(scope);
-    final books = scope.ledgerBooks;
-    final selectedId = await showOptionSheet<String>(
-      context: context,
-      title: l10n.aiChatChooseBook,
-      values: books.map((book) => book.id).toList(growable: false),
-      selected: current.id,
-      labelOf: (id) => books.firstWhere((book) => book.id == id).name,
-    );
-    if (!mounted || selectedId == null || selectedId == current.id) {
+  void _selectBook(String bookId) {
+    if (bookId == _selectedBookId) {
       return;
     }
-    setState(() => _selectedBookId = selectedId);
+    setState(() => _selectedBookId = bookId);
   }
 
   void _scrollToBottom() {
@@ -583,83 +578,153 @@ class _AiChatPageState extends State<AiChatPage> {
     final isDark = theme.brightness == Brightness.dark;
     final canSend = _canSend;
     final l10n = AppLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
-      decoration: BoxDecoration(
-        color: isDark ? veriSurfaceDark : veriSurfaceLight,
-        border: Border(
-          top: BorderSide(color: theme.colorScheme.outlineVariant),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Flexible(
-                child: FilterPill(
-                  label: '${l10n.ledgerLabel} · ${book.name}',
-                  icon: Icons.account_balance_wallet_outlined,
-                  onTap: _streaming ? null : _chooseBook,
-                  flexibleLabel: true,
-                ),
-              ),
-              const Spacer(),
-              if (_messages.isNotEmpty)
-                IconButton(
-                  onPressed: _streaming ? null : _clearHistory,
-                  icon: const Icon(Icons.delete_outline, size: 19),
-                  color: theme.colorScheme.error,
-                  tooltip: l10n.aiChatClearCurrent,
-                  constraints: const BoxConstraints.tightFor(
-                    width: 44,
-                    height: 44,
-                  ),
-                  padding: EdgeInsets.zero,
-                ),
-            ],
+    final books = VeriFinScope.of(context).ledgerBooks;
+    final borderColor = _inputFocus.hasFocus
+        ? theme.colorScheme.primary
+        : Colors.transparent;
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.58);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+      child: Container(
+        key: const Key('ai_chat_composer'),
+        decoration: BoxDecoration(
+          color: veriElevatedSurfaceColor(theme.brightness),
+          borderRadius: BorderRadius.circular(veriRadiusXl),
+          border: Border.all(
+            color: borderColor,
+            width: _inputFocus.hasFocus ? 1.2 : 1,
           ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: <Widget>[
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(veriRadiusXl),
-                    border: Border.all(color: theme.colorScheme.outlineVariant),
-                  ),
-                  child: TextField(
-                    controller: _input,
-                    minLines: 1,
-                    maxLines: 5,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _send(),
-                    style: const TextStyle(fontSize: 15.5, height: 1.45),
-                    decoration: InputDecoration(
-                      hintText: l10n.aiChatInputHint,
-                      isDense: true,
-                      filled: false,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 13,
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              controller: _input,
+              focusNode: _inputFocus,
+              minLines: 1,
+              maxLines: 6,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _send(),
+              onTapOutside: (_) => _inputFocus.unfocus(),
+              style: TextStyle(
+                fontSize: 15.5,
+                height: 1.45,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.94),
+              ),
+              decoration: InputDecoration(
+                hintText: l10n.aiChatInputHint,
+                hintStyle: TextStyle(color: muted),
+                isDense: true,
+                filled: false,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.fromLTRB(18, 15, 18, 4),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
+              child: Row(
+                children: <Widget>[
+                  if (_messages.isNotEmpty)
+                    IconButton(
+                      onPressed: _streaming ? null : _clearHistory,
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      color: theme.colorScheme.error,
+                      tooltip: l10n.aiChatClearCurrent,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 40,
+                        height: 40,
+                      ),
+                      padding: EdgeInsets.zero,
+                    )
+                  else
+                    const SizedBox(width: 40),
+                  const Spacer(),
+                  Flexible(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: AnchoredMenuChoice<String>(
+                        values: books
+                            .map((entry) => entry.id)
+                            .toList(growable: false),
+                        selected: book.id,
+                        idOf: (id) => 'ai_chat_book_$id',
+                        labelOf: (id) =>
+                            books.firstWhere((entry) => entry.id == id).name,
+                        iconOf: (_) => Icons.account_balance_wallet_outlined,
+                        onSelected: _selectBook,
+                        semanticLabel: l10n.aiChatChooseBook,
+                        width: 232,
+                        builder: (context, openMenu, menuOpen) => Semantics(
+                          button: true,
+                          label: l10n.aiChatChooseBook,
+                          child: InkWell(
+                            key: const Key('ai_chat_book_selector'),
+                            borderRadius: BorderRadius.circular(999),
+                            onTap: _streaming
+                                ? null
+                                : () {
+                                    _inputFocus.unfocus();
+                                    openMenu();
+                                  },
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.account_balance_wallet_outlined,
+                                    size: 16,
+                                    color: muted,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      book.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.labelLarge
+                                          ?.copyWith(
+                                            color: theme.colorScheme.onSurface
+                                                .withValues(alpha: 0.82),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(
+                                    menuOpen
+                                        ? Icons.keyboard_arrow_up_rounded
+                                        : Icons.keyboard_arrow_down_rounded,
+                                    size: 18,
+                                    color: muted,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  _SendButton(
+                    enabled: canSend,
+                    streaming: _streaming,
+                    onSend: _send,
+                    onStop: _stopGeneration,
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              _SendButton(
-                enabled: canSend,
-                streaming: _streaming,
-                onSend: _send,
-                onStop: _stopGeneration,
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -683,13 +748,12 @@ class _SendButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final disabledBg = scheme.surfaceContainerHighest;
-    final disabledFg = Theme.of(
-      context,
-    ).colorScheme.onSurface.withValues(alpha: 0.35);
+    final disabledFg = scheme.onSurface.withValues(alpha: 0.35);
     final active = enabled || streaming;
     final l10n = AppLocalizations.of(context);
     return Material(
-      color: active ? scheme.primary : disabledBg,
+      key: const Key('ai_chat_send_button'),
+      color: active ? scheme.onSurface : disabledBg,
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -701,8 +765,8 @@ class _SendButton extends StatelessWidget {
             message: streaming ? l10n.aiStopGenerating : l10n.aiSendQuestion,
             child: Icon(
               streaming ? Icons.stop_rounded : Icons.arrow_upward_rounded,
-              color: active ? scheme.onPrimary : disabledFg,
-              size: 22,
+              color: active ? scheme.surface : disabledFg,
+              size: streaming ? 18 : 22,
             ),
           ),
         ),

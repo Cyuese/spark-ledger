@@ -93,6 +93,36 @@ void main() {
     expect(find.text('AI 设置'), findsOneWidget);
   });
 
+  testWidgets('底部输入区为单块 Composer，账本与发送位于同一操作行', (tester) async {
+    tester.view.physicalSize = const Size(393, 852);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: const AiChatPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final composer = tester.getRect(find.byKey(const Key('ai_chat_composer')));
+    final input = tester.getRect(find.byType(TextField));
+    final book = tester.getRect(find.byKey(const Key('ai_chat_book_selector')));
+    final send = tester.getRect(find.byKey(const Key('ai_chat_send_button')));
+    expect(composer.left, greaterThan(0));
+    expect(composer.right, lessThan(393));
+    expect(input.top, lessThan(book.top));
+    expect(book.width, greaterThan(80));
+    expect(book.top, greaterThanOrEqualTo(input.bottom));
+    expect((send.center.dy - book.center.dy).abs(), lessThan(2));
+  });
+
   testWidgets('已配置：发问 → 工具卡片 + 流式答复', (tester) async {
     final controller = await makeController();
     final bookId = controller.activeBook.id;
@@ -214,10 +244,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining(defaultBookName), findsWidgets);
-    await tester.tap(find.byIcon(Icons.account_balance_wallet_outlined));
+    await tester.tap(find.byKey(const Key('ai_chat_book_selector')));
     await tester.pumpAndSettle();
-    expect(find.text('选择对话账本'), findsOneWidget);
-    await tester.tap(find.text('旅行账本'));
+    expect(
+      find.byKey(
+        ValueKey<String>('anchored_menu_item_ai_chat_book_$travelBookId'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(
+        ValueKey<String>('anchored_menu_item_ai_chat_book_$travelBookId'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('旅行账本'), findsWidgets);
 
