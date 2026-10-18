@@ -176,6 +176,29 @@ void main() {
     expect(transport.toolDefinitions.every((tools) => tools.isEmpty), isTrue);
   });
 
+  test('native tool arguments are normalized before execution', () async {
+    final transport = _ScriptedTransport(<Object>[
+      <AiCompletionEvent>[
+        const AiToolCallDelta(
+          index: 0,
+          id: 'call_normalized',
+          name: 'largestTransactions',
+          arguments: '{"range":"all","limit":"1"}',
+        ),
+        const AiCompletionFinished(AiFinishReason.toolCalls),
+        const AiStreamDone(),
+      ],
+      _answer('已找到一笔。'),
+    ]);
+
+    final events = await _run(engine, transport);
+
+    expect(events.whereType<AiAgentToolCompleted>(), hasLength(1));
+    expect(events.whereType<AiAgentToolFailed>(), isEmpty);
+    final completed = events.whereType<AiAgentCompleted>().single;
+    expect(completed.successfulToolCalls, 1);
+  });
+
   test(
     'auto mode falls back only after explicit native protocol rejection',
     () async {
