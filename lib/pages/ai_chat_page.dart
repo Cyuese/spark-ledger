@@ -171,28 +171,14 @@ class _AiChatPageState extends State<AiChatPage> {
     final book = _bookForScope(scope);
     final moneyDisplay = scope.moneyCodeDisplayForBook(book.id);
     final prior = _priorMessages();
+    final snapshot = scope.aiLedgerSnapshotForBook(book.id);
     final context0 = AiToolContext(
-      entries: scope.entriesForBook(book.id),
-      accounts: scope.accountsForBook(book.id),
-      categories: scope.categoriesForBook(book.id),
-      tags: scope.tagsForBook(book.id),
-      balanceOf: scope.accountBalance,
-      baseCurrencyCode: book.baseCurrencyCode,
-      now: DateTime.now(),
+      ledger: snapshot,
+      now: snapshot.capturedAt,
       l10n: l10n,
       // 摘要句与结果卡片要跟界面上金额的单位口径一致：单币种账本隐藏单位时，
       // 摘要也不能出现币种代码，否则模型会照着写出与卡片矛盾的「合计 CNY 4,300」。
       currencyDisplay: moneyDisplay,
-      exchangeRates: scope.exchangeRatesForBook(book.id),
-      bookId: book.id,
-      budget: AiBudgetContext(
-        keyMonthOf: (date) => scope.budgetKeyMonthForBook(book.id, date),
-        windowOf: (keyMonth) => scope.budgetWindowForBook(book.id, keyMonth),
-        monthlyBudgetOf: (keyMonth) =>
-            scope.monthlyBudgetForBook(book.id, keyMonth),
-        categoryBudgetOf: (keyMonth, categoryId) =>
-            scope.categoryBudgetForBook(book.id, keyMonth, categoryId),
-      ),
     );
     final settings = scope.aiSettings;
     final transport =
