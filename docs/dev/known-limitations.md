@@ -94,6 +94,21 @@
 
 ---
 
+### L12 · Controller、交易详情与 MainActivity 仍然过大
+- **现状**：`veri_fin_controller_ops.dart` 约 5,273 行，`entry_detail_page.dart` 约 2,380 行，
+  `MainActivity.kt` 约 1,514 行。Controller 已按状态/操作拆 part，但操作层仍覆盖交易、账户、
+  分类、预算、导入、备份与应用锁；`MainActivity.kt` 同时承载 SAF、更新下载、截图入口与
+  小组件桥。
+- **影响**：单文件上下文中仍可能出现跨领域修改，代码审查和故障定位成本偏高；当前有
+  repository contract、迁移矩阵、控制器原子命令与平台编译门禁兜底。
+- **为何暂不一次性重写**：这些文件是运行时咽喉点，整块搬迁会在同一变更中混合行为调整与
+  文件移动，难以用现有回归测试证明无行为变化。当前先以“新增领域逻辑不再堆回操作层”为约定。
+- **触发阈值**：新增导入/备份或 Android 原生能力再次修改同一大文件超过 200 行，或出现
+  两个以上跨领域回归时，按领域拆出导入恢复服务、备份传输服务和 Android `UpdateBridge` /
+  `BackupSafBridge`，保持单一 MethodChannel 入口不变。
+
+---
+
 ## 有意缓做（评估后判定：高风险 / 低当前收益）
 
 - **偏好类 KV 剥离为独立 notifier**：可修掉「偏好改动触发全树重建」的性能问题，但需把 ~15 个偏好字段搬出 controller、新建独立 scope，**每个读取点都要改**，漏一个即运行时错误；而该性能问题属「规模变大才疼」。判定为中期项，规模/团队变大或出现掉帧后再单独做。**约定：新增偏好一律照主题/语言的独立 `ValueNotifier` 先例做**（`themePreferenceListenable`/`localePreferenceListenable`），不再往全树广播里加。
