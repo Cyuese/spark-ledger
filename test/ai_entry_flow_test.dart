@@ -69,7 +69,7 @@ void main() {
     // 「去设置」进入 AI 设置页。
     await tester.tap(find.text('去设置'));
     await tester.pumpAndSettle();
-    expect(find.text('API Key'), findsOneWidget);
+    expect(find.text('API Key（可选）'), findsOneWidget);
     expect(find.text('检测能力'), findsOneWidget);
   });
 }
