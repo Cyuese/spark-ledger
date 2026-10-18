@@ -109,15 +109,29 @@ void main() {
     expect(selected.last, inInclusiveRange(1, 3));
   });
 
-  testWidgets('深色模式使用压暗的 ios27Dark 玻璃材质', (tester) async {
+  testWidgets('深色模式使用中性、轻磨砂的底栏材质', (tester) async {
     await tester.pumpWidget(
       _LiquidGlassHarness(theme: buildVeriFinTheme(Brightness.dark)),
     );
 
     final bar = tester.widget<GlassTabBar>(find.byType(GlassTabBar));
-    expect(bar.settings?.glassColor, LiquidGlassSettings.ios27Dark.glassColor);
-    expect(bar.settings?.bodyShade, LiquidGlassSettings.ios27Dark.bodyShade);
-    expect(bar.settings?.frost, LiquidGlassSettings.ios27Dark.frost);
+    final settings = bar.settings;
+    expect(settings, isNotNull);
+    expect(
+      settings!.glassColor.a,
+      lessThan(LiquidGlassSettings.ios27Dark.glassColor.a),
+      reason: '深色底栏应减少白色雾层',
+    );
+    expect(
+      settings.saturation,
+      lessThan(LiquidGlassSettings.ios27Dark.saturation),
+      reason: '降低饱和度，避免把后方页面的蓝色放大成整块蓝灰底',
+    );
+    expect(settings.blur, 2);
+    expect(settings.frost, 4);
+    expect(settings.frostOpacity, 0.68);
+    expect(settings.bodyShade, 0.18);
+    expect(settings.backerColor?.a, closeTo(0.07, 0.001));
     expect(bar.indicatorColor?.a, closeTo(0.06, 0.001));
   });
 }

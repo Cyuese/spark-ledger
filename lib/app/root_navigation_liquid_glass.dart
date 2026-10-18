@@ -67,6 +67,23 @@ class VeriLiquidGlassRootNavigation extends StatelessWidget {
 
   final VeriRootNavigationSpec spec;
 
+  /// 深色底栏的磨砂材质。
+  ///
+  /// `ios27Dark` 的 12% 白色 tint 会让底栏发灰发白，1.4 的饱和度还会
+  /// 放大后方页面的蓝色。这里压低白色 tint 与饱和度，仅保留轻量模糊，
+  /// 用很弱的黑色 backer 压住高光，同时维持玻璃边缘和选中态。
+  static final LiquidGlassSettings _darkSettings = LiquidGlassSettings.ios27Dark
+      .copyWith(
+        glassColor: const Color(0x00000000),
+        blur: 2,
+        frost: 4,
+        frostOpacity: 0.68,
+        frostClamp: -0.3,
+        saturation: 0.65,
+        bodyShade: 0.18,
+        backerColor: const Color(0x12000000),
+      );
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -115,9 +132,8 @@ class VeriLiquidGlassRootNavigation extends StatelessWidget {
         selectedLabelColor: scheme.primary,
         unselectedLabelColor: veriNavigationUnselected,
         adaptiveBrightness: false,
-        // 默认底栏玻璃会使用 24% 白色底；深色模式改用库文档定义的
-        // ios27Dark 材质，让玻璃压暗而不是发白。浅色模式保持原默认材质。
-        settings: isDark ? LiquidGlassSettings.ios27Dark : null,
+        // 浅色模式保持组件库默认材质；深色模式使用压暗、低白雾的磨砂材质。
+        settings: isDark ? _darkSettings : null,
         indicatorColor: isDark ? Colors.white.withValues(alpha: 0.06) : null,
         quality: isPreview ? GlassQuality.minimal : GlassQuality.premium,
         backgroundQuality: isPreview ? GlassQuality.minimal : null,
