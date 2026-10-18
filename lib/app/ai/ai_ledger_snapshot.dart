@@ -60,14 +60,28 @@ class AiLedgerSnapshot {
     required Iterable<ExchangeRate> exchangeRates,
     required Map<String, double> balanceByAccountId,
     this.budget,
-  }) : entries = List<LedgerEntry>.unmodifiable(entries),
+  }) : entries = List<LedgerEntry>.unmodifiable(
+         entries.toList(growable: false)..sort((a, b) {
+           final byDate = b.occurredAt.compareTo(a.occurredAt);
+           return byDate != 0 ? byDate : b.id.compareTo(a.id);
+         }),
+       ),
        accounts = List<Account>.unmodifiable(accounts),
        categories = List<Category>.unmodifiable(categories),
        tags = List<Tag>.unmodifiable(tags),
        exchangeRates = List<ExchangeRate>.unmodifiable(exchangeRates),
        balanceByAccountId = Map<String, double>.unmodifiable(
          balanceByAccountId,
-       ) {
+       ),
+       _accountsById = Map<String, Account>.unmodifiable({
+         for (final account in accounts) account.id: account,
+       }),
+       _categoriesById = Map<String, Category>.unmodifiable({
+         for (final category in categories) category.id: category,
+       }),
+       _tagsById = Map<String, Tag>.unmodifiable({
+         for (final tag in tags) tag.id: tag,
+       }) {
     _assertBookScope();
   }
 
@@ -82,6 +96,15 @@ class AiLedgerSnapshot {
   final List<ExchangeRate> exchangeRates;
   final Map<String, double> balanceByAccountId;
   final AiBudgetSnapshot? budget;
+  final Map<String, Account> _accountsById;
+  final Map<String, Category> _categoriesById;
+  final Map<String, Tag> _tagsById;
+
+  Account? accountById(String id) => _accountsById[id];
+
+  Category? categoryById(String id) => _categoriesById[id];
+
+  Tag? tagById(String id) => _tagsById[id];
 
   double balanceOf(Account account) {
     final balance = balanceByAccountId[account.id];
