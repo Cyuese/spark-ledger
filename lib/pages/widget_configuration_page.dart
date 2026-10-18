@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_lock.dart';
 import '../app/common_widgets.dart';
 import '../app/feedback.dart';
 import '../app/logging/app_logger.dart';
@@ -16,6 +17,7 @@ import '../app/widgets/widget_instance_config.dart';
 import '../local_storage/local_storage.dart';
 import '../l10n/app_localizations.dart';
 import 'sheets.dart';
+import 'app_lock_page.dart';
 
 /// 桌面实例配置页的入口。独立引擎、独立会话，**不构造 Controller、不读数据库**：
 /// 账本列表由主应用推送，这里只做选择与保存。
@@ -24,16 +26,26 @@ import 'sheets.dart';
 /// 组件的深/浅色由实例自己的外观设置决定，与这里显示的选项一致。
 Future<void> runWidgetConfiguration() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final logger = AppLogger(await LocalKeyValueStore.create());
+  final store = await LocalKeyValueStore.create();
+  final logger = AppLogger(store);
+  final appLock = AppLockConfig.fromStorage(store.read(appLockStorageKey));
   final locale = await HomeWidget.getWidgetData<String>(widgetLocaleKey);
-  runApp(WidgetConfigurationApp(logger: logger, locale: locale));
+  runApp(
+    WidgetConfigurationApp(logger: logger, locale: locale, appLock: appLock),
+  );
 }
 
 class WidgetConfigurationApp extends StatefulWidget {
-  const WidgetConfigurationApp({super.key, this.logger, this.locale});
+  const WidgetConfigurationApp({
+    super.key,
+    this.logger,
+    this.locale,
+    this.appLock = const AppLockConfig.none(),
+  });
 
   final AppLogger? logger;
   final String? locale;
+  final AppLockConfig appLock;
 
   @override
   State<WidgetConfigurationApp> createState() => _WidgetConfigurationAppState();
@@ -61,8 +73,41 @@ class _WidgetConfigurationAppState extends State<WidgetConfigurationApp> {
     themeMode: ThemeMode.system,
     builder: (context, child) =>
         VeriFeedbackHost(controller: _feedback, child: child!),
-    home: WidgetConfigurationPage(logger: widget.logger),
+    home: _WidgetConfigurationLockGate(
+      appLock: widget.appLock,
+      child: WidgetConfigurationPage(logger: widget.logger),
+    ),
   );
+}
+
+class _WidgetConfigurationLockGate extends StatefulWidget {
+  const _WidgetConfigurationLockGate({
+    required this.appLock,
+    required this.child,
+  });
+
+  final AppLockConfig appLock;
+  final Widget child;
+
+  @override
+  State<_WidgetConfigurationLockGate> createState() =>
+      _WidgetConfigurationLockGateState();
+}
+
+class _WidgetConfigurationLockGateState
+    extends State<_WidgetConfigurationLockGate> {
+  late bool _locked = widget.appLock.enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_locked) {
+      return widget.child;
+    }
+    return AppLockScreen(
+      config: widget.appLock,
+      onUnlocked: () => setState(() => _locked = false),
+    );
+  }
 }
 
 class WidgetConfigurationPage extends StatefulWidget {

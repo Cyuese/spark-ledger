@@ -98,7 +98,7 @@
 
 ```bash
 flutter pub get
-flutter run -d <android-device-id> --flavor github
+flutter run -d <android-device-id> --flavor diagnostic
 flutter analyze
 flutter test
 flutter test test/entries_test.dart
@@ -109,12 +109,12 @@ dart format .
 手机开发前先按 `docs/dev/android-development.md` 检测 Flutter（与 CI 固定版本一致）、Java、Android SDK 与 adb。
 **当前环境缺工具时，必须自动尝试从官方来源安装/补齐并复检；不能仅报告“没有环境”。**
 优先复用已安装版本，不覆盖其他项目的 SDK 或签名；权限、下载或手机授权实际受阻时才请求用户处理。
-默认使用独立 `diagnostic` flavor 运行正式入口做 hot reload 和 release/R8 验收，避免覆盖用户账目。
+日常调试使用独立 `diagnostic` flavor 运行正式入口做 hot reload，避免覆盖用户账目。
 不再维护 Web 预览、WASM 或浏览器测试；不要创建独立演示 UI。布局测试保留 393×852 与窄屏尺寸，
 视觉迭代保留首页预算圆环、支出/剩余日均、概览指标方块和“我的”四列宫格。
 
-- Android 运行/构建仍必须显式使用 `--flavor github`；验证 Play 时使用 `--flavor play --dart-define=SELF_UPDATE=false`。桌面 widget 测试不能替代 Android 原生能力、生命周期和性能验收。
-- 图形故障隔离是例外：仅本地使用独立 applicationId 的 `--flavor diagnostic`，可运行最小绘制入口或正式 `lib/main.dart` 验收，不能当作交付物。
+- 本地日常运行使用 `--flavor diagnostic`；验证 GitHub 渠道、自更新或正式包外观时使用 `--flavor github`；验证 Play 渠道时使用 `--flavor play --dart-define=SELF_UPDATE=false`。所有构建都显式带 flavor。桌面 widget 测试不能替代 Android 原生能力、生命周期和性能验收。
+- `diagnostic` 使用独立 applicationId 与正式数据隔离；它可以运行 `lib/main.dart` 或最小绘制入口，但不能当作交付物。
 - 提交前执行 `dart format .`、`flutter analyze` 和 `flutter test`。只改文档时至少做 diff/链接/路径校验，可不运行 Flutter 测试，但要在汇报中说明。
 - 不把本地 `flutter build apk` 当成交付依据；正式 APK/AAB 由 GitHub Actions 构建。
 
@@ -141,7 +141,7 @@ dart format .
 
 **Release 标题与说明（规范）：**
 
-- **标题固定等于标签名**：`vX.Y.Z`，不加「· 中文摘要」之类后缀。CI 建预发布时用的就是标签名，提升为正式版时不要再改标题（历史上有过带后缀的标题，不再沿用）。
+- **标题固定等于标签名**：`vX.Y.Z`，不加中文摘要等后缀。CI 建预发布时使用标签名，提升为正式版时不再改标题。
 - **说明正文由 `CHANGELOG.md` 的对应版本段落自动生成**，模板在 `.github/workflows/flutter.yml` 的 `Compose release notes` 步骤里，只补固定文案：预发布时期的验收提示、「直接覆盖安装 + 更新前先备份」提示。
 - **不写安装包自身的说明**：架构 / ABI / 体积 / 机型限制属于构建与分发口径，只记在 `README.md` 与 `docs/dev/tech-decisions.md`，不进 Release 说明。
 - 提升为正式版：`gh release edit vX.Y.Z --prerelease=false --latest`（不动 git 标签与附件），完成后回读 `gh release view` / `gh release list` 确认 `isPrerelease=false` 且 Latest 已指向它。
@@ -151,7 +151,6 @@ dart format .
 - GitHub Releases 只保留**正式版**（推荐 Latest 指向最新正式版）；预发布只是「待真机验收」的临时状态，验收通过就应该提升为正式版，而不是长期留存。
 - **git 标签是版本源码的唯一归档**：即使清掉了某个预发布的 Release 页面，也不要删除它的标签——发布脚本会拒绝复用已存在的标签，标签也是旧版本唯一的源码定位方式。Release 页面可以删，标签不要删。
 - 清理命令：`dart run scripts/prune_prereleases.dart --dry-run` 先核对列表，再去掉 `--dry-run` 执行（默认保留 git 标签）。只有在确认某个标签确实不再需要时才加 `--cleanup-tag`。
-- 当前仓库历史上堆积过 80+ 个未被提升的预发布，已按上述规则清理过一次。
 
 ### 仓库脚本
 

@@ -46,7 +46,6 @@ Windows 安装顺序：
 - Flutter：`C:\Dev\flutter-3.47.2`，本地 `stable` 分支固定在该 tag，`flutter --version` 为 3.47.2（与 CI 一致）；机器 PATH 中排在通用安装 `C:\Dev\flutter` 之前。
 - Android SDK：`C:\Dev\android-sdk`；`ANDROID_HOME` / `ANDROID_SDK_ROOT` 指向它，`platform-tools` 已在 PATH 上，SDK 许可已全部接受（`flutter doctor` 的 Android toolchain 为 ✓）。
 - JDK：`JAVA_HOME` 指向 `jdk-17.0.20.101-hotspot`，与 CI 同为 Java 17。
-- 早先 `C:\Android\Sdk` 是个没有 `platforms/`、`build-tools/` 的空壳目录，已删除，避免工具把它当成可用的 SDK。
 
 复核（新终端）：
 
@@ -66,11 +65,9 @@ $env:JAVA_TOOL_OPTIONS='-Djava.io.tmpdir=C:/Dev/java-tmp -Djdk.net.unixdomain.tm
 仅在复现同类错误时使用上述 Java/Kotlin 绕过，不复制到 CI 全局配置。`local.properties`
 由 Flutter 维护且不提交；正式 keystore 永远不替换或输出。
 
-**别拿并行 `input tap` 压测模拟器。** 每次 `input` 都会在设备上起一个 JVM，几十路并发足以把
-模拟器自己打爆：之后应用冷启动会从几秒退化到 30 秒以上、日志出现 `NO_INPUT_CHANNEL`、点击
-全部打空，还会弹出「应用无响应」对话框——**看着像应用的 Bug，其实是模拟器废了**。`adb reboot`
-即可恢复。连点、快速切页这类压测优先用 `flutter test` 的 widget 测试（可控、可复现、能断言），
-真机/模拟器只做最终确认。
+**不要并行执行 `input tap`。** 每次 `input` 都会在设备上启动一个 JVM；并发过高会使模拟器卡死，
+表现为冷启动变慢、`NO_INPUT_CHANNEL`、点击无效或 ANR。需要时先 `adb reboot` 恢复。
+连点、快速切页等压力验证使用 `flutter test` 的 widget 测试；真机/模拟器只做最终确认。
 
 ## 日常真机开发
 
@@ -100,7 +97,7 @@ flutter test integration_test/ -d <device-id> --flavor diagnostic
 “Veri Fin 图形诊断”；仍是正式页面、Controller、SQLite 和原生插件，数据与用户正式应用隔离。
 debug 支持 hot reload；最终图形/OCR/插件行为必须另外用 release/R8 检查。
 同一工作区的 `flutter test`、`flutter pub get` 与 Android 构建必须顺序执行：它们会更新
-插件注册文件和依赖元数据；并行运行曾导致 release 编译误引用 integration_test 插件。
+插件注册文件和依赖元数据，并行运行可能让 release 编译误引用 integration_test 插件。
 用户明确要求在正式应用目录调试时使用 `--flavor github`，先核对签名/版本号；不得为
 解决签名不一致卸载正式应用。GitHub/Play 的发布差异仍以 AGENTS 为准。
 

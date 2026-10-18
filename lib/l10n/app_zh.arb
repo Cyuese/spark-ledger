@@ -1645,6 +1645,7 @@
     }
   },
   "categoryNameLabel": "分类名称",
+  "categoryNameDuplicate": "同一父分类下已存在同名分类",
   "viewCategoryEntries": "查看交易",
   "changeIcon": "更换图标",
   "addSubCategory": "新增子分类",
@@ -1699,6 +1700,7 @@
   },
   "mergeCategoryFailed": "无法合并该分类",
   "renameCategoryTitle": "重命名分类",
+  "tagNameDuplicate": "已存在同名标签",
   "pickIconTitle": "选择图标",
   "iconSectionBuiltin": "内置图标",
   "iconSectionEmoji": "Emoji",
@@ -2110,6 +2112,7 @@
   "aiChatHintMonthSummary": "本月收支情况怎么样？",
   "aiChatNoData": "暂无数据",
   "aiChatNoMatchingTx": "无匹配交易",
+  "aiImageBlocked": "出于隐私考虑，未加载图片",
   "aiClearConfig": "清空配置",
   "aiClearConfigMessage": "将清空请求地址、API Key 与模型。清空后需重新填写才能使用 AI 功能。",
   "aiConfigCleared": "配置已清空",

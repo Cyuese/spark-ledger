@@ -696,12 +696,48 @@ class _MessageView extends StatelessWidget {
                 height: 1.6,
                 color: theme.colorScheme.onSurface,
               ),
+              // Markdown 来自模型输出，不能让它凭一个远程 URL 触发网络请求，
+              // 从而在用户不知情时暴露 IP、阅读时间或账目上下文。
+              imageBuilder: (context, _, _, _) => const _BlockedMarkdownImage(),
             ),
           if (message.errorText != null) ...<Widget>[
             const SizedBox(height: 8),
             _ErrorBubble(text: message.errorText!, onRetry: onRetry),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _BlockedMarkdownImage extends StatelessWidget {
+  const _BlockedMarkdownImage();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(veriRadiusSm),
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(Icons.image_not_supported_outlined, size: 16),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                AppLocalizations.of(context).aiImageBlocked,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

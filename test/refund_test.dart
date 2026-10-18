@@ -206,7 +206,7 @@ void main() {
     final bookId = controller.activeBook.id;
     controller.addAccount(account('A', bookId, 1000));
     // 模拟平台导入（如一木「退款」列）：一条带 refundedAmount 标量的支出。
-    controller.applyImportEntries(
+    await controller.applyImportEntries(
       entries: <LedgerEntry>[
         LedgerEntry(
           id: 'imp1',

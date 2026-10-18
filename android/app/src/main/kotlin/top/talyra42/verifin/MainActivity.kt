@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.StatFs
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.provider.Settings
@@ -49,6 +50,9 @@ class MainActivity : FlutterFragmentActivity() {
         rememberWidgetRouteIntent(intent)
         rememberCaptureIntent(intent)
         super.onCreate(savedInstanceState)
+        if (AppLockPreferences.isEnabled(this)) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -124,6 +128,15 @@ class MainActivity : FlutterFragmentActivity() {
                     call.argument<String>("path") ?: "",
                     result,
                 )
+                "availableBytes" -> {
+                    val path = call.argument<String>("path") ?: ""
+                    val available = try {
+                        StatFs(File(path).absolutePath).availableBytes
+                    } catch (_: Exception) {
+                        null
+                    }
+                    result.success(available)
+                }
                 "listBackupFiles" -> listBackupFiles(
                     call.argument<String>("directoryUri") ?: "",
                     result,

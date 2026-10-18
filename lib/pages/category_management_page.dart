@@ -512,7 +512,18 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
     if (!mounted || label == null) {
       return;
     }
-    VeriFinScope.of(context).renameCategory(category.id, label);
+    final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final result = await controller.renameCategory(category.id, label);
+    if (!mounted || result != RenameResult.duplicate) {
+      return;
+    }
+    unawaited(
+      VeriFeedbackHost.of(context).showMessage(
+        message: l10n.categoryNameDuplicate,
+        tone: VeriFeedbackTone.warning,
+      ),
+    );
   }
 
   Future<void> _changeCategoryIcon(Category category) async {
