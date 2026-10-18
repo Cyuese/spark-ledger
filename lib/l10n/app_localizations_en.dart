@@ -4979,6 +4979,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String aiAnswerProvenanceQueried(int count) {
+    return 'Based on $count ledger queries';
+  }
+
+  @override
+  String get aiAnswerProvenanceNoQuery => 'No ledger data queried';
+
+  @override
+  String get aiAnswerProvenanceUnverified =>
+      'No ledger data was queried; do not rely on this for account facts';
+
+  @override
   String get widgetPreviewFailed => 'Widget preview unavailable';
 
   @override

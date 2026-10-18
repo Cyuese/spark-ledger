@@ -1955,6 +1955,9 @@
   "aiBudgetAttentionRow": "{label} {spent}/{budget} ({status})",
   "aiDailyRemainingLine": ", {amount}/day remaining",
   "aiBudgetSummary": "{period} budget {budget}, spent {spent}, remaining {remaining}{daily}. {attention}",
+  "aiAnswerProvenanceQueried": "Based on {count} ledger queries",
+  "aiAnswerProvenanceNoQuery": "No ledger data queried",
+  "aiAnswerProvenanceUnverified": "No ledger data was queried; do not rely on this for account facts",
   "widgetPreviewFailed": "Widget preview unavailable",
   "widgetConfigurationFailed": "Could not load this widget. Return to the home screen and try again."
 }

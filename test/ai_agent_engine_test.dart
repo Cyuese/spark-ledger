@@ -124,10 +124,11 @@ void main() {
       expect(events.whereType<AiAgentToolStarted>(), hasLength(2));
       expect(events.whereType<AiAgentToolCompleted>(), hasLength(2));
       expect(events.whereType<AiAgentToolFailed>(), isEmpty);
-      expect(
-        events.whereType<AiAgentCompleted>().single.answer,
-        '本月支出 300 元，最大一笔也是 300 元。',
-      );
+      final completed = events.whereType<AiAgentCompleted>().single;
+      expect(completed.answer, '本月支出 300 元，最大一笔也是 300 元。');
+      expect(completed.attemptedToolCalls, 2);
+      expect(completed.successfulToolCalls, 2);
+      expect(completed.usedLedgerData, isTrue);
       expect(
         events.whereType<AiAgentAnswerDelta>().single.text,
         isNot(contains('private reasoning')),
@@ -160,7 +161,10 @@ void main() {
     final events = await _run(engine, transport, mode: AiToolCallMode.prompt);
 
     expect(events.whereType<AiAgentToolCompleted>(), hasLength(1));
-    expect(events.whereType<AiAgentCompleted>().single.answer, '本月支出 300 元。');
+    final completed = events.whereType<AiAgentCompleted>().single;
+    expect(completed.answer, '本月支出 300 元。');
+    expect(completed.attemptedToolCalls, 1);
+    expect(completed.successfulToolCalls, 1);
     final visible = events
         .whereType<AiAgentAnswerDelta>()
         .map((event) => event.text)

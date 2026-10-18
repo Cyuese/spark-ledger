@@ -8662,6 +8662,24 @@ abstract class AppLocalizations {
     String attention,
   );
 
+  /// No description provided for @aiAnswerProvenanceQueried.
+  ///
+  /// In zh, this message translates to:
+  /// **'基于账本查询 · {count} 次'**
+  String aiAnswerProvenanceQueried(int count);
+
+  /// No description provided for @aiAnswerProvenanceNoQuery.
+  ///
+  /// In zh, this message translates to:
+  /// **'未查询账本'**
+  String get aiAnswerProvenanceNoQuery;
+
+  /// No description provided for @aiAnswerProvenanceUnverified.
+  ///
+  /// In zh, this message translates to:
+  /// **'未查询账本，请勿据此判断账目'**
+  String get aiAnswerProvenanceUnverified;
+
   /// No description provided for @widgetPreviewFailed.
   ///
   /// In zh, this message translates to:
