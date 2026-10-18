@@ -29,7 +29,7 @@ void main() {
     await coordinator.flush();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(calls, <String>['flush', 'push:normal']);
+    expect(calls, <String>['flush', 'push:force']);
   });
 
   testWidgets('立即推送会取消待执行防抖并转发 force', (tester) async {

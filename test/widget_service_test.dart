@@ -76,6 +76,26 @@ void main() {
     expect(saved, isEmpty);
   });
 
+  test('桌面上没有实例时，强制推送仍准备最新快照供之后新增组件读取', () async {
+    final controller = await makeController();
+    addTearDown(controller.dispose);
+    registerEntry(controller);
+    mockChannels(const <String, int>{});
+    resetWidgetProjectionCache();
+
+    await pushWidgetProjection(controller, force: true);
+
+    final snapshots =
+        jsonDecode(saved[widgetSnapshotsKey]!) as Map<String, dynamic>;
+    final book = snapshots[controller.activeBook.id] as Map<String, dynamic>;
+    expect((book['quick_entry'] as Map<String, dynamic>)['amount'], '20');
+    expect(
+      calls.any((call) => call.startsWith('update:')),
+      isFalse,
+      reason: '没有实例时只写共享快照，不向 Provider 发刷新广播',
+    );
+  });
+
   test('有实例时写入快照与账本，并只为该模板刷新与排程', () async {
     final controller = await makeController();
     addTearDown(controller.dispose);

@@ -62,7 +62,7 @@ Future<void> _pushWidgetProjection(
     final counts = await AppWidgetBridge.widgetInstanceCounts();
     if (!force && counts.isEmpty) return;
     final payload = _encodePayload(controller);
-    if (!force && payload.fingerprint == _pushedFingerprint) {
+    if (payload.fingerprint == _pushedFingerprint) {
       _pushedRevision = revision;
       return;
     }

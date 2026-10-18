@@ -60,7 +60,11 @@ class WidgetRefreshCoordinator {
     _timer = null;
     await _flushPendingWrites();
     if (_disposed) return;
-    await _pushProjection(force: false);
+    // A forced publish still compares fingerprints, so unchanged content is
+    // not rewritten. It additionally prepares the snapshot when the launcher
+    // currently has no instance, allowing a widget added later to render data
+    // without requiring the main application to be reopened first.
+    await _pushProjection(force: true);
   }
 
   void _clearFlush(Future<void> future) {
