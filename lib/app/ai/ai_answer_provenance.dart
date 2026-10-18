@@ -13,7 +13,7 @@ enum AiAnswerProvenance {
 final RegExp _financialQuestionPattern = RegExp(
   r'支出|收入|花费|消费|预算|账户|余额|转账|退款|报销|账单|工资|'
   r'大额|分类|标签|净资产|信用卡|还款|花|赚|'
-  r'\b(?:spend|spent|expense|income|budget|account|balance|transfer|'
+  r'\b(?:spend|spending|spent|expense|expenses|income|budget|account|balance|transfer|'
   r'refund|bill|salary|cost|payment|net worth|credit card)\b',
   caseSensitive: false,
 );

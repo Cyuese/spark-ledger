@@ -30,6 +30,14 @@ void main() {
       ),
       AiAnswerProvenance.noLedgerQueryWithNumericContent,
     );
+    expect(
+      classifyAiAnswerProvenance(
+        userInput: 'direct answer monthly spending',
+        answer: '本月支出 1234 元。',
+        successfulToolCalls: 0,
+      ),
+      AiAnswerProvenance.noLedgerQueryWithNumericContent,
+    );
   });
 
   test('non-financial direct answers remain a neutral no-query state', () {
