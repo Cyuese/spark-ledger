@@ -120,6 +120,7 @@ Future<String> unpackBackupArchiveFile({
   required AttachmentStore sink,
   void Function(int done, int total)? onProgress,
   bool Function()? isCancelled,
+  int? availableBytes,
 }) async {
   final input = InputFileStream(archivePath);
   final Archive archive;
@@ -135,6 +136,10 @@ Future<String> unpackBackupArchiveFile({
   var attachmentCount = 0;
   onProgress?.call(0, 0);
   try {
+    final requiredBytes = _declaredExtractionBytes(archive);
+    if (availableBytes != null && requiredBytes > availableBytes) {
+      throw const FormatException('设备存储空间不足，无法解压备份');
+    }
     for (final file in archive) {
       if (isCancelled?.call() ?? false) {
         throw const BackupCancelledException();
@@ -210,6 +215,21 @@ Future<String> unpackBackupArchiveFile({
     }
   }
   return jsonEncode(root);
+}
+
+int _declaredExtractionBytes(Archive archive) {
+  var total = 0;
+  for (final file in archive.files) {
+    if (!file.isFile) continue;
+    if (file.name != backupJsonEntryName &&
+        !file.name.startsWith('$_attachmentsDir/')) {
+      continue;
+    }
+    if (file.size > 0) {
+      total += file.size;
+    }
+  }
+  return total;
 }
 
 /// 旧版明文 JSON（v1/v2，附件内嵌 base64）→ 暂存附件 + 元数据 JSON。
