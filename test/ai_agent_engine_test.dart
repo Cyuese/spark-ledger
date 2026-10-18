@@ -7,30 +7,31 @@ import 'package:verifin/app/ai/ai_agent_event.dart';
 import 'package:verifin/app/ai/ai_agent_message.dart';
 import 'package:verifin/app/ai/ai_completion_event.dart';
 import 'package:verifin/app/ai/ai_error.dart';
+import 'package:verifin/app/ai/ai_ledger_snapshot.dart';
 import 'package:verifin/app/ai/ai_query_tool.dart';
 import 'package:verifin/app/ai/ai_settings.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/l10n/app_localizations.dart';
 
 AiToolContext _context() {
+  final entries = <LedgerEntry>[
+    LedgerEntry(
+      id: 'e1',
+      bookId: 'b',
+      type: EntryType.expense,
+      amount: 300,
+      categoryId: 'food',
+      accountId: 'acc',
+      note: '午餐',
+      occurredAt: DateTime(2026, 6, 10),
+    ),
+  ];
   return AiToolContext(
-    entries: <LedgerEntry>[
-      LedgerEntry(
-        id: 'e1',
-        bookId: 'b',
-        type: EntryType.expense,
-        amount: 300,
-        categoryId: 'food',
-        accountId: 'acc',
-        note: '午餐',
-        occurredAt: DateTime(2026, 6, 10),
-      ),
-    ],
-    accounts: const <Account>[],
-    categories: const <Category>[],
-    tags: const <Tag>[],
-    balanceOf: (_) => 0,
-    baseCurrencyCode: 'CNY',
+    ledger: AiLedgerSnapshot.forTesting(
+      bookId: 'b',
+      entries: entries,
+      balanceOf: (_) => 0,
+    ),
     now: DateTime(2026, 6, 20),
     l10n: lookupAppLocalizations(const Locale('zh')),
   );

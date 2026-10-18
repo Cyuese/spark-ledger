@@ -1,5 +1,7 @@
 part of 'veri_fin_controller.dart';
 
+final RegExp _budgetMonthKeyPattern = RegExp(r'^\d{4}-\d{2}$');
+
 /// 控制器的「领域操作」层：交易/账户/分组/账本/分类/标签/预算/偏好/备份/
 /// 导入导出等所有对外方法。字段与持久化在 [_ControllerState]。
 mixin _ControllerOps on ChangeNotifier, _ControllerState {
@@ -205,6 +207,68 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return amount_format.hideUnitInSingleCurrency && !multiple
         ? MoneyCodeDisplay.none
         : amount_format.preferredMoneyCodeDisplay;
+  }
+
+  /// 构建一次 AI turn 使用的冻结账本快照。
+  ///
+  /// 余额与预算在这里一次求值；之后的工具执行和结果展示不得再读取 Controller。
+  AiLedgerSnapshot aiLedgerSnapshotForBook(String bookId, {DateTime? now}) {
+    final book = ledgerBooks.where((item) => item.id == bookId).firstOrNull;
+    if (book == null) {
+      throw ArgumentError.value(bookId, 'bookId', '未知账本');
+    }
+    final accounts = accountsForBook(bookId);
+    final startDay = clampBudgetCycleStartDay(
+      _budgetCycleStartDays[bookId] ?? naturalMonthStartDay,
+    );
+    final prefix = '$bookId:';
+    var defaultMonthlyBudget = 0.0;
+    final monthlyBudgetByMonth = <String, double>{};
+    for (final entry in _monthlyBudgets.entries) {
+      if (!entry.key.startsWith(prefix)) continue;
+      final suffix = entry.key.substring(prefix.length);
+      if (suffix == _budgetDefaultMonthSegment) {
+        defaultMonthlyBudget = entry.value;
+      } else if (_budgetMonthKeyPattern.hasMatch(suffix)) {
+        monthlyBudgetByMonth[suffix] = entry.value;
+      }
+    }
+    final defaultCategoryBudgetByCategory = <String, double>{};
+    final categoryBudgetByMonthAndCategory = <String, double>{};
+    for (final entry in _categoryBudgets.entries) {
+      if (!entry.key.startsWith(prefix)) continue;
+      final suffix = entry.key.substring(prefix.length);
+      final separator = suffix.indexOf(':');
+      if (separator <= 0 || separator == suffix.length - 1) continue;
+      final monthOrDefault = suffix.substring(0, separator);
+      final categoryId = suffix.substring(separator + 1);
+      if (monthOrDefault == _budgetDefaultMonthSegment) {
+        defaultCategoryBudgetByCategory[categoryId] = entry.value;
+      } else if (_budgetMonthKeyPattern.hasMatch(monthOrDefault)) {
+        categoryBudgetByMonthAndCategory[suffix] = entry.value;
+      }
+    }
+    return AiLedgerSnapshot(
+      bookId: bookId,
+      bookName: book.name,
+      baseCurrencyCode: book.baseCurrencyCode,
+      capturedAt: now ?? DateTime.now(),
+      entries: entriesForBook(bookId),
+      accounts: accounts,
+      categories: categoriesForBook(bookId),
+      tags: tagsForBook(bookId),
+      exchangeRates: exchangeRatesForBook(bookId),
+      balanceByAccountId: <String, double>{
+        for (final account in accounts) account.id: accountBalance(account),
+      },
+      budget: AiBudgetSnapshot(
+        cycleStartDay: startDay,
+        monthlyBudgetByMonth: monthlyBudgetByMonth,
+        defaultMonthlyBudget: defaultMonthlyBudget,
+        categoryBudgetByMonthAndCategory: categoryBudgetByMonthAndCategory,
+        defaultCategoryBudgetByCategory: defaultCategoryBudgetByCategory,
+      ),
+    );
   }
 
   List<AccountGroup> get accountGroups {

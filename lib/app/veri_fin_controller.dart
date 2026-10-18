@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart' hide Category;
 import '../data/ledger_repository.dart';
 import '../local_storage/local_storage.dart';
 import 'ai/ai_capabilities.dart';
+import 'ai/ai_ledger_snapshot.dart';
 import 'ai/ai_settings.dart';
 import 'app_lock.dart';
 import 'attachments/attachment_store.dart';
