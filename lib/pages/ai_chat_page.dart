@@ -604,27 +604,36 @@ class _AiChatPageState extends State<AiChatPage> {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            TextField(
-              controller: _input,
-              focusNode: _inputFocus,
-              minLines: 1,
-              maxLines: 6,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _send(),
-              onTapOutside: (_) => _inputFocus.unfocus(),
-              style: TextStyle(
-                fontSize: 15.5,
-                height: 1.45,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.94),
-              ),
-              decoration: InputDecoration(
-                hintText: l10n.aiChatInputHint,
-                hintStyle: TextStyle(color: muted),
-                isDense: true,
-                filled: false,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.fromLTRB(18, 15, 18, 4),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 4),
+              child: TextField(
+                controller: _input,
+                focusNode: _inputFocus,
+                minLines: 1,
+                maxLines: 6,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _send(),
+                onTapOutside: (_) => _inputFocus.unfocus(),
+                style: TextStyle(
+                  fontSize: 15.5,
+                  height: 1.45,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.94),
+                ),
+                decoration: InputDecoration(
+                  hintText: l10n.aiChatInputHint,
+                  hintStyle: TextStyle(color: muted),
+                  isDense: true,
+                  filled: false,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
             ),
             Padding(
@@ -759,14 +768,14 @@ class _SendButton extends StatelessWidget {
       child: InkWell(
         onTap: streaming ? onStop : (enabled ? onSend : null),
         child: SizedBox(
-          width: 46,
-          height: 46,
+          width: 38,
+          height: 38,
           child: Tooltip(
             message: streaming ? l10n.aiStopGenerating : l10n.aiSendQuestion,
             child: Icon(
               streaming ? Icons.stop_rounded : Icons.arrow_upward_rounded,
               color: active ? scheme.surface : disabledFg,
-              size: streaming ? 18 : 22,
+              size: streaming ? 15 : 18,
             ),
           ),
         ),
