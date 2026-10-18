@@ -644,12 +644,10 @@ class QueryTransactionsTool extends AiQueryTool {
       if (entry.type != EntryType.transfer) {
         return _baseMoney(ctx, entry.netBaseAmount);
       }
-      final from = ctx.accounts
-          .where((account) => account.id == entry.accountId)
-          .firstOrNull;
-      final to = ctx.accounts
-          .where((account) => account.id == entry.toAccountId)
-          .firstOrNull;
+      final from = ctx.ledger.accountById(entry.accountId);
+      final to = entry.toAccountId == null
+          ? null
+          : ctx.ledger.accountById(entry.toAccountId!);
       final fromCode = from?.currencyCode ?? entry.currencyCode;
       final fromAmount = entry.accountAmount ?? entry.amount;
       final fromText = formatMoney(

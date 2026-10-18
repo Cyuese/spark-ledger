@@ -102,15 +102,43 @@ void main() {
     expect(() => snapshot.entries.add(_entry()), throwsUnsupportedError);
     expect(() => snapshot.balanceByAccountId['x'] = 1, throwsUnsupportedError);
   });
+
+  test('snapshot sorts entries and exposes account index', () {
+    final account = Account(
+      id: 'a',
+      bookId: 'b',
+      name: '现金',
+      type: AccountType.cash,
+      groupId: null,
+      initialBalance: 0,
+      iconCode: 'cash',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+    );
+    final snapshot = AiLedgerSnapshot.forTesting(
+      bookId: 'b',
+      accounts: <Account>[account],
+      entries: <LedgerEntry>[
+        _entry(id: 'old', at: DateTime(2026, 6, 1)),
+        _entry(id: 'new', at: DateTime(2026, 6, 3)),
+      ],
+      balanceOf: (_) => 0,
+    );
+
+    expect(snapshot.entries.map((entry) => entry.id), <String>['new', 'old']);
+    expect(snapshot.accountById('a')?.name, '现金');
+    expect(snapshot.accountById('missing'), isNull);
+  });
 }
 
-LedgerEntry _entry() => LedgerEntry(
-  id: 'e',
+LedgerEntry _entry({String id = 'e', DateTime? at}) => LedgerEntry(
+  id: id,
   bookId: 'b',
   type: EntryType.expense,
   amount: 1,
   categoryId: 'c',
   accountId: '',
   note: '',
-  occurredAt: DateTime(2026, 6, 1),
+  occurredAt: at ?? DateTime(2026, 6, 1),
 );
