@@ -1055,6 +1055,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
               controller.webdavConfig,
               prepared.filename,
               prepared.cachePath,
+              isCancelled: isCancelled,
             );
             controller.recordBackupTime(now);
             uploadedName = prepared.filename;
@@ -1195,6 +1196,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
               controller.webdavConfig,
               chosen.href,
               cachePath,
+              isCancelled: isCancelled,
             );
             if (!context.mounted) {
               return false;
