@@ -64,6 +64,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('去配置 AI'), findsOneWidget);
+    expect(find.byKey(const Key('empty_state_illustration')), findsOneWidget);
+    expect(find.textContaining('只读查询账目'), findsNothing);
     expect(find.text('对话只存本机，不含在备份内'), findsNothing);
     expect(find.byTooltip('AI 设置'), findsNothing);
     controller.dispose();

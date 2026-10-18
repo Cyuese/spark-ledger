@@ -483,46 +483,18 @@ class _AiChatPageState extends State<AiChatPage> {
 
   Widget _buildUnconfigured(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              Icons.smart_toy_outlined,
-              size: 56,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(l10n.aiChatUnconfiguredHint, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            for (final note in <String>[
-              l10n.aiChatReadOnlyNote,
-              l10n.aiChatPrivateNote,
-              l10n.aiChatLedgerScopeNote,
-            ])
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  note,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AiSettingsPage()),
-              ),
-              icon: const Icon(Icons.settings_outlined),
-              label: Text(l10n.aiChatGoConfigure),
-            ),
-          ],
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: EmptyState(
+        icon: Icons.smart_toy_outlined,
+        title: l10n.aiChatUnconfiguredTitle,
+        description: l10n.aiChatUnconfiguredHint,
+        action: FilledButton.icon(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const AiSettingsPage()),
+          ),
+          icon: const Icon(Icons.settings_outlined),
+          label: Text(l10n.aiChatGoConfigure),
         ),
       ),
     );
