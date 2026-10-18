@@ -13,6 +13,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../l10n/app_localizations.dart';
 import 'account_icon_assets.dart';
+import 'amount_format.dart';
 import 'app_theme.dart';
 import 'category_tree.dart';
 import 'credit_card.dart';

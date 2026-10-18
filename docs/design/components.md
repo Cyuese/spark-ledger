@@ -118,8 +118,8 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 | 名称 | 类型 | 位置 | 用途 |
 |---|---|---|---|
-| `TransactionTile` | Widget | `common_widgets.dart` | 单条交易行（图标+分类+时间/备注+金额+账户 pill+待报销/已退款徽标，多选态内建）；副行的跨币种换算**只在两端币种不同时**渲染（同币种两端的换算整条是重复信息），`forceUnit: true` 只留给真正同屏出现第二个币种的换算字段，「显示逐笔结余」的余额走 `formatUserMoney` 不带单位 |
-| `TransactionListCard` | Widget | `common_widgets.dart` | 交易列表卡（多条 `TransactionTile` + 分隔线） |
+| `TransactionTile` | Widget | `common_widgets.dart` | 单条交易行（图标+分类+时间/备注+金额+账户 pill+待报销/已退款徽标，多选态内建）；副行的跨币种换算**只在两端币种不同时**渲染（同币种两端的换算整条是重复信息），`forceUnit: true` 只留给真正同屏出现第二个币种的换算字段；`moneyDisplay` 仅供非活动账本结果（如 AI 对话）显式覆盖单位口径，普通页面保持为空 |
+| `TransactionListCard` | Widget | `common_widgets.dart` | 交易列表卡（多条 `TransactionTile` + 分隔线）；可透传 `moneyDisplay`，AI 等非活动账本结果使用；AI 对话调用时不传 `onEntryTap`，保持只读 |
 | `DateGroupHeader` | Widget | `common_widgets.dart` | 日期分组小标题（日期+今天/昨天+当日合计） |
 | `groupEntriesByDate` / `relativeDay` | 纯函数 | `common_widgets.dart` | 按日分组、日期倒序 / 相对今天；`DateEntryGroup` 分组模型 |
 | `CalendarPreview` | Widget | `common_widgets.dart` | 月历预览（内建月份切换、非当前月份显示「本月」回跳按钮 + 日收支）；必传 `currencyCode`；单币种账本隐藏单位时右下角不再显示轻量单位提示，并**连同前置 6dp 间距整块不构建**（`if (!textCurrencyUnitHidden)`，见维护约定），多币种账本照常显示 |
@@ -146,7 +146,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `MoneyUnitLabel` | Widget | `common_widgets.dart` | 聚合卡片的轻量「单位：¥/CNY」提示（首页预算卡、日历卡、AI 结果卡；走势设置页预览复用同一张卡。首页支出走势卡不显示它，那里渲染的是「周／月／季／年」周期标签）；单币种账本隐藏单位时组件自身返回 `SizedBox.shrink`——**只表示看不见，不能拿它判断单位是否显示**；把容器一起收掉的调用点（日历卡）隐藏时根本不构建，`find.byType` 是 `findsNothing`。要断言隐藏用 `find.textContaining('单位：')` |
 | `currencyUnitSubtitle` | 纯函数 | `common_widgets.dart` | **页头 / 卡片副标题拼「单位：x」的唯一入口**：传 `l10n`、上下文前缀（书名/账户类型/日期范围，可空）与币种代码。隐藏单位时返回前缀本身（**不会把书名一起丢掉**），无前缀时返回 `null`——调用方必须据此整段省略副标题，不要渲染只剩分隔符的残句 |
 | `SummaryMetric` | Widget | `common_widgets.dart` | **指标块**（label+value+color+detail）。各类统计小块一律用它，勿新造 `_XxxMetric`/`_XxxTile` |
-| `FilterPill` | Widget | `common_widgets.dart` | 筛选胶囊（标签+可选图标+chevron） |
+| `FilterPill` | Widget | `common_widgets.dart` | 筛选胶囊（标签+可选图标+chevron）；空间受限时传 `flexibleLabel: true`，标签单行省略且不撑破父级 |
 | `ToolEntry` | Widget | `common_widgets.dart` | 工具入口图标块 |
 
 ## 族 8 — 对话框 / 弹窗 helper
@@ -201,7 +201,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | 账目数据校验 | `ledger_data_validation.dart` | `validateLedgerEntries` `LedgerDataValidationIssue`——交易聚合、账单导入和备份恢复共用的三层金额/退款/引用校验 |
 | 附件存储与备份管线 | `attachments/attachment_store.dart`、`backup/backup_archive.dart`、`backup/legacy_json_stream.dart`、`backup/backup_service.dart`、`backup/backup_storage_*.dart` | `AttachmentStore`——附件字节**唯一入口**（文件存储 + 导入暂存 + 孤儿回收 + 迁移期按需物化；生产 `FileAttachmentStore`、测试 `InMemoryAttachmentStore`），绘制层禁止自行拼附件路径或直接用 `File`；`packBackupArchiveToFile` / `unpackBackupArchiveFile`（流式 zip，附件 store 模式、逐条落盘）；`rewriteLegacyBackupJson`（旧版内嵌 base64 备份的前向事件流重写）。**恢复入口**：`BackupService.chooseBackupFile()`（自带 SAF 选择器，只回传 `PickedBackupFile{uri,name,size}`，不要用 `file_selector`——它会把整份文件读进内存）、`BackupService.stageBackupFile(uri)`（原生流式复制到缓存，返回 `StagedCacheFile{path,byteSize,owned}`，**只有 `owned` 才允许调用方删除**）、`availableBackupStorageBytes`（Android `StatFs` 解包空间预检）。旧库 `data_url` 的读取与回收在仓储层：`loadAttachmentDataUrl`/`attachmentIdsWithLegacyData`/`clearAttachmentDataUrl`、`hasLegacyAttachmentColumn`、`dropLegacyAttachmentData`（迁移完成后去列 + VACUUM），`loadAttachments` **只读元数据列** |
 | AI 对话查询工具 | `ai/ledger_query.dart`、`ai/ai_query_tool.dart`、`ai/ai_tool_schema.dart` | 通用交易筛选 `queryLedgerEntries`（`LedgerQuery`）；只读工具协议 `AiQueryTool` + `AiToolContext`（含 `currencyDisplay`：单位口径由聊天页注入，**工具层不读 `amount_format` 全局闸门**）+ `AiToolResult` + `AiResultDisplay`（sealed）+ typed Schema + 注册表 `buildAiQueryTools`（**新增分析工具在此登记，并更新 `ai-tools.md`**） |
-| AI Agent 引擎 | `ai/ai_agent_engine.dart`、`ai/ai_native_tool_protocol.dart`、`ai/ai_prompt_tool_protocol.dart` | 双协议只读 Agent 状态机（结构化 `AiAgentMessage` / `AiAgentEvent`）；原生 Tool Calls 与兼容标记协议共用工具执行、轮次和重试边界；结构化传输入口为 `aiAgentStream` / `aiAgentComplete` |
+| AI Agent 引擎 | `ai/ai_agent_engine.dart`、`ai/ai_native_tool_protocol.dart`、`ai/ai_prompt_tool_protocol.dart` | 双协议只读 Agent 状态机（结构化 `AiAgentMessage` / `AiAgentEvent`）；原生 Tool Calls 与兼容标记协议共用工具执行、轮次和重试边界；原生正文逐事件下发，支持 cancellation token、断流保留和有界响应；结构化传输入口为 `aiAgentStream` / `aiAgentComplete` |
 | 设计令牌 | `app_theme.dart` | Material 主交互色从 `Theme.of(context).colorScheme.primary` 读取（默认 Veri Royal、系统动态色或用户自定义色）；`veriRoyal` 仅作为默认回退和无主题上下文的绘制 API 默认值；语义色 `veriBlue` `veriIncome` `veriExpense` `veriWarning` 保持独立；圆角 `veriRadiusSm/Md/Lg/Xl` 与 `veriCardRadius`（卡片圆角，`VeriCard` 与卡内自行裁角的场景共用同一取值，不要在调用点另写数字）；`veriHeaderHeight` `veriPageMaxWidth` |
 
 ## 族 11 — AI 对话查询 UI
@@ -215,9 +215,9 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 | 名称 | 类型 | 位置 | 用途 |
 |---|---|---|---|
-| `AiChatPage` | 页面 Widget | `ai_chat_page.dart` | 全屏 AI 财务 Agent 对话页（气泡 + 工具步骤 + 输入框 + 清空历史）；已配置时 Header 提供 AI 设置入口，未配置时显示去设置引导；`debugTransport` / `debugCompleteTransport` 供测试注入结构化传输 |
+| `AiChatPage` | 页面 Widget | `ai_chat_page.dart` | 全屏 AI 财务 Agent 对话页（消息气泡 + 工具步骤 + 单块 Composer）；Composer 上方为多行输入、下方为操作行，账本选择位于操作行右侧并直接用 `AnchoredMenuChoice` 展开，默认选中全局活动账本，切换不改变全局账本；发送按钮在流式时原位切换为停止；会话只保留页面内存，离开即清空；清空当前对话位于 Header 设置按钮左侧，无对话时保留同宽占位以保证设置按钮位置固定；已配置时 Header 提供 AI 设置入口，未配置时用 `EmptyState` 插画引导配置；`debugTransport` / `debugCompleteTransport` 供测试注入结构化传输 |
 | `AiAgentStepView` | Widget | `ai_agent_step_view.dart` | Agent 工具调用与重试的紧凑可折叠步骤卡；只展示本地化参数与结果摘要，不展示协议 JSON / reasoning / 底层异常 |
-| `AiResultView` | Widget | `ai_result_view.dart` | 把 `AiResultDisplay` 渲染成统计卡 / 柱状排行 / 折线趋势 / **可点击交易列表** / 表格（新增展示类型在此加一支） |
+| `AiResultView` | Widget | `ai_result_view.dart` | 把 `AiResultDisplay` 渲染成统计卡 / 柱状排行 / 折线趋势 / **只读交易列表** / 表格（新增展示类型在此加一支）；按消息生成时的账本、本位币与单位口径渲染 |
 | `AiProviderPreset` / `aiProviderPresets` / `customAiProviderPreset` / `aiProviderPresetFor` / `aiModelListUrlFor` | 值类 / 常量 / 纯函数 | `lib/app/ai/ai_provider_presets.dart` | 8 个内置 OpenAI-compatible 渠道 + 自定义渠道的稳定注册表；Base URL、Logo、模型列表规则和搜索别名集中维护，渠道 ID 不得复用 |
 | `aiProviderDescription` / `aiProviderGroupLabel` / `aiProviderMatchesSearch` / `aiProviderGroupOrder` | 纯函数 / 常量 | `lib/app/ai/ai_provider_presentation.dart` | 渠道分组、说明与跨分组搜索的统一入口；用户可见文案全部经 l10n |
 | `AiModelInfo` / `fetchAiModels` / `parseAiModelList` | 值类 / API / 纯函数 | `lib/app/ai/ai_model_catalog.dart` | 只读模型发现：精确 URL 优先、版本段推导、同源重定向、响应体与条数上限、`data[].id` / `models[].slug` 解析、稳定错误映射；空 Key 不发 Authorization |

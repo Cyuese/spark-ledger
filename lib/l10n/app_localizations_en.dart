@@ -3214,8 +3214,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatClearConfirm => 'Clear';
 
   @override
+  String get aiChatChooseBook => 'Choose conversation ledger';
+
+  @override
+  String get aiChatClearCurrent => 'Clear chat';
+
+  @override
+  String get aiSendQuestion => 'Send';
+
+  @override
+  String get aiStopGenerating => 'Stop generating';
+
+  @override
+  String aiChatCurrentBook(String book) {
+    return 'Current ledger: $book';
+  }
+
+  @override
   String get aiChatUnconfiguredHint =>
       'Configure AI first to start asking about your finances';
+
+  @override
+  String get aiChatUnconfiguredTitle => 'Connect your AI';
 
   @override
   String get aiChatGoConfigure => 'Configure AI';
@@ -4199,6 +4219,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiErrBadResponse => 'Could not parse the server response';
+
+  @override
+  String get aiErrResponseTooLarge =>
+      'The AI response was too large and has been stopped.';
 
   @override
   String get aiErrModelListUnsupported =>

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'ai_agent_event.dart';
 import 'ai_agent_message.dart';
 import 'ai_completion_event.dart';
@@ -19,6 +21,20 @@ typedef AiAgentCompleteTransport =
       List<Map<String, Object?>> tools,
     );
 
+class AiAgentCancellation {
+  final Completer<void> _completer = Completer<void>();
+
+  bool get isCancelled => _completer.isCompleted;
+
+  Future<void> get whenCancelled => _completer.future;
+
+  void cancel() {
+    if (!_completer.isCompleted) {
+      _completer.complete();
+    }
+  }
+}
+
 /// 只读财务 Agent。协议差异只负责编解码，工具执行、轮次、边界和 UI 事件共用此状态机。
 class AiAgentEngine {
   const AiAgentEngine({
@@ -28,6 +44,7 @@ class AiAgentEngine {
     this.maxPriorMessages = 12,
     this.maxPriorCharacters = 12000,
     this.maxToolSummaryCharacters = 4000,
+    this.maxAnswerCharacters = 200000,
   });
 
   final List<AiQueryTool> tools;
@@ -36,6 +53,7 @@ class AiAgentEngine {
   final int maxPriorMessages;
   final int maxPriorCharacters;
   final int maxToolSummaryCharacters;
+  final int maxAnswerCharacters;
 
   Stream<AiAgentEvent> run({
     required AiToolCallMode mode,
@@ -44,6 +62,7 @@ class AiAgentEngine {
     required AiToolContext context,
     required List<AiTextMessage> priorMessages,
     required String userInput,
+    AiAgentCancellation? cancellation,
   }) async* {
     final initialProtocol = mode == AiToolCallMode.prompt
         ? _AgentProtocol.prompt
@@ -56,6 +75,7 @@ class AiAgentEngine {
         context: context,
         priorMessages: priorMessages,
         userInput: userInput,
+        cancellation: cancellation,
       )) {
         yield event;
       }
@@ -81,6 +101,7 @@ class AiAgentEngine {
         context: context,
         priorMessages: priorMessages,
         userInput: userInput,
+        cancellation: cancellation,
       )) {
         yield event;
       }
@@ -96,6 +117,7 @@ class AiAgentEngine {
     required AiToolContext context,
     required List<AiTextMessage> priorMessages,
     required String userInput,
+    AiAgentCancellation? cancellation,
   }) async* {
     final nativeDefinitions = protocol == _AgentProtocol.native
         ? tools.map((tool) => tool.toNativeDefinition()).toList(growable: false)
@@ -110,33 +132,95 @@ class AiAgentEngine {
     ];
     var toolCallCount = 0;
     var retryUsed = false;
+    var answerCharacters = 0;
+    var anyToolExecuted = false;
 
     for (var round = 0; round <= maxToolRounds; round += 1) {
-      AiCompletionResult response;
+      if (cancellation?.isCancelled == true) return;
+      final accumulator = AiNativeCompletionAccumulator();
+      var visibleAnswerWritten = false;
+      late AiCompletionResult response;
       try {
-        final events = await streamTransport(
-          messages,
-          nativeDefinitions,
-        ).toList();
-        response = collectNativeCompletion(events);
+        final iterator = StreamIterator(
+          streamTransport(messages, nativeDefinitions),
+        );
+        try {
+          while (true) {
+            final hasNext = cancellation == null
+                ? await iterator.moveNext()
+                : await Future.any(<Future<bool>>[
+                    iterator.moveNext(),
+                    cancellation.whenCancelled.then((_) => false),
+                  ]);
+            if (cancellation?.isCancelled == true) return;
+            if (!hasNext) break;
+            final event = iterator.current;
+            if (protocol == _AgentProtocol.native &&
+                event is AiContentDelta &&
+                event.text.isNotEmpty) {
+              answerCharacters += event.text.length;
+              _checkAnswerLength(answerCharacters);
+              visibleAnswerWritten = true;
+              yield AiAgentAnswerDelta(event.text);
+            }
+            accumulator.add(event);
+          }
+          response = accumulator.build();
+        } finally {
+          await iterator.cancel();
+        }
       } catch (error) {
-        if (completeTransport == null || retryUsed || !_isTransient(error)) {
+        final canRetry =
+            !visibleAnswerWritten &&
+            !anyToolExecuted &&
+            completeTransport != null &&
+            !retryUsed &&
+            _isTransient(error);
+        if (!canRetry) {
+          if (protocol == _AgentProtocol.native &&
+              error is AiException &&
+              error.code == AiErrorCode.protocolUnsupported &&
+              (visibleAnswerWritten || anyToolExecuted)) {
+            throw AiException(
+              AiErrorCode.badResponse,
+              detail: 'native protocol failed after output',
+            );
+          }
           rethrow;
         }
         retryUsed = true;
         yield const AiAgentRetrying(attempt: 1, reason: 'network');
         response = await completeTransport(messages, nativeDefinitions);
+        if (cancellation?.isCancelled == true) return;
       }
 
       if (response.finishReason == AiFinishReason.insufficientSystemResource &&
           completeTransport != null &&
-          !retryUsed) {
+          !retryUsed &&
+          !visibleAnswerWritten &&
+          !anyToolExecuted) {
         retryUsed = true;
         yield const AiAgentRetrying(attempt: 1, reason: 'upstreamResource');
         response = await completeTransport(messages, nativeDefinitions);
+        if (cancellation?.isCancelled == true) return;
+      }
+
+      if (protocol == _AgentProtocol.native &&
+          !visibleAnswerWritten &&
+          response.content.isNotEmpty) {
+        answerCharacters += response.content.length;
+        _checkAnswerLength(answerCharacters);
+        visibleAnswerWritten = true;
+        yield AiAgentAnswerDelta(response.content);
       }
 
       if (protocol == _AgentProtocol.native && response.toolCalls.isNotEmpty) {
+        if (response.finishReason == AiFinishReason.length) {
+          throw AiException(
+            AiErrorCode.badResponse,
+            detail: 'truncated tool call',
+          );
+        }
         if (round >= maxToolRounds) {
           throw AiException(
             AiErrorCode.badResponse,
@@ -153,6 +237,7 @@ class AiAgentEngine {
           ),
         );
         for (final call in response.toolCalls) {
+          if (cancellation?.isCancelled == true) return;
           toolCallCount += 1;
           if (toolCallCount > maxToolCalls) {
             throw AiException(
@@ -173,6 +258,7 @@ class AiAgentEngine {
                   modelMessage: '工具参数不是有效的 JSON 对象，请修正参数后重试。',
                 )
               : _execute(call.name, arguments, context);
+          anyToolExecuted = true;
           if (execution.result == null) {
             yield AiAgentToolFailed(
               stepId: call.id,
@@ -211,6 +297,7 @@ class AiAgentEngine {
           knownTools: tools.map((tool) => tool.name).toSet(),
         );
         if (parsed is AiPromptToolCall) {
+          if (cancellation?.isCancelled == true) return;
           if (round >= maxToolRounds || ++toolCallCount > maxToolCalls) {
             throw AiException(
               AiErrorCode.badResponse,
@@ -224,6 +311,7 @@ class AiAgentEngine {
             arguments: parsed.arguments,
           );
           final execution = _execute(parsed.name, parsed.arguments, context);
+          anyToolExecuted = true;
           messages.add(AiTextMessage.assistant(response.content));
           if (execution.result == null) {
             yield AiAgentToolFailed(
@@ -255,13 +343,42 @@ class AiAgentEngine {
           continue;
         }
         if (parsed is AiPromptAnswer) {
+          if (cancellation?.isCancelled == true) return;
           yield* _answerEvents(parsed.text, response.finishReason);
           return;
         }
       } else {
-        yield* _answerEvents(response.content, response.finishReason);
+        if (cancellation?.isCancelled == true) return;
+        final answer = response.content.trim();
+        if (answer.isEmpty) {
+          throw AiException(AiErrorCode.badResponse, detail: 'empty answer');
+        }
+        if (response.finishReason == AiFinishReason.length) {
+          yield AiAgentFailed(
+            AiException(AiErrorCode.badResponse, detail: 'response truncated'),
+            partialAnswer: answer,
+          );
+          return;
+        }
+        if (response.finishReason == AiFinishReason.contentFilter) {
+          yield AiAgentFailed(
+            AiException(AiErrorCode.upstream, detail: 'content filtered'),
+            partialAnswer: answer,
+          );
+          return;
+        }
+        yield AiAgentCompleted(answer);
         return;
       }
+    }
+  }
+
+  void _checkAnswerLength(int characters) {
+    if (characters > maxAnswerCharacters) {
+      throw AiException(
+        AiErrorCode.responseTooLarge,
+        detail: 'answer too large',
+      );
     }
   }
 
@@ -273,6 +390,7 @@ class AiAgentEngine {
     if (answer.isEmpty) {
       throw AiException(AiErrorCode.badResponse, detail: 'empty answer');
     }
+    _checkAnswerLength(answer.length);
     if (_containsToolProtocol(answer)) {
       throw AiException(AiErrorCode.badResponse, detail: 'tool protocol leak');
     }

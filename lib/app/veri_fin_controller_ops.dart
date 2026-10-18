@@ -74,6 +74,18 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
           }),
       );
 
+  /// 某账本的汇率（只读，按币种与生效日倒序）。
+  List<ExchangeRate> exchangeRatesForBook(String bookId) =>
+      List<ExchangeRate>.unmodifiable(
+        _exchangeRates.where((rate) => rate.bookId == bookId).toList()
+          ..sort((a, b) {
+            final byCode = a.currencyCode.compareTo(b.currencyCode);
+            if (byCode != 0) return byCode;
+            final byDate = b.effectiveDate.compareTo(a.effectiveDate);
+            return byDate != 0 ? byDate : b.id.compareTo(a.id);
+          }),
+      );
+
   ExchangeRate? exchangeRateFor(String currencyCode, DateTime date) {
     return exchangeRateAt(
       bookId: _activeBookId,
@@ -172,6 +184,28 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   List<Account> get accounts => _accountsView ??= List<Account>.unmodifiable(
     _accounts.where((account) => account.bookId == _activeBookId),
   );
+
+  /// 某账本的账户（只读，供 AI 对话等跨账本读取入口使用）。
+  List<Account> accountsForBook(String bookId) => List<Account>.unmodifiable(
+    _accounts.where((account) => account.bookId == bookId),
+  );
+
+  /// 某账本应使用的金额单位显示口径（AI 对话等非活动账本结果使用）。
+  MoneyCodeDisplay moneyCodeDisplayForBook(String bookId) {
+    final book = ledgerBooks.where((item) => item.id == bookId).firstOrNull;
+    if (book == null) return amount_format.activeMoneyCodeDisplay;
+    final multiple = bookUsesMultipleCurrencies(
+      bookId: bookId,
+      baseCurrencyCode: book.baseCurrencyCode,
+      accounts: accountsForBook(bookId),
+      entries: entriesForBook(bookId),
+      rules: _recurringRules.where((rule) => rule.bookId == bookId),
+      rates: exchangeRatesForBook(bookId),
+    );
+    return amount_format.hideUnitInSingleCurrency && !multiple
+        ? MoneyCodeDisplay.none
+        : amount_format.preferredMoneyCodeDisplay;
+  }
 
   List<AccountGroup> get accountGroups {
     return _accountGroupsView ??= List<AccountGroup>.unmodifiable(
@@ -894,10 +928,28 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   DateWindow budgetWindow(DateTime keyMonth) =>
       budgetCycleOfKeyMonth(keyMonth, budgetCycleStartDay);
 
+  /// 某账本某键月的预算周期窗口（只读）。
+  DateWindow budgetWindowForBook(String bookId, DateTime keyMonth) =>
+      budgetCycleOfKeyMonth(
+        keyMonth,
+        clampBudgetCycleStartDay(
+          _budgetCycleStartDays[bookId] ?? naturalMonthStartDay,
+        ),
+      );
+
   /// 包含 [date] 的预算周期的键月（当前账本起始日）——面板/小组件用「现在」换算
   /// 出应读取哪一期的预算。
   DateTime budgetKeyMonthFor(DateTime date) =>
       budgetCycleKeyMonthFor(date, budgetCycleStartDay);
+
+  /// 某账本中 [date] 所属预算期的键月（只读）。
+  DateTime budgetKeyMonthForBook(String bookId, DateTime date) =>
+      budgetCycleKeyMonthFor(
+        date,
+        clampBudgetCycleStartDay(
+          _budgetCycleStartDays[bookId] ?? naturalMonthStartDay,
+        ),
+      );
 
   /// 当前账本的「默认月预算」：设一次每月自动沿用（0 = 未设默认）。存于预算表的
   /// 哨兵键 `bookId:default`，与逐月键 `bookId:yyyy-MM` 天然不冲突。
@@ -923,6 +975,12 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   double monthlyBudget(DateTime month) =>
       _monthlyBudgets['$_activeBookId:${_monthKey(month)}'] ??
       defaultMonthlyBudget;
+
+  /// 某账本某键月的实际月预算（只读）。
+  double monthlyBudgetForBook(String bookId, DateTime month) =>
+      _monthlyBudgets['$bookId:${_monthKey(month)}'] ??
+      _monthlyBudgets[_defaultMonthlyBudgetKey(bookId)] ??
+      0;
 
   /// 该键月是否设了单独的覆盖值（用于区分「沿用默认」与「本月单独」）。
   bool monthlyBudgetIsOverride(DateTime month) =>
@@ -968,6 +1026,16 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   double categoryBudget(DateTime month, String categoryId) =>
       _categoryBudgets[_categoryBudgetKey(_activeBookId, month, categoryId)] ??
       defaultCategoryBudget(categoryId);
+
+  /// 某账本某键月某分类的实际预算（只读）。
+  double categoryBudgetForBook(
+    String bookId,
+    DateTime month,
+    String categoryId,
+  ) =>
+      _categoryBudgets[_categoryBudgetKey(bookId, month, categoryId)] ??
+      _categoryBudgets[_defaultCategoryBudgetKey(bookId, categoryId)] ??
+      0;
 
   /// 该键月的分类是否设置了单独覆盖值。只检查当前账本的单期键，不把默认预算
   /// 视为覆盖，供总览页区分「本期单独」与「沿用默认」。
@@ -1472,25 +1540,6 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     }
     aiCapabilityListenable.value = profile;
   }
-
-  /// AI 对话查询的聊天记录（每条 `{role, content, displays?}`，助手消息可带序列化的
-  /// 结果卡片）。设备本地、不进 JSON 备份、初始化保留。
-  List<Map<String, Object?>> get aiChatHistory =>
-      List<Map<String, Object?>>.unmodifiable(_aiChatHistory);
-
-  /// 覆盖保存聊天记录。不 notifyListeners——历史无响应式依赖，只由聊天页读写，
-  /// 避免每条消息触发全应用重建。
-  void setAiChatHistory(List<Map<String, Object?>> history) {
-    _aiChatHistory = List<Map<String, Object?>>.from(history);
-    if (_aiChatHistory.isEmpty) {
-      _store.delete(_aiChatHistoryKey);
-    } else {
-      _store.write(_aiChatHistoryKey, jsonEncode(_aiChatHistory));
-    }
-  }
-
-  /// 清空聊天记录。
-  void clearAiChatHistory() => setAiChatHistory(<Map<String, Object?>>[]);
 
   /// 用户是否已同意隐私政策与用户协议（首启动前为 false）。
   bool get onboardingCompleted => _onboardingCompleted;

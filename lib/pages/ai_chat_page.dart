@@ -2,6 +2,9 @@
 // Markdown 文字作答。全屏聊天页，消息气泡 + 底部输入框 + 清空历史。
 //
 // 网络传输默认使用结构化 Agent SSE；debug transport 供测试注入，避免真实网络。
+import 'dart:async';
+
+import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 
@@ -14,9 +17,10 @@ import '../app/ai/ai_client.dart';
 import '../app/ai/ai_query_tool.dart';
 import '../app/ai/ai_settings.dart';
 import '../app/ai/ai_tool_presentation.dart';
-import '../app/amount_format.dart';
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
+import '../app/models.dart';
+import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
 import 'ai_agent_step_view.dart';
@@ -31,6 +35,10 @@ enum _MsgStatus { streaming, done, error }
 class _ChatMessage {
   _ChatMessage({
     required this.role,
+    required this.bookId,
+    required this.bookName,
+    required this.baseCurrencyCode,
+    required this.moneyCodeDisplay,
     this.text = '',
     this.status = _MsgStatus.done,
     List<AiResultDisplay>? displays,
@@ -39,6 +47,10 @@ class _ChatMessage {
        steps = steps ?? <AiAgentStep>[];
 
   final _Role role;
+  final String bookId;
+  final String bookName;
+  final String baseCurrencyCode;
+  final MoneyCodeDisplay moneyCodeDisplay;
   String text;
   final List<AiResultDisplay> displays;
   final List<AiAgentStep> steps;
@@ -63,60 +75,40 @@ class AiChatPage extends StatefulWidget {
 class _AiChatPageState extends State<AiChatPage> {
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final TextEditingController _input = TextEditingController();
+  final FocusNode _inputFocus = FocusNode();
   final ScrollController _scroll = ScrollController();
   final AiAgentEngine _engine = AiAgentEngine(tools: buildAiQueryTools());
+  String? _selectedBookId;
+  _ChatMessage? _activeAssistant;
+  AiAgentCancellation? _activeCancellation;
+  int _requestSerial = 0;
   bool _streaming = false;
-  bool _restored = false;
-
-  /// 落库的历史消息上限，防止 KV 无限增长。
-  static const int _historyLimit = 40;
 
   @override
   void initState() {
     super.initState();
     // 输入内容变化时刷新发送按钮的可用态（空内容不可发送）。
     _input.addListener(_onInputChanged);
+    _inputFocus.addListener(_onInputFocusChanged);
   }
-
-  void _onInputChanged() => setState(() {});
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_restored) {
-      return;
-    }
-    _restored = true;
-    // 重开时恢复历史文字与结果卡片（displays 已序列化落库）。
-    for (final message in VeriFinScope.of(context).aiChatHistory) {
-      final rawDisplays = message['displays'];
-      final displays = <AiResultDisplay>[
-        if (rawDisplays is List)
-          for (final d in rawDisplays.whereType<Map>())
-            if (aiResultDisplayFromJson(Map<String, Object?>.from(d))
-                case final AiResultDisplay display)
-              display,
-      ];
-      final rawSteps = message['steps'];
-      final steps = <AiAgentStep>[
-        if (rawSteps is List)
-          for (final rawStep in rawSteps)
-            if (AiAgentStep.fromJson(rawStep) case final AiAgentStep step) step,
-      ];
-      _messages.add(
-        _ChatMessage(
-          role: message['role'] == 'user' ? _Role.user : _Role.assistant,
-          text: message['content']?.toString() ?? '',
-          displays: displays,
-          steps: steps,
-        ),
-      );
-    }
+    _selectedBookId ??= VeriFinScope.of(context).activeBook.id;
   }
+
+  void _onInputChanged() => setState(() {});
+
+  void _onInputFocusChanged() => setState(() {});
 
   @override
   void dispose() {
+    _requestSerial += 1;
+    _activeCancellation?.cancel();
     _input.removeListener(_onInputChanged);
+    _inputFocus.removeListener(_onInputFocusChanged);
+    _inputFocus.dispose();
     _input.dispose();
     _scroll.dispose();
     super.dispose();
@@ -124,42 +116,18 @@ class _AiChatPageState extends State<AiChatPage> {
 
   bool get _canSend => !_streaming && _input.text.trim().isNotEmpty;
 
-  /// 把当前对话落库（可见文本、完成步骤和结果卡片）。
-  void _saveHistory() {
-    final all = <Map<String, Object?>>[
-      for (final m in _messages)
-        if (m.status != _MsgStatus.streaming &&
-            (m.text.trim().isNotEmpty ||
-                m.displays.isNotEmpty ||
-                m.steps.any(
-                  (step) =>
-                      step.status == AiAgentStepStatus.succeeded ||
-                      step.status == AiAgentStepStatus.failed,
-                )))
-          <String, Object?>{
-            'role': m.role == _Role.user ? 'user' : 'assistant',
-            'content': m.text.trim(),
-            if (m.displays.isNotEmpty)
-              'displays': m.displays.map((d) => d.toJson()).toList(),
-            if (m.steps.any(
-              (step) =>
-                  step.status == AiAgentStepStatus.succeeded ||
-                  step.status == AiAgentStepStatus.failed,
-            ))
-              'steps': m.steps
-                  .where(
-                    (step) =>
-                        step.status == AiAgentStepStatus.succeeded ||
-                        step.status == AiAgentStepStatus.failed,
-                  )
-                  .map((step) => step.toJson())
-                  .toList(),
-          },
-    ];
-    final trimmed = all.length > _historyLimit
-        ? all.sublist(all.length - _historyLimit)
-        : all;
-    VeriFinScope.of(context).setAiChatHistory(trimmed);
+  LedgerBook _bookForScope(VeriFinController scope) {
+    return scope.ledgerBooks
+            .where((book) => book.id == _selectedBookId)
+            .firstOrNull ??
+        scope.activeBook;
+  }
+
+  void _selectBook(String bookId) {
+    if (bookId == _selectedBookId) {
+      return;
+    }
+    setState(() => _selectedBookId = bookId);
   }
 
   void _scrollToBottom() {
@@ -195,26 +163,30 @@ class _AiChatPageState extends State<AiChatPage> {
     }
     final scope = VeriFinScope.of(context);
     final l10n = AppLocalizations.of(context);
+    final book = _bookForScope(scope);
+    final moneyDisplay = scope.moneyCodeDisplayForBook(book.id);
     final prior = _priorMessages();
     final context0 = AiToolContext(
-      entries: scope.entries,
-      accounts: scope.accounts,
-      categories: scope.categories,
-      tags: scope.tags,
+      entries: scope.entriesForBook(book.id),
+      accounts: scope.accountsForBook(book.id),
+      categories: scope.categoriesForBook(book.id),
+      tags: scope.tagsForBook(book.id),
       balanceOf: scope.accountBalance,
-      baseCurrencyCode: scope.activeBook.baseCurrencyCode,
+      baseCurrencyCode: book.baseCurrencyCode,
       now: DateTime.now(),
       l10n: l10n,
       // 摘要句与结果卡片要跟界面上金额的单位口径一致：单币种账本隐藏单位时，
       // 摘要也不能出现币种代码，否则模型会照着写出与卡片矛盾的「合计 CNY 4,300」。
-      currencyDisplay: activeMoneyCodeDisplay,
-      exchangeRates: scope.exchangeRates,
-      bookId: scope.activeBook.id,
+      currencyDisplay: moneyDisplay,
+      exchangeRates: scope.exchangeRatesForBook(book.id),
+      bookId: book.id,
       budget: AiBudgetContext(
-        keyMonthOf: scope.budgetKeyMonthFor,
-        windowOf: scope.budgetWindow,
-        monthlyBudgetOf: scope.monthlyBudget,
-        categoryBudgetOf: scope.categoryBudget,
+        keyMonthOf: (date) => scope.budgetKeyMonthForBook(book.id, date),
+        windowOf: (keyMonth) => scope.budgetWindowForBook(book.id, keyMonth),
+        monthlyBudgetOf: (keyMonth) =>
+            scope.monthlyBudgetForBook(book.id, keyMonth),
+        categoryBudgetOf: (keyMonth, categoryId) =>
+            scope.categoryBudgetForBook(book.id, keyMonth, categoryId),
       ),
     );
     final settings = scope.aiSettings;
@@ -235,118 +207,180 @@ class _AiChatPageState extends State<AiChatPage> {
 
     final assistant = _ChatMessage(
       role: _Role.assistant,
+      bookId: book.id,
+      bookName: book.name,
+      baseCurrencyCode: book.baseCurrencyCode,
+      moneyCodeDisplay: moneyDisplay,
       status: _MsgStatus.streaming,
     );
+    final requestId = ++_requestSerial;
+    final cancellation = AiAgentCancellation();
+    _activeCancellation = cancellation;
     setState(() {
       _input.clear();
-      _messages.add(_ChatMessage(role: _Role.user, text: text));
+      _selectedBookId = book.id;
+      _messages.add(
+        _ChatMessage(
+          role: _Role.user,
+          bookId: book.id,
+          bookName: book.name,
+          baseCurrencyCode: book.baseCurrencyCode,
+          moneyCodeDisplay: moneyDisplay,
+          text: text,
+        ),
+      );
       _messages.add(assistant);
       _streaming = true;
     });
+    _activeAssistant = assistant;
     _scrollToBottom();
 
-    try {
-      await for (final event in _engine.run(
-        mode: mode,
-        streamTransport: transport,
-        completeTransport: completeTransport,
-        context: context0,
-        priorMessages: prior,
-        userInput: text,
-      )) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          if (event is! AiAgentRetrying) {
-            _finishRetrySteps(assistant);
-          }
-          switch (event) {
-            case final AiAgentToolStarted e:
-              if (mode != AiToolCallMode.prompt &&
-                  scope.aiCapabilityProfile?.matches(settings) != true) {
-                scope.setAiCapabilityProfile(
-                  AiCapabilityProfile.forSettings(
-                    settings: settings,
-                    nativeToolCalls: AiNativeToolCapability.supported,
-                  ),
-                );
+    _engine
+        .run(
+          mode: mode,
+          streamTransport: transport,
+          completeTransport: completeTransport,
+          context: context0,
+          priorMessages: prior,
+          userInput: text,
+          cancellation: cancellation,
+        )
+        .listen(
+          (event) {
+            if (!mounted || requestId != _requestSerial) {
+              return;
+            }
+            setState(() {
+              if (event is AiAgentFailed) {
+                _finishRetrySteps(assistant, succeeded: false);
+              } else if (event is! AiAgentRetrying) {
+                _finishRetrySteps(assistant, succeeded: true);
               }
-              assistant.steps.add(
-                AiAgentStep(
-                  id: e.stepId,
-                  toolName: e.toolName,
-                  status: AiAgentStepStatus.running,
-                  arguments: e.arguments,
-                ),
-              );
-            case final AiAgentToolCompleted e:
-              _updateStep(
-                assistant,
-                e.stepId,
-                status: AiAgentStepStatus.succeeded,
-                summary: presentAiToolResultSummary(l10n, e.result),
-              );
-              if (e.result.display != null) {
-                assistant.displays.add(e.result.display!);
+              switch (event) {
+                case final AiAgentToolStarted e:
+                  if (mode != AiToolCallMode.prompt &&
+                      scope.aiCapabilityProfile?.matches(settings) != true) {
+                    scope.setAiCapabilityProfile(
+                      AiCapabilityProfile.forSettings(
+                        settings: settings,
+                        nativeToolCalls: AiNativeToolCapability.supported,
+                      ),
+                    );
+                  }
+                  assistant.steps.add(
+                    AiAgentStep(
+                      id: e.stepId,
+                      toolName: e.toolName,
+                      status: AiAgentStepStatus.running,
+                      arguments: e.arguments,
+                    ),
+                  );
+                case final AiAgentToolCompleted e:
+                  _updateStep(
+                    assistant,
+                    e.stepId,
+                    status: AiAgentStepStatus.succeeded,
+                    summary: presentAiToolResultSummary(l10n, e.result),
+                  );
+                  if (e.result.display != null) {
+                    assistant.displays.add(e.result.display!);
+                  }
+                case final AiAgentToolFailed e:
+                  _updateStep(
+                    assistant,
+                    e.stepId,
+                    status: AiAgentStepStatus.failed,
+                    summary: l10n.aiStepFailed,
+                  );
+                case final AiAgentRetrying e:
+                  if (e.reason == 'protocolFallback') {
+                    scope.setAiCapabilityProfile(
+                      AiCapabilityProfile.forSettings(
+                        settings: settings,
+                        nativeToolCalls: AiNativeToolCapability.unsupported,
+                      ),
+                    );
+                  }
+                  assistant.steps.add(
+                    AiAgentStep(
+                      id: 'retry-${assistant.steps.length}',
+                      toolName: 'agentRetry',
+                      status: AiAgentStepStatus.retrying,
+                      summary: e.reason,
+                    ),
+                  );
+                case final AiAgentAnswerDelta e:
+                  assistant.text += e.text;
+                case final AiAgentCompleted e:
+                  if (assistant.text.trim().isEmpty) {
+                    assistant.text = e.answer;
+                  }
+                  assistant.status = _MsgStatus.done;
+                case final AiAgentFailed e:
+                  assistant.status = _MsgStatus.error;
+                  assistant.errorText = e.error is AiException
+                      ? aiErrorMessage(l10n, e.error as AiException)
+                      : l10n.aiErrUnknown;
+                  scope.logger?.error(
+                    'AI Agent 回答失败',
+                    source: 'ai',
+                    error: e.error,
+                  );
               }
-            case final AiAgentToolFailed e:
-              _updateStep(
-                assistant,
-                e.stepId,
-                status: AiAgentStepStatus.failed,
-                summary: l10n.aiStepFailed,
-              );
-            case final AiAgentRetrying e:
-              if (e.reason == 'protocolFallback') {
-                scope.setAiCapabilityProfile(
-                  AiCapabilityProfile.forSettings(
-                    settings: settings,
-                    nativeToolCalls: AiNativeToolCapability.unsupported,
-                  ),
-                );
-              }
-              assistant.steps.add(
-                AiAgentStep(
-                  id: 'retry-${assistant.steps.length}',
-                  toolName: 'agentRetry',
-                  status: AiAgentStepStatus.retrying,
-                  summary: e.reason,
-                ),
-              );
-            case final AiAgentAnswerDelta e:
-              assistant.text += e.text;
-            case final AiAgentCompleted e:
-              if (assistant.text.trim().isEmpty) {
-                assistant.text = e.answer;
-              }
-              assistant.status = _MsgStatus.done;
-            case final AiAgentFailed e:
+            });
+            _scrollToBottom();
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            if (!mounted || requestId != _requestSerial) {
+              return;
+            }
+            setState(() {
+              _finishRetrySteps(assistant, succeeded: false);
               assistant.status = _MsgStatus.error;
-              assistant.errorText = e.error is AiException
-                  ? aiErrorMessage(l10n, e.error as AiException)
+              assistant.errorText = error is AiException
+                  ? aiErrorMessage(l10n, error)
                   : l10n.aiErrUnknown;
-              scope.logger?.error(
-                'AI Agent 回答失败',
-                source: 'ai',
-                error: e.error,
-              );
-          }
-        });
-        _scrollToBottom();
+              _streaming = false;
+              _activeAssistant = null;
+              _activeCancellation = null;
+            });
+            scope.logger?.error('AI Agent 回答失败', source: 'ai', error: error);
+            _scrollToBottom();
+          },
+          onDone: () {
+            if (!mounted || requestId != _requestSerial) {
+              return;
+            }
+            setState(() {
+              _streaming = false;
+              _activeAssistant = null;
+              _activeCancellation = null;
+              if (assistant.status == _MsgStatus.streaming) {
+                assistant.status = _MsgStatus.done;
+              }
+            });
+          },
+          cancelOnError: true,
+        );
+  }
+
+  void _stopGeneration() {
+    final assistant = _activeAssistant;
+    _requestSerial += 1;
+    _activeAssistant = null;
+    _activeCancellation?.cancel();
+    _activeCancellation = null;
+    setState(() {
+      _streaming = false;
+      assistant?.steps.removeWhere(
+        (step) =>
+            step.status == AiAgentStepStatus.running ||
+            step.status == AiAgentStepStatus.retrying,
+      );
+      if (assistant?.status == _MsgStatus.streaming) {
+        assistant?.status = _MsgStatus.done;
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _streaming = false;
-          if (assistant.status == _MsgStatus.streaming) {
-            assistant.status = _MsgStatus.error;
-            assistant.errorText = l10n.aiErrUnknown;
-          }
-        });
-        _saveHistory();
-      }
-    }
+    });
   }
 
   void _updateStep(
@@ -363,12 +397,14 @@ class _AiChatPageState extends State<AiChatPage> {
     );
   }
 
-  void _finishRetrySteps(_ChatMessage message) {
+  void _finishRetrySteps(_ChatMessage message, {required bool succeeded}) {
     for (var index = 0; index < message.steps.length; index += 1) {
       final step = message.steps[index];
       if (step.status == AiAgentStepStatus.retrying) {
         message.steps[index] = step.copyWith(
-          status: AiAgentStepStatus.succeeded,
+          status: succeeded
+              ? AiAgentStepStatus.succeeded
+              : AiAgentStepStatus.failed,
         );
       }
     }
@@ -385,7 +421,6 @@ class _AiChatPageState extends State<AiChatPage> {
     );
     if (confirmed && mounted) {
       setState(_messages.clear);
-      VeriFinScope.of(context).clearAiChatHistory();
     }
   }
 
@@ -401,7 +436,9 @@ class _AiChatPageState extends State<AiChatPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final configured = VeriFinScope.of(context).aiSettings.isConfigured;
+    final scope = VeriFinScope.of(context);
+    final configured = scope.aiSettings.isConfigured;
+    final book = _bookForScope(scope);
     return Scaffold(
       body: SafeArea(
         child: VeriPage(
@@ -416,17 +453,23 @@ class _AiChatPageState extends State<AiChatPage> {
                   showBack: true,
                   actions: <Widget>[
                     if (configured)
+                      Visibility(
+                        visible: _messages.isNotEmpty,
+                        maintainSize: true,
+                        maintainAnimation: true,
+                        maintainState: true,
+                        child: HeaderAction(
+                          icon: Icons.delete_outline,
+                          tooltip: l10n.aiChatClearCurrent,
+                          onPressed: _streaming ? null : _clearHistory,
+                          destructive: true,
+                        ),
+                      ),
+                    if (configured)
                       HeaderAction(
                         icon: Icons.settings_outlined,
                         tooltip: l10n.aiSettingsTitle,
                         onPressed: _streaming ? null : _openSettings,
-                      ),
-                    if (_messages.isNotEmpty)
-                      HeaderAction(
-                        icon: Icons.delete_sweep_outlined,
-                        tooltip: l10n.aiChatClearHistory,
-                        destructive: true,
-                        onPressed: _streaming ? null : _clearHistory,
                       ),
                   ],
                 ),
@@ -434,11 +477,11 @@ class _AiChatPageState extends State<AiChatPage> {
               Expanded(
                 child: configured
                     ? (_messages.isEmpty
-                          ? _buildEmptyState(context)
+                          ? _buildEmptyState(context, book)
                           : _buildMessageList(context))
                     : _buildUnconfigured(context),
               ),
-              if (configured) _buildInputBar(context),
+              if (configured) _buildInputBar(context, book),
             ],
           ),
         ),
@@ -448,36 +491,26 @@ class _AiChatPageState extends State<AiChatPage> {
 
   Widget _buildUnconfigured(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              Icons.smart_toy_outlined,
-              size: 56,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(l10n.aiChatUnconfiguredHint, textAlign: TextAlign.center),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AiSettingsPage()),
-              ),
-              icon: const Icon(Icons.settings_outlined),
-              label: Text(l10n.aiChatGoConfigure),
-            ),
-          ],
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: EmptyState(
+        icon: Icons.smart_toy_outlined,
+        title: l10n.aiChatUnconfiguredTitle,
+        description: l10n.aiChatUnconfiguredHint,
+        action: FilledButton.icon(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const AiSettingsPage()),
+          ),
+          icon: const Icon(Icons.settings_outlined),
+          label: Text(l10n.aiChatGoConfigure),
         ),
       ),
     );
   }
 
   Widget _buildMessageList(BuildContext context) {
+    final showBookLabel =
+        _messages.map((message) => message.bookId).toSet().length > 1;
     return ListView.builder(
       controller: _scroll,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
@@ -492,9 +525,11 @@ class _AiChatPageState extends State<AiChatPage> {
             : null;
         return _MessageView(
           message: message,
+          showBookLabel: showBookLabel,
           onRetry: retryText == null || _streaming
               ? null
               : () async {
+                  _selectedBookId = message.bookId;
                   _input.text = retryText;
                   await _send();
                 },
@@ -503,7 +538,7 @@ class _AiChatPageState extends State<AiChatPage> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, LedgerBook book) {
     final l10n = AppLocalizations.of(context);
     final hints = <String>[
       l10n.aiChatHintTopCategory,
@@ -521,6 +556,15 @@ class _AiChatPageState extends State<AiChatPage> {
               child: Text(
                 l10n.aiChatEmptyTitle,
                 style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: Text(
+                l10n.aiChatCurrentBook(book.name),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -542,98 +586,197 @@ class _AiChatPageState extends State<AiChatPage> {
     );
   }
 
-  Widget _buildInputBar(BuildContext context) {
+  Widget _buildInputBar(BuildContext context, LedgerBook book) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final canSend = _canSend;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
-      decoration: BoxDecoration(
-        color: isDark ? veriSurfaceDark : veriSurfaceLight,
-        border: Border(
-          top: BorderSide(color: isDark ? Colors.white10 : veriLine),
+    final l10n = AppLocalizations.of(context);
+    final books = VeriFinScope.of(context).ledgerBooks;
+    final borderColor = _inputFocus.hasFocus
+        ? theme.colorScheme.primary
+        : Colors.transparent;
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.58);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+      child: Container(
+        key: const Key('ai_chat_composer'),
+        decoration: BoxDecoration(
+          color: veriElevatedSurfaceColor(theme.brightness),
+          borderRadius: BorderRadius.circular(veriRadiusXl),
+          border: Border.all(
+            color: borderColor,
+            width: _inputFocus.hasFocus ? 1.2 : 1,
+          ),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white10 : veriSurfaceAltLight,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: isDark ? Colors.white12 : veriLine),
-              ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 4),
               child: TextField(
                 controller: _input,
+                focusNode: _inputFocus,
                 minLines: 1,
-                maxLines: 5,
+                maxLines: 6,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _send(),
-                style: const TextStyle(fontSize: 15.5, height: 1.45),
+                onTapOutside: (_) => _inputFocus.unfocus(),
+                style: TextStyle(
+                  fontSize: 15.5,
+                  height: 1.45,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.94),
+                ),
                 decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context).aiChatInputHint,
+                  hintText: l10n.aiChatInputHint,
+                  hintStyle: TextStyle(color: muted),
                   isDense: true,
                   filled: false,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 13,
-                  ),
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          _SendButton(enabled: canSend, streaming: _streaming, onTap: _send),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
+              child: Row(
+                children: <Widget>[
+                  const Spacer(),
+                  Flexible(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: AnchoredMenuChoice<String>(
+                        values: books
+                            .map((entry) => entry.id)
+                            .toList(growable: false),
+                        selected: book.id,
+                        idOf: (id) => 'ai_chat_book_$id',
+                        labelOf: (id) =>
+                            books.firstWhere((entry) => entry.id == id).name,
+                        iconOf: (_) => Icons.account_balance_wallet_outlined,
+                        onSelected: _selectBook,
+                        semanticLabel: l10n.aiChatChooseBook,
+                        width: 232,
+                        builder: (context, openMenu, menuOpen) => Semantics(
+                          button: true,
+                          label: l10n.aiChatChooseBook,
+                          child: InkWell(
+                            key: const Key('ai_chat_book_selector'),
+                            borderRadius: BorderRadius.circular(999),
+                            onTap: _streaming
+                                ? null
+                                : () {
+                                    _inputFocus.unfocus();
+                                    openMenu();
+                                  },
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.account_balance_wallet_outlined,
+                                    size: 16,
+                                    color: muted,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      book.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.labelLarge
+                                          ?.copyWith(
+                                            color: theme.colorScheme.onSurface
+                                                .withValues(alpha: 0.82),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(
+                                    menuOpen
+                                        ? Icons.keyboard_arrow_up_rounded
+                                        : Icons.keyboard_arrow_down_rounded,
+                                    size: 18,
+                                    color: muted,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _SendButton(
+                    enabled: canSend,
+                    streaming: _streaming,
+                    onSend: _send,
+                    onStop: _stopGeneration,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// 底部发送按钮：可用=主色圆钮 + 白色箭头；流式=主色 + 转圈；不可用=灰底灰标、不可点。
+/// 底部操作按钮：空闲时发送；流式时原位切换为停止。
 class _SendButton extends StatelessWidget {
   const _SendButton({
     required this.enabled,
     required this.streaming,
-    required this.onTap,
+    required this.onSend,
+    required this.onStop,
   });
 
   final bool enabled;
   final bool streaming;
-  final VoidCallback onTap;
+  final VoidCallback onSend;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final disabledBg = isDark ? Colors.white12 : const Color(0xFFDCE3EE);
-    final disabledFg = Theme.of(
-      context,
-    ).colorScheme.onSurface.withValues(alpha: 0.35);
+    final scheme = Theme.of(context).colorScheme;
+    final disabledBg = scheme.surfaceContainerHighest;
+    final disabledFg = scheme.onSurface.withValues(alpha: 0.35);
     final active = enabled || streaming;
+    final l10n = AppLocalizations.of(context);
     return Material(
-      color: active ? Theme.of(context).colorScheme.primary : disabledBg,
+      key: const Key('ai_chat_send_button'),
+      color: active ? scheme.onSurface : disabledBg,
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: enabled ? onTap : null,
+        onTap: streaming ? onStop : (enabled ? onSend : null),
         child: SizedBox(
-          width: 46,
-          height: 46,
-          child: streaming
-              ? const Padding(
-                  padding: EdgeInsets.all(13),
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Icon(
-                  Icons.arrow_upward_rounded,
-                  color: enabled ? Colors.white : disabledFg,
-                  size: 22,
-                ),
+          width: 38,
+          height: 38,
+          child: Tooltip(
+            message: streaming ? l10n.aiStopGenerating : l10n.aiSendQuestion,
+            child: Icon(
+              streaming ? Icons.stop_rounded : Icons.arrow_upward_rounded,
+              color: active ? scheme.surface : disabledFg,
+              size: streaming ? 15 : 18,
+            ),
+          ),
         ),
       ),
     );
@@ -641,41 +784,61 @@ class _SendButton extends StatelessWidget {
 }
 
 class _MessageView extends StatelessWidget {
-  const _MessageView({required this.message, this.onRetry});
+  const _MessageView({
+    required this.message,
+    required this.showBookLabel,
+    this.onRetry,
+  });
 
   final _ChatMessage message;
+  final bool showBookLabel;
   final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     if (message.role == _Role.user) {
-      return Align(
-        alignment: Alignment.centerRight,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 7),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.8,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(18),
-              topRight: Radius.circular(18),
-              bottomLeft: Radius.circular(18),
-              bottomRight: Radius.circular(4),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          if (showBookLabel)
+            Padding(
+              padding: const EdgeInsets.only(top: 5, bottom: 2, right: 4),
+              child: Text(
+                message.bookName,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.8,
+              ),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(veriRadiusLg),
+                  topRight: Radius.circular(veriRadiusLg),
+                  bottomLeft: Radius.circular(veriRadiusLg),
+                  bottomRight: Radius.circular(veriRadiusSm),
+                ),
+              ),
+              child: Text(
+                message.text,
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontSize: 15.5,
+                  height: 1.45,
+                ),
+              ),
             ),
           ),
-          child: Text(
-            message.text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15.5,
-              height: 1.45,
-            ),
-          ),
-        ),
+        ],
       );
     }
     return Container(
@@ -683,9 +846,24 @@ class _MessageView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          if (showBookLabel)
+            Padding(
+              padding: const EdgeInsets.only(top: 5, bottom: 2, left: 2),
+              child: Text(
+                message.bookName,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
           for (final step in message.steps) AiAgentStepView(step: step),
           for (final display in message.displays) ...<Widget>[
-            AiResultView(display: display),
+            AiResultView(
+              display: display,
+              bookId: message.bookId,
+              baseCurrencyCode: message.baseCurrencyCode,
+              moneyCodeDisplay: message.moneyCodeDisplay,
+            ),
             const SizedBox(height: 10),
           ],
           if (message.text.trim().isNotEmpty)
@@ -753,17 +931,18 @@ class _ErrorBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final error = Theme.of(context).colorScheme.error;
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: error.withValues(alpha: 0.08),
+        color: scheme.errorContainer,
         borderRadius: BorderRadius.circular(veriRadiusMd),
-        border: Border.all(color: error.withValues(alpha: 0.35)),
+        border: Border.all(color: error),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.error_outline, size: 18, color: error),
+          Icon(Icons.error_outline, size: 18, color: scheme.onErrorContainer),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -771,13 +950,17 @@ class _ErrorBubble extends StatelessWidget {
               children: <Widget>[
                 Text(
                   text,
-                  style: TextStyle(color: error, fontSize: 14, height: 1.45),
+                  style: TextStyle(
+                    color: scheme.onErrorContainer,
+                    fontSize: 14,
+                    height: 1.45,
+                  ),
                 ),
                 if (onRetry != null)
                   TextButton(
                     onPressed: onRetry,
                     style: TextButton.styleFrom(
-                      foregroundColor: error,
+                      foregroundColor: scheme.onErrorContainer,
                       padding: const EdgeInsets.only(top: 6),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
