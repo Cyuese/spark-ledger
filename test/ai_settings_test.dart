@@ -96,18 +96,28 @@ void main() {
   });
 
   group('AiSettings', () {
-    test('isConfigured requires all three fields', () {
-      expect(const AiSettings().isConfigured, isFalse);
-      expect(const AiSettings(baseUrl: 'x', apiKey: 'y').isConfigured, isFalse);
-      expect(
-        const AiSettings(
-          baseUrl: 'https://x/v1',
-          apiKey: 'k',
-          model: 'm',
-        ).isConfigured,
-        isTrue,
-      );
-    });
+    test(
+      'isConfigured requires base URL and model but allows empty API key',
+      () {
+        expect(const AiSettings().isConfigured, isFalse);
+        expect(
+          const AiSettings(baseUrl: 'x', apiKey: 'y').isConfigured,
+          isFalse,
+        );
+        expect(
+          const AiSettings(
+            baseUrl: 'https://x/v1',
+            apiKey: 'k',
+            model: 'm',
+          ).isConfigured,
+          isTrue,
+        );
+        expect(
+          const AiSettings(baseUrl: 'https://x/v1', model: 'm').isConfigured,
+          isTrue,
+        );
+      },
+    );
 
     test('chatCompletionsUrl appends path and tolerates trailing slash', () {
       expect(
@@ -135,9 +145,11 @@ void main() {
 
     test('encode/decode roundtrip', () {
       const settings = AiSettings(
+        providerId: 'deepseek',
         baseUrl: 'https://x/v1',
         apiKey: 'secret',
         model: 'gpt-4o-mini',
+        modelListUrl: 'https://x/v1/custom-models',
         toolCallMode: AiToolCallMode.native,
       );
       final decoded = AiSettings.decode(settings.encode());
@@ -159,6 +171,8 @@ void main() {
       );
 
       expect(oldSettings.toolCallMode, AiToolCallMode.auto);
+      expect(oldSettings.providerId, 'custom');
+      expect(oldSettings.modelListUrl, isEmpty);
       expect(unknownMode.toolCallMode, AiToolCallMode.auto);
       expect(
         oldSettings.copyWith(toolCallMode: AiToolCallMode.prompt).toolCallMode,

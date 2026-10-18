@@ -4092,6 +4092,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiErrBadResponse => 'Could not parse the server response';
 
   @override
+  String get aiErrModelListUnsupported =>
+      'This provider does not expose a model list. Enter a model manually.';
+
+  @override
   String get aiErrUpstream => 'The server returned an error';
 
   @override

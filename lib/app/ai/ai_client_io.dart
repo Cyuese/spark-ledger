@@ -203,10 +203,10 @@ Future<HttpClientResponse> _post({
 }) async {
   final uri = Uri.parse(settings.chatCompletionsUrl);
   final request = await client.openUrl('POST', uri).timeout(responseTimeout);
-  request.headers.set(
-    HttpHeaders.authorizationHeader,
-    'Bearer ${settings.apiKey.trim()}',
-  );
+  final apiKey = settings.apiKey.trim();
+  if (apiKey.isNotEmpty) {
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $apiKey');
+  }
   request.headers.contentType = ContentType.json;
   if (acceptEventStream) {
     request.headers.set(HttpHeaders.acceptHeader, 'text/event-stream');

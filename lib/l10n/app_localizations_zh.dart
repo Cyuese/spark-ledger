@@ -3976,6 +3976,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiErrBadResponse => '无法解析服务器响应';
 
   @override
+  String get aiErrModelListUnsupported => '该渠道不支持获取模型列表，请手动填写模型';
+
+  @override
   String get aiErrUpstream => '服务器返回错误';
 
   @override
