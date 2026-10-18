@@ -174,6 +174,19 @@ void main() {
         occurredAt: DateTime.now(),
       ),
     );
+    controller.addEntry(
+      LedgerEntry(
+        id: 'travel-cny-entry',
+        bookId: travelBookId,
+        type: EntryType.expense,
+        amount: 10,
+        currencyCode: 'CNY',
+        categoryId: expenseCategory.id,
+        accountId: '',
+        note: '旅行人民币支出',
+        occurredAt: DateTime.now(),
+      ),
+    );
     controller.switchLedgerBook(defaultBookId);
     addTearDown(controller.dispose);
 
@@ -214,6 +227,7 @@ void main() {
 
     expect(controller.activeBook.id, defaultBookId);
     expect(find.textContaining('25'), findsWidgets);
+    expect(find.textContaining('单位：'), findsWidgets);
   });
 
   testWidgets('AI 交易结果卡只读，不跳转交易详情', (tester) async {

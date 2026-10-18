@@ -236,16 +236,26 @@ String? currencyUnitSubtitle(
 
 /// 聚合卡片/页面使用的轻量金额单位提示，避免在每个数字旁重复堆叠货币标识。
 class MoneyUnitLabel extends StatelessWidget {
-  const MoneyUnitLabel({super.key, required this.currencyCode, this.color});
+  const MoneyUnitLabel({
+    super.key,
+    required this.currencyCode,
+    this.color,
+    this.display,
+  });
 
   final String currencyCode;
   final Color? color;
+  final MoneyCodeDisplay? display;
 
   @override
   Widget build(BuildContext context) {
     // 单币种账本按偏好隐藏单位时整块不渲染：聚合卡片里的数字本身已经不带单位，
     // 只在卡片角落留一句「单位：¥」是纯噪声（空态卡片里连数字都没有，更明显）。
-    final unit = optionalCurrencyUnit(currencyCode);
+    final unit = display == null
+        ? optionalCurrencyUnit(currencyCode)
+        : display == MoneyCodeDisplay.none
+        ? null
+        : displayCurrencyUnit(currencyCode);
     if (unit == null) return const SizedBox.shrink();
     final foreground =
         color ??

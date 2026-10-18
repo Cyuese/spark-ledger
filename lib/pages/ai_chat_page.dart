@@ -16,7 +16,6 @@ import '../app/ai/ai_client.dart';
 import '../app/ai/ai_query_tool.dart';
 import '../app/ai/ai_settings.dart';
 import '../app/ai/ai_tool_presentation.dart';
-import '../app/amount_format.dart';
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
 import '../app/models.dart';
@@ -39,6 +38,7 @@ class _ChatMessage {
     required this.bookId,
     required this.bookName,
     required this.baseCurrencyCode,
+    required this.moneyCodeDisplay,
     this.text = '',
     this.status = _MsgStatus.done,
     List<AiResultDisplay>? displays,
@@ -50,6 +50,7 @@ class _ChatMessage {
   final String bookId;
   final String bookName;
   final String baseCurrencyCode;
+  final MoneyCodeDisplay moneyCodeDisplay;
   String text;
   final List<AiResultDisplay> displays;
   final List<AiAgentStep> steps;
@@ -168,6 +169,7 @@ class _AiChatPageState extends State<AiChatPage> {
     final scope = VeriFinScope.of(context);
     final l10n = AppLocalizations.of(context);
     final book = _bookForScope(scope);
+    final moneyDisplay = scope.moneyCodeDisplayForBook(book.id);
     final prior = _priorMessages();
     final context0 = AiToolContext(
       entries: scope.entriesForBook(book.id),
@@ -180,7 +182,7 @@ class _AiChatPageState extends State<AiChatPage> {
       l10n: l10n,
       // 摘要句与结果卡片要跟界面上金额的单位口径一致：单币种账本隐藏单位时，
       // 摘要也不能出现币种代码，否则模型会照着写出与卡片矛盾的「合计 CNY 4,300」。
-      currencyDisplay: activeMoneyCodeDisplay,
+      currencyDisplay: moneyDisplay,
       exchangeRates: scope.exchangeRatesForBook(book.id),
       bookId: book.id,
       budget: AiBudgetContext(
@@ -213,6 +215,7 @@ class _AiChatPageState extends State<AiChatPage> {
       bookId: book.id,
       bookName: book.name,
       baseCurrencyCode: book.baseCurrencyCode,
+      moneyCodeDisplay: moneyDisplay,
       status: _MsgStatus.streaming,
     );
     final requestId = ++_requestSerial;
@@ -227,6 +230,7 @@ class _AiChatPageState extends State<AiChatPage> {
           bookId: book.id,
           bookName: book.name,
           baseCurrencyCode: book.baseCurrencyCode,
+          moneyCodeDisplay: moneyDisplay,
           text: text,
         ),
       );
@@ -373,6 +377,11 @@ class _AiChatPageState extends State<AiChatPage> {
     _activeCancellation = null;
     setState(() {
       _streaming = false;
+      assistant?.steps.removeWhere(
+        (step) =>
+            step.status == AiAgentStepStatus.running ||
+            step.status == AiAgentStepStatus.retrying,
+      );
       if (assistant?.status == _MsgStatus.streaming) {
         assistant?.status = _MsgStatus.done;
       }
@@ -808,6 +817,7 @@ class _MessageView extends StatelessWidget {
               display: display,
               bookId: message.bookId,
               baseCurrencyCode: message.baseCurrencyCode,
+              moneyCodeDisplay: message.moneyCodeDisplay,
             ),
             const SizedBox(height: 10),
           ],
