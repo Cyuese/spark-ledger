@@ -3071,9 +3071,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiProviderDescCustom => '任意 OpenAI 兼容端点';
 
   @override
-  String get aiProviderBaseUrlLocked => '预设渠道地址由 VeriFin 固定';
-
-  @override
   String get aiProviderCustomBaseUrlHint => '填写到 /v1，或完整 /chat/completions 地址';
 
   @override
@@ -3084,9 +3081,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiProviderApiKeyLabel => 'API Key（可选）';
-
-  @override
-  String get aiProviderApiKeyHint => '可留空；部分渠道会返回鉴权错误';
 
   @override
   String get aiProviderModelLabel => '模型';
@@ -3133,9 +3127,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatClearHistory => '清空聊天记录';
 
   @override
-  String get aiChatHistoryLocalOnly => '对话只存本机，不含在备份内';
-
-  @override
   String get aiChatClearMessage => '将删除当前所有对话，无法恢复。';
 
   @override
@@ -3176,10 +3167,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiConfigCleared => '配置已清空';
-
-  @override
-  String get aiSettingsIntro =>
-      '选择预设渠道，或使用自定义 OpenAI 兼容端点。API Key 可留空；你的输入只会发送到这里配置的服务，配置只存本机、不进备份。';
 
   @override
   String get aiBaseUrlLabel => '请求地址（Base URL）';
@@ -3237,9 +3224,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiActualProtocolAuto => '实际协议：自动检测';
-
-  @override
-  String get aiCapabilityProbeNotice => '能力检测会发起少量测试请求，但不会发送任何账目数据。';
 
   @override
   String get aiStepRunning => '调用中';
@@ -3363,9 +3347,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get aiPrivacyNotice =>
       'AI 功能会把你输入的文字，以及回答问题所需的只读账目查询摘要发送到你配置的第三方服务；配置和完整账目仍只存本机。';
-
-  @override
-  String get aiOptionalNotice => 'AI 是可选功能：不配置也能正常记账、看报表和备份。';
 
   @override
   String get aiEntryTitle => 'AI 记账';

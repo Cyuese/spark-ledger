@@ -5642,12 +5642,6 @@ abstract class AppLocalizations {
   /// **'任意 OpenAI 兼容端点'**
   String get aiProviderDescCustom;
 
-  /// No description provided for @aiProviderBaseUrlLocked.
-  ///
-  /// In zh, this message translates to:
-  /// **'预设渠道地址由 VeriFin 固定'**
-  String get aiProviderBaseUrlLocked;
-
   /// No description provided for @aiProviderCustomBaseUrlHint.
   ///
   /// In zh, this message translates to:
@@ -5671,12 +5665,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'API Key（可选）'**
   String get aiProviderApiKeyLabel;
-
-  /// No description provided for @aiProviderApiKeyHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'可留空；部分渠道会返回鉴权错误'**
-  String get aiProviderApiKeyHint;
 
   /// No description provided for @aiProviderModelLabel.
   ///
@@ -5762,12 +5750,6 @@ abstract class AppLocalizations {
   /// **'清空聊天记录'**
   String get aiChatClearHistory;
 
-  /// No description provided for @aiChatHistoryLocalOnly.
-  ///
-  /// In zh, this message translates to:
-  /// **'对话只存本机，不含在备份内'**
-  String get aiChatHistoryLocalOnly;
-
   /// No description provided for @aiChatClearMessage.
   ///
   /// In zh, this message translates to:
@@ -5851,12 +5833,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'配置已清空'**
   String get aiConfigCleared;
-
-  /// No description provided for @aiSettingsIntro.
-  ///
-  /// In zh, this message translates to:
-  /// **'选择预设渠道，或使用自定义 OpenAI 兼容端点。API Key 可留空；你的输入只会发送到这里配置的服务，配置只存本机、不进备份。'**
-  String get aiSettingsIntro;
 
   /// No description provided for @aiBaseUrlLabel.
   ///
@@ -5971,12 +5947,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'实际协议：自动检测'**
   String get aiActualProtocolAuto;
-
-  /// No description provided for @aiCapabilityProbeNotice.
-  ///
-  /// In zh, this message translates to:
-  /// **'能力检测会发起少量测试请求，但不会发送任何账目数据。'**
-  String get aiCapabilityProbeNotice;
 
   /// No description provided for @aiStepRunning.
   ///
@@ -6205,12 +6175,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'AI 功能会把你输入的文字，以及回答问题所需的只读账目查询摘要发送到你配置的第三方服务；配置和完整账目仍只存本机。'**
   String get aiPrivacyNotice;
-
-  /// No description provided for @aiOptionalNotice.
-  ///
-  /// In zh, this message translates to:
-  /// **'AI 是可选功能：不配置也能正常记账、看报表和备份。'**
-  String get aiOptionalNotice;
 
   /// No description provided for @aiEntryTitle.
   ///

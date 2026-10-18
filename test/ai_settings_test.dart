@@ -173,9 +173,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('工具调用协议'));
+    final toolModeField = find.byKey(const Key('ai_tool_mode_field'));
+    await tester.ensureVisible(toolModeField);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('工具调用协议'));
+    expect(find.text('自动（推荐）'), findsOneWidget);
+    expect(find.text('优先使用原生协议，不支持时自动兼容'), findsNothing);
+    await tester.tap(toolModeField);
     await tester.pumpAndSettle();
     expect(find.text('用于不支持原生工具调用的模型或中转服务'), findsOneWidget);
     await tester.tap(find.text('兼容模式'));
@@ -187,6 +190,39 @@ void main() {
     await tester.tap(find.widgetWithIcon(IconButton, Icons.save_outlined));
     await tester.pumpAndSettle();
     expect(controller.aiSettings.toolCallMode, AiToolCallMode.prompt);
+  });
+
+  testWidgets('连接配置使用可见输入框并隐藏多余说明', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(
+          baseUrl: 'https://example.com/v1',
+          apiKey: 'secret',
+          model: 'model',
+        ),
+      );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: const AiSettingsPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (final field in tester.widgetList<TextField>(find.byType(TextField))) {
+      final border = field.decoration?.enabledBorder;
+      expect(border, isA<OutlineInputBorder>());
+      expect(
+        (border! as OutlineInputBorder).borderSide.style,
+        isNot(BorderStyle.none),
+      );
+    }
+    expect(find.textContaining('选择预设渠道，或使用自定义 OpenAI 兼容端点'), findsNothing);
+    expect(find.text('预设渠道地址由 VeriFin 固定'), findsNothing);
+    expect(find.text('可留空；部分渠道会返回鉴权错误'), findsNothing);
+    expect(find.textContaining('能力检测会发起少量测试请求'), findsNothing);
+    expect(find.textContaining('AI 是可选功能'), findsNothing);
   });
 
   group('AiSettings', () {

@@ -389,6 +389,15 @@ class _AiChatPageState extends State<AiChatPage> {
     }
   }
 
+  Future<void> _openSettings() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const AiSettingsPage()));
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -404,10 +413,14 @@ class _AiChatPageState extends State<AiChatPage> {
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
                 child: VeriHeader(
                   title: l10n.aiChatTitle,
-                  // 聊天记录只存 KV、不进备份，用户需要知道换机会丢。
-                  subtitle: l10n.aiChatHistoryLocalOnly,
                   showBack: true,
                   actions: <Widget>[
+                    if (configured)
+                      HeaderAction(
+                        icon: Icons.settings_outlined,
+                        tooltip: l10n.aiSettingsTitle,
+                        onPressed: _streaming ? null : _openSettings,
+                      ),
                     if (_messages.isNotEmpty)
                       HeaderAction(
                         icon: Icons.delete_sweep_outlined,

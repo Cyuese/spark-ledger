@@ -7,6 +7,7 @@ import 'package:verifin/app/ai/ai_settings.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/app/veri_fin_scope.dart';
 import 'package:verifin/pages/ai_chat_page.dart';
+import 'package:verifin/pages/ai_settings_page.dart';
 
 import 'support/test_harness.dart';
 
@@ -43,7 +44,31 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('去配置 AI'), findsOneWidget);
+    expect(find.text('对话只存本机，不含在备份内'), findsNothing);
+    expect(find.byTooltip('AI 设置'), findsNothing);
     controller.dispose();
+  });
+
+  testWidgets('已配置 AI 时右上角设置按钮进入 AI 设置', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: const AiChatPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('AI 设置'), findsOneWidget);
+    await tester.tap(find.byTooltip('AI 设置'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AiSettingsPage), findsOneWidget);
+    expect(find.text('AI 设置'), findsOneWidget);
   });
 
   testWidgets('已配置：发问 → 工具卡片 + 流式答复', (tester) async {
