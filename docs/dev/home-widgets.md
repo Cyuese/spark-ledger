@@ -23,7 +23,8 @@ Veri Fin 提供四个固定模板的 Android 桌面小组件：快速记账（`q
 
 - `lib/app/widgets/widget_catalog.dart`：唯一词表（模板 key、Provider 类名、外观枚举、应用内名称）。
 - `lib/app/widgets/widget_projection.dart`：纯函数投影与快照编码、快照结构版本 `widgetSnapshotVersion`。
-- `lib/app/widgets/widget_service.dart`：刷新管线（失效信号、三道闸门、写入与排程）。
+- `lib/app/widgets/widget_refresh_coordinator.dart`：刷新时机（数据变化防抖、启动/回前台立即推送、切后台冲刷）。
+- `lib/app/widgets/widget_service.dart`：投影发布管线（失效信号、三道闸门、串行写入与排程）。
 - `lib/app/widgets/widget_instance_config.dart`：实例配置与配置会话（读账本列表、保存并校验）。
 - `lib/app/native_widget_preview.dart` + `lib/app/platform_bridge_widget.dart`：应用内预览与通道。
 - 原生：`VeriFinWidget.kt`（Store、三态、渲染、图形、Provider）、`WidgetPreviewBridge.kt`
@@ -62,6 +63,11 @@ PIN/图案验证页，验证前不加载账本列表或真实预览；原生窗�
 以及 data 里带实例 id（`Intent` 的 extras 不参与 `filterEquals`，只有 data 不同才能保证每个实例的
 `PendingIntent` 互不覆盖）。已配置组件的点击继续沿用 `verifin://widget/<id>/<route>?bookId=…` 路由。
 
+该自定义 URI **只由原生入口解析**：`MainActivity` 与 `WidgetConfigurationActivity` 都显式设置
+`flutter_deeplinking_enabled=false`，避免 Flutter 嵌入层把 `/id/route` 再推给没有命名路由的
+Navigator。主应用在隐私同意、新手引导或应用锁期间尚未挂载壳层时，磁贴与组件入口保持
+pending，等 Shell 的处理器就绪后再由 Dart 消费；不能“发出即清空”。
+
 ## 外观与金额口径
 
 - 外观是**实例级**设置：`system`（默认，跟随设备深色模式）/`light`/`dark`。
@@ -78,6 +84,10 @@ PIN/图案验证页，验证前不加载账本列表或真实预览；原生窗�
 - 三道闸门，按代价从低到高：①同一数据版本已推送过 → 直接返回；②桌面上没有任何实例
   （数据变更触发时）→ 连投影都不算；③推送内容与上次完全相同 → 不写共享存储、不刷 Provider、不排闹钟。
 - 冷启动与回前台强制推一次，保证用户之后新添加的实例第一次渲染就能读到数据。
+- 进入后台（`paused` / `hidden`）时立即取消 250ms 防抖，先刷盘挂起写入，再强制检查一次投影；
+  不依赖后台计时器在进程被缓存前恰好执行。即使桌面上暂时没有实例，这一步也准备最新快照，
+  供之后新增的组件直接读取；内容指纹不变时仍不重复写入。多次刷新进入同一串行队列，且在
+  推送开始时捕获数据版本，避免较旧的 payload 覆盖较新的快照。
 - 投影是纯函数：一次遍历得到逐日支出与账户余额增量，净资产曲线按「期初余额 + 逐日前缀和」推进，
   复杂度 `O(交易数 + 账户数 × 天数)`。`test/widget_projection_perf_test.dart`
   以 20 账户 × 5000 笔数据约束四模板合计投影时间不超过 40 ms。
@@ -115,3 +125,6 @@ Receiver 清理对应配置。
    「点击进入配置」。
 5. 桌面无实例时改账目：不产生 Provider 刷新与闹钟重排（`test/widget_service_test.dart` 的闸门用例）。
 6. 运行 `dart run scripts/widget_previews.dart`：仪器测试全绿并重导出 16 张预览图。
+7. 强停后从磁贴记账并立即回桌面：小组件在离开应用前完成刷新，不依赖下次回前台补推。
+8. 冷启动与运行中点击已配置组件、进入未配置组件的配置页、重新配置组件：均正常打开目标页面，
+   日志不出现 `onUnknownRoute` / `Null check operator used on a null value`。
