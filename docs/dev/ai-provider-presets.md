@@ -1,17 +1,17 @@
 # AI 渠道预设与模型发现
 
-> 状态：调研与实施规格（尚未落地）。实现完成后，把仍然有效的结论并入
-> [tech-decisions.md](tech-decisions.md)、[ai-tools.md](ai-tools.md)、
-> [components.md](../design/components.md) 与验收清单，本方案稿不再单独保留。
+> 本文件记录 AI 渠道预设与模型发现的当前实现、数据契约和验收边界。
+> 技术取舍摘要另见 [tech-decisions.md](tech-decisions.md)，组件入口见
+> [components.md](../design/components.md)。
 >
 > 调研日期：2026-10-18。
 >
 > 外部参考：[cc-switch](https://github.com/farion1231/cc-switch)，调研时
 > `main` 提交为 `77c6dc793d4fbc13bc96163d55d747b02f887a8b`。
 
-## 1. 目标
+## 1. 用户体验
 
-AI 设置从“手填 Base URL、API Key、模型”升级为：
+AI 设置当前提供：
 
 1. 用户从分组宫格中选择预设渠道；
 2. 预设自动带出正确的 OpenAI-compatible Base URL、模型列表地址和推荐的调用协议；
@@ -173,7 +173,7 @@ class AiProviderPreset {
 {
   "providerId": "deepseek",
   "baseUrl": "https://api.deepseek.com/v1",
-  "apiKey": "sk-...",
+  "apiKey": "",
   "model": "deepseek-flash",
   "toolCallMode": "auto",
   "modelListUrl": ""
@@ -199,7 +199,7 @@ class AiProviderPreset {
 
 ## 6. 渠道目录
 
-### 6.1 已确认的 8 个核心渠道
+### 6.1 内置渠道
 
 “自定义 OpenAI 兼容”作为常驻兜底入口，不计入 8 个预设。以下组合已确认：
 
@@ -218,11 +218,11 @@ class AiProviderPreset {
 OpenAI 标准地址未发送无效 Key 做探测，避免无意义请求；其模型列表沿用官方
 OpenAI-compatible 契约。
 
-### 6.2 第二批扩展（P1）
+### 6.2 未内置的渠道
 
-以下渠道已有明确 OpenAI Chat Completions 端点，建议在 P0 稳定后按表格逐个验收并
-加入。模型列表状态来自 2026-10-18 的无效 Key 探测；401/403/400 只说明路由存在，
-仍需真实 Key 做最终内容验收。
+以下渠道当前没有内置入口，需要时通过“自定义 OpenAI 兼容”填写地址接入。表中的
+模型列表状态来自 2026-10-18 的无效 Key 探测；401/403/400 只说明路由存在，实际
+可用性仍取决于用户端点和 Key。
 
 | 分组 | 渠道 | Base URL | 模型列表状态 |
 |---|---|---|---|
@@ -282,7 +282,7 @@ OpenAI-compatible 契约。
 - Coding Plan：`https://ark.cn-beijing.volces.com/api/coding/v3`
 - Agent Plan：`https://ark.cn-beijing.volces.com/api/plan/v3`
 
-P0 只内置普通按量入口。Coding/Agent Plan 是否接受与普通 API 相同的模型枚举和
+当前只内置普通按量入口。Coding/Agent Plan 是否接受与普通 API 相同的模型枚举和
 Chat Completions 请求，需要用对应套餐的真实 Key 单独验收后再成为独立预设，不能
 把三个地址合并成一个“火山方舟”渠道。
 
@@ -497,7 +497,7 @@ assets/ai_providers/
 
 ### 9.3 素材来源
 
-P0/P1 需要的 `openai`、`deepseek`、`huoshan`/`doubao`、`kimi`、`zhipu`、
+内置渠道需要的 `openai`、`deepseek`、`huoshan`/`doubao`、`kimi`、`zhipu`、
 `qianwenai`、`minimax`、`siliconflow`、`ppio`、`openrouter`、`xai`、`gemini`、
 `groq`、`mistral`、`together`、`fireworks`、`deepinfra`、`novita`、`nvidia`、
 `huggingface`、`nebius`、`sambanova`、`digitalocean`、`baseten`、`ollama`、
@@ -571,7 +571,7 @@ P0/P1 需要的 `openai`、`deepseek`、`huoshan`/`doubao`、`kimi`、`zhipu`、
 
 ### 10.4 真机验收
 
-至少用真实 Key 或用户提供的本地服务验收：
+至少用真实 Key、公开模型列表或用户提供的本地服务验收：
 
 - DeepSeek；
 - 火山方舟普通按量入口；
@@ -590,65 +590,26 @@ P0/P1 需要的 `openai`、`deepseek`、`huoshan`/`doubao`、`kimi`、`zhipu`、
 - 配置不进入备份；
 - 不泄露 Key 或原始响应。
 
-## 11. 代码改动清单
+## 11. 实现落点
 
-预计新增：
+- 渠道注册表与模型列表地址规则：
+  `lib/app/ai/ai_provider_presets.dart`
+- 渠道说明、分组与搜索匹配：
+  `lib/app/ai/ai_provider_presentation.dart`
+- 模型发现、响应解析与错误映射：
+  `lib/app/ai/ai_model_catalog.dart`
+- 渠道宫格与模型选择弹层：
+  `lib/pages/ai_provider_picker.dart`、`lib/pages/ai_model_picker.dart`
+- Logo 托盘与离线素材：
+  `lib/pages/ai_provider_logo.dart`、`assets/ai_providers/`
+- 设置页草稿、只读 Base URL、空 Key 保存和模型获取：
+  `lib/pages/ai_settings_page.dart`
+- 稳定弹层入口：
+  `lib/pages/sheets.dart`
+- 配置字段与旧配置兼容：
+  `lib/app/ai/ai_settings.dart`
 
-- `lib/app/ai/ai_provider_presets.dart`
-- `lib/app/ai/ai_model_catalog.dart`
-- `lib/pages/ai_provider_picker.dart`
-- `assets/ai_providers/*`
-- `assets/ai_providers/NOTICE.md`
-- `test/ai_provider_presets_test.dart`
-- `test/ai_model_catalog_test.dart`
-- `test/ai_provider_picker_test.dart`
-
-预计修改：
-
-- `lib/app/ai/ai_settings.dart`
-- `lib/app/ai/ai_client_io.dart`（无 Key 本地服务的鉴权分支）
-- `lib/pages/ai_settings_page.dart`
-- `lib/pages/sheets.dart`（稳定 `showAiProviderPickerSheet` 入口）
-- `pubspec.yaml`
-- `lib/l10n/app_zh.arb`
-- `lib/l10n/app_en.arb`
-- `test/ai_settings_test.dart`
-- `docs/design/components.md`
-- `docs/dev/tech-decisions.md`
-- `CHANGELOG.md`（实际可见功能完成时）
-
-不建议修改：
-
-- Agent 工具 schema 和执行器；
-- 聊天历史数据结构；
-- SQLite schema；
-- 备份格式；
-- 现有 SSE/Tool Calls 状态机。
-
-## 12. 实施顺序
-
-1. 先落渠道注册表、Logo 资源、`AiSettings` 新字段与旧配置兼容测试；
-2. 实现纯 Dart 模型发现服务与本地 HttpServer 测试；
-3. 实现渠道选择宫格与搜索；
-4. 改造设置页模型字段和模型选择弹层；
-5. 接入 P0 渠道并逐个用真实 Key 验证；
-6. 更新组件注册表、技术决策、截图与 CHANGELOG；
-7. 再按 P1 表逐批扩展，不一次性塞入全部第三方渠道。
-
-## 13. 已确认的产品约束
-
-已确认：
-
-1. 切换渠道时清空上一渠道的 API Key 与模型；
-2. 所有预设渠道的 Base URL 只读，只能选择或展示；
-3. 核心预设确定为：DeepSeek、火山方舟、Kimi、智谱 GLM、阿里云百炼、OpenAI、
-   OpenRouter、Ollama；“自定义 OpenAI 兼容”不计入这 8 个；
-4. 选择渠道后模型字段不预填，用户通过远端列表选择或手动填写；
-5. 所有渠道的 API Key 都允许留空；空 Key 请求不带鉴权头，由渠道返回真实错误。
-
-当前没有阻塞实施的待确认项。
-
-## 14. 参考
+## 12. 参考
 
 - cc-switch 仓库：<https://github.com/farion1231/cc-switch>
   - 调研提交：`77c6dc793d4fbc13bc96163d55d747b02f887a8b`
