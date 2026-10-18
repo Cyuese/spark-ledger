@@ -3069,9 +3069,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiNotConfigured => 'Not set';
 
   @override
-  String get aiProviderSectionTitle => 'Provider';
-
-  @override
   String get aiProviderCurrent => 'Current provider';
 
   @override
@@ -3201,9 +3198,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Connected, but no models were returned';
 
   @override
-  String get aiProviderModelSelected => 'Model selected';
-
-  @override
   String get aiProviderMissingBaseUrl => 'Enter the provider endpoint first';
 
   @override
@@ -3273,15 +3267,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiBaseUrlHint => 'e.g. https://api.openai.com/v1';
-
-  @override
-  String get aiApiKeyLabel => 'API Key';
-
-  @override
-  String get aiModelLabel => 'Model';
-
-  @override
-  String get aiModelHint => 'e.g. gpt-4o-mini';
 
   @override
   String get aiFillAllFields => 'Choose a provider and enter a model';

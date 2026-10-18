@@ -5510,12 +5510,6 @@ abstract class AppLocalizations {
   /// **'未配置'**
   String get aiNotConfigured;
 
-  /// No description provided for @aiProviderSectionTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'渠道'**
-  String get aiProviderSectionTitle;
-
   /// No description provided for @aiProviderCurrent.
   ///
   /// In zh, this message translates to:
@@ -5750,12 +5744,6 @@ abstract class AppLocalizations {
   /// **'连接成功，但没有获取到模型'**
   String get aiProviderModelFetchEmpty;
 
-  /// No description provided for @aiProviderModelSelected.
-  ///
-  /// In zh, this message translates to:
-  /// **'模型已选择'**
-  String get aiProviderModelSelected;
-
   /// No description provided for @aiProviderMissingBaseUrl.
   ///
   /// In zh, this message translates to:
@@ -5881,24 +5869,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'如 https://api.openai.com/v1'**
   String get aiBaseUrlHint;
-
-  /// No description provided for @aiApiKeyLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'API Key'**
-  String get aiApiKeyLabel;
-
-  /// No description provided for @aiModelLabel.
-  ///
-  /// In zh, this message translates to:
-  /// **'模型'**
-  String get aiModelLabel;
-
-  /// No description provided for @aiModelHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'如 gpt-4o-mini'**
-  String get aiModelHint;
 
   /// No description provided for @aiFillAllFields.
   ///
