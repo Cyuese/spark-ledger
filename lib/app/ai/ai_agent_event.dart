@@ -53,10 +53,12 @@ class AiAgentAnswerDelta extends AiAgentEvent {
   final String text;
 }
 
+enum AiAgentRetryReason { protocolFallback, network, upstreamResource }
+
 class AiAgentRetrying extends AiAgentEvent {
   const AiAgentRetrying({required this.attempt, required this.reason});
   final int attempt;
-  final String reason;
+  final AiAgentRetryReason reason;
 }
 
 class AiAgentCompleted extends AiAgentEvent {

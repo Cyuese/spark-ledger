@@ -318,7 +318,7 @@ class AiChatSessionController extends ChangeNotifier {
           summary: request.l10n.aiStepFailed,
         );
       case final AiAgentRetrying e:
-        if (e.reason == 'protocolFallback') {
+        if (e.reason == AiAgentRetryReason.protocolFallback) {
           onCapabilityDetected(
             AiCapabilityProfile.forSettings(
               settings: request.settings,
@@ -334,7 +334,7 @@ class AiChatSessionController extends ChangeNotifier {
                 id: 'retry-${message.steps.length}',
                 toolName: 'agentRetry',
                 status: AiAgentStepStatus.retrying,
-                summary: e.reason,
+                retryReason: e.reason,
               ),
             ],
           ),

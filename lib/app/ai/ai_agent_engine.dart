@@ -109,7 +109,10 @@ class AiAgentEngine {
       }
     }
 
-    yield const AiAgentRetrying(attempt: 1, reason: 'protocolFallback');
+    yield const AiAgentRetrying(
+      attempt: 1,
+      reason: AiAgentRetryReason.protocolFallback,
+    );
     try {
       await for (final event in _runProtocol(
         protocol: _AgentProtocol.prompt,
@@ -210,7 +213,10 @@ class AiAgentEngine {
           rethrow;
         }
         retryUsed = true;
-        yield const AiAgentRetrying(attempt: 1, reason: 'network');
+        yield const AiAgentRetrying(
+          attempt: 1,
+          reason: AiAgentRetryReason.network,
+        );
         response = await completeTransport(messages, nativeDefinitions);
         if (cancellation?.isCancelled == true) return;
       }
@@ -221,7 +227,10 @@ class AiAgentEngine {
           !visibleAnswerWritten &&
           !anyToolExecuted) {
         retryUsed = true;
-        yield const AiAgentRetrying(attempt: 1, reason: 'upstreamResource');
+        yield const AiAgentRetrying(
+          attempt: 1,
+          reason: AiAgentRetryReason.upstreamResource,
+        );
         response = await completeTransport(messages, nativeDefinitions);
         if (cancellation?.isCancelled == true) return;
       }
