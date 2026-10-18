@@ -3139,7 +3139,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatClearConfirm => '清空';
 
   @override
+  String get aiChatChooseBook => '选择对话账本';
+
+  @override
+  String get aiChatClearCurrent => '清空对话';
+
+  @override
+  String get aiSendQuestion => '发送';
+
+  @override
+  String get aiStopGenerating => '停止生成';
+
+  @override
+  String aiChatCurrentBook(String book) {
+    return '当前账本：$book';
+  }
+
+  @override
   String get aiChatUnconfiguredHint => '先配置 AI，才能开始对话查询账目';
+
+  @override
+  String get aiChatUnconfiguredTitle => '连接你的 AI';
 
   @override
   String get aiChatGoConfigure => '去配置 AI';
@@ -4077,6 +4097,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiErrBadResponse => '无法解析服务器响应';
+
+  @override
+  String get aiErrResponseTooLarge => 'AI 返回内容过长，已停止处理';
 
   @override
   String get aiErrModelListUnsupported => '该渠道不支持获取模型列表，请手动填写模型';

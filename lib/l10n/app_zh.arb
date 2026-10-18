@@ -2103,7 +2103,20 @@
   "aiChatClearHistory": "清空聊天记录",
   "aiChatClearMessage": "将删除当前所有对话，无法恢复。",
   "aiChatClearConfirm": "清空",
+  "aiChatChooseBook": "选择对话账本",
+  "aiChatClearCurrent": "清空对话",
+  "aiSendQuestion": "发送",
+  "aiStopGenerating": "停止生成",
+  "aiChatCurrentBook": "当前账本：{book}",
+  "@aiChatCurrentBook": {
+    "placeholders": {
+      "book": {
+        "type": "String"
+      }
+    }
+  },
   "aiChatUnconfiguredHint": "先配置 AI，才能开始对话查询账目",
+  "aiChatUnconfiguredTitle": "连接你的 AI",
   "aiChatGoConfigure": "去配置 AI",
   "aiChatEmptyTitle": "问问 AI 你的账目",
   "aiChatInputHint": "问问你的账目…",
@@ -2620,6 +2633,7 @@
   "aiErrRateLimited": "请求过于频繁或额度不足",
   "aiErrServer": "服务器返回错误",
   "aiErrBadResponse": "无法解析服务器响应",
+  "aiErrResponseTooLarge": "AI 返回内容过长，已停止处理",
   "aiErrModelListUnsupported": "该渠道不支持获取模型列表，请手动填写模型",
   "aiErrUpstream": "服务器返回错误",
   "aiErrUnknown": "请求失败",
