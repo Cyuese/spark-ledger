@@ -32,29 +32,31 @@ AI 设置当前提供：
 本功能只改变 AI 连接配置与模型发现，不改变 Agent 工具、账目口径、聊天历史或
 AI 记账解析逻辑。
 
-## 2. 当前实现基线
+## 2. 实现范围与边界
 
-当前 AI 配置在 [ai_settings.dart](../../lib/app/ai/ai_settings.dart) 中只有：
+AI 配置在 [ai_settings.dart](../../lib/app/ai/ai_settings.dart) 中保存：
 
+- `providerId`
 - `baseUrl`
 - `apiKey`
 - `model`
+- `modelListUrl`
 - `toolCallMode`
 
-`AiSettings.isConfigured` 要求三项输入都非空。设置页只有一个手填表单，模型是普通
-文本框；`AiChatPage`、AI 记账和截图识账共用这份配置。
+`AiSettings.isConfigured` 只要求 Base URL 与模型非空；API Key 可为空。
+`AiChatPage`、AI 记账和截图识账共用这份配置。
 
-当前传输层固定使用：
+传输层固定使用：
 
 - `{baseUrl}/chat/completions`；
-- `Authorization: Bearer {apiKey}`；
+- API Key 非空时发送 `Authorization: Bearer {apiKey}`，为空时不发送鉴权头；
 - OpenAI Chat Completions 请求体；
 - 原生 SSE 与 Tool Calls。
 
-因此第一阶段只适配“Bearer 鉴权、OpenAI Chat Completions、模型列表可由 HTTPS/本地
-HTTP GET 获取”的渠道。Anthropic Messages、OpenAI Responses、AWS Bedrock、Azure
-管理面模型枚举等协议不在本阶段范围内；如果后续要接，需要另立协议适配设计，不能把
-渠道名和协议名混在一起。
+因此当前只适配“Bearer 或空鉴权、OpenAI Chat Completions、模型列表可由 HTTP GET
+获取”的渠道。Anthropic Messages、OpenAI Responses、AWS Bedrock、Azure 管理面模型
+枚举等协议不在范围内；如果后续要接，需要另立协议适配设计，不能把渠道名和协议名
+混在一起。
 
 ## 3. cc-switch 调研结论
 
@@ -84,7 +86,8 @@ cc-switch 的模型发现能力拆分得很清楚：
    - `{"data":[{"id":"...","owned_by":"..."}]}`
    - `{"models":[{"slug":"..."}]}`，也兼容 `models[].id`
 6. 对错误响应做密钥脱敏，404/405 时继续试下一个候选，其他错误直接结束；
-7. 前端按 `ownedBy` 分组，支持搜索模型名和厂商名，选中即回填。
+7. 前端按 `ownedBy` 分组；响应未提供 `owned_by` 时，用模型 ID 中 `/` 前的厂商
+   前缀作为分组键。支持搜索模型名和厂商名，选中即回填。
 
 ### 3.2 不应照搬的部分
 
@@ -111,7 +114,7 @@ cc-switch 使用 MIT。其 `src/icons/extracted/` 中不少 SVG 带
 
 ## 4. 渠道数据模型
 
-建议新增 `lib/app/ai/ai_provider_presets.dart`，用不可变静态注册表描述渠道。
+渠道注册表位于 `lib/app/ai/ai_provider_presets.dart`，用不可变静态数据描述渠道。
 
 ```dart
 enum AiProviderGroup {
@@ -122,21 +125,14 @@ enum AiProviderGroup {
   custom,
 }
 
-enum AiModelListMode {
-  openAiModels, // 在固定 Base URL 上请求 /models
-  exactUrl, // 使用渠道提供的完整模型列表 URL
-  disabled, // 只能手动填写
-}
-
 class AiProviderPreset {
   const AiProviderPreset({
     required this.id,
     required this.brandName,
     required this.group,
     required this.baseUrl,
-    required this.modelListMode,
+    required this.iconAsset,
     this.modelListUrl,
-    this.docsUrl,
     this.searchTerms = const <String>[],
   });
 
@@ -144,10 +140,11 @@ class AiProviderPreset {
   final String brandName;
   final AiProviderGroup group;
   final String baseUrl;
-  final AiModelListMode modelListMode;
   final String? modelListUrl;
-  final String? docsUrl;
+  final String? iconAsset;
   final List<String> searchTerms;
+
+  bool get isCustom => group == AiProviderGroup.custom;
 }
 ```
 
@@ -156,6 +153,7 @@ class AiProviderPreset {
 - `id` 一经发布不得复用；显示名可以更新，ID 不能承载版本号或模型名。
 - `baseUrl` 是 `chatCompletionsUrl` 的基础，不包含 `/chat/completions`。
 - 非标准模型列表路径必须用 `modelListUrl` 显式声明，不能靠通用字符串猜测。
+- Logo 使用随 APK 打包的本地资源；自定义渠道没有品牌 Logo。
 - API Key 对所有渠道都可选；为空时请求不发送 `Authorization`，由渠道自行返回
   401/403 或其他业务错误。
 - 渠道展示名是品牌专名，可保留英文；分类名和厂商说明必须写入中英文 ARB。
@@ -167,7 +165,7 @@ class AiProviderPreset {
 - `providerId`：当前渠道稳定 ID；旧配置缺失时回退 `custom`；
 - `modelListUrl`：仅自定义渠道使用的高级可选覆盖；预设渠道由注册表提供。
 
-建议 JSON：
+配置 JSON：
 
 ```json
 {
@@ -213,7 +211,7 @@ class AiProviderPreset {
 | `dashscope` | 阿里云百炼 | 国内官方 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `+ /models` | 无效 Key 返回 401 |
 | `openrouter` | OpenRouter | 聚合平台 | `https://openrouter.ai/api/v1` | `+ /models` | 公开列表返回 200 |
 | `ollama` | Ollama | 本地服务 | `http://localhost:11434/v1` | `+ /models` | 本地未启动，需真机/局域网验证 |
-| `custom` | 自定义 OpenAI 兼容 | 自定义 | 用户填写 | 可选高级覆盖；否则候选回退 | 保留现有手填能力 |
+| `custom` | 自定义 OpenAI 兼容 | 自定义 | 用户填写 | 可选高级覆盖；否则按 Base URL 推导 | 保留现有手填能力 |
 
 OpenAI 标准地址未发送无效 Key 做探测，避免无意义请求；其模型列表沿用官方
 OpenAI-compatible 契约。
@@ -293,7 +291,7 @@ Chat Completions 请求，需要用对应套餐的真实 Key 单独验收后再�
 
 ### 7.1 请求
 
-新增纯 Dart 服务 `lib/app/ai/ai_model_catalog.dart`：
+模型发现实现位于 `lib/app/ai/ai_model_catalog.dart`：
 
 ```dart
 Future<List<AiModelInfo>> fetchAiModels({
@@ -304,7 +302,7 @@ Future<List<AiModelInfo>> fetchAiModels({
 
 请求规则：
 
-- 只允许 `https` 与本地/私有网络的 `http`；
+- 支持 `https` 与 `http`；公网明文 HTTP 在保存和请求前要求用户确认；
 - 默认超时 15 秒；
 - `Accept: application/json`；
 - API Key 非空时发送 `Authorization: Bearer <key>`；
@@ -312,10 +310,10 @@ Future<List<AiModelInfo>> fetchAiModels({
 - 不发送任何账目数据、聊天内容或应用内日志；
 - 保存或请求公网明文 HTTP 前复用 `confirmCleartextIfRisky`；本机/内网地址不告警；
 - 重定向只允许同源；跨域重定向直接报错，避免 API Key 被带到另一个主机；
-- 响应体上限建议 5 MB，模型条数上限 2000，超出即失败并提示手动填写；
+- 响应体上限 5 MB，模型条数上限 2000，超出即失败并提示手动填写；
 - 同一时刻只允许一个模型列表请求；切换渠道或修改 URL 后，旧响应必须丢弃。
 
-模型列表第一版只做会话内缓存，不写入 KV。远端模型频繁变化，持久化缓存容易让用户
+模型列表只用于当前选择弹层，不写入 KV。远端模型频繁变化，持久化缓存容易让用户
 选择已下线模型；如后续需要缓存，必须按渠道、endpoint、模型列表 URL 建键，且不得
 保存 API Key。
 
@@ -330,8 +328,7 @@ Android 上的“本机服务”要区分：
 
 1. 如果预设/自定义配置提供 `modelListUrl`，只使用该精确 URL；
 2. 否则 Base URL 以 `/v{N}` 结尾时请求 `{base}/models`；
-3. 否则请求 `{base}/v1/models`；
-4. 自定义渠道可以追加最多一个已知兼容后缀剥离候选，但预设渠道不使用猜测。
+3. 否则请求 `{base}/v1/models`。
 
 必须显式覆盖模型列表 URL 的已知例子：
 
@@ -361,7 +358,7 @@ Android 上的“本机服务”要区分：
 - `models` 可以是任意形状；只提取数组对象的 `slug` 或 `id`；
 - 跳过空字符串、数字 ID、缺少稳定 ID 的条目；
 - 去重后按 `id` 不区分大小写排序；
-- `owned_by` 缺失时归入“其他”；
+- `owned_by` 缺失时使用模型 ID 中 `/` 前的厂商前缀；两者都无法推导时才归入“其他”；
 - 不要求响应带 `object`、`created`、价格、上下文长度等字段。
 
 模型项展示：
@@ -448,8 +445,8 @@ AI 设置页顶部增加“渠道”卡/行：
 模型选择弹层：
 
 - 使用 `showVeriModalSheet` 统一 chrome；
-- 顶部搜索模型 ID、显示名或 `owned_by`；
-- 按 `owned_by` 分组；
+- 顶部搜索模型 ID、显示名、`owned_by` 或模型 ID 推导出的厂商；
+- 按 `owned_by` 分组；缺失时用模型 ID 中 `/` 前的厂商前缀，仍无法推导才归入“其他”；
 - 行高至少 44dp，显示模型 ID，右侧显示所属厂商或当前选中标记；
 - 模型多时使用懒列表，不一次性构建全部行；
 - 点击行返回模型 ID 并关闭弹层；取消返回 `null`。
@@ -476,9 +473,13 @@ AI 设置页顶部增加“渠道”卡/行：
 assets/ai_providers/
   openai.svg
   deepseek.svg
-  volcengine-ark.svg
+  huoshan.png
   kimi.svg
-  ...
+  zhipu.svg
+  qianwenai.svg
+  openrouter.svg
+  ollama.svg
+  NOTICE.md
 ```
 
 `pubspec.yaml` 增加目录资源声明。继续使用项目已有的 `flutter_svg`，不新增图片或
@@ -490,19 +491,17 @@ assets/ai_providers/
 
 - 32–36dp，固定正方形；
 - 中性实色底 + 细描边，避免透明黑色 Logo 在深色背景上消失；
-- 10% 左右内边距；
+- 12% 内边距；
 - 不按主题色重绘品牌 Logo；
-- 未知或缺失资源回退到通用 `openai`/网关图标；
+- 未知或缺失资源回退到通用的 hub 网关图标；
 - 不通过网络加载 Logo。
 
 ### 9.3 素材来源
 
-内置渠道需要的 `openai`、`deepseek`、`huoshan`/`doubao`、`kimi`、`zhipu`、
-`qianwenai`、`minimax`、`siliconflow`、`ppio`、`openrouter`、`xai`、`gemini`、
-`groq`、`mistral`、`together`、`fireworks`、`deepinfra`、`novita`、`nvidia`、
-`huggingface`、`nebius`、`sambanova`、`digitalocean`、`baseten`、`ollama`、
-`lmstudio`、`vllm`、`llamacpp`、`newapi` 等，优先从 cc-switch 的
-`src/icons/extracted/` 提取，并记录源文件与上游项目。
+当前 8 个预设使用 `openai`、`deepseek`、`huoshan`、`kimi`、`zhipu`、
+`qianwenai`、`openrouter`、`ollama` 素材，均从 cc-switch 的
+`src/icons/extracted/` 提取，并在 `assets/ai_providers/NOTICE.md` 记录源文件与
+上游项目。
 
 缺失素材时：
 
@@ -530,7 +529,7 @@ assets/ai_providers/
 - `/v1`、`/v4`、非版本路径、尾斜杠、完整 URL 的模型列表推导；
 - `data[].id`、`models[].slug`、`models[].id` 三种响应；
 - `data` 与无关 `models` 共存时仍解析 `data`；
-- 空 ID、数字 ID、重复 ID、缺失 `owned_by`、超大条目；
+- 空 ID、数字 ID、重复 ID、缺失 `owned_by` 时用 ID 前缀分组、超大条目；
 - 401/403、404/405、429、超时、非 JSON、空列表的错误映射；
 - 密钥、Authorization、响应体不进日志。
 
@@ -560,7 +559,7 @@ assets/ai_providers/
 - 无结果空态；
 - 手动输入 Base URL 与模型；
 - 模型下拉请求中、成功、失败三种状态；
-- 成功后弹层展示模型并按 `owned_by` 分组；
+- 成功后弹层展示模型并按 `owned_by` 或模型 ID 的厂商前缀分组；
 - 选中模型回填输入框；
 - 切换渠道清空旧 Key/模型，但取消设置页后原配置不变；
 - 保存后持久化，重启恢复；
