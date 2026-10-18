@@ -162,6 +162,58 @@ void main() {
     controller.dispose();
   });
 
+  test('同级分类重排只影响当前账本', () async {
+    final controller = await makeController();
+    final defaultBookId = controller.activeBook.id;
+    final defaultOrder = controller
+        .categoriesForBook(defaultBookId)
+        .where(
+          (category) =>
+              category.type == EntryType.expense && category.parentId == null,
+        )
+        .map((category) => category.id)
+        .toList();
+
+    controller.addLedgerBook('旅行');
+    final travelBookId = controller.activeBook.id;
+    final travelOrder = controller
+        .categoriesForBook(travelBookId)
+        .where(
+          (category) =>
+              category.type == EntryType.expense && category.parentId == null,
+        )
+        .map((category) => category.id)
+        .toList();
+    controller.switchLedgerBook(defaultBookId);
+
+    controller.reorderCategories(EntryType.expense, null, 0, 1);
+
+    final reorderedDefault = controller
+        .categoriesForBook(defaultBookId)
+        .where(
+          (category) =>
+              category.type == EntryType.expense && category.parentId == null,
+        )
+        .map((category) => category.id)
+        .toList();
+    expect(reorderedDefault.take(2), <String>[
+      defaultOrder[1],
+      defaultOrder[0],
+    ]);
+    expect(
+      controller
+          .categoriesForBook(travelBookId)
+          .where(
+            (category) =>
+                category.type == EntryType.expense && category.parentId == null,
+          )
+          .map((category) => category.id)
+          .toList(),
+      travelOrder,
+    );
+    controller.dispose();
+  });
+
   test('删除标签只摘掉本账本交易上的引用', () async {
     final controller = await makeController();
     final defaultBookId = controller.activeBook.id;

@@ -3774,7 +3774,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     final positions = <int>[];
     for (var i = 0; i < _categories.length; i++) {
       final category = _categories[i];
-      if (category.type == type && category.parentId == parentId) {
+      if (category.bookId == _activeBookId &&
+          category.type == type &&
+          category.parentId == parentId) {
         positions.add(i);
       }
     }
