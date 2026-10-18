@@ -190,6 +190,23 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     _accounts.where((account) => account.bookId == bookId),
   );
 
+  /// 某账本应使用的金额单位显示口径（AI 对话等非活动账本结果使用）。
+  MoneyCodeDisplay moneyCodeDisplayForBook(String bookId) {
+    final book = ledgerBooks.where((item) => item.id == bookId).firstOrNull;
+    if (book == null) return amount_format.activeMoneyCodeDisplay;
+    final multiple = bookUsesMultipleCurrencies(
+      bookId: bookId,
+      baseCurrencyCode: book.baseCurrencyCode,
+      accounts: accountsForBook(bookId),
+      entries: entriesForBook(bookId),
+      rules: _recurringRules.where((rule) => rule.bookId == bookId),
+      rates: exchangeRatesForBook(bookId),
+    );
+    return amount_format.hideUnitInSingleCurrency && !multiple
+        ? MoneyCodeDisplay.none
+        : amount_format.preferredMoneyCodeDisplay;
+  }
+
   List<AccountGroup> get accountGroups {
     return _accountGroupsView ??= List<AccountGroup>.unmodifiable(
       _accountGroups.where((group) => group.bookId == _activeBookId).toList()
