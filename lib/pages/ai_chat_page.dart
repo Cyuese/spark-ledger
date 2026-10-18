@@ -634,15 +634,16 @@ class _AiChatPageState extends State<AiChatPage> {
               ),
               const Spacer(),
               if (_messages.isNotEmpty)
-                TextButton.icon(
+                IconButton(
                   onPressed: _streaming ? null : _clearHistory,
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  label: Text(l10n.aiChatClearCurrent),
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.colorScheme.error,
-                    minimumSize: const Size(0, 44),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  icon: const Icon(Icons.delete_outline, size: 19),
+                  color: theme.colorScheme.error,
+                  tooltip: l10n.aiChatClearCurrent,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 44,
+                    height: 44,
                   ),
+                  padding: EdgeInsets.zero,
                 ),
             ],
           ),
