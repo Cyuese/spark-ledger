@@ -344,14 +344,21 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.byTooltip('清空对话').hitTestable(), findsNothing);
+    final settingsBefore = tester.getCenter(find.byTooltip('AI 设置'));
     await tester.enterText(find.byType(TextField), '在吗');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
     await tester.pump();
     await _pumpAsync(tester);
     expect(find.text('在吗'), findsOneWidget);
+    expect(tester.getCenter(find.byTooltip('AI 设置')), settingsBefore);
+    expect(
+      tester.getCenter(find.byTooltip('清空对话').hitTestable()).dx,
+      lessThan(settingsBefore.dx),
+    );
 
-    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.tap(find.byTooltip('清空对话').hitTestable());
     await tester.pumpAndSettle();
     await tester.tap(find.text('清空'));
     await tester.pumpAndSettle();

@@ -215,7 +215,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 | 名称 | 类型 | 位置 | 用途 |
 |---|---|---|---|
-| `AiChatPage` | 页面 Widget | `ai_chat_page.dart` | 全屏 AI 财务 Agent 对话页（消息气泡 + 工具步骤 + 单块 Composer + 清空当前对话）；Composer 上方为多行输入、下方为操作行，账本选择位于操作行右侧并直接用 `AnchoredMenuChoice` 展开，默认选中全局活动账本，切换不改变全局账本；发送按钮在流式时原位切换为停止；会话只保留页面内存，离开即清空；已配置时 Header 提供 AI 设置入口，未配置时用 `EmptyState` 插画引导配置；`debugTransport` / `debugCompleteTransport` 供测试注入结构化传输 |
+| `AiChatPage` | 页面 Widget | `ai_chat_page.dart` | 全屏 AI 财务 Agent 对话页（消息气泡 + 工具步骤 + 单块 Composer）；Composer 上方为多行输入、下方为操作行，账本选择位于操作行右侧并直接用 `AnchoredMenuChoice` 展开，默认选中全局活动账本，切换不改变全局账本；发送按钮在流式时原位切换为停止；会话只保留页面内存，离开即清空；清空当前对话位于 Header 设置按钮左侧，无对话时保留同宽占位以保证设置按钮位置固定；已配置时 Header 提供 AI 设置入口，未配置时用 `EmptyState` 插画引导配置；`debugTransport` / `debugCompleteTransport` 供测试注入结构化传输 |
 | `AiAgentStepView` | Widget | `ai_agent_step_view.dart` | Agent 工具调用与重试的紧凑可折叠步骤卡；只展示本地化参数与结果摘要，不展示协议 JSON / reasoning / 底层异常 |
 | `AiResultView` | Widget | `ai_result_view.dart` | 把 `AiResultDisplay` 渲染成统计卡 / 柱状排行 / 折线趋势 / **只读交易列表** / 表格（新增展示类型在此加一支）；按消息生成时的账本、本位币与单位口径渲染 |
 | `AiProviderPreset` / `aiProviderPresets` / `customAiProviderPreset` / `aiProviderPresetFor` / `aiModelListUrlFor` | 值类 / 常量 / 纯函数 | `lib/app/ai/ai_provider_presets.dart` | 8 个内置 OpenAI-compatible 渠道 + 自定义渠道的稳定注册表；Base URL、Logo、模型列表规则和搜索别名集中维护，渠道 ID 不得复用 |
