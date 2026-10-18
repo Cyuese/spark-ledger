@@ -3005,9 +3005,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiNotConfigured => '未配置';
 
   @override
-  String get aiProviderSectionTitle => '渠道';
-
-  @override
   String get aiProviderCurrent => '当前渠道';
 
   @override
@@ -3127,9 +3124,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiProviderModelFetchEmpty => '连接成功，但没有获取到模型';
 
   @override
-  String get aiProviderModelSelected => '模型已选择';
-
-  @override
   String get aiProviderMissingBaseUrl => '请先填写渠道请求地址';
 
   @override
@@ -3192,15 +3186,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiBaseUrlHint => '如 https://api.openai.com/v1';
-
-  @override
-  String get aiApiKeyLabel => 'API Key';
-
-  @override
-  String get aiModelLabel => '模型';
-
-  @override
-  String get aiModelHint => '如 gpt-4o-mini';
 
   @override
   String get aiFillAllFields => '请选择渠道并填写模型';
