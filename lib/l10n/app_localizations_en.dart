@@ -3069,6 +3069,144 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiNotConfigured => 'Not set';
 
   @override
+  String get aiProviderSectionTitle => 'Provider';
+
+  @override
+  String get aiProviderCurrent => 'Current provider';
+
+  @override
+  String get aiProviderPickerTitle => 'Choose AI provider';
+
+  @override
+  String get aiProviderPickerSubtitle =>
+      'The provider\'s fixed endpoint will be used';
+
+  @override
+  String get aiProviderChange => 'Change';
+
+  @override
+  String get aiProviderSearchHint => 'Search provider, description, or domain';
+
+  @override
+  String get aiProviderSearchEmpty => 'No provider found';
+
+  @override
+  String get aiProviderSearchEmptyDesc =>
+      'Try a vendor name, platform, or domain';
+
+  @override
+  String get aiProviderGroupAll => 'All';
+
+  @override
+  String get aiProviderGroupChinaOfficial => 'China official';
+
+  @override
+  String get aiProviderGroupGlobalOfficial => 'Global official';
+
+  @override
+  String get aiProviderGroupAggregator => 'Aggregators';
+
+  @override
+  String get aiProviderGroupLocal => 'Local';
+
+  @override
+  String get aiProviderGroupCustom => 'Custom';
+
+  @override
+  String get aiProviderDescDeepSeek =>
+      'DeepSeek official OpenAI-compatible endpoint';
+
+  @override
+  String get aiProviderDescVolcengine => 'Volcengine Ark model service';
+
+  @override
+  String get aiProviderDescKimi => 'Moonshot Kimi official endpoint';
+
+  @override
+  String get aiProviderDescZhipu => 'Zhipu GLM official endpoint';
+
+  @override
+  String get aiProviderDescDashscope =>
+      'Alibaba Cloud Bailian compatible endpoint';
+
+  @override
+  String get aiProviderDescOpenai => 'OpenAI official endpoint';
+
+  @override
+  String get aiProviderDescOpenrouter => 'Multi-model routing platform';
+
+  @override
+  String get aiProviderDescOllama => 'Local Ollama service';
+
+  @override
+  String get aiProviderDescCustom => 'Any OpenAI-compatible endpoint';
+
+  @override
+  String get aiProviderBaseUrlLocked => 'The endpoint is fixed for this preset';
+
+  @override
+  String get aiProviderCustomBaseUrlHint =>
+      'Enter through /v1, or a full /chat/completions URL';
+
+  @override
+  String get aiProviderModelListUrlLabel => 'Model list URL (optional)';
+
+  @override
+  String get aiProviderModelListUrlHint =>
+      'Leave empty to derive it from the endpoint';
+
+  @override
+  String get aiProviderApiKeyLabel => 'API Key (optional)';
+
+  @override
+  String get aiProviderApiKeyHint =>
+      'Can be empty; some providers will return an auth error';
+
+  @override
+  String get aiProviderModelLabel => 'Model';
+
+  @override
+  String get aiProviderModelHint =>
+      'Fetch the model list or enter a model manually';
+
+  @override
+  String get aiProviderFetchModels => 'Fetch model list';
+
+  @override
+  String get aiProviderFetchingModels => 'Fetching model list…';
+
+  @override
+  String get aiProviderModelPickerTitle => 'Choose model';
+
+  @override
+  String get aiProviderModelSearchHint => 'Search model or vendor';
+
+  @override
+  String get aiProviderModelEmpty => 'No models available';
+
+  @override
+  String get aiProviderModelEmptyDesc =>
+      'Try another filter or enter a model ID manually';
+
+  @override
+  String get aiProviderModelOtherGroup => 'Other';
+
+  @override
+  String aiProviderModelFetchFailed(String message) {
+    return 'Could not fetch models: $message';
+  }
+
+  @override
+  String get aiProviderModelFetchEmpty =>
+      'Connected, but no models were returned';
+
+  @override
+  String get aiProviderModelSelected => 'Model selected';
+
+  @override
+  String get aiProviderMissingBaseUrl => 'Enter the provider endpoint first';
+
+  @override
   String get aiChatTitle => 'AI Assistant';
 
   @override
@@ -3128,7 +3266,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiSettingsIntro =>
-      'Enter the request URL, API key and model of any OpenAI-compatible service. Your input is only sent to the service configured here; the config stays on this device and is not backed up.';
+      'Choose a preset provider or use a custom OpenAI-compatible endpoint. The API key can be empty. Your input is only sent to the service configured here; the config stays on this device and is not backed up.';
 
   @override
   String get aiBaseUrlLabel => 'Request URL (base)';
@@ -3146,8 +3284,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiModelHint => 'e.g. gpt-4o-mini';
 
   @override
-  String get aiFillAllFields =>
-      'Please fill in the request URL, API key and model';
+  String get aiFillAllFields => 'Choose a provider and enter a model';
 
   @override
   String get aiToolModeTitle => 'Tool calling protocol';
