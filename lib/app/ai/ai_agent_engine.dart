@@ -529,15 +529,18 @@ class AiAgentEngine {
         modelMessage: '工具不存在，请选择已提供的工具。',
       );
     }
-    if (tool.schema.validate(arguments).isNotEmpty) {
-      return const _ToolExecution.failed(
+    final validation = tool.schema.validateArguments(arguments);
+    if (!validation.isValid) {
+      return _ToolExecution.failed(
         reason: 'invalidArguments',
-        modelMessage: '工具参数无效，请修正参数后重试。',
+        modelMessage:
+            '工具参数无效：${validation.issues.take(5).join('；')}。'
+            '请修正参数后重试。',
       );
     }
     final stopwatch = Stopwatch()..start();
     try {
-      final result = tool.run(context, arguments);
+      final result = tool.run(context, validation.normalizedArguments);
       stopwatch.stop();
       return _ToolExecution.succeeded(result, stopwatch.elapsed);
     } catch (_) {

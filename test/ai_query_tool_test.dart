@@ -3,6 +3,7 @@ import 'dart:ui' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/ai/ai_ledger_snapshot.dart';
 import 'package:verifin/app/ai/ai_query_tool.dart';
+import 'package:verifin/app/ai/ai_tool_schema.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/l10n/app_localizations.dart';
 
@@ -114,20 +115,43 @@ void main() {
     expect(parameters['type'], 'object');
     expect(parameters['additionalProperties'], isFalse);
     expect(properties.keys, containsAll(<String>['range', 'start', 'end']));
+    final valid = tool.schema.validateArguments(<String, Object?>{
+      'range': 'thisMonth',
+      'limit': '20',
+    });
+    expect(valid.isValid, isTrue);
+    expect(valid.normalizedArguments['limit'], 20);
+    final invalid = tool.schema.validateArguments(<String, Object?>{
+      'range': 'not-a-range',
+      'unknown': true,
+    });
+    expect(invalid.issues, hasLength(2));
     expect(
-      tool.schema.validate(<String, Object?>{
-        'range': 'thisMonth',
-        'limit': 20,
-      }),
-      isEmpty,
+      invalid.issues.map((issue) => issue.field),
+      containsAll(['range', 'unknown']),
     );
-    expect(
-      tool.schema.validate(<String, Object?>{
-        'range': 'not-a-range',
-        'unknown': true,
-      }),
-      hasLength(2),
+  });
+
+  test('prompt schema keeps enum, range and required constraints', () {
+    final tool = _tool('categoryRanking');
+    expect(tool.schema.promptDescription, contains('expense/income'));
+    expect(tool.schema.promptDescription, contains('integer'));
+    expect(tool.schema.promptDescription, contains('最小 1'));
+
+    const schema = AiToolSchema(
+      properties: <String, AiToolParameter>{
+        'type': AiToolParameter(
+          type: AiToolParameterType.string,
+          description: '类型',
+          enumValues: <Object>['expense', 'income'],
+        ),
+      },
+      required: <String>{'type'},
     );
+    final validation = schema.validateArguments(const <String, Object?>{});
+    expect(validation.isValid, isFalse);
+    expect(validation.issues.single.field, 'type');
+    expect(schema.promptDescription, contains('必填：type'));
   });
 
   test('summary 汇总当月收支净额', () {
