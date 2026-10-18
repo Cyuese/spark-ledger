@@ -3166,6 +3166,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatNoMatchingTx => '无匹配交易';
 
   @override
+  String get aiImageBlocked => '出于隐私考虑，未加载图片';
+
+  @override
   String get aiClearConfig => '清空配置';
 
   @override

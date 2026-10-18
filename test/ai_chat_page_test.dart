@@ -255,4 +255,35 @@ void main() {
     expect(find.text('查询分类排行'), findsOneWidget);
     controller.dispose();
   });
+
+  testWidgets('Markdown 远程图片不会触发网络加载', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      )
+      ..setAiChatHistory(<Map<String, Object?>>[
+        <String, Object?>{'role': 'user', 'content': '看看图片'},
+        <String, Object?>{
+          'role': 'assistant',
+          'content': '![remote](https://example.com/tracker.png)',
+        },
+      ]);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: const AiChatPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('出于隐私考虑，未加载图片'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is Image && widget.image is NetworkImage,
+      ),
+      findsNothing,
+    );
+  });
 }

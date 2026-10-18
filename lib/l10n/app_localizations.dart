@@ -5828,6 +5828,12 @@ abstract class AppLocalizations {
   /// **'无匹配交易'**
   String get aiChatNoMatchingTx;
 
+  /// No description provided for @aiImageBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'出于隐私考虑，未加载图片'**
+  String get aiImageBlocked;
+
   /// No description provided for @aiClearConfig.
   ///
   /// In zh, this message translates to:
