@@ -41,7 +41,7 @@ void main() {
     final models = parseAiModelList(<String, Object?>{
       'data': <Object?>[
         <String, Object?>{'id': 'z-model', 'owned_by': 'vendor'},
-        <String, Object?>{'id': 'A-model'},
+        <String, Object?>{'id': 'vendor-b/A-model'},
         <String, Object?>{'id': 'z-model', 'owned_by': 'duplicate'},
         <String, Object?>{'id': ''},
         <String, Object?>{'id': 42},
@@ -51,8 +51,12 @@ void main() {
       ],
     });
 
-    expect(models.map((model) => model.id), <String>['A-model', 'z-model']);
+    expect(models.map((model) => model.id), <String>[
+      'vendor-b/A-model',
+      'z-model',
+    ]);
     expect(models.last.ownedBy, 'vendor');
+    expect(models.first.ownedBy, 'vendor-b');
   });
 
   test('解析 models[].slug 与 id', () {

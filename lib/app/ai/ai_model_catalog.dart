@@ -192,7 +192,11 @@ AiModelInfo? _modelFromData(Map<String, Object?> raw) {
   if (id is! String || id.trim().isEmpty) {
     return null;
   }
-  return AiModelInfo(id: id.trim(), ownedBy: _string(raw['owned_by']));
+  final normalizedId = id.trim();
+  return AiModelInfo(
+    id: normalizedId,
+    ownedBy: _string(raw['owned_by']) ?? _vendorFromModelId(normalizedId),
+  );
 }
 
 AiModelInfo? _modelFromCatalog(Map<String, Object?> raw) {
@@ -200,7 +204,19 @@ AiModelInfo? _modelFromCatalog(Map<String, Object?> raw) {
   if (id == null) {
     return null;
   }
-  return AiModelInfo(id: id, ownedBy: _string(raw['owned_by']));
+  return AiModelInfo(
+    id: id,
+    ownedBy: _string(raw['owned_by']) ?? _vendorFromModelId(id),
+  );
+}
+
+String? _vendorFromModelId(String id) {
+  final slash = id.indexOf('/');
+  if (slash <= 0) {
+    return null;
+  }
+  final vendor = id.substring(0, slash).trim();
+  return vendor.isEmpty ? null : vendor;
 }
 
 String? _string(Object? value) {
