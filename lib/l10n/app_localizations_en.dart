@@ -3220,6 +3220,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatClearCurrent => 'Clear chat';
 
   @override
+  String get aiSendQuestion => 'Send';
+
+  @override
+  String get aiStopGenerating => 'Stop generating';
+
+  @override
   String aiChatCurrentBook(String book) {
     return 'Current ledger: $book';
   }
@@ -3227,6 +3233,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiChatUnconfiguredHint =>
       'Configure AI first to start asking about your finances';
+
+  @override
+  String get aiChatReadOnlyNote => 'Read-only queries never modify your data';
+
+  @override
+  String get aiChatPrivateNote =>
+      'Questions are sent only to your configured AI endpoint';
+
+  @override
+  String get aiChatLedgerScopeNote =>
+      'Switching ledgers affects later questions only';
 
   @override
   String get aiChatGoConfigure => 'Configure AI';
@@ -4210,6 +4227,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiErrBadResponse => 'Could not parse the server response';
+
+  @override
+  String get aiErrResponseTooLarge =>
+      'The AI response was too large and has been stopped.';
 
   @override
   String get aiErrModelListUnsupported =>

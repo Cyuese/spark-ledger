@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show Locale;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -228,6 +229,106 @@ void main() {
     },
   );
 
+  test('native answer deltas are delivered before the stream closes', () async {
+    final stream = StreamController<AiCompletionEvent>();
+    final events = <AiAgentEvent>[];
+    final done = Completer<void>();
+    final subscription = engine
+        .run(
+          mode: AiToolCallMode.native,
+          streamTransport: (_, _) => stream.stream,
+          context: _context(),
+          priorMessages: const <AiTextMessage>[],
+          userInput: '本月花了多少',
+        )
+        .listen(events.add, onDone: () => done.complete());
+
+    stream.add(const AiContentDelta('第一段'));
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+
+    expect(
+      events.whereType<AiAgentAnswerDelta>().map((event) => event.text),
+      <String>['第一段'],
+    );
+    expect(done.isCompleted, isFalse);
+
+    stream.add(const AiCompletionFinished(AiFinishReason.stop));
+    stream.add(const AiStreamDone());
+    await stream.close();
+    await done.future;
+    await subscription.cancel();
+
+    expect(events.whereType<AiAgentCompleted>(), hasLength(1));
+  });
+
+  test('partial answer survives a transport failure without retry', () async {
+    final stream = StreamController<AiCompletionEvent>();
+    var completeCalls = 0;
+    final events = <AiAgentEvent>[];
+    final done = Completer<void>();
+    engine
+        .run(
+          mode: AiToolCallMode.native,
+          streamTransport: (_, _) => stream.stream,
+          completeTransport: (_, _) async {
+            completeCalls += 1;
+            return const AiCompletionResult(
+              content: '不应重试',
+              finishReason: AiFinishReason.stop,
+            );
+          },
+          context: _context(),
+          priorMessages: const <AiTextMessage>[],
+          userInput: '本月花了多少',
+        )
+        .listen(events.add, onDone: () => done.complete());
+
+    stream.add(const AiContentDelta('已经显示的正文'));
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+    stream.addError(AiException(AiErrorCode.network));
+    await stream.close();
+    await done.future;
+
+    expect(
+      events.whereType<AiAgentAnswerDelta>().map((event) => event.text).join(),
+      '已经显示的正文',
+    );
+    expect(events.whereType<AiAgentFailed>(), hasLength(1));
+    expect(events.whereType<AiAgentRetrying>(), isEmpty);
+    expect(completeCalls, 0);
+  });
+
+  test('cancellation stops the active transport', () async {
+    final stream = StreamController<AiCompletionEvent>();
+    var cancelled = false;
+    stream.onCancel = () => cancelled = true;
+    final cancellation = AiAgentCancellation();
+    final done = Completer<void>();
+    final events = <AiAgentEvent>[];
+    engine
+        .run(
+          mode: AiToolCallMode.native,
+          streamTransport: (_, _) => stream.stream,
+          context: _context(),
+          priorMessages: const <AiTextMessage>[],
+          userInput: '本月花了多少',
+          cancellation: cancellation,
+        )
+        .listen(events.add, onDone: () => done.complete());
+
+    stream.add(const AiContentDelta('部分正文'));
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+    cancellation.cancel();
+    await done.future.timeout(const Duration(seconds: 1));
+
+    expect(cancelled, isTrue);
+    expect(
+      events.whereType<AiAgentAnswerDelta>().map((event) => event.text).join(),
+      '部分正文',
+    );
+    await stream.close();
+  });
+
   test(
     'malformed compatibility control fails without visible raw JSON',
     () async {
@@ -258,5 +359,24 @@ void main() {
     expect(transport.messages.single.length, lessThanOrEqualTo(14));
     expect(transport.messages.single.first.role, AiMessageRole.system);
     expect(transport.messages.single.last.role, AiMessageRole.user);
+  });
+
+  test('answer character limit stops unbounded output', () async {
+    final limited = AiAgentEngine(
+      tools: buildAiQueryTools(),
+      maxAnswerCharacters: 3,
+    );
+    final transport = _ScriptedTransport(<Object>[
+      <AiCompletionEvent>[
+        const AiContentDelta('too long'),
+        const AiCompletionFinished(AiFinishReason.stop),
+        const AiStreamDone(),
+      ],
+    ]);
+
+    final events = await _run(limited, transport);
+
+    final failure = events.whereType<AiAgentFailed>().single;
+    expect((failure.error as AiException).code, AiErrorCode.responseTooLarge);
   });
 }

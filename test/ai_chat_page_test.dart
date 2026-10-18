@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/ai/ai_agent_engine.dart';
@@ -8,6 +10,7 @@ import 'package:verifin/app/models.dart';
 import 'package:verifin/app/veri_fin_scope.dart';
 import 'package:verifin/pages/ai_chat_page.dart';
 import 'package:verifin/pages/ai_settings_page.dart';
+import 'package:verifin/pages/transaction_detail_page.dart';
 
 import 'support/test_harness.dart';
 
@@ -30,6 +33,23 @@ List<AiCompletionEvent> _answer(String text) => <AiCompletionEvent>[
   const AiCompletionFinished(AiFinishReason.stop),
   const AiStreamDone(),
 ];
+
+Future<void> _pumpAsync(WidgetTester tester) async {
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 10)),
+  );
+  await tester.pump();
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpRealAsyncFrames(WidgetTester tester) async {
+  for (var index = 0; index < 5; index += 1) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 2)),
+    );
+    await tester.pump();
+  }
+}
 
 void main() {
   useTestDatabases();
@@ -116,7 +136,8 @@ void main() {
     await tester.enterText(find.byType(TextField), '本月花了多少');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await _pumpAsync(tester);
 
     // 用户气泡
     expect(find.text('本月花了多少'), findsOneWidget);
@@ -188,10 +209,66 @@ void main() {
     await tester.enterText(find.byType(TextField), '帮我汇总');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await _pumpAsync(tester);
 
     expect(controller.activeBook.id, defaultBookId);
     expect(find.textContaining('25'), findsWidgets);
+  });
+
+  testWidgets('AI 交易结果卡只读，不跳转交易详情', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      );
+    final bookId = controller.activeBook.id;
+    final category = controller.categories.firstWhere(
+      (item) => item.type == EntryType.expense,
+    );
+    controller.addEntry(
+      LedgerEntry(
+        id: 'readonly-entry',
+        bookId: bookId,
+        type: EntryType.expense,
+        amount: 12,
+        categoryId: category.id,
+        accountId: '',
+        note: '不可点击午餐',
+        occurredAt: DateTime.now(),
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    final transport = _scripted(<List<AiCompletionEvent>>[
+      <AiCompletionEvent>[
+        const AiToolCallDelta(
+          index: 0,
+          id: 'call_tx',
+          name: 'queryTransactions',
+          arguments: '{"range":"thisMonth"}',
+        ),
+        const AiCompletionFinished(AiFinishReason.toolCalls),
+        const AiStreamDone(),
+      ],
+      _answer('找到一笔交易。'),
+    ]);
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: AiChatPage(debugTransport: transport)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '最近交易');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
+    await tester.pump();
+    await _pumpAsync(tester);
+
+    expect(find.text('不可点击午餐'), findsOneWidget);
+    await tester.tap(find.text('不可点击午餐'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TransactionDetailPage), findsNothing);
   });
 
   testWidgets('清空聊天记录', (tester) async {
@@ -215,7 +292,8 @@ void main() {
     await tester.enterText(find.byType(TextField), '在吗');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await _pumpAsync(tester);
     expect(find.text('在吗'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.delete_outline));
@@ -257,13 +335,92 @@ void main() {
     await tester.enterText(find.byType(TextField), '帮我查一下');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await _pumpAsync(tester);
 
     expect(find.text('无法连接到服务器'), findsOneWidget);
     expect(find.text('重新回答'), findsOneWidget);
     expect(find.textContaining('HttpException'), findsNothing);
     expect(find.textContaining('secret upstream'), findsNothing);
     controller.dispose();
+  });
+
+  testWidgets('流式期间发送按钮切换为停止并保留部分正文', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      );
+    addTearDown(controller.dispose);
+    final stream = StreamController<AiCompletionEvent>();
+
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(
+          home: AiChatPage(debugTransport: (messages, tools) => stream.stream),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '慢慢回答');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
+    await tester.pump();
+
+    expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+    stream.add(const AiContentDelta('已经收到的正文'));
+    await tester.pump();
+    expect(find.text('已经收到的正文'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.stop_rounded));
+    await tester.pump();
+
+    expect(find.byIcon(Icons.arrow_upward_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.stop_rounded), findsNothing);
+    expect(find.text('已经收到的正文'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    unawaited(stream.close());
+  });
+
+  testWidgets('降级重试最终失败时不会显示重试完成', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      );
+    addTearDown(controller.dispose);
+    var calls = 0;
+
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(
+          home: AiChatPage(
+            debugTransport: (messages, tools) async* {
+              calls += 1;
+              throw AiException(
+                calls == 1
+                    ? AiErrorCode.protocolUnsupported
+                    : AiErrorCode.network,
+              );
+            },
+            debugCompleteTransport: (messages, tools) async {
+              throw AiException(AiErrorCode.network);
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '触发降级');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
+    await tester.pump();
+    await _pumpRealAsyncFrames(tester);
+
+    expect(find.text('完成'), findsNothing);
+    expect(find.text('失败'), findsWidgets);
+    expect(find.text('无法连接到服务器'), findsOneWidget);
   });
 
   testWidgets('离开并重开页面后不恢复旧对话', (tester) async {
@@ -285,7 +442,8 @@ void main() {
     await tester.enterText(find.byType(TextField), '分类排行');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await _pumpAsync(tester);
     expect(find.text('这次回答只在当前页面保留'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -326,7 +484,8 @@ void main() {
     await tester.enterText(find.byType(TextField), '看看图片');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await _pumpAsync(tester);
 
     expect(find.text('出于隐私考虑，未加载图片'), findsOneWidget);
     expect(

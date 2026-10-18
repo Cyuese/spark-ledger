@@ -2,6 +2,8 @@
 // Markdown 文字作答。全屏聊天页，消息气泡 + 底部输入框 + 清空历史。
 //
 // 网络传输默认使用结构化 Agent SSE；debug transport 供测试注入，避免真实网络。
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 
@@ -75,6 +77,9 @@ class _AiChatPageState extends State<AiChatPage> {
   final ScrollController _scroll = ScrollController();
   final AiAgentEngine _engine = AiAgentEngine(tools: buildAiQueryTools());
   String? _selectedBookId;
+  _ChatMessage? _activeAssistant;
+  AiAgentCancellation? _activeCancellation;
+  int _requestSerial = 0;
   bool _streaming = false;
 
   @override
@@ -94,6 +99,8 @@ class _AiChatPageState extends State<AiChatPage> {
 
   @override
   void dispose() {
+    _requestSerial += 1;
+    _activeCancellation?.cancel();
     _input.removeListener(_onInputChanged);
     _input.dispose();
     _scroll.dispose();
@@ -208,6 +215,9 @@ class _AiChatPageState extends State<AiChatPage> {
       baseCurrencyCode: book.baseCurrencyCode,
       status: _MsgStatus.streaming,
     );
+    final requestId = ++_requestSerial;
+    final cancellation = AiAgentCancellation();
+    _activeCancellation = cancellation;
     setState(() {
       _input.clear();
       _selectedBookId = book.id;
@@ -223,109 +233,150 @@ class _AiChatPageState extends State<AiChatPage> {
       _messages.add(assistant);
       _streaming = true;
     });
+    _activeAssistant = assistant;
     _scrollToBottom();
 
-    try {
-      await for (final event in _engine.run(
-        mode: mode,
-        streamTransport: transport,
-        completeTransport: completeTransport,
-        context: context0,
-        priorMessages: prior,
-        userInput: text,
-      )) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          if (event is! AiAgentRetrying) {
-            _finishRetrySteps(assistant);
-          }
-          switch (event) {
-            case final AiAgentToolStarted e:
-              if (mode != AiToolCallMode.prompt &&
-                  scope.aiCapabilityProfile?.matches(settings) != true) {
-                scope.setAiCapabilityProfile(
-                  AiCapabilityProfile.forSettings(
-                    settings: settings,
-                    nativeToolCalls: AiNativeToolCapability.supported,
-                  ),
-                );
+    _engine
+        .run(
+          mode: mode,
+          streamTransport: transport,
+          completeTransport: completeTransport,
+          context: context0,
+          priorMessages: prior,
+          userInput: text,
+          cancellation: cancellation,
+        )
+        .listen(
+          (event) {
+            if (!mounted || requestId != _requestSerial) {
+              return;
+            }
+            setState(() {
+              if (event is AiAgentFailed) {
+                _finishRetrySteps(assistant, succeeded: false);
+              } else if (event is! AiAgentRetrying) {
+                _finishRetrySteps(assistant, succeeded: true);
               }
-              assistant.steps.add(
-                AiAgentStep(
-                  id: e.stepId,
-                  toolName: e.toolName,
-                  status: AiAgentStepStatus.running,
-                  arguments: e.arguments,
-                ),
-              );
-            case final AiAgentToolCompleted e:
-              _updateStep(
-                assistant,
-                e.stepId,
-                status: AiAgentStepStatus.succeeded,
-                summary: presentAiToolResultSummary(l10n, e.result),
-              );
-              if (e.result.display != null) {
-                assistant.displays.add(e.result.display!);
+              switch (event) {
+                case final AiAgentToolStarted e:
+                  if (mode != AiToolCallMode.prompt &&
+                      scope.aiCapabilityProfile?.matches(settings) != true) {
+                    scope.setAiCapabilityProfile(
+                      AiCapabilityProfile.forSettings(
+                        settings: settings,
+                        nativeToolCalls: AiNativeToolCapability.supported,
+                      ),
+                    );
+                  }
+                  assistant.steps.add(
+                    AiAgentStep(
+                      id: e.stepId,
+                      toolName: e.toolName,
+                      status: AiAgentStepStatus.running,
+                      arguments: e.arguments,
+                    ),
+                  );
+                case final AiAgentToolCompleted e:
+                  _updateStep(
+                    assistant,
+                    e.stepId,
+                    status: AiAgentStepStatus.succeeded,
+                    summary: presentAiToolResultSummary(l10n, e.result),
+                  );
+                  if (e.result.display != null) {
+                    assistant.displays.add(e.result.display!);
+                  }
+                case final AiAgentToolFailed e:
+                  _updateStep(
+                    assistant,
+                    e.stepId,
+                    status: AiAgentStepStatus.failed,
+                    summary: l10n.aiStepFailed,
+                  );
+                case final AiAgentRetrying e:
+                  if (e.reason == 'protocolFallback') {
+                    scope.setAiCapabilityProfile(
+                      AiCapabilityProfile.forSettings(
+                        settings: settings,
+                        nativeToolCalls: AiNativeToolCapability.unsupported,
+                      ),
+                    );
+                  }
+                  assistant.steps.add(
+                    AiAgentStep(
+                      id: 'retry-${assistant.steps.length}',
+                      toolName: 'agentRetry',
+                      status: AiAgentStepStatus.retrying,
+                      summary: e.reason,
+                    ),
+                  );
+                case final AiAgentAnswerDelta e:
+                  assistant.text += e.text;
+                case final AiAgentCompleted e:
+                  if (assistant.text.trim().isEmpty) {
+                    assistant.text = e.answer;
+                  }
+                  assistant.status = _MsgStatus.done;
+                case final AiAgentFailed e:
+                  assistant.status = _MsgStatus.error;
+                  assistant.errorText = e.error is AiException
+                      ? aiErrorMessage(l10n, e.error as AiException)
+                      : l10n.aiErrUnknown;
+                  scope.logger?.error(
+                    'AI Agent 回答失败',
+                    source: 'ai',
+                    error: e.error,
+                  );
               }
-            case final AiAgentToolFailed e:
-              _updateStep(
-                assistant,
-                e.stepId,
-                status: AiAgentStepStatus.failed,
-                summary: l10n.aiStepFailed,
-              );
-            case final AiAgentRetrying e:
-              if (e.reason == 'protocolFallback') {
-                scope.setAiCapabilityProfile(
-                  AiCapabilityProfile.forSettings(
-                    settings: settings,
-                    nativeToolCalls: AiNativeToolCapability.unsupported,
-                  ),
-                );
-              }
-              assistant.steps.add(
-                AiAgentStep(
-                  id: 'retry-${assistant.steps.length}',
-                  toolName: 'agentRetry',
-                  status: AiAgentStepStatus.retrying,
-                  summary: e.reason,
-                ),
-              );
-            case final AiAgentAnswerDelta e:
-              assistant.text += e.text;
-            case final AiAgentCompleted e:
-              if (assistant.text.trim().isEmpty) {
-                assistant.text = e.answer;
-              }
-              assistant.status = _MsgStatus.done;
-            case final AiAgentFailed e:
+            });
+            _scrollToBottom();
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            if (!mounted || requestId != _requestSerial) {
+              return;
+            }
+            setState(() {
+              _finishRetrySteps(assistant, succeeded: false);
               assistant.status = _MsgStatus.error;
-              assistant.errorText = e.error is AiException
-                  ? aiErrorMessage(l10n, e.error as AiException)
+              assistant.errorText = error is AiException
+                  ? aiErrorMessage(l10n, error)
                   : l10n.aiErrUnknown;
-              scope.logger?.error(
-                'AI Agent 回答失败',
-                source: 'ai',
-                error: e.error,
-              );
-          }
-        });
-        _scrollToBottom();
+              _streaming = false;
+              _activeAssistant = null;
+              _activeCancellation = null;
+            });
+            scope.logger?.error('AI Agent 回答失败', source: 'ai', error: error);
+            _scrollToBottom();
+          },
+          onDone: () {
+            if (!mounted || requestId != _requestSerial) {
+              return;
+            }
+            setState(() {
+              _streaming = false;
+              _activeAssistant = null;
+              _activeCancellation = null;
+              if (assistant.status == _MsgStatus.streaming) {
+                assistant.status = _MsgStatus.done;
+              }
+            });
+          },
+          cancelOnError: true,
+        );
+  }
+
+  void _stopGeneration() {
+    final assistant = _activeAssistant;
+    _requestSerial += 1;
+    _activeAssistant = null;
+    _activeCancellation?.cancel();
+    _activeCancellation = null;
+    setState(() {
+      _streaming = false;
+      if (assistant?.status == _MsgStatus.streaming) {
+        assistant?.status = _MsgStatus.done;
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _streaming = false;
-          if (assistant.status == _MsgStatus.streaming) {
-            assistant.status = _MsgStatus.error;
-            assistant.errorText = l10n.aiErrUnknown;
-          }
-        });
-      }
-    }
+    });
   }
 
   void _updateStep(
@@ -342,12 +393,14 @@ class _AiChatPageState extends State<AiChatPage> {
     );
   }
 
-  void _finishRetrySteps(_ChatMessage message) {
+  void _finishRetrySteps(_ChatMessage message, {required bool succeeded}) {
     for (var index = 0; index < message.steps.length; index += 1) {
       final step = message.steps[index];
       if (step.status == AiAgentStepStatus.retrying) {
         message.steps[index] = step.copyWith(
-          status: AiAgentStepStatus.succeeded,
+          status: succeeded
+              ? AiAgentStepStatus.succeeded
+              : AiAgentStepStatus.failed,
         );
       }
     }
@@ -436,6 +489,22 @@ class _AiChatPageState extends State<AiChatPage> {
             ),
             const SizedBox(height: 16),
             Text(l10n.aiChatUnconfiguredHint, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            for (final note in <String>[
+              l10n.aiChatReadOnlyNote,
+              l10n.aiChatPrivateNote,
+              l10n.aiChatLedgerScopeNote,
+            ])
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  note,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
             const SizedBox(height: 20),
             FilledButton.icon(
               onPressed: () => Navigator.of(context).push(
@@ -538,7 +607,7 @@ class _AiChatPageState extends State<AiChatPage> {
       decoration: BoxDecoration(
         color: isDark ? veriSurfaceDark : veriSurfaceLight,
         border: Border(
-          top: BorderSide(color: isDark ? Colors.white10 : veriLine),
+          top: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
       child: Column(
@@ -575,11 +644,9 @@ class _AiChatPageState extends State<AiChatPage> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white10 : veriSurfaceAltLight,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: isDark ? Colors.white12 : veriLine,
-                    ),
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(veriRadiusXl),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
                   ),
                   child: TextField(
                     controller: _input,
@@ -605,7 +672,8 @@ class _AiChatPageState extends State<AiChatPage> {
               _SendButton(
                 enabled: canSend,
                 streaming: _streaming,
-                onTap: _send,
+                onSend: _send,
+                onStop: _stopGeneration,
               ),
             ],
           ),
@@ -615,48 +683,46 @@ class _AiChatPageState extends State<AiChatPage> {
   }
 }
 
-/// 底部发送按钮：可用=主色圆钮 + 白色箭头；流式=主色 + 转圈；不可用=灰底灰标、不可点。
+/// 底部操作按钮：空闲时发送；流式时原位切换为停止。
 class _SendButton extends StatelessWidget {
   const _SendButton({
     required this.enabled,
     required this.streaming,
-    required this.onTap,
+    required this.onSend,
+    required this.onStop,
   });
 
   final bool enabled;
   final bool streaming;
-  final VoidCallback onTap;
+  final VoidCallback onSend;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final disabledBg = isDark ? Colors.white12 : const Color(0xFFDCE3EE);
+    final scheme = Theme.of(context).colorScheme;
+    final disabledBg = scheme.surfaceContainerHighest;
     final disabledFg = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.35);
     final active = enabled || streaming;
+    final l10n = AppLocalizations.of(context);
     return Material(
-      color: active ? Theme.of(context).colorScheme.primary : disabledBg,
+      color: active ? scheme.primary : disabledBg,
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: enabled ? onTap : null,
+        onTap: streaming ? onStop : (enabled ? onSend : null),
         child: SizedBox(
           width: 46,
           height: 46,
-          child: streaming
-              ? const Padding(
-                  padding: EdgeInsets.all(13),
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Icon(
-                  Icons.arrow_upward_rounded,
-                  color: enabled ? Colors.white : disabledFg,
-                  size: 22,
-                ),
+          child: Tooltip(
+            message: streaming ? l10n.aiStopGenerating : l10n.aiSendQuestion,
+            child: Icon(
+              streaming ? Icons.stop_rounded : Icons.arrow_upward_rounded,
+              color: active ? scheme.onPrimary : disabledFg,
+              size: 22,
+            ),
+          ),
         ),
       ),
     );
@@ -700,18 +766,18 @@ class _MessageView extends StatelessWidget {
                 maxWidth: MediaQuery.of(context).size.width * 0.8,
               ),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
+                color: theme.colorScheme.primary,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(18),
-                  topRight: Radius.circular(18),
-                  bottomLeft: Radius.circular(18),
-                  bottomRight: Radius.circular(4),
+                  topLeft: Radius.circular(veriRadiusLg),
+                  topRight: Radius.circular(veriRadiusLg),
+                  bottomLeft: Radius.circular(veriRadiusLg),
+                  bottomRight: Radius.circular(veriRadiusSm),
                 ),
               ),
               child: Text(
                 message.text,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
                   fontSize: 15.5,
                   height: 1.45,
                 ),
@@ -810,17 +876,18 @@ class _ErrorBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final error = Theme.of(context).colorScheme.error;
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: error.withValues(alpha: 0.08),
+        color: scheme.errorContainer,
         borderRadius: BorderRadius.circular(veriRadiusMd),
-        border: Border.all(color: error.withValues(alpha: 0.35)),
+        border: Border.all(color: error),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.error_outline, size: 18, color: error),
+          Icon(Icons.error_outline, size: 18, color: scheme.onErrorContainer),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -828,13 +895,17 @@ class _ErrorBubble extends StatelessWidget {
               children: <Widget>[
                 Text(
                   text,
-                  style: TextStyle(color: error, fontSize: 14, height: 1.45),
+                  style: TextStyle(
+                    color: scheme.onErrorContainer,
+                    fontSize: 14,
+                    height: 1.45,
+                  ),
                 ),
                 if (onRetry != null)
                   TextButton(
                     onPressed: onRetry,
                     style: TextButton.styleFrom(
-                      foregroundColor: error,
+                      foregroundColor: scheme.onErrorContainer,
                       padding: const EdgeInsets.only(top: 6),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
