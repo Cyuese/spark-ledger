@@ -3245,6 +3245,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatNoMatchingTx => 'No matching transactions';
 
   @override
+  String get aiImageBlocked => 'Image not loaded for privacy';
+
+  @override
   String get aiClearConfig => 'Clear configuration';
 
   @override
