@@ -131,6 +131,7 @@ class AiAgentEngine {
       AiTextMessage.user(userInput),
     ];
     var toolCallCount = 0;
+    var successfulToolCallCount = 0;
     var retryUsed = false;
     var answerCharacters = 0;
     var anyToolExecuted = false;
@@ -273,6 +274,7 @@ class AiAgentEngine {
               ),
             );
           } else {
+            successfulToolCallCount += 1;
             yield AiAgentToolCompleted(
               stepId: call.id,
               toolName: call.name,
@@ -326,6 +328,7 @@ class AiAgentEngine {
               ),
             );
           } else {
+            successfulToolCallCount += 1;
             yield AiAgentToolCompleted(
               stepId: stepId,
               toolName: parsed.name,
@@ -344,7 +347,12 @@ class AiAgentEngine {
         }
         if (parsed is AiPromptAnswer) {
           if (cancellation?.isCancelled == true) return;
-          yield* _answerEvents(parsed.text, response.finishReason);
+          yield* _answerEvents(
+            parsed.text,
+            response.finishReason,
+            attemptedToolCalls: toolCallCount,
+            successfulToolCalls: successfulToolCallCount,
+          );
           return;
         }
       } else {
@@ -367,7 +375,11 @@ class AiAgentEngine {
           );
           return;
         }
-        yield AiAgentCompleted(answer);
+        yield AiAgentCompleted(
+          answer,
+          attemptedToolCalls: toolCallCount,
+          successfulToolCalls: successfulToolCallCount,
+        );
         return;
       }
     }
@@ -384,8 +396,10 @@ class AiAgentEngine {
 
   Stream<AiAgentEvent> _answerEvents(
     String rawAnswer,
-    AiFinishReason finishReason,
-  ) async* {
+    AiFinishReason finishReason, {
+    required int attemptedToolCalls,
+    required int successfulToolCalls,
+  }) async* {
     final answer = rawAnswer.trim();
     if (answer.isEmpty) {
       throw AiException(AiErrorCode.badResponse, detail: 'empty answer');
@@ -409,7 +423,11 @@ class AiAgentEngine {
       );
       return;
     }
-    yield AiAgentCompleted(answer);
+    yield AiAgentCompleted(
+      answer,
+      attemptedToolCalls: attemptedToolCalls,
+      successfulToolCalls: successfulToolCalls,
+    );
   }
 
   List<AiTextMessage> _boundedPrior(List<AiTextMessage> priorMessages) {

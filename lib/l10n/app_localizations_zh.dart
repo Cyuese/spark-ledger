@@ -4835,6 +4835,17 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String aiAnswerProvenanceQueried(int count) {
+    return '基于账本查询 · $count 次';
+  }
+
+  @override
+  String get aiAnswerProvenanceNoQuery => '未查询账本';
+
+  @override
+  String get aiAnswerProvenanceUnverified => '未查询账本，请勿据此判断账目';
+
+  @override
   String get widgetPreviewFailed => '小组件预览暂时不可用';
 
   @override

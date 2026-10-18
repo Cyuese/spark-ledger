@@ -60,8 +60,17 @@ class AiAgentRetrying extends AiAgentEvent {
 }
 
 class AiAgentCompleted extends AiAgentEvent {
-  const AiAgentCompleted(this.answer);
+  const AiAgentCompleted(
+    this.answer, {
+    this.attemptedToolCalls = 0,
+    this.successfulToolCalls = 0,
+  });
+
   final String answer;
+  final int attemptedToolCalls;
+  final int successfulToolCalls;
+
+  bool get usedLedgerData => successfulToolCalls > 0;
 }
 
 class AiAgentFailed extends AiAgentEvent {

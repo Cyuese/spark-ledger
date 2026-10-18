@@ -12,6 +12,7 @@ import '../app/ai/ai_agent_engine.dart';
 import '../app/ai/ai_agent_event.dart';
 import '../app/ai/ai_agent_message.dart';
 import '../app/ai/ai_agent_step.dart';
+import '../app/ai/ai_answer_provenance.dart';
 import '../app/ai/ai_capabilities.dart';
 import '../app/ai/ai_client.dart';
 import '../app/ai/ai_query_tool.dart';
@@ -43,6 +44,7 @@ class _ChatMessage {
     this.status = _MsgStatus.done,
     List<AiResultDisplay>? displays,
     List<AiAgentStep>? steps,
+    this.sourceUserInput = '',
   }) : displays = displays ?? <AiResultDisplay>[],
        steps = steps ?? <AiAgentStep>[];
 
@@ -51,11 +53,14 @@ class _ChatMessage {
   final String bookName;
   final String baseCurrencyCode;
   final MoneyCodeDisplay moneyCodeDisplay;
+  final String sourceUserInput;
   String text;
   final List<AiResultDisplay> displays;
   final List<AiAgentStep> steps;
   _MsgStatus status;
   String? errorText;
+  int successfulToolCalls = 0;
+  AiAnswerProvenance? provenance;
 }
 
 class AiChatPage extends StatefulWidget {
@@ -212,6 +217,7 @@ class _AiChatPageState extends State<AiChatPage> {
       baseCurrencyCode: book.baseCurrencyCode,
       moneyCodeDisplay: moneyDisplay,
       status: _MsgStatus.streaming,
+      sourceUserInput: text,
     );
     final requestId = ++_requestSerial;
     final cancellation = AiAgentCancellation();
@@ -276,6 +282,7 @@ class _AiChatPageState extends State<AiChatPage> {
                     ),
                   );
                 case final AiAgentToolCompleted e:
+                  assistant.successfulToolCalls += 1;
                   _updateStep(
                     assistant,
                     e.stepId,
@@ -315,12 +322,23 @@ class _AiChatPageState extends State<AiChatPage> {
                   if (assistant.text.trim().isEmpty) {
                     assistant.text = e.answer;
                   }
+                  assistant.successfulToolCalls = e.successfulToolCalls;
+                  assistant.provenance = classifyAiAnswerProvenance(
+                    userInput: assistant.sourceUserInput,
+                    answer: assistant.text,
+                    successfulToolCalls: assistant.successfulToolCalls,
+                  );
                   assistant.status = _MsgStatus.done;
                 case final AiAgentFailed e:
                   assistant.status = _MsgStatus.error;
                   assistant.errorText = e.error is AiException
                       ? aiErrorMessage(l10n, e.error as AiException)
                       : l10n.aiErrUnknown;
+                  assistant.provenance = classifyAiAnswerProvenance(
+                    userInput: assistant.sourceUserInput,
+                    answer: assistant.text,
+                    successfulToolCalls: assistant.successfulToolCalls,
+                  );
                   scope.logger?.error(
                     'AI Agent 回答失败',
                     source: 'ai',
@@ -340,6 +358,11 @@ class _AiChatPageState extends State<AiChatPage> {
               assistant.errorText = error is AiException
                   ? aiErrorMessage(l10n, error)
                   : l10n.aiErrUnknown;
+              assistant.provenance = classifyAiAnswerProvenance(
+                userInput: assistant.sourceUserInput,
+                answer: assistant.text,
+                successfulToolCalls: assistant.successfulToolCalls,
+              );
               _streaming = false;
               _activeAssistant = null;
               _activeCancellation = null;
@@ -379,6 +402,13 @@ class _AiChatPageState extends State<AiChatPage> {
       );
       if (assistant?.status == _MsgStatus.streaming) {
         assistant?.status = _MsgStatus.done;
+      }
+      if (assistant != null) {
+        assistant.provenance = classifyAiAnswerProvenance(
+          userInput: assistant.sourceUserInput,
+          answer: assistant.text,
+          successfulToolCalls: assistant.successfulToolCalls,
+        );
       }
     });
   }
@@ -878,10 +908,65 @@ class _MessageView extends StatelessWidget {
               // 从而在用户不知情时暴露 IP、阅读时间或账目上下文。
               imageBuilder: (context, _, _, _) => const _BlockedMarkdownImage(),
             ),
+          if (message.provenance case final AiAnswerProvenance provenance)
+            _AnswerProvenanceLine(
+              provenance: provenance,
+              successfulToolCalls: message.successfulToolCalls,
+            ),
           if (message.errorText != null) ...<Widget>[
             const SizedBox(height: 8),
             _ErrorBubble(text: message.errorText!, onRetry: onRetry),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AnswerProvenanceLine extends StatelessWidget {
+  const _AnswerProvenanceLine({
+    required this.provenance,
+    required this.successfulToolCalls,
+  });
+
+  final AiAnswerProvenance provenance;
+  final int successfulToolCalls;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final (icon, text, color) = switch (provenance) {
+      AiAnswerProvenance.ledgerQueried => (
+        Icons.verified_outlined,
+        l10n.aiAnswerProvenanceQueried(successfulToolCalls),
+        theme.colorScheme.onSurfaceVariant,
+      ),
+      AiAnswerProvenance.noLedgerQuery => (
+        Icons.info_outline,
+        l10n.aiAnswerProvenanceNoQuery,
+        theme.colorScheme.onSurfaceVariant,
+      ),
+      AiAnswerProvenance.noLedgerQueryWithNumericContent => (
+        Icons.warning_amber_outlined,
+        l10n.aiAnswerProvenanceUnverified,
+        veriSemantic(context, veriWarning),
+      ),
+    };
+    return Padding(
+      key: const Key('ai_answer_provenance'),
+      padding: const EdgeInsets.only(top: 6, left: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              text,
+              style: theme.textTheme.labelSmall?.copyWith(color: color),
+            ),
+          ),
         ],
       ),
     );
