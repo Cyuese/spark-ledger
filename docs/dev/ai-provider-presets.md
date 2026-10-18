@@ -115,15 +115,12 @@ cc-switch 使用 MIT。其 `src/icons/extracted/` 中不少 SVG 带
 
 ```dart
 enum AiProviderGroup {
-  recommended,
   chinaOfficial,
   globalOfficial,
   aggregator,
   local,
   custom,
 }
-
-enum AiProviderAuthStyle { bearer, none }
 
 enum AiModelListMode {
   openAiModels, // 在固定 Base URL 上请求 /models
@@ -137,11 +134,8 @@ class AiProviderPreset {
     required this.brandName,
     required this.group,
     required this.baseUrl,
-    required this.authStyle,
     required this.modelListMode,
     this.modelListUrl,
-    this.suggestedModelId,
-    this.apiKeyOptional = false,
     this.docsUrl,
     this.searchTerms = const <String>[],
   });
@@ -150,11 +144,8 @@ class AiProviderPreset {
   final String brandName;
   final AiProviderGroup group;
   final String baseUrl;
-  final AiProviderAuthStyle authStyle;
   final AiModelListMode modelListMode;
   final String? modelListUrl;
-  final String? suggestedModelId;
-  final bool apiKeyOptional;
   final String? docsUrl;
   final List<String> searchTerms;
 }
@@ -165,9 +156,8 @@ class AiProviderPreset {
 - `id` 一经发布不得复用；显示名可以更新，ID 不能承载版本号或模型名。
 - `baseUrl` 是 `chatCompletionsUrl` 的基础，不包含 `/chat/completions`。
 - 非标准模型列表路径必须用 `modelListUrl` 显式声明，不能靠通用字符串猜测。
-- `apiKeyOptional` 只用于 Ollama、LM Studio、vLLM、llama.cpp 等本地无鉴权服务；
-  云端渠道默认必须填写 Key。
-- `suggestedModelId` 只是表单预填建议，不是唯一模型，也不代表远端仍然存在。
+- API Key 对所有渠道都可选；为空时请求不发送 `Authorization`，由渠道自行返回
+  401/403 或其他业务错误。
 - 渠道展示名是品牌专名，可保留英文；分类名和厂商说明必须写入中英文 ARB。
 
 ## 5. 配置模型与迁移
@@ -200,33 +190,18 @@ class AiProviderPreset {
 - `AiSettings == / hashCode`、`toJson`、`fromJson`、测试夹具同步更新；
 - AI 配置仍只存设备 KV，不进备份，初始化数据时保留。
 
-`isConfigured` 改为按渠道判断：
+`isConfigured` 改为：
 
 - Base URL、模型必填；
-- `apiKeyOptional == true` 时允许空 Key；
-- 其他渠道仍要求 Key；
-- 未知 ID 按“需要 Key”的自定义渠道处理，避免旧配置被误判为可用。
+- API Key 不参与 `isConfigured` 判定，允许为空；
+- 空 Key 时发送不含 `Authorization` 的请求；
+- 未知 ID 仍按自定义渠道处理，但同样允许空 Key。
 
 ## 6. 渠道目录
 
-### 6.1 核心候选池（正式内置收窄为 8 个）
+### 6.1 已确认的 8 个核心渠道
 
-用户已确认核心渠道只需要 8 个；下表是经过端点和素材调研的候选池。
-“自定义 OpenAI 兼容”作为常驻兜底入口，不计入 8 个预设。
-
-当前推荐组合：
-
-1. DeepSeek
-2. 火山方舟
-3. Kimi
-4. 智谱 GLM
-5. 阿里云百炼
-6. OpenAI
-7. OpenRouter
-8. Ollama
-
-推荐理由：覆盖四家国内主流模型厂商、一个国内外模型聚合平台、OpenAI 官方入口和
-本地隐私路线。最终组合待用户确认；未进入核心 8 个的渠道转入 P1 备选表。
+“自定义 OpenAI 兼容”作为常驻兜底入口，不计入 8 个预设。以下组合已确认：
 
 | ID | 显示名 | 分组 | Base URL | 模型列表 | 探测事实 |
 |---|---|---|---|---|---|
@@ -236,16 +211,8 @@ class AiProviderPreset {
 | `kimi` | Kimi（Moonshot） | 国内官方 | `https://api.moonshot.cn/v1` | `+ /models` | 无效 Key 返回 401 |
 | `zhipu-glm` | 智谱 GLM | 国内官方 | `https://open.bigmodel.cn/api/paas/v4` | `+ /models` | 无效 Key 返回 401 |
 | `dashscope` | 阿里云百炼 | 国内官方 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `+ /models` | 无效 Key 返回 401 |
-| `minimax` | MiniMax | 国内官方 | `https://api.minimax.cn/v1` | `+ /models` | 无效 Key 返回 401 |
-| `siliconflow` | 硅基流动 | 聚合平台 | `https://api.siliconflow.cn/v1` | `+ /models` | 无效 Key 返回 401 |
-| `modelscope` | ModelScope | 聚合平台 | `https://api-inference.modelscope.cn/v1` | `+ /models` | 无需 Key 的公开列表返回 200 |
-| `ppio` | PPIO | 聚合平台 | `https://api.ppio.com/openai/v1` | `+ /models` | 公开列表返回 200 |
 | `openrouter` | OpenRouter | 聚合平台 | `https://openrouter.ai/api/v1` | `+ /models` | 公开列表返回 200 |
-| `groq` | Groq | 国际平台 | `https://api.groq.com/openai/v1` | `+ /models` | 无效 Key 返回 401 |
-| `xai` | xAI | 国际官方 | `https://api.x.ai/v1` | `+ /models` | 无效 Key 返回 400，路由存在 |
-| `gemini-openai` | Google Gemini | 国际官方 | `https://generativelanguage.googleapis.com/v1beta/openai` | 精确 URL：`.../v1beta/openai/models` | 无效 Key 返回 400，必须显式模型列表 URL |
-| `ollama` | Ollama | 本地服务 | `http://localhost:11434/v1` | `+ /models` | 本地未启动，需真机/局域网验证；允许空 Key |
-| `lm-studio` | LM Studio | 本地服务 | `http://localhost:1234/v1` | `+ /models` | 本地未启动，需真机/局域网验证；允许空 Key |
+| `ollama` | Ollama | 本地服务 | `http://localhost:11434/v1` | `+ /models` | 本地未启动，需真机/局域网验证 |
 | `custom` | 自定义 OpenAI 兼容 | 自定义 | 用户填写 | 可选高级覆盖；否则候选回退 | 保留现有手填能力 |
 
 OpenAI 标准地址未发送无效 Key 做探测，避免无意义请求；其模型列表沿用官方
@@ -263,6 +230,7 @@ OpenAI-compatible 契约。
 | 国内官方 | 智谱 GLM Global | 待官方文档复核（不要从 Coding Plan 地址推断） | 待复核 |
 | 国内官方 | 百炼国际 | `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` | 401 |
 | 国内官方 | MiniMax Global | `https://api.minimax.io/v1` | 需真实 Key 验证 |
+| 国内官方 | MiniMax | `https://api.minimax.cn/v1` | 401 |
 | 国内官方 | 阶跃星辰 | `https://api.stepfun.com/v1` | 401 |
 | 国内官方 | 腾讯混元 | `https://api.hunyuan.cloud.tencent.com/v1` | 401 |
 | 国内官方 | 腾讯 TokenHub | `https://tokenhub.tencentmaas.com/v1` | 401 |
@@ -274,6 +242,9 @@ OpenAI-compatible 契约。
 | 国内官方 | 长猫 LongCat | `https://api.longcat.chat/openai/v1` | 401 |
 | 聚合平台 | 模力方舟 | `https://api.moark.com/v1` | 401 |
 | 聚合平台 | AiHubMix | `https://aihubmix.com/v1` | 公开列表返回 200 |
+| 聚合平台 | 硅基流动 | `https://api.siliconflow.cn/v1` | 401 |
+| 聚合平台 | ModelScope | `https://api-inference.modelscope.cn/v1` | 公开列表返回 200 |
+| 聚合平台 | PPIO | `https://api.ppio.com/openai/v1` | 公开列表返回 200 |
 | 聚合平台 | Novita AI | `https://api.novita.ai/openai/v1` | 公开列表返回 200 |
 | 聚合平台 | NVIDIA NIM | `https://integrate.api.nvidia.com/v1` | 公开列表返回 200 |
 | 聚合平台 | Hugging Face Router | `https://router.huggingface.co/v1` | 公开列表返回 200 |
@@ -288,8 +259,12 @@ OpenAI-compatible 契约。
 | 国际平台 | Cerebras | `https://api.cerebras.ai/v1` | 401 |
 | 国际平台 | Hyperbolic | `https://api.hyperbolic.xyz/v1` | 401 |
 | 云平台 | DigitalOcean Gradient | `https://inference.do-ai.run/v1` | 401 |
+| 国际官方 | xAI | `https://api.x.ai/v1` | 400，路由存在 |
+| 国际官方 | Google Gemini OpenAI 兼容 | `https://generativelanguage.googleapis.com/v1beta/openai` | 400；模型列表需显式 `/models` |
+| 国际平台 | Groq | `https://api.groq.com/openai/v1` | 401 |
 | 本地服务 | vLLM | `http://localhost:8000/v1` | 需本地实例；允许空 Key |
 | 本地服务 | llama.cpp | `http://localhost:8080/v1` | 需本地实例；允许空 Key |
+| 本地服务 | LM Studio | `http://localhost:1234/v1` | 需本地实例；允许空 Key |
 
 以下渠道暂不纳入：
 
@@ -332,8 +307,8 @@ Future<List<AiModelInfo>> fetchAiModels({
 - 只允许 `https` 与本地/私有网络的 `http`；
 - 默认超时 15 秒；
 - `Accept: application/json`；
-- 需要鉴权时发送 `Authorization: Bearer <key>`；
-- 无鉴权本地服务不发送空 Bearer；
+- API Key 非空时发送 `Authorization: Bearer <key>`；
+- API Key 为空时不发送 `Authorization`，不伪造占位 Key；
 - 不发送任何账目数据、聊天内容或应用内日志；
 - 保存或请求公网明文 HTTP 前复用 `confirmCleartextIfRisky`；本机/内网地址不告警；
 - 重定向只允许同源；跨域重定向直接报错，避免 API Key 被带到另一个主机；
@@ -429,7 +404,7 @@ AI 设置页顶部增加“渠道”卡/行：
 点击后打开 `showAiProviderPickerSheet`。其中：
 
 - 搜索框固定顶部；
-- 横向分组：全部 / 推荐 / 国内官方 / 国际官方 / 聚合平台 / 本地服务 / 自定义；
+- 横向分组：全部 / 国内官方 / 国际官方 / 聚合平台 / 本地服务 / 自定义；
 - 宫格 `maxCrossAxisExtent ≈ 120`、`mainAxisExtent ≈ 112`，Logo 32–36dp；
 - 每项显示 Logo、品牌名、最多两行短描述；
 - 选中项使用主色细边框和勾选标记；
@@ -444,7 +419,7 @@ AI 设置页顶部增加“渠道”卡/行：
 渠道切换只改变设置页草稿：
 
 - 写入该渠道默认 Base URL、模型列表策略和推荐工具协议；
-- 若渠道有已验证且稳定的建议模型，可预填模型字段；
+- 模型字段保持为空，不预填任何官方建议模型；
 - 渠道 ID 变化时清空上一渠道的 API Key 与模型，避免把 A 厂商 Key 发给 B 厂商；
 - 同一品牌的不同地区变体也视为不同身份，按新渠道处理；
 - 用户取消整个设置页时，草稿全部丢弃；
@@ -460,7 +435,8 @@ AI 设置页顶部增加“渠道”卡/行：
 
 - 右侧图标为向下箭头 `Icons.expand_more`；
 - 多渠道/模型多时改为 `Icons.arrow_drop_down` 的同一语义图标，不新增两套入口；
-- 点击时校验渠道、Base URL、Key（若必填）和模型列表能力；
+- 点击时校验渠道、Base URL 和模型列表能力；API Key 为空也照常发起无鉴权请求，
+  由渠道返回 401/403 等真实结果；
 - 请求期间图标替换为 16dp 进度环，重复点击被忽略；
 - 成功后打开模型选择弹层；
 - 失败后不关闭设置页、不清空已填模型，通过根级 Feedback Host 提示；
@@ -478,14 +454,14 @@ AI 设置页顶部增加“渠道”卡/行：
 - 模型多时使用懒列表，不一次性构建全部行；
 - 点击行返回模型 ID 并关闭弹层；取消返回 `null`。
 
-### 8.4 推荐模型与保存
+### 8.4 模型输入与保存
 
 不把“列表第一项”自动当成默认模型：聚合平台第一项可能是图像、嵌入或非对话模型。
 
-推荐策略：
+模型策略：
 
-- 只有具备稳定官方别名且已做对话/工具调用验证的渠道才设置 `suggestedModelId`；
-- 带日期或版本号的模型 ID 只作示例，不能作为唯一可用模型；
+- 渠道预设不携带默认模型，不在代码或 KV 中写入会过期的模型 ID；
+- 用户在模型弹层中选择，或直接手动填写；
 - 未选择模型时保存按钮保持禁用；
 - 远端模型列表失败不影响手动输入和保存；
 - 不改动现有“保存后统一应用”的设置草稿语义。
@@ -564,6 +540,8 @@ P0/P1 需要的 `openai`、`deepseek`、`huoshan`/`doubao`、`kimi`、`zhipu`、
 
 - 200 且返回标准列表；
 - 200 且返回 `models[].slug`；
+- API Key 为空时不发送 `Authorization`，且可用于公开列表；
+- API Key 为空时聊天请求同样不发送 `Authorization`；
 - 401；
 - 404/405；
 - 429；
@@ -657,25 +635,18 @@ P0/P1 需要的 `openai`、`deepseek`、`huoshan`/`doubao`、`kimi`、`zhipu`、
 6. 更新组件注册表、技术决策、截图与 CHANGELOG；
 7. 再按 P1 表逐批扩展，不一次性塞入全部第三方渠道。
 
-## 13. 待确认的产品取舍
-
-以下问题不阻塞调研，但实施前需要定稿：
+## 13. 已确认的产品约束
 
 已确认：
 
 1. 切换渠道时清空上一渠道的 API Key 与模型；
 2. 所有预设渠道的 Base URL 只读，只能选择或展示；
-3. 核心预设收窄为 8 个，“自定义 OpenAI 兼容”不计入这 8 个。
+3. 核心预设确定为：DeepSeek、火山方舟、Kimi、智谱 GLM、阿里云百炼、OpenAI、
+   OpenRouter、Ollama；“自定义 OpenAI 兼容”不计入这 8 个；
+4. 选择渠道后模型字段不预填，用户通过远端列表选择或手动填写；
+5. 所有渠道的 API Key 都允许留空；空 Key 请求不带鉴权头，由渠道返回真实错误。
 
-仍需确认：
-
-1. 是否采用上面的推荐 8 渠道组合？
-2. 选择渠道后模型字段是否预填官方建议模型，还是先留空、等待用户点击下箭头获取并
-   选择？推荐留空，避免把已下线或非对话模型误当默认值。
-3. 若 Ollama 进入核心 8，是否确认允许空 API Key（推荐允许）？
-
-在未确认前，推荐采用本文的安全默认值：切换渠道清空 Key、预设 Base URL 只读、
-模型字段先留空、手动点击获取模型、保留自定义渠道的高级模型列表地址。
+当前没有阻塞实施的待确认项。
 
 ## 14. 参考
 
