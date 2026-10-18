@@ -279,6 +279,8 @@ enum EntryValidationCode {
   tagOutOfScope,
 }
 
+enum RenameResult { success, invalid, duplicate, persistenceFailure }
+
 sealed class EntrySaveResult {
   const EntrySaveResult();
 

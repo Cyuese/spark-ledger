@@ -2278,6 +2278,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryNameLabel => '分类名称';
 
   @override
+  String get categoryNameDuplicate => '同一父分类下已存在同名分类';
+
+  @override
   String get viewCategoryEntries => '查看交易';
 
   @override
@@ -2335,6 +2338,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get renameCategoryTitle => '重命名分类';
+
+  @override
+  String get tagNameDuplicate => '已存在同名标签';
 
   @override
   String get pickIconTitle => '选择图标';

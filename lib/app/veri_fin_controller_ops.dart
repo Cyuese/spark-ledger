@@ -3588,21 +3588,44 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return true;
   }
 
-  void renameCategory(String categoryId, String label) {
+  Future<RenameResult> renameCategory(String categoryId, String label) async {
     final trimmedLabel = label.trim();
     if (trimmedLabel.isEmpty) {
-      return;
+      return RenameResult.invalid;
     }
     final index = _categories.indexWhere(
       (category) =>
           category.id == categoryId && category.bookId == _activeBookId,
     );
     if (index == -1) {
-      return;
+      return RenameResult.invalid;
     }
-    _categories[index] = _categories[index].copyWith(label: trimmedLabel);
-    _persistCategories();
+    final current = _categories[index];
+    final normalized = normalizedCategoryLabel(trimmedLabel);
+    final duplicate = _categories.any(
+      (category) =>
+          category.id != categoryId &&
+          category.bookId == current.bookId &&
+          category.type == current.type &&
+          category.parentId == current.parentId &&
+          normalizedCategoryLabel(category.label) == normalized,
+    );
+    if (duplicate) {
+      return RenameResult.duplicate;
+    }
+    final next = List<Category>.of(_categories)
+      ..[index] = current.copyWith(label: trimmedLabel);
+    try {
+      await _repository.saveCategories(next);
+    } catch (error, stackTrace) {
+      _handlePersistError(error, stackTrace);
+      return RenameResult.persistenceFailure;
+    }
+    _categories
+      ..clear()
+      ..addAll(next);
     notifyListeners();
+    return RenameResult.success;
   }
 
   void updateCategoryIcon(String categoryId, String iconCode) {
@@ -3874,20 +3897,39 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return tag.id;
   }
 
-  void renameTag(String tagId, String label) {
+  Future<RenameResult> renameTag(String tagId, String label) async {
     final trimmed = label.trim();
     if (trimmed.isEmpty) {
-      return;
+      return RenameResult.invalid;
     }
     final index = _tags.indexWhere(
       (tag) => tag.id == tagId && tag.bookId == _activeBookId,
     );
     if (index == -1) {
-      return;
+      return RenameResult.invalid;
     }
-    _tags[index] = _tags[index].copyWith(label: trimmed);
-    _persistTags();
+    final duplicate = _tags.any(
+      (tag) =>
+          tag.id != tagId &&
+          tag.bookId == _activeBookId &&
+          tag.label == trimmed,
+    );
+    if (duplicate) {
+      return RenameResult.duplicate;
+    }
+    final next = List<Tag>.of(_tags)
+      ..[index] = _tags[index].copyWith(label: trimmed);
+    try {
+      await _repository.saveTags(next);
+    } catch (error, stackTrace) {
+      _handlePersistError(error, stackTrace);
+      return RenameResult.persistenceFailure;
+    }
+    _tags
+      ..clear()
+      ..addAll(next);
     notifyListeners();
+    return RenameResult.success;
   }
 
   /// 在当前账本的标签之间重排。标签属于账本，[oldIndex]/[newIndex] 是**当前账本
