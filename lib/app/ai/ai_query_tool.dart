@@ -157,7 +157,7 @@ class AiTrendDisplay extends AiResultDisplay {
   final bool isExpense;
 }
 
-/// 一组具体交易，渲染为**可点击**的交易列表（点击进详情页）。
+/// 一组具体交易，渲染为只读交易列表。
 class AiTransactionsDisplay extends AiResultDisplay {
   const AiTransactionsDisplay({required this.title, required this.entryIds});
   final String title;
@@ -562,7 +562,7 @@ class TagRankingTool extends AiQueryTool {
   }
 }
 
-/// 交易筛选：按类型 / 时间 / 金额区间 / 关键词等条件查具体交易，返回可点击列表。
+/// 交易筛选：按类型 / 时间 / 金额区间 / 关键词等条件查具体交易，返回只读列表。
 class QueryTransactionsTool extends AiQueryTool {
   const QueryTransactionsTool();
 
@@ -570,7 +570,7 @@ class QueryTransactionsTool extends AiQueryTool {
   String get name => 'queryTransactions';
 
   @override
-  String get description => '按条件筛选具体交易并列出（可点击查看）。用于「最近某类花费」「含某关键词的交易」等。';
+  String get description => '按条件筛选具体交易并以只读列表列出。用于「最近某类花费」「含某关键词的交易」等。';
 
   @override
   AiToolSchema get schema => const AiToolSchema(
@@ -1093,25 +1093,27 @@ class CreditCardBillTool extends AiQueryTool {
             : formatCurrencyNumber(available, card.currencyCode),
         bill == null ? '—' : formatCurrencyNumber(bill, card.currencyCode),
       ]);
+      final usedText = formatMoney(
+        used,
+        card.currencyCode,
+        display: ctx.currencyDisplay,
+      );
+      final availableText = available == null
+          ? null
+          : formatMoney(
+              available,
+              card.currencyCode,
+              display: ctx.currencyDisplay,
+            );
+      final billText = bill == null
+          ? null
+          : formatMoney(bill, card.currencyCode, display: ctx.currencyDisplay);
       parts.add(
-        l10n.aiCardDebtLine(
-              card.name,
-              formatCurrencyNumber(used, card.currencyCode),
-              // 单币种账本不留币种代码；这里的空串会自然充当后半句之间的分隔空格。
-              ctx.currencyDisplay == MoneyCodeDisplay.none
-                  ? ''
-                  : card.currencyCode,
-            ) +
-            (available == null
+        l10n.aiCardDebtLine(card.name, usedText) +
+            (availableText == null
                 ? ''
-                : l10n.aiCardAvailableLine(
-                    formatCurrencyNumber(available, card.currencyCode),
-                  )) +
-            (bill == null
-                ? ''
-                : l10n.aiCardBillLine(
-                    formatCurrencyNumber(bill, card.currencyCode),
-                  )) +
+                : l10n.aiCardAvailableLine(availableText)) +
+            (billText == null ? '' : l10n.aiCardBillLine(billText)) +
             (card.dueDay == null
                 ? ''
                 : l10n.aiCardDueLine(

@@ -4778,8 +4778,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiCardDebtLine(String name, String amount, String currency) {
-    return '$name 当前欠款 $amount $currency';
+  String aiCardDebtLine(String name, String amount) {
+    return '$name 当前欠款 $amount';
   }
 
   @override

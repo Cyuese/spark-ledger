@@ -1946,7 +1946,7 @@
   "aiTotalMissingRateLine": "Total unavailable, missing rates for {codes}",
   "aiMissingRatesNetWorth": "Some accounts are missing exchange rates ({codes}), so total assets and net assets can't be shown. Add them under {page}.",
   "aiNetWorthSummary": "Total assets {assets}, total liabilities {liabilities}, net assets {net}.",
-  "aiCardDebtLine": "{name} owes {amount} {currency}",
+  "aiCardDebtLine": "{name} owes {amount}",
   "aiCardAvailableLine": ", available {amount}",
   "aiCardBillLine": ", this cycle {amount}",
   "aiCardDueLine": ", due on day {day} ({due})",

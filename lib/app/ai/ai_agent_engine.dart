@@ -264,7 +264,12 @@ class AiAgentEngine {
             toolCalls: response.toolCalls,
           ),
         );
-        for (final call in response.toolCalls) {
+        for (
+          var callIndex = 0;
+          callIndex < response.toolCalls.length;
+          callIndex += 1
+        ) {
+          final call = response.toolCalls[callIndex];
           if (cancellation?.isCancelled == true) return;
           toolCallCount += 1;
           if (toolCallCount > maxToolCalls) {
@@ -280,8 +285,9 @@ class AiAgentEngine {
           );
           final decodedArguments = call.decodeArguments();
           final arguments = decodedArguments ?? <String, Object?>{};
+          final stepId = 'native-$round-${callIndex + 1}';
           yield AiAgentToolStarted(
-            stepId: call.id,
+            stepId: stepId,
             toolName: call.name,
             arguments: arguments,
           );
@@ -294,7 +300,7 @@ class AiAgentEngine {
           anyToolExecuted = true;
           if (execution.result == null) {
             yield AiAgentToolFailed(
-              stepId: call.id,
+              stepId: stepId,
               toolName: call.name,
               arguments: arguments,
               reason: execution.failureReason!,
@@ -308,7 +314,7 @@ class AiAgentEngine {
           } else {
             successfulToolCallCount += 1;
             yield AiAgentToolCompleted(
-              stepId: call.id,
+              stepId: stepId,
               toolName: call.name,
               arguments: arguments,
               result: execution.result!,

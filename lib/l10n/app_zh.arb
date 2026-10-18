@@ -3135,12 +3135,11 @@
       "net": {"type": "String"}
     }
   },
-  "aiCardDebtLine": "{name} 当前欠款 {amount} {currency}",
+  "aiCardDebtLine": "{name} 当前欠款 {amount}",
   "@aiCardDebtLine": {
     "placeholders": {
       "name": {"type": "String"},
-      "amount": {"type": "String"},
-      "currency": {"type": "String"}
+      "amount": {"type": "String"}
     }
   },
   "aiCardAvailableLine": "，可用额度 {amount}",
