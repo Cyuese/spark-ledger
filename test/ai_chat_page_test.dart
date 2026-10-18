@@ -129,6 +129,71 @@ void main() {
     controller.dispose();
   });
 
+  testWidgets('对话账本按页面选择，不改变全局活动账本', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      );
+    final defaultBookId = controller.activeBook.id;
+    final defaultBookName = controller.activeBook.name;
+    controller.addLedgerBook('旅行账本', baseCurrencyCode: 'USD');
+    final travelBookId = controller.activeBook.id;
+    final expenseCategory = controller
+        .categoriesForBook(travelBookId)
+        .firstWhere((category) => category.type == EntryType.expense);
+    controller.addEntry(
+      LedgerEntry(
+        id: 'travel-entry',
+        bookId: travelBookId,
+        type: EntryType.expense,
+        amount: 25,
+        categoryId: expenseCategory.id,
+        accountId: '',
+        note: '旅行午餐',
+        occurredAt: DateTime.now(),
+      ),
+    );
+    controller.switchLedgerBook(defaultBookId);
+    addTearDown(controller.dispose);
+
+    final transport = _scripted(<List<AiCompletionEvent>>[
+      <AiCompletionEvent>[
+        const AiToolCallDelta(
+          index: 0,
+          id: 'call_book',
+          name: 'summary',
+          arguments: '{"range":"thisMonth"}',
+        ),
+        const AiCompletionFinished(AiFinishReason.toolCalls),
+        const AiStreamDone(),
+      ],
+      _answer('旅行账本支出 25。'),
+    ]);
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: AiChatPage(debugTransport: transport)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(defaultBookName), findsWidgets);
+    await tester.tap(find.byIcon(Icons.account_balance_wallet_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('选择对话账本'), findsOneWidget);
+    await tester.tap(find.text('旅行账本'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('旅行账本'), findsWidgets);
+
+    await tester.enterText(find.byType(TextField), '帮我汇总');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
+    await tester.pumpAndSettle();
+
+    expect(controller.activeBook.id, defaultBookId);
+    expect(find.textContaining('25'), findsWidgets);
+  });
+
   testWidgets('清空聊天记录', (tester) async {
     final controller = await makeController()
       ..setAiSettings(
@@ -153,7 +218,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('在吗'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.delete_sweep_outlined));
+    await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
     await tester.tap(find.text('清空'));
     await tester.pumpAndSettle();

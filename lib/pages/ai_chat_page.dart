@@ -17,11 +17,14 @@ import '../app/ai/ai_tool_presentation.dart';
 import '../app/amount_format.dart';
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
+import '../app/models.dart';
+import '../app/veri_fin_controller.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
 import 'ai_agent_step_view.dart';
 import 'ai_result_view.dart';
 import 'ai_settings_page.dart';
+import 'sheets.dart';
 
 enum _Role { user, assistant }
 
@@ -31,6 +34,9 @@ enum _MsgStatus { streaming, done, error }
 class _ChatMessage {
   _ChatMessage({
     required this.role,
+    required this.bookId,
+    required this.bookName,
+    required this.baseCurrencyCode,
     this.text = '',
     this.status = _MsgStatus.done,
     List<AiResultDisplay>? displays,
@@ -39,6 +45,9 @@ class _ChatMessage {
        steps = steps ?? <AiAgentStep>[];
 
   final _Role role;
+  final String bookId;
+  final String bookName;
+  final String baseCurrencyCode;
   String text;
   final List<AiResultDisplay> displays;
   final List<AiAgentStep> steps;
@@ -65,6 +74,7 @@ class _AiChatPageState extends State<AiChatPage> {
   final TextEditingController _input = TextEditingController();
   final ScrollController _scroll = ScrollController();
   final AiAgentEngine _engine = AiAgentEngine(tools: buildAiQueryTools());
+  String? _selectedBookId;
   bool _streaming = false;
 
   @override
@@ -72,6 +82,12 @@ class _AiChatPageState extends State<AiChatPage> {
     super.initState();
     // 输入内容变化时刷新发送按钮的可用态（空内容不可发送）。
     _input.addListener(_onInputChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _selectedBookId ??= VeriFinScope.of(context).activeBook.id;
   }
 
   void _onInputChanged() => setState(() {});
@@ -85,6 +101,31 @@ class _AiChatPageState extends State<AiChatPage> {
   }
 
   bool get _canSend => !_streaming && _input.text.trim().isNotEmpty;
+
+  LedgerBook _bookForScope(VeriFinController scope) {
+    return scope.ledgerBooks
+            .where((book) => book.id == _selectedBookId)
+            .firstOrNull ??
+        scope.activeBook;
+  }
+
+  Future<void> _chooseBook() async {
+    final scope = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final current = _bookForScope(scope);
+    final books = scope.ledgerBooks;
+    final selectedId = await showOptionSheet<String>(
+      context: context,
+      title: l10n.aiChatChooseBook,
+      values: books.map((book) => book.id).toList(growable: false),
+      selected: current.id,
+      labelOf: (id) => books.firstWhere((book) => book.id == id).name,
+    );
+    if (!mounted || selectedId == null || selectedId == current.id) {
+      return;
+    }
+    setState(() => _selectedBookId = selectedId);
+  }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -119,26 +160,29 @@ class _AiChatPageState extends State<AiChatPage> {
     }
     final scope = VeriFinScope.of(context);
     final l10n = AppLocalizations.of(context);
+    final book = _bookForScope(scope);
     final prior = _priorMessages();
     final context0 = AiToolContext(
-      entries: scope.entries,
-      accounts: scope.accounts,
-      categories: scope.categories,
-      tags: scope.tags,
+      entries: scope.entriesForBook(book.id),
+      accounts: scope.accountsForBook(book.id),
+      categories: scope.categoriesForBook(book.id),
+      tags: scope.tagsForBook(book.id),
       balanceOf: scope.accountBalance,
-      baseCurrencyCode: scope.activeBook.baseCurrencyCode,
+      baseCurrencyCode: book.baseCurrencyCode,
       now: DateTime.now(),
       l10n: l10n,
       // 摘要句与结果卡片要跟界面上金额的单位口径一致：单币种账本隐藏单位时，
       // 摘要也不能出现币种代码，否则模型会照着写出与卡片矛盾的「合计 CNY 4,300」。
       currencyDisplay: activeMoneyCodeDisplay,
-      exchangeRates: scope.exchangeRates,
-      bookId: scope.activeBook.id,
+      exchangeRates: scope.exchangeRatesForBook(book.id),
+      bookId: book.id,
       budget: AiBudgetContext(
-        keyMonthOf: scope.budgetKeyMonthFor,
-        windowOf: scope.budgetWindow,
-        monthlyBudgetOf: scope.monthlyBudget,
-        categoryBudgetOf: scope.categoryBudget,
+        keyMonthOf: (date) => scope.budgetKeyMonthForBook(book.id, date),
+        windowOf: (keyMonth) => scope.budgetWindowForBook(book.id, keyMonth),
+        monthlyBudgetOf: (keyMonth) =>
+            scope.monthlyBudgetForBook(book.id, keyMonth),
+        categoryBudgetOf: (keyMonth, categoryId) =>
+            scope.categoryBudgetForBook(book.id, keyMonth, categoryId),
       ),
     );
     final settings = scope.aiSettings;
@@ -159,11 +203,23 @@ class _AiChatPageState extends State<AiChatPage> {
 
     final assistant = _ChatMessage(
       role: _Role.assistant,
+      bookId: book.id,
+      bookName: book.name,
+      baseCurrencyCode: book.baseCurrencyCode,
       status: _MsgStatus.streaming,
     );
     setState(() {
       _input.clear();
-      _messages.add(_ChatMessage(role: _Role.user, text: text));
+      _selectedBookId = book.id;
+      _messages.add(
+        _ChatMessage(
+          role: _Role.user,
+          bookId: book.id,
+          bookName: book.name,
+          baseCurrencyCode: book.baseCurrencyCode,
+          text: text,
+        ),
+      );
       _messages.add(assistant);
       _streaming = true;
     });
@@ -323,7 +379,9 @@ class _AiChatPageState extends State<AiChatPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final configured = VeriFinScope.of(context).aiSettings.isConfigured;
+    final scope = VeriFinScope.of(context);
+    final configured = scope.aiSettings.isConfigured;
+    final book = _bookForScope(scope);
     return Scaffold(
       body: SafeArea(
         child: VeriPage(
@@ -343,24 +401,17 @@ class _AiChatPageState extends State<AiChatPage> {
                         tooltip: l10n.aiSettingsTitle,
                         onPressed: _streaming ? null : _openSettings,
                       ),
-                    if (_messages.isNotEmpty)
-                      HeaderAction(
-                        icon: Icons.delete_sweep_outlined,
-                        tooltip: l10n.aiChatClearHistory,
-                        destructive: true,
-                        onPressed: _streaming ? null : _clearHistory,
-                      ),
                   ],
                 ),
               ),
               Expanded(
                 child: configured
                     ? (_messages.isEmpty
-                          ? _buildEmptyState(context)
+                          ? _buildEmptyState(context, book)
                           : _buildMessageList(context))
                     : _buildUnconfigured(context),
               ),
-              if (configured) _buildInputBar(context),
+              if (configured) _buildInputBar(context, book),
             ],
           ),
         ),
@@ -400,6 +451,8 @@ class _AiChatPageState extends State<AiChatPage> {
   }
 
   Widget _buildMessageList(BuildContext context) {
+    final showBookLabel =
+        _messages.map((message) => message.bookId).toSet().length > 1;
     return ListView.builder(
       controller: _scroll,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
@@ -414,9 +467,11 @@ class _AiChatPageState extends State<AiChatPage> {
             : null;
         return _MessageView(
           message: message,
+          showBookLabel: showBookLabel,
           onRetry: retryText == null || _streaming
               ? null
               : () async {
+                  _selectedBookId = message.bookId;
                   _input.text = retryText;
                   await _send();
                 },
@@ -425,7 +480,7 @@ class _AiChatPageState extends State<AiChatPage> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, LedgerBook book) {
     final l10n = AppLocalizations.of(context);
     final hints = <String>[
       l10n.aiChatHintTopCategory,
@@ -443,6 +498,15 @@ class _AiChatPageState extends State<AiChatPage> {
               child: Text(
                 l10n.aiChatEmptyTitle,
                 style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: Text(
+                l10n.aiChatCurrentBook(book.name),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -464,10 +528,11 @@ class _AiChatPageState extends State<AiChatPage> {
     );
   }
 
-  Widget _buildInputBar(BuildContext context) {
+  Widget _buildInputBar(BuildContext context, LedgerBook book) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final canSend = _canSend;
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
       decoration: BoxDecoration(
@@ -476,38 +541,74 @@ class _AiChatPageState extends State<AiChatPage> {
           top: BorderSide(color: isDark ? Colors.white10 : veriLine),
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white10 : veriSurfaceAltLight,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: isDark ? Colors.white12 : veriLine),
+          Row(
+            children: <Widget>[
+              Flexible(
+                child: FilterPill(
+                  label: '${l10n.ledgerLabel} · ${book.name}',
+                  icon: Icons.account_balance_wallet_outlined,
+                  onTap: _streaming ? null : _chooseBook,
+                  flexibleLabel: true,
+                ),
               ),
-              child: TextField(
-                controller: _input,
-                minLines: 1,
-                maxLines: 5,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _send(),
-                style: const TextStyle(fontSize: 15.5, height: 1.45),
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context).aiChatInputHint,
-                  isDense: true,
-                  filled: false,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 13,
+              const Spacer(),
+              if (_messages.isNotEmpty)
+                TextButton.icon(
+                  onPressed: _streaming ? null : _clearHistory,
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: Text(l10n.aiChatClearCurrent),
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    minimumSize: const Size(0, 44),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white10 : veriSurfaceAltLight,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isDark ? Colors.white12 : veriLine,
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _input,
+                    minLines: 1,
+                    maxLines: 5,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _send(),
+                    style: const TextStyle(fontSize: 15.5, height: 1.45),
+                    decoration: InputDecoration(
+                      hintText: l10n.aiChatInputHint,
+                      isDense: true,
+                      filled: false,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 13,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              _SendButton(
+                enabled: canSend,
+                streaming: _streaming,
+                onTap: _send,
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          _SendButton(enabled: canSend, streaming: _streaming, onTap: _send),
         ],
       ),
     );
@@ -563,41 +664,61 @@ class _SendButton extends StatelessWidget {
 }
 
 class _MessageView extends StatelessWidget {
-  const _MessageView({required this.message, this.onRetry});
+  const _MessageView({
+    required this.message,
+    required this.showBookLabel,
+    this.onRetry,
+  });
 
   final _ChatMessage message;
+  final bool showBookLabel;
   final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     if (message.role == _Role.user) {
-      return Align(
-        alignment: Alignment.centerRight,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 7),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.8,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(18),
-              topRight: Radius.circular(18),
-              bottomLeft: Radius.circular(18),
-              bottomRight: Radius.circular(4),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          if (showBookLabel)
+            Padding(
+              padding: const EdgeInsets.only(top: 5, bottom: 2, right: 4),
+              child: Text(
+                message.bookName,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.8,
+              ),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  topRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                  bottomRight: Radius.circular(4),
+                ),
+              ),
+              child: Text(
+                message.text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15.5,
+                  height: 1.45,
+                ),
+              ),
             ),
           ),
-          child: Text(
-            message.text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15.5,
-              height: 1.45,
-            ),
-          ),
-        ),
+        ],
       );
     }
     return Container(
@@ -605,9 +726,23 @@ class _MessageView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          if (showBookLabel)
+            Padding(
+              padding: const EdgeInsets.only(top: 5, bottom: 2, left: 2),
+              child: Text(
+                message.bookName,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
           for (final step in message.steps) AiAgentStepView(step: step),
           for (final display in message.displays) ...<Widget>[
-            AiResultView(display: display),
+            AiResultView(
+              display: display,
+              bookId: message.bookId,
+              baseCurrencyCode: message.baseCurrencyCode,
+            ),
             const SizedBox(height: 10),
           ],
           if (message.text.trim().isNotEmpty)

@@ -34,12 +34,14 @@ class FilterPill extends StatelessWidget {
     this.icon,
     this.onTap,
     this.showChevron = true,
+    this.flexibleLabel = false,
   });
 
   final String label;
   final IconData? icon;
   final VoidCallback? onTap;
   final bool showChevron;
+  final bool flexibleLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -66,17 +68,32 @@ class FilterPill extends StatelessWidget {
                 Icon(icon, size: 16),
                 const SizedBox(width: 5),
               ],
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.78),
+              if (flexibleLabel)
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.78),
+                    ),
+                  ),
+                )
+              else
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.78),
+                  ),
                 ),
-              ),
               if (showChevron) ...<Widget>[
                 const SizedBox(width: 4),
                 const Icon(Icons.keyboard_arrow_down, size: 16),

@@ -11,21 +11,31 @@ import '../app/ledger_math.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
-import 'transaction_detail_page.dart';
 
 /// 把一条 [AiResultDisplay] 渲染成卡片。
 class AiResultView extends StatelessWidget {
-  const AiResultView({super.key, required this.display});
+  const AiResultView({
+    super.key,
+    required this.display,
+    required this.bookId,
+    required this.baseCurrencyCode,
+  });
 
   final AiResultDisplay display;
+  final String bookId;
+  final String baseCurrencyCode;
 
   @override
   Widget build(BuildContext context) {
     return switch (display) {
-      final AiStatDisplay d => _StatCard(d),
-      final AiRankingDisplay d => _RankingCard(d),
-      final AiTrendDisplay d => _TrendCard(d),
-      final AiTransactionsDisplay d => _TransactionsCard(d),
+      final AiStatDisplay d => _StatCard(d, baseCurrencyCode),
+      final AiRankingDisplay d => _RankingCard(d, baseCurrencyCode),
+      final AiTrendDisplay d => _TrendCard(d, baseCurrencyCode),
+      final AiTransactionsDisplay d => _TransactionsCard(
+        d,
+        bookId: bookId,
+        baseCurrencyCode: baseCurrencyCode,
+      ),
       final AiTableDisplay d => _TableCard(d),
     };
   }
@@ -74,14 +84,12 @@ List<String> _yLabels(BuildContext context, Iterable<double> values) {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard(this.display);
+  const _StatCard(this.display, this.baseCurrencyCode);
   final AiStatDisplay display;
+  final String baseCurrencyCode;
 
   @override
   Widget build(BuildContext context) {
-    final baseCurrencyCode = VeriFinScope.of(
-      context,
-    ).activeBook.baseCurrencyCode;
     return VeriCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,14 +126,12 @@ class _StatCard extends StatelessWidget {
 }
 
 class _RankingCard extends StatelessWidget {
-  const _RankingCard(this.display);
+  const _RankingCard(this.display, this.baseCurrencyCode);
   final AiRankingDisplay display;
+  final String baseCurrencyCode;
 
   @override
   Widget build(BuildContext context) {
-    final baseCurrencyCode = VeriFinScope.of(
-      context,
-    ).activeBook.baseCurrencyCode;
     final rows = display.rows;
     if (rows.isEmpty) {
       return VeriCard(
@@ -205,14 +211,12 @@ class _RankingCard extends StatelessWidget {
 }
 
 class _TrendCard extends StatelessWidget {
-  const _TrendCard(this.display);
+  const _TrendCard(this.display, this.baseCurrencyCode);
   final AiTrendDisplay display;
+  final String baseCurrencyCode;
 
   @override
   Widget build(BuildContext context) {
-    final baseCurrencyCode = VeriFinScope.of(
-      context,
-    ).activeBook.baseCurrencyCode;
     if (display.values.isEmpty) {
       return VeriCard(
         child: Column(
@@ -260,14 +264,20 @@ class _TrendCard extends StatelessWidget {
 }
 
 class _TransactionsCard extends StatelessWidget {
-  const _TransactionsCard(this.display);
+  const _TransactionsCard(
+    this.display, {
+    required this.bookId,
+    required this.baseCurrencyCode,
+  });
   final AiTransactionsDisplay display;
+  final String bookId;
+  final String baseCurrencyCode;
 
   @override
   Widget build(BuildContext context) {
     final controller = VeriFinScope.of(context);
     final byId = <String, LedgerEntry>{
-      for (final entry in controller.entries) entry.id: entry,
+      for (final entry in controller.entriesForBook(bookId)) entry.id: entry,
     };
     final entries = display.entryIds
         .map((id) => byId[id])
@@ -278,11 +288,7 @@ class _TransactionsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            _cardTitle(
-              context,
-              display.title,
-              currencyCode: controller.activeBook.baseCurrencyCode,
-            ),
+            _cardTitle(context, display.title, currencyCode: baseCurrencyCode),
             _emptyHint(
               context,
               AppLocalizations.of(context).aiChatNoMatchingTx,
@@ -299,16 +305,15 @@ class _TransactionsCard extends StatelessWidget {
           child: _cardTitle(
             context,
             display.title,
-            currencyCode: controller.activeBook.baseCurrencyCode,
+            currencyCode: baseCurrencyCode,
           ),
         ),
         TransactionListCard(
           entries: entries,
-          accounts: controller.accounts,
-          categories: controller.categories,
-          tags: controller.tags,
-          baseCurrencyCode: controller.activeBook.baseCurrencyCode,
-          onEntryTap: (entry) => openEntryDetail(context, entry),
+          accounts: controller.accountsForBook(bookId),
+          categories: controller.categoriesForBook(bookId),
+          tags: controller.tagsForBook(bookId),
+          baseCurrencyCode: baseCurrencyCode,
         ),
       ],
     );

@@ -74,6 +74,18 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
           }),
       );
 
+  /// 某账本的汇率（只读，按币种与生效日倒序）。
+  List<ExchangeRate> exchangeRatesForBook(String bookId) =>
+      List<ExchangeRate>.unmodifiable(
+        _exchangeRates.where((rate) => rate.bookId == bookId).toList()
+          ..sort((a, b) {
+            final byCode = a.currencyCode.compareTo(b.currencyCode);
+            if (byCode != 0) return byCode;
+            final byDate = b.effectiveDate.compareTo(a.effectiveDate);
+            return byDate != 0 ? byDate : b.id.compareTo(a.id);
+          }),
+      );
+
   ExchangeRate? exchangeRateFor(String currencyCode, DateTime date) {
     return exchangeRateAt(
       bookId: _activeBookId,
@@ -171,6 +183,11 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
 
   List<Account> get accounts => _accountsView ??= List<Account>.unmodifiable(
     _accounts.where((account) => account.bookId == _activeBookId),
+  );
+
+  /// 某账本的账户（只读，供 AI 对话等跨账本读取入口使用）。
+  List<Account> accountsForBook(String bookId) => List<Account>.unmodifiable(
+    _accounts.where((account) => account.bookId == bookId),
   );
 
   List<AccountGroup> get accountGroups {
@@ -894,10 +911,28 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   DateWindow budgetWindow(DateTime keyMonth) =>
       budgetCycleOfKeyMonth(keyMonth, budgetCycleStartDay);
 
+  /// 某账本某键月的预算周期窗口（只读）。
+  DateWindow budgetWindowForBook(String bookId, DateTime keyMonth) =>
+      budgetCycleOfKeyMonth(
+        keyMonth,
+        clampBudgetCycleStartDay(
+          _budgetCycleStartDays[bookId] ?? naturalMonthStartDay,
+        ),
+      );
+
   /// 包含 [date] 的预算周期的键月（当前账本起始日）——面板/小组件用「现在」换算
   /// 出应读取哪一期的预算。
   DateTime budgetKeyMonthFor(DateTime date) =>
       budgetCycleKeyMonthFor(date, budgetCycleStartDay);
+
+  /// 某账本中 [date] 所属预算期的键月（只读）。
+  DateTime budgetKeyMonthForBook(String bookId, DateTime date) =>
+      budgetCycleKeyMonthFor(
+        date,
+        clampBudgetCycleStartDay(
+          _budgetCycleStartDays[bookId] ?? naturalMonthStartDay,
+        ),
+      );
 
   /// 当前账本的「默认月预算」：设一次每月自动沿用（0 = 未设默认）。存于预算表的
   /// 哨兵键 `bookId:default`，与逐月键 `bookId:yyyy-MM` 天然不冲突。
@@ -923,6 +958,12 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   double monthlyBudget(DateTime month) =>
       _monthlyBudgets['$_activeBookId:${_monthKey(month)}'] ??
       defaultMonthlyBudget;
+
+  /// 某账本某键月的实际月预算（只读）。
+  double monthlyBudgetForBook(String bookId, DateTime month) =>
+      _monthlyBudgets['$bookId:${_monthKey(month)}'] ??
+      _monthlyBudgets[_defaultMonthlyBudgetKey(bookId)] ??
+      0;
 
   /// 该键月是否设了单独的覆盖值（用于区分「沿用默认」与「本月单独」）。
   bool monthlyBudgetIsOverride(DateTime month) =>
@@ -968,6 +1009,16 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   double categoryBudget(DateTime month, String categoryId) =>
       _categoryBudgets[_categoryBudgetKey(_activeBookId, month, categoryId)] ??
       defaultCategoryBudget(categoryId);
+
+  /// 某账本某键月某分类的实际预算（只读）。
+  double categoryBudgetForBook(
+    String bookId,
+    DateTime month,
+    String categoryId,
+  ) =>
+      _categoryBudgets[_categoryBudgetKey(bookId, month, categoryId)] ??
+      _categoryBudgets[_defaultCategoryBudgetKey(bookId, categoryId)] ??
+      0;
 
   /// 该键月的分类是否设置了单独覆盖值。只检查当前账本的单期键，不把默认预算
   /// 视为覆盖，供总览页区分「本期单独」与「沿用默认」。
