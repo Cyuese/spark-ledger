@@ -207,7 +207,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 
 | 名称 | 类型 | 位置 | 用途 |
 |---|---|---|---|
-| `AiChatPage` | 页面 Widget | `ai_chat_page.dart` | 全屏 AI 财务 Agent 对话页（气泡 + 工具步骤 + 输入框 + 清空历史，未配置引导去设置）；`debugTransport` / `debugCompleteTransport` 供测试注入结构化传输 |
+| `AiChatPage` | 页面 Widget | `ai_chat_page.dart` | 全屏 AI 财务 Agent 对话页（气泡 + 工具步骤 + 输入框 + 清空历史）；已配置时 Header 提供 AI 设置入口，未配置时显示去设置引导；`debugTransport` / `debugCompleteTransport` 供测试注入结构化传输 |
 | `AiAgentStepView` | Widget | `ai_agent_step_view.dart` | Agent 工具调用与重试的紧凑可折叠步骤卡；只展示本地化参数与结果摘要，不展示协议 JSON / reasoning / 底层异常 |
 | `AiResultView` | Widget | `ai_result_view.dart` | 把 `AiResultDisplay` 渲染成统计卡 / 柱状排行 / 折线趋势 / **可点击交易列表** / 表格（新增展示类型在此加一支） |
 | `AiProviderPreset` / `aiProviderPresets` / `customAiProviderPreset` / `aiProviderPresetFor` / `aiModelListUrlFor` | 值类 / 常量 / 纯函数 | `lib/app/ai/ai_provider_presets.dart` | 8 个内置 OpenAI-compatible 渠道 + 自定义渠道的稳定注册表；Base URL、Logo、模型列表规则和搜索别名集中维护，渠道 ID 不得复用 |
@@ -216,7 +216,7 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 | `showAiProviderSelectionSheet` | Sheet 函数 | `sheets.dart` + `ai_provider_picker.dart` | 稳定渠道选择入口；分组筛选、搜索、宫格 Logo/说明、选中态与无障碍语义；返回渠道 ID，取消返回 `null` |
 | `showAiModelSelectionSheet` | Sheet 函数 | `sheets.dart` + `ai_model_picker.dart` | 稳定模型选择入口；按 `ownedBy` 分组（缺失 `owned_by` 时回退模型 ID 的厂商前缀）、支持搜索和懒列表；返回模型 ID，取消返回 `null` |
 | `AiProviderLogo` | Widget | `ai_provider_logo.dart` | 渠道 Logo 统一实底托盘；SVG 走 `SvgPicture.asset`，PNG 原比例显示，未知/自定义回退网关图标，不联网加载 |
-| `AiSettingsPage` | 页面 Widget | `ai_settings_page.dart` | AI 渠道与模型设置：预设 Base URL 只读、切换渠道清空 Key/模型、API Key 可选、模型远端获取/手动输入、能力检测；所有变更先留草稿再统一保存 |
+| `AiSettingsPage` | 页面 Widget | `ai_settings_page.dart` | AI 渠道与模型设置：预设 Base URL 只读、切换渠道清空 Key/模型、API Key 可选、模型远端获取/手动输入、能力检测；连接参数使用可见描边输入框，工具调用协议以只读输入框作为选择入口，收起时只显示当前选项；所有变更先留草稿再统一保存 |
 
 ---
 
