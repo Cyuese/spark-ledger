@@ -3159,13 +3159,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatUnconfiguredHint => '先配置 AI，才能开始对话查询账目';
 
   @override
-  String get aiChatReadOnlyNote => '只读查询账目，不会修改任何数据';
-
-  @override
-  String get aiChatPrivateNote => '问题只发送到你配置的 AI 端点';
-
-  @override
-  String get aiChatLedgerScopeNote => '切换账本只影响之后的问题';
+  String get aiChatUnconfiguredTitle => '连接你的 AI';
 
   @override
   String get aiChatGoConfigure => '去配置 AI';

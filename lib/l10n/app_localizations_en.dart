@@ -3235,15 +3235,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Configure AI first to start asking about your finances';
 
   @override
-  String get aiChatReadOnlyNote => 'Read-only queries never modify your data';
-
-  @override
-  String get aiChatPrivateNote =>
-      'Questions are sent only to your configured AI endpoint';
-
-  @override
-  String get aiChatLedgerScopeNote =>
-      'Switching ledgers affects later questions only';
+  String get aiChatUnconfiguredTitle => 'Connect your AI';
 
   @override
   String get aiChatGoConfigure => 'Configure AI';

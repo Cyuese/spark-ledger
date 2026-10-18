@@ -86,7 +86,7 @@ Widget _emptyHint(BuildContext context, String text) {
   );
 }
 
-/// 图表纵轴 3 档标签：max / max·½ / 0（紧凑格式）。
+/// 图表纵轴 3 档标签，自下而上：0 / max·½ / max（紧凑格式）。
 List<String> _yLabels(BuildContext context, Iterable<double> values) {
   final max = values.fold<double>(0, (m, v) => v.abs() > m ? v.abs() : m);
   if (max <= 0) {
@@ -94,9 +94,9 @@ List<String> _yLabels(BuildContext context, Iterable<double> values) {
   }
   final l10n = AppLocalizations.of(context);
   return <String>[
-    formatCompactAmount(l10n, max),
-    formatCompactAmount(l10n, max / 2),
     '0',
+    formatCompactAmount(l10n, max / 2),
+    formatCompactAmount(l10n, max),
   ];
 }
 

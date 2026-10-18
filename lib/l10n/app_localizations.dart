@@ -5810,23 +5810,11 @@ abstract class AppLocalizations {
   /// **'先配置 AI，才能开始对话查询账目'**
   String get aiChatUnconfiguredHint;
 
-  /// No description provided for @aiChatReadOnlyNote.
+  /// No description provided for @aiChatUnconfiguredTitle.
   ///
   /// In zh, this message translates to:
-  /// **'只读查询账目，不会修改任何数据'**
-  String get aiChatReadOnlyNote;
-
-  /// No description provided for @aiChatPrivateNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'问题只发送到你配置的 AI 端点'**
-  String get aiChatPrivateNote;
-
-  /// No description provided for @aiChatLedgerScopeNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'切换账本只影响之后的问题'**
-  String get aiChatLedgerScopeNote;
+  /// **'连接你的 AI'**
+  String get aiChatUnconfiguredTitle;
 
   /// No description provided for @aiChatGoConfigure.
   ///
