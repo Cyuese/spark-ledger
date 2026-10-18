@@ -7304,6 +7304,12 @@ abstract class AppLocalizations {
   /// **'无法解析服务器响应'**
   String get aiErrBadResponse;
 
+  /// No description provided for @aiErrModelListUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'该渠道不支持获取模型列表，请手动填写模型'**
+  String get aiErrModelListUnsupported;
+
   /// No description provided for @aiErrUpstream.
   ///
   /// In zh, this message translates to:

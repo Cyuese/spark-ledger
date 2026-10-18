@@ -292,4 +292,32 @@ void main() {
       ),
     );
   });
+
+  test('empty API key omits the Authorization header', () async {
+    final settings = await _serve((request) async {
+      await _requestJson(request);
+      expect(request.headers.value(HttpHeaders.authorizationHeader), isNull);
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(
+        jsonEncode(<String, Object?>{
+          'choices': <Object?>[
+            <String, Object?>{
+              'message': <String, Object?>{
+                'role': 'assistant',
+                'content': 'OK',
+              },
+              'finish_reason': 'stop',
+            },
+          ],
+        }),
+      );
+      await request.response.close();
+    });
+
+    final result = await aiAgentComplete(
+      settings: settings.copyWith(apiKey: ''),
+      messages: messages,
+    );
+    expect(result.content, 'OK');
+  });
 }

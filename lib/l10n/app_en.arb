@@ -1529,6 +1529,7 @@
   "aiErrRateLimited": "Too many requests or insufficient quota",
   "aiErrServer": "The server returned an error",
   "aiErrBadResponse": "Could not parse the server response",
+  "aiErrModelListUnsupported": "This provider does not expose a model list. Enter a model manually.",
   "aiErrUpstream": "The server returned an error",
   "aiErrUnknown": "Request failed",
   "budgetTitle": "Budget",

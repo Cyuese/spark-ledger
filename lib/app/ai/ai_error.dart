@@ -16,6 +16,7 @@ enum AiErrorCode {
   badResponse,
   incompleteStream,
   protocolUnsupported,
+  modelListUnsupported,
   upstream,
   unknown,
 }
@@ -47,6 +48,7 @@ String aiErrorMessage(AppLocalizations l10n, AiException error) {
     AiErrorCode.badResponse => l10n.aiErrBadResponse,
     AiErrorCode.incompleteStream => l10n.aiErrBadResponse,
     AiErrorCode.protocolUnsupported => l10n.aiErrNotSupported,
+    AiErrorCode.modelListUnsupported => l10n.aiErrModelListUnsupported,
     AiErrorCode.upstream => l10n.aiErrUpstream,
     AiErrorCode.unknown => l10n.aiErrUnknown,
   };
