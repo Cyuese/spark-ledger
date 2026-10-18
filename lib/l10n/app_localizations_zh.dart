@@ -3005,6 +3005,134 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiNotConfigured => '未配置';
 
   @override
+  String get aiProviderSectionTitle => '渠道';
+
+  @override
+  String get aiProviderCurrent => '当前渠道';
+
+  @override
+  String get aiProviderPickerTitle => '选择 AI 渠道';
+
+  @override
+  String get aiProviderPickerSubtitle => '选择后自动使用该渠道的固定请求地址';
+
+  @override
+  String get aiProviderChange => '更换';
+
+  @override
+  String get aiProviderSearchHint => '搜索渠道名称、说明或域名';
+
+  @override
+  String get aiProviderSearchEmpty => '未找到渠道';
+
+  @override
+  String get aiProviderSearchEmptyDesc => '试试厂商名、模型平台或域名';
+
+  @override
+  String get aiProviderGroupAll => '全部';
+
+  @override
+  String get aiProviderGroupChinaOfficial => '国内官方';
+
+  @override
+  String get aiProviderGroupGlobalOfficial => '国际官方';
+
+  @override
+  String get aiProviderGroupAggregator => '聚合平台';
+
+  @override
+  String get aiProviderGroupLocal => '本地服务';
+
+  @override
+  String get aiProviderGroupCustom => '自定义';
+
+  @override
+  String get aiProviderDescDeepSeek => 'DeepSeek 官方 OpenAI 兼容接口';
+
+  @override
+  String get aiProviderDescVolcengine => '火山方舟模型服务';
+
+  @override
+  String get aiProviderDescKimi => '月之暗面 Kimi 官方接口';
+
+  @override
+  String get aiProviderDescZhipu => '智谱 GLM 官方接口';
+
+  @override
+  String get aiProviderDescDashscope => '阿里云百炼兼容接口';
+
+  @override
+  String get aiProviderDescOpenai => 'OpenAI 官方接口';
+
+  @override
+  String get aiProviderDescOpenrouter => '多模型聚合与路由平台';
+
+  @override
+  String get aiProviderDescOllama => '本地 Ollama 服务';
+
+  @override
+  String get aiProviderDescCustom => '任意 OpenAI 兼容端点';
+
+  @override
+  String get aiProviderBaseUrlLocked => '预设渠道地址由 VeriFin 固定';
+
+  @override
+  String get aiProviderCustomBaseUrlHint => '填写到 /v1，或完整 /chat/completions 地址';
+
+  @override
+  String get aiProviderModelListUrlLabel => '模型列表地址（可选）';
+
+  @override
+  String get aiProviderModelListUrlHint => '不填时按请求地址自动推导';
+
+  @override
+  String get aiProviderApiKeyLabel => 'API Key（可选）';
+
+  @override
+  String get aiProviderApiKeyHint => '可留空；部分渠道会返回鉴权错误';
+
+  @override
+  String get aiProviderModelLabel => '模型';
+
+  @override
+  String get aiProviderModelHint => '获取模型列表或手动填写';
+
+  @override
+  String get aiProviderFetchModels => '获取模型列表';
+
+  @override
+  String get aiProviderFetchingModels => '正在获取模型列表…';
+
+  @override
+  String get aiProviderModelPickerTitle => '选择模型';
+
+  @override
+  String get aiProviderModelSearchHint => '搜索模型或厂商';
+
+  @override
+  String get aiProviderModelEmpty => '没有可用模型';
+
+  @override
+  String get aiProviderModelEmptyDesc => '换一种筛选，或返回手动填写模型 ID';
+
+  @override
+  String get aiProviderModelOtherGroup => '其他';
+
+  @override
+  String aiProviderModelFetchFailed(String message) {
+    return '模型列表获取失败：$message';
+  }
+
+  @override
+  String get aiProviderModelFetchEmpty => '连接成功，但没有获取到模型';
+
+  @override
+  String get aiProviderModelSelected => '模型已选择';
+
+  @override
+  String get aiProviderMissingBaseUrl => '请先填写渠道请求地址';
+
+  @override
   String get aiChatTitle => 'AI 财务助理';
 
   @override
@@ -3057,7 +3185,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiSettingsIntro =>
-      '填写任意 OpenAI 兼容服务的请求地址、API Key 与模型。你的输入只会发送到这里配置的服务，配置只存本机、不进备份。';
+      '选择预设渠道，或使用自定义 OpenAI 兼容端点。API Key 可留空；你的输入只会发送到这里配置的服务，配置只存本机、不进备份。';
 
   @override
   String get aiBaseUrlLabel => '请求地址（Base URL）';
@@ -3075,7 +3203,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiModelHint => '如 gpt-4o-mini';
 
   @override
-  String get aiFillAllFields => '请填写请求地址、API Key 与模型';
+  String get aiFillAllFields => '请选择渠道并填写模型';
 
   @override
   String get aiToolModeTitle => '工具调用协议';
