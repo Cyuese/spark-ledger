@@ -14,6 +14,7 @@ import '../app/root_navigation_styles.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
 import 'ai_entry_sheet.dart';
+import 'app_lock_gate.dart';
 import 'assets_pages.dart';
 import 'capture_entry.dart';
 import 'entry_detail_page.dart';
@@ -85,6 +86,10 @@ class _VeriFinShellState extends State<VeriFinShell> {
     AppWidgetBridge.setRouteHandler(_openWidgetRouteFromPlatform);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // 同意与引导由外部门卫完成后才构建本壳。
+      await AppLockSessionScope.waitUntilUnlocked(context);
+      if (!mounted) {
+        return;
+      }
       if (await AppCaptureBridge.consumeInitialQuickEntryIntent() && mounted) {
         await _openQuickEntryFromPlatform();
       }
@@ -469,6 +474,7 @@ class _VeriFinShellState extends State<VeriFinShell> {
   }
 
   Future<void> _openQuickEntryFromPlatform() async {
+    await AppLockSessionScope.waitUntilUnlocked(context);
     if (!mounted) {
       return;
     }
@@ -484,6 +490,7 @@ class _VeriFinShellState extends State<VeriFinShell> {
 
   /// 应用运行中收到分享/外部采集内容（原生 onNewIntent 通知）时拉取并识别。
   Future<void> _openSharedCaptureFromPlatform() async {
+    await AppLockSessionScope.waitUntilUnlocked(context);
     if (!mounted) {
       return;
     }
@@ -491,6 +498,7 @@ class _VeriFinShellState extends State<VeriFinShell> {
   }
 
   Future<void> _openWidgetRouteFromPlatform(Map<String, Object?> args) async {
+    await AppLockSessionScope.waitUntilUnlocked(context);
     if (!mounted) return;
     final controller = VeriFinScope.of(context);
     final bookId = args['bookId'] as String?;
