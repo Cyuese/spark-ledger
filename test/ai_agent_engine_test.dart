@@ -242,7 +242,7 @@ void main() {
 
       expect(
         events.whereType<AiAgentRetrying>().single.reason,
-        'protocolFallback',
+        AiAgentRetryReason.protocolFallback,
       );
       expect(events.whereType<AiAgentCompleted>().single.answer, '兼容模式回答。');
       expect(transport.toolDefinitions[0], isNotEmpty);
@@ -283,7 +283,10 @@ void main() {
         },
       );
 
-      expect(events.whereType<AiAgentRetrying>().single.reason, 'network');
+      expect(
+        events.whereType<AiAgentRetrying>().single.reason,
+        AiAgentRetryReason.network,
+      );
       expect(events.whereType<AiAgentCompleted>().single.answer, '重试成功。');
       expect(completeCalls, 1);
     },
