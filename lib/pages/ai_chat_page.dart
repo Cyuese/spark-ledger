@@ -9,16 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 
 import '../app/ai/ai_agent_engine.dart';
-import '../app/ai/ai_agent_event.dart';
 import '../app/ai/ai_agent_message.dart';
-import '../app/ai/ai_agent_step.dart';
 import '../app/ai/ai_answer_provenance.dart';
 import '../app/ai/ai_capabilities.dart';
+import '../app/ai/ai_chat_session_controller.dart';
 import '../app/ai/ai_client.dart';
 import '../app/ai/ai_query_tool.dart';
-import '../app/ai/ai_settings.dart';
-import '../app/ai/ai_streaming_text_buffer.dart';
-import '../app/ai/ai_tool_presentation.dart';
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
 import '../app/models.dart';
@@ -28,41 +24,6 @@ import '../l10n/app_localizations.dart';
 import 'ai_agent_step_view.dart';
 import 'ai_result_view.dart';
 import 'ai_settings_page.dart';
-
-enum _Role { user, assistant }
-
-enum _MsgStatus { streaming, done, error }
-
-/// 一条聊天消息的 UI 状态。助手消息可同时含若干结果卡片与流式 Markdown 文本。
-class _ChatMessage {
-  _ChatMessage({
-    required this.role,
-    required this.bookId,
-    required this.bookName,
-    required this.baseCurrencyCode,
-    required this.moneyCodeDisplay,
-    this.text = '',
-    this.status = _MsgStatus.done,
-    List<AiResultDisplay>? displays,
-    List<AiAgentStep>? steps,
-    this.sourceUserInput = '',
-  }) : displays = displays ?? <AiResultDisplay>[],
-       steps = steps ?? <AiAgentStep>[];
-
-  final _Role role;
-  final String bookId;
-  final String bookName;
-  final String baseCurrencyCode;
-  final MoneyCodeDisplay moneyCodeDisplay;
-  final String sourceUserInput;
-  String text;
-  final List<AiResultDisplay> displays;
-  final List<AiAgentStep> steps;
-  _MsgStatus status;
-  String? errorText;
-  int successfulToolCalls = 0;
-  AiAnswerProvenance? provenance;
-}
 
 class AiChatPage extends StatefulWidget {
   const AiChatPage({
@@ -79,18 +40,11 @@ class AiChatPage extends StatefulWidget {
 }
 
 class _AiChatPageState extends State<AiChatPage> {
-  final List<_ChatMessage> _messages = <_ChatMessage>[];
   final TextEditingController _input = TextEditingController();
   final FocusNode _inputFocus = FocusNode();
   final ScrollController _scroll = ScrollController();
-  final AiAgentEngine _engine = AiAgentEngine(tools: buildAiQueryTools());
-  String? _selectedBookId;
-  _ChatMessage? _activeAssistant;
-  AiAgentCancellation? _activeCancellation;
-  AiStreamingTextBuffer? _activeStreamBuffer;
-  int _requestSerial = 0;
+  AiChatSessionController? _session;
   bool _scrollScheduled = false;
-  bool _streaming = false;
 
   @override
   void initState() {
@@ -103,7 +57,28 @@ class _AiChatPageState extends State<AiChatPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _selectedBookId ??= VeriFinScope.of(context).activeBook.id;
+    final scope = VeriFinScope.of(context);
+    if (_session == null) {
+      final session = AiChatSessionController(
+        engine: AiAgentEngine(tools: buildAiQueryTools()),
+        onCapabilityDetected: scope.setAiCapabilityProfile,
+        onError: (message, error, stackTrace) => scope.logger?.error(
+          message,
+          source: 'ai',
+          error: error,
+          stackTrace: stackTrace,
+        ),
+      );
+      session.addListener(_onSessionChanged);
+      _session = session;
+    }
+    _session!.ensureSelectedBook(scope.activeBook.id);
+  }
+
+  void _onSessionChanged() {
+    if (!mounted) return;
+    setState(() {});
+    _scrollToBottom();
   }
 
   void _onInputChanged() => setState(() {});
@@ -112,9 +87,8 @@ class _AiChatPageState extends State<AiChatPage> {
 
   @override
   void dispose() {
-    _requestSerial += 1;
-    _activeCancellation?.cancel();
-    _activeStreamBuffer?.dispose();
+    _session?.removeListener(_onSessionChanged);
+    _session?.dispose();
     _input.removeListener(_onInputChanged);
     _inputFocus.removeListener(_onInputFocusChanged);
     _inputFocus.dispose();
@@ -123,20 +97,18 @@ class _AiChatPageState extends State<AiChatPage> {
     super.dispose();
   }
 
-  bool get _canSend => !_streaming && _input.text.trim().isNotEmpty;
+  bool get _canSend =>
+      !(_session?.isStreaming ?? false) && _input.text.trim().isNotEmpty;
 
   LedgerBook _bookForScope(VeriFinController scope) {
     return scope.ledgerBooks
-            .where((book) => book.id == _selectedBookId)
+            .where((book) => book.id == _session?.selectedBookId)
             .firstOrNull ??
         scope.activeBook;
   }
 
   void _selectBook(String bookId) {
-    if (bookId == _selectedBookId) {
-      return;
-    }
-    setState(() => _selectedBookId = bookId);
+    _session?.selectBook(bookId);
   }
 
   void _scrollToBottom({bool force = false}) {
@@ -157,39 +129,17 @@ class _AiChatPageState extends State<AiChatPage> {
     });
   }
 
-  /// 从已完成的历史消息构建给模型的上下文（不含正在流式的这条）。
-  List<AiTextMessage> _priorMessages() {
-    return <AiTextMessage>[
-      for (final m in _messages)
-        if (m.status == _MsgStatus.done && m.text.trim().isNotEmpty)
-          AiTextMessage(
-            role: m.role == _Role.user
-                ? AiMessageRole.user
-                : AiMessageRole.assistant,
-            content: m.text.trim(),
-          ),
-    ];
-  }
-
   Future<void> _send() async {
     final text = _input.text.trim();
-    if (text.isEmpty || _streaming) {
+    final session = _session;
+    if (text.isEmpty || session == null || session.isStreaming) {
       return;
     }
     final scope = VeriFinScope.of(context);
     final l10n = AppLocalizations.of(context);
     final book = _bookForScope(scope);
     final moneyDisplay = scope.moneyCodeDisplayForBook(book.id);
-    final prior = _priorMessages();
     final snapshot = scope.aiLedgerSnapshotForBook(book.id);
-    final context0 = AiToolContext(
-      ledger: snapshot,
-      now: snapshot.capturedAt,
-      l10n: l10n,
-      // 摘要句与结果卡片要跟界面上金额的单位口径一致：单币种账本隐藏单位时，
-      // 摘要也不能出现币种代码，否则模型会照着写出与卡片矛盾的「合计 CNY 4,300」。
-      currencyDisplay: moneyDisplay,
-    );
     final settings = scope.aiSettings;
     final transport =
         widget.debugTransport ??
@@ -205,257 +155,25 @@ class _AiChatPageState extends State<AiChatPage> {
             );
     final capability = scope.aiCapabilityProfile;
     final mode = resolveAiAgentMode(settings: settings, capability: capability);
-
-    final assistant = _ChatMessage(
-      role: _Role.assistant,
-      bookId: book.id,
-      bookName: book.name,
-      baseCurrencyCode: book.baseCurrencyCode,
-      moneyCodeDisplay: moneyDisplay,
-      status: _MsgStatus.streaming,
-      sourceUserInput: text,
+    _input.clear();
+    session.send(
+      AiChatRequest(
+        text: text,
+        ledger: snapshot,
+        l10n: l10n,
+        moneyCodeDisplay: moneyDisplay,
+        settings: settings,
+        capability: capability,
+        mode: mode,
+        streamTransport: transport,
+        completeTransport: completeTransport,
+      ),
     );
-    final requestId = ++_requestSerial;
-    final cancellation = AiAgentCancellation();
-    _activeCancellation = cancellation;
-    final streamBuffer = AiStreamingTextBuffer(
-      onFlush: (chunk) {
-        if (!mounted || requestId != _requestSerial) return;
-        setState(() => assistant.text += chunk);
-        _scrollToBottom();
-      },
-    );
-    _activeStreamBuffer = streamBuffer;
-    setState(() {
-      _input.clear();
-      _selectedBookId = book.id;
-      _messages.add(
-        _ChatMessage(
-          role: _Role.user,
-          bookId: book.id,
-          bookName: book.name,
-          baseCurrencyCode: book.baseCurrencyCode,
-          moneyCodeDisplay: moneyDisplay,
-          text: text,
-        ),
-      );
-      _messages.add(assistant);
-      _streaming = true;
-    });
-    _activeAssistant = assistant;
     _scrollToBottom(force: true);
-
-    _engine
-        .run(
-          mode: mode,
-          streamTransport: transport,
-          completeTransport: completeTransport,
-          context: context0,
-          priorMessages: prior,
-          userInput: text,
-          cancellation: cancellation,
-        )
-        .listen(
-          (event) {
-            if (!mounted || requestId != _requestSerial) {
-              return;
-            }
-            if (event is AiAgentAnswerDelta) {
-              streamBuffer.add(event.text);
-              return;
-            }
-            streamBuffer.flush();
-            setState(() {
-              if (event is AiAgentFailed) {
-                _finishRetrySteps(assistant, succeeded: false);
-              } else if (event is! AiAgentRetrying) {
-                _finishRetrySteps(assistant, succeeded: true);
-              }
-              switch (event) {
-                case final AiAgentToolStarted e:
-                  if (mode != AiToolCallMode.prompt &&
-                      scope.aiCapabilityProfile?.matches(settings) != true) {
-                    scope.setAiCapabilityProfile(
-                      AiCapabilityProfile.forSettings(
-                        settings: settings,
-                        nativeToolCalls: AiNativeToolCapability.supported,
-                      ),
-                    );
-                  }
-                  assistant.steps.add(
-                    AiAgentStep(
-                      id: e.stepId,
-                      toolName: e.toolName,
-                      status: AiAgentStepStatus.running,
-                      arguments: e.arguments,
-                    ),
-                  );
-                case final AiAgentToolCompleted e:
-                  assistant.successfulToolCalls += 1;
-                  _updateStep(
-                    assistant,
-                    e.stepId,
-                    status: AiAgentStepStatus.succeeded,
-                    summary: presentAiToolResultSummary(l10n, e.result),
-                  );
-                  if (e.result.display != null) {
-                    assistant.displays.add(e.result.display!);
-                  }
-                case final AiAgentToolFailed e:
-                  _updateStep(
-                    assistant,
-                    e.stepId,
-                    status: AiAgentStepStatus.failed,
-                    summary: l10n.aiStepFailed,
-                  );
-                case final AiAgentRetrying e:
-                  if (e.reason == 'protocolFallback') {
-                    scope.setAiCapabilityProfile(
-                      AiCapabilityProfile.forSettings(
-                        settings: settings,
-                        nativeToolCalls: AiNativeToolCapability.unsupported,
-                      ),
-                    );
-                  }
-                  assistant.steps.add(
-                    AiAgentStep(
-                      id: 'retry-${assistant.steps.length}',
-                      toolName: 'agentRetry',
-                      status: AiAgentStepStatus.retrying,
-                      summary: e.reason,
-                    ),
-                  );
-                case AiAgentAnswerDelta():
-                  break;
-                case final AiAgentCompleted e:
-                  if (assistant.text.trim().isEmpty) {
-                    assistant.text = e.answer;
-                  }
-                  assistant.successfulToolCalls = e.successfulToolCalls;
-                  assistant.provenance = classifyAiAnswerProvenance(
-                    userInput: assistant.sourceUserInput,
-                    answer: assistant.text,
-                    successfulToolCalls: assistant.successfulToolCalls,
-                  );
-                  assistant.status = _MsgStatus.done;
-                case final AiAgentFailed e:
-                  assistant.status = _MsgStatus.error;
-                  assistant.errorText = e.error is AiException
-                      ? aiErrorMessage(l10n, e.error as AiException)
-                      : l10n.aiErrUnknown;
-                  assistant.provenance = classifyAiAnswerProvenance(
-                    userInput: assistant.sourceUserInput,
-                    answer: assistant.text,
-                    successfulToolCalls: assistant.successfulToolCalls,
-                  );
-                  scope.logger?.error(
-                    'AI Agent 回答失败',
-                    source: 'ai',
-                    error: e.error,
-                  );
-              }
-            });
-            _scrollToBottom();
-          },
-          onError: (Object error, StackTrace stackTrace) {
-            if (!mounted || requestId != _requestSerial) {
-              return;
-            }
-            streamBuffer.flush();
-            streamBuffer.dispose();
-            setState(() {
-              _finishRetrySteps(assistant, succeeded: false);
-              assistant.status = _MsgStatus.error;
-              assistant.errorText = error is AiException
-                  ? aiErrorMessage(l10n, error)
-                  : l10n.aiErrUnknown;
-              assistant.provenance = classifyAiAnswerProvenance(
-                userInput: assistant.sourceUserInput,
-                answer: assistant.text,
-                successfulToolCalls: assistant.successfulToolCalls,
-              );
-              _streaming = false;
-              _activeAssistant = null;
-              _activeCancellation = null;
-              _activeStreamBuffer = null;
-            });
-            scope.logger?.error('AI Agent 回答失败', source: 'ai', error: error);
-            _scrollToBottom();
-          },
-          onDone: () {
-            if (!mounted || requestId != _requestSerial) {
-              return;
-            }
-            streamBuffer.flush();
-            streamBuffer.dispose();
-            setState(() {
-              _streaming = false;
-              _activeAssistant = null;
-              _activeCancellation = null;
-              _activeStreamBuffer = null;
-              if (assistant.status == _MsgStatus.streaming) {
-                assistant.status = _MsgStatus.done;
-              }
-            });
-          },
-          cancelOnError: true,
-        );
   }
 
   void _stopGeneration() {
-    final assistant = _activeAssistant;
-    _activeStreamBuffer?.flush();
-    _activeStreamBuffer?.dispose();
-    _activeStreamBuffer = null;
-    _requestSerial += 1;
-    _activeAssistant = null;
-    _activeCancellation?.cancel();
-    _activeCancellation = null;
-    setState(() {
-      _streaming = false;
-      assistant?.steps.removeWhere(
-        (step) =>
-            step.status == AiAgentStepStatus.running ||
-            step.status == AiAgentStepStatus.retrying,
-      );
-      if (assistant?.status == _MsgStatus.streaming) {
-        assistant?.status = _MsgStatus.done;
-      }
-      if (assistant != null) {
-        assistant.provenance = classifyAiAnswerProvenance(
-          userInput: assistant.sourceUserInput,
-          answer: assistant.text,
-          successfulToolCalls: assistant.successfulToolCalls,
-        );
-      }
-    });
-  }
-
-  void _updateStep(
-    _ChatMessage message,
-    String stepId, {
-    required AiAgentStepStatus status,
-    required String summary,
-  }) {
-    final index = message.steps.indexWhere((step) => step.id == stepId);
-    if (index < 0) return;
-    message.steps[index] = message.steps[index].copyWith(
-      status: status,
-      summary: summary,
-    );
-  }
-
-  void _finishRetrySteps(_ChatMessage message, {required bool succeeded}) {
-    for (var index = 0; index < message.steps.length; index += 1) {
-      final step = message.steps[index];
-      if (step.status == AiAgentStepStatus.retrying) {
-        message.steps[index] = step.copyWith(
-          status: succeeded
-              ? AiAgentStepStatus.succeeded
-              : AiAgentStepStatus.failed,
-        );
-      }
-    }
+    _session?.stop();
   }
 
   Future<void> _clearHistory() async {
@@ -468,7 +186,7 @@ class _AiChatPageState extends State<AiChatPage> {
       destructive: true,
     );
     if (confirmed && mounted) {
-      setState(_messages.clear);
+      _session?.clear();
     }
   }
 
@@ -487,6 +205,9 @@ class _AiChatPageState extends State<AiChatPage> {
     final scope = VeriFinScope.of(context);
     final configured = scope.aiSettings.isConfigured;
     final book = _bookForScope(scope);
+    final session = _session!;
+    final messages = session.messages;
+    final streaming = session.isStreaming;
     return Scaffold(
       body: SafeArea(
         child: VeriPage(
@@ -502,14 +223,14 @@ class _AiChatPageState extends State<AiChatPage> {
                   actions: <Widget>[
                     if (configured)
                       Visibility(
-                        visible: _messages.isNotEmpty,
+                        visible: messages.isNotEmpty,
                         maintainSize: true,
                         maintainAnimation: true,
                         maintainState: true,
                         child: HeaderAction(
                           icon: Icons.delete_outline,
                           tooltip: l10n.aiChatClearCurrent,
-                          onPressed: _streaming ? null : _clearHistory,
+                          onPressed: streaming ? null : _clearHistory,
                           destructive: true,
                         ),
                       ),
@@ -517,14 +238,14 @@ class _AiChatPageState extends State<AiChatPage> {
                       HeaderAction(
                         icon: Icons.settings_outlined,
                         tooltip: l10n.aiSettingsTitle,
-                        onPressed: _streaming ? null : _openSettings,
+                        onPressed: streaming ? null : _openSettings,
                       ),
                   ],
                 ),
               ),
               Expanded(
                 child: configured
-                    ? (_messages.isEmpty
+                    ? (messages.isEmpty
                           ? _buildEmptyState(context, book)
                           : _buildMessageList(context))
                     : _buildUnconfigured(context),
@@ -557,27 +278,28 @@ class _AiChatPageState extends State<AiChatPage> {
   }
 
   Widget _buildMessageList(BuildContext context) {
+    final messages = _session!.messages;
     final showBookLabel =
-        _messages.map((message) => message.bookId).toSet().length > 1;
+        messages.map((message) => message.bookId).toSet().length > 1;
     return ListView.builder(
       controller: _scroll,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-      itemCount: _messages.length,
+      itemCount: messages.length,
       itemBuilder: (context, index) {
-        final message = _messages[index];
+        final message = messages[index];
         final retryText =
-            message.status == _MsgStatus.error &&
+            message.status == AiChatMessageStatus.error &&
                 index > 0 &&
-                _messages[index - 1].role == _Role.user
-            ? _messages[index - 1].text
+                messages[index - 1].role == AiChatRole.user
+            ? messages[index - 1].text
             : null;
         return _MessageView(
           message: message,
           showBookLabel: showBookLabel,
-          onRetry: retryText == null || _streaming
+          onRetry: retryText == null || _session!.isStreaming
               ? null
               : () async {
-                  _selectedBookId = message.bookId;
+                  _session!.selectBook(message.bookId);
                   _input.text = retryText;
                   await _send();
                 },
@@ -638,6 +360,7 @@ class _AiChatPageState extends State<AiChatPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final canSend = _canSend;
+    final streaming = _session!.isStreaming;
     final l10n = AppLocalizations.of(context);
     final books = VeriFinScope.of(context).ledgerBooks;
     final borderColor = _inputFocus.hasFocus
@@ -725,7 +448,7 @@ class _AiChatPageState extends State<AiChatPage> {
                           child: InkWell(
                             key: const Key('ai_chat_book_selector'),
                             borderRadius: BorderRadius.circular(999),
-                            onTap: _streaming
+                            onTap: streaming
                                 ? null
                                 : () {
                                     _inputFocus.unfocus();
@@ -774,7 +497,7 @@ class _AiChatPageState extends State<AiChatPage> {
                   const SizedBox(width: 8),
                   _SendButton(
                     enabled: canSend,
-                    streaming: _streaming,
+                    streaming: streaming,
                     onSend: _send,
                     onStop: _stopGeneration,
                   ),
@@ -840,14 +563,14 @@ class _MessageView extends StatelessWidget {
     this.onRetry,
   });
 
-  final _ChatMessage message;
+  final AiChatMessage message;
   final bool showBookLabel;
   final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    if (message.role == _Role.user) {
+    if (message.role == AiChatRole.user) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: <Widget>[
@@ -916,7 +639,7 @@ class _MessageView extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           if (message.text.trim().isNotEmpty)
-            message.status == _MsgStatus.streaming
+            message.status == AiChatMessageStatus.streaming
                 ? Text(
                     message.text,
                     style: TextStyle(
