@@ -453,6 +453,19 @@ class _AiChatPageState extends State<AiChatPage> {
                   showBack: true,
                   actions: <Widget>[
                     if (configured)
+                      Visibility(
+                        visible: _messages.isNotEmpty,
+                        maintainSize: true,
+                        maintainAnimation: true,
+                        maintainState: true,
+                        child: HeaderAction(
+                          icon: Icons.delete_outline,
+                          tooltip: l10n.aiChatClearCurrent,
+                          onPressed: _streaming ? null : _clearHistory,
+                          destructive: true,
+                        ),
+                      ),
+                    if (configured)
                       HeaderAction(
                         icon: Icons.settings_outlined,
                         tooltip: l10n.aiSettingsTitle,
@@ -640,20 +653,6 @@ class _AiChatPageState extends State<AiChatPage> {
               padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
               child: Row(
                 children: <Widget>[
-                  if (_messages.isNotEmpty)
-                    IconButton(
-                      onPressed: _streaming ? null : _clearHistory,
-                      icon: const Icon(Icons.delete_outline, size: 20),
-                      color: theme.colorScheme.error,
-                      tooltip: l10n.aiChatClearCurrent,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 40,
-                        height: 40,
-                      ),
-                      padding: EdgeInsets.zero,
-                    )
-                  else
-                    const SizedBox(width: 40),
                   const Spacer(),
                   Flexible(
                     child: Align(
