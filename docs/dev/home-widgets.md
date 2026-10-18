@@ -23,7 +23,8 @@ Veri Fin 提供四个固定模板的 Android 桌面小组件：快速记账（`q
 
 - `lib/app/widgets/widget_catalog.dart`：唯一词表（模板 key、Provider 类名、外观枚举、应用内名称）。
 - `lib/app/widgets/widget_projection.dart`：纯函数投影与快照编码、快照结构版本 `widgetSnapshotVersion`。
-- `lib/app/widgets/widget_service.dart`：刷新管线（失效信号、三道闸门、写入与排程）。
+- `lib/app/widgets/widget_refresh_coordinator.dart`：刷新时机（数据变化防抖、启动/回前台立即推送、切后台冲刷）。
+- `lib/app/widgets/widget_service.dart`：投影发布管线（失效信号、三道闸门、串行写入与排程）。
 - `lib/app/widgets/widget_instance_config.dart`：实例配置与配置会话（读账本列表、保存并校验）。
 - `lib/app/native_widget_preview.dart` + `lib/app/platform_bridge_widget.dart`：应用内预览与通道。
 - 原生：`VeriFinWidget.kt`（Store、三态、渲染、图形、Provider）、`WidgetPreviewBridge.kt`
