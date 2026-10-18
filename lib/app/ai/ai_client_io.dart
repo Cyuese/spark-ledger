@@ -157,7 +157,9 @@ Stream<AiCompletionEvent> aiAgentStream({
         break;
       }
       for (final event in _parseStreamPayload(data)) {
-        if (event is AiCompletionFinished) sawFinish = true;
+        if (event is AiCompletionFinished) {
+          sawFinish = true;
+        }
         yield event;
       }
     }
@@ -249,7 +251,12 @@ Future<HttpClientResponse> _post({
   required Duration responseTimeout,
   bool acceptEventStream = false,
 }) async {
-  final uri = Uri.parse(settings.chatCompletionsUrl);
+  final Uri uri;
+  try {
+    uri = Uri.parse(settings.chatCompletionsUrl);
+  } on FormatException {
+    throw AiException(AiErrorCode.badUrl);
+  }
   final request = await client.openUrl('POST', uri).timeout(responseTimeout);
   final apiKey = settings.apiKey.trim();
   if (apiKey.isNotEmpty) {
@@ -442,7 +449,10 @@ AiException _mapTransportError(Object error) {
   if (error is HttpException) {
     return AiException(AiErrorCode.network, detail: error.message);
   }
-  if (error is FormatException || error is ArgumentError) {
+  if (error is FormatException) {
+    return AiException(AiErrorCode.badResponse);
+  }
+  if (error is ArgumentError) {
     return AiException(AiErrorCode.badUrl);
   }
   return AiException(AiErrorCode.unknown, detail: '$error');

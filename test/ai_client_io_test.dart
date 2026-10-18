@@ -425,4 +425,27 @@ void main() {
     );
     expect(result.content, 'OK');
   });
+
+  test(
+    'invalid UTF-8 response maps to bad response instead of bad URL',
+    () async {
+      final settings = await _serve((request) async {
+        await _requestJson(request);
+        request.response.headers.contentType = ContentType.json;
+        request.response.add(const <int>[0xff, 0xfe, 0xfd]);
+        await request.response.close();
+      });
+
+      await expectLater(
+        aiAgentComplete(settings: settings, messages: messages),
+        throwsA(
+          isA<AiException>().having(
+            (error) => error.code,
+            'code',
+            AiErrorCode.badResponse,
+          ),
+        ),
+      );
+    },
+  );
 }

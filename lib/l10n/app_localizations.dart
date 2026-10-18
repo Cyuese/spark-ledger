@@ -8599,8 +8599,8 @@ abstract class AppLocalizations {
   /// No description provided for @aiCardDebtLine.
   ///
   /// In zh, this message translates to:
-  /// **'{name} 当前欠款 {amount} {currency}'**
-  String aiCardDebtLine(String name, String amount, String currency);
+  /// **'{name} 当前欠款 {amount}'**
+  String aiCardDebtLine(String name, String amount);
 
   /// No description provided for @aiCardAvailableLine.
   ///

@@ -4922,8 +4922,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String aiCardDebtLine(String name, String amount, String currency) {
-    return '$name owes $amount $currency';
+  String aiCardDebtLine(String name, String amount) {
+    return '$name owes $amount';
   }
 
   @override

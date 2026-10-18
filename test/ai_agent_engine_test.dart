@@ -199,6 +199,37 @@ void main() {
     expect(completed.successfulToolCalls, 1);
   });
 
+  test('duplicate provider call ids keep distinct UI step ids', () async {
+    final transport = _ScriptedTransport(<Object>[
+      <AiCompletionEvent>[
+        const AiToolCallDelta(
+          index: 0,
+          id: 'duplicate',
+          name: 'summary',
+          arguments: '{"range":"all"}',
+        ),
+        const AiToolCallDelta(
+          index: 1,
+          id: 'duplicate',
+          name: 'largestTransactions',
+          arguments: '{"range":"all","limit":1}',
+        ),
+        const AiCompletionFinished(AiFinishReason.toolCalls),
+        const AiStreamDone(),
+      ],
+      _answer('完成。'),
+    ]);
+
+    final events = await _run(engine, transport);
+    final ids = events
+        .whereType<AiAgentToolStarted>()
+        .map((event) => event.stepId)
+        .toList();
+
+    expect(ids, <String>['native-0-1', 'native-0-2']);
+    expect(ids.toSet(), hasLength(2));
+  });
+
   test(
     'auto mode falls back only after explicit native protocol rejection',
     () async {

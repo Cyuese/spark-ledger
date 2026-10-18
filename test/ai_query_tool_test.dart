@@ -96,6 +96,7 @@ void main() {
     for (final t in tools) {
       expect(t.name.trim(), isNotEmpty);
       expect(t.description.trim(), isNotEmpty);
+      expect(t.description, isNot(contains('可点击')));
       // 无参工具（账户一览 / 净资产 / 信用卡账单）的参数说明本来就为空。
       if (t.schema.properties.isNotEmpty) {
         expect(t.schema.promptDescription, isNotEmpty);
@@ -466,6 +467,31 @@ void main() {
     // 卡片表格本来就没有币种列，摘要句是这张卡唯一的币种来源；隐藏单位时它也不能写代码。
     expect(result.summary, isNot(contains('CNY')));
     expect(result.summary, contains('300'));
+  });
+
+  test('信用卡摘要跟随 symbol 单位样式', () {
+    const card = Account(
+      id: 'acc',
+      bookId: 'b',
+      name: '信用卡',
+      type: AccountType.creditCard,
+      groupId: null,
+      initialBalance: 0,
+      iconCode: 'bank',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+      creditLimit: 10000,
+    );
+    final ctx = _ctx(
+      <LedgerEntry>[_e(id: 'c', amount: 300, at: DateTime(2026, 6, 6))],
+      accounts: const <Account>[card],
+      balanceOf: (_) => -300,
+      currencyDisplay: MoneyCodeDisplay.symbol,
+    );
+    final result = _tool('creditCardBill').run(ctx, const <String, Object?>{});
+    expect(result.summary, contains('¥'));
+    expect(result.summary, isNot(contains('CNY')));
   });
 
   test('多币种信用卡表格保留币种列，避免金额无法辨认', () {
