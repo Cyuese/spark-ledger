@@ -3214,6 +3214,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatClearConfirm => 'Clear';
 
   @override
+  String get aiChatChooseBook => 'Choose conversation ledger';
+
+  @override
+  String get aiChatClearCurrent => 'Clear chat';
+
+  @override
+  String aiChatCurrentBook(String book) {
+    return 'Current ledger: $book';
+  }
+
+  @override
   String get aiChatUnconfiguredHint =>
       'Configure AI first to start asking about your finances';
 

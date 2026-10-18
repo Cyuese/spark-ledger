@@ -3139,6 +3139,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatClearConfirm => '清空';
 
   @override
+  String get aiChatChooseBook => '选择对话账本';
+
+  @override
+  String get aiChatClearCurrent => '清空对话';
+
+  @override
+  String aiChatCurrentBook(String book) {
+    return '当前账本：$book';
+  }
+
+  @override
   String get aiChatUnconfiguredHint => '先配置 AI，才能开始对话查询账目';
 
   @override

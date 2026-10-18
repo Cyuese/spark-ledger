@@ -5774,6 +5774,24 @@ abstract class AppLocalizations {
   /// **'清空'**
   String get aiChatClearConfirm;
 
+  /// No description provided for @aiChatChooseBook.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择对话账本'**
+  String get aiChatChooseBook;
+
+  /// No description provided for @aiChatClearCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空对话'**
+  String get aiChatClearCurrent;
+
+  /// No description provided for @aiChatCurrentBook.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前账本：{book}'**
+  String aiChatCurrentBook(String book);
+
   /// No description provided for @aiChatUnconfiguredHint.
   ///
   /// In zh, this message translates to:
