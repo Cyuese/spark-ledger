@@ -6,7 +6,7 @@ on:
       - 'v*.*.*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   checks:
@@ -66,9 +66,8 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 固定到真机验收过的引擎版本；两渠道都带 UNIFIED_DESIGN_PREVIEW，
-      # 保证发布包与已评审外观一致（该参数只控制布局密度，与材质无关）。
-      - name: Verify release design flows
+      # 发布包与已评审外观同源，不再需要额外构建参数；先跑设计契约测试。
+      - name: Verify design flows
         run: flutter test test/design_consistency_test.dart test/page_smoke_test.dart test/home_density_test.dart test/anchored_menu_test.dart test/material_stability_test.dart test/navigation_settings_test.dart
 
       - name: Build release APK (github flavor)
@@ -131,6 +130,9 @@ jobs:
     name: GitHub Release
     runs-on: ubuntu-latest
     needs: android
+    permissions:
+      # 只有创建 Release 的 job 需要写权限；构建与校验 job 保持只读。
+      contents: write
     steps:
       # 必须排在下载制品之前：actions/checkout 默认 clean=true，会删除工作区里
       # 未跟踪的文件。放在下载之后会把刚下下来的 APK/AAB 一起清掉，发布出一个

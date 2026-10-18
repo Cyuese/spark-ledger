@@ -119,7 +119,7 @@ void main() {
     test('金额或账户引用不合法时拒绝整批且不写入', () async {
       final controller = await makeController();
       final before = controller.entries.length;
-      final applied = controller.applyImportEntries(
+      final applied = await controller.applyImportEntries(
         entries: <LedgerEntry>[
           LedgerEntry(
             id: 'invalid-import',
@@ -149,7 +149,7 @@ void main() {
         ImportPlatform.csvTemplate,
         _csvBytes(_csv),
       );
-      controller.applyImportEntries(
+      await controller.applyImportEntries(
         entries: plan.entries,
         candidateAccounts: plan.newAccounts,
         candidateCategories: plan.newCategories,
@@ -172,7 +172,7 @@ void main() {
       // 只保留第一笔（引用 测试钱包A / 测试餐饮）。
       final kept = plan.entries.where((e) => e.accountId == walletAId).toList();
       expect(kept, hasLength(1));
-      controller.applyImportEntries(
+      await controller.applyImportEntries(
         entries: kept,
         candidateAccounts: plan.newAccounts,
         candidateCategories: plan.newCategories,
@@ -191,7 +191,7 @@ void main() {
         ImportPlatform.csvTemplate,
         _csvBytes(_tagCsv),
       );
-      controller.applyImportEntries(
+      await controller.applyImportEntries(
         entries: plan.entries,
         candidateAccounts: plan.newAccounts,
         candidateCategories: plan.newCategories,
@@ -233,7 +233,7 @@ void main() {
             ),
           )
           .toList();
-      controller.applyImportEntries(
+      await controller.applyImportEntries(
         entries: remapped,
         candidateAccounts: plan.newAccounts,
         candidateCategories: plan.newCategories,
@@ -253,7 +253,7 @@ void main() {
         ImportPlatform.csvTemplate,
         _csvBytes(csv),
       );
-      controller.applyImportEntries(
+      await controller.applyImportEntries(
         entries: plan.entries,
         candidateAccounts: plan.newAccounts,
         candidateCategories: plan.newCategories,
@@ -534,7 +534,7 @@ void main() {
       );
 
       // 空交易 + 独立账户：applyImportEntries 仍创建账户。
-      controller.applyImportEntries(
+      await controller.applyImportEntries(
         entries: const <LedgerEntry>[],
         candidateAccounts: plan.newAccounts,
         candidateCategories: plan.newCategories,
@@ -558,7 +558,7 @@ void main() {
         candidateCategories: plan.newCategories,
         alwaysCreateAccountIds: plan.standaloneAccountIds,
       );
-      controller.applyImportEntries(
+      await controller.applyImportEntries(
         entries: result.entries,
         candidateAccounts: result.candidateAccounts,
         candidateCategories: result.candidateCategories,

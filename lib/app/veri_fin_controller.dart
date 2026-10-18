@@ -73,7 +73,7 @@ const String _activeBookKey = 'verifin.active_book.v1';
 const String _assetCoverKey = 'verifin.asset_cover.v1';
 const String _hapticsKey = 'verifin.haptics.v1';
 const String _privacyConsentKey = 'verifin.privacy_consent.v1';
-const String _appLockKey = 'verifin.app_lock.v1';
+const String _appLockKey = appLockStorageKey;
 const String _assetViewModeKey = 'verifin.asset_view_mode.v1';
 const String _assetSectionCollapsedKey = 'verifin.asset_section_collapsed.v1';
 const String _assetAccountOrderKey = 'verifin.asset_account_order.v1';
@@ -278,6 +278,8 @@ enum EntryValidationCode {
   /// 交易/退款引用了不属于其账本的标签（标签按账本隔离后的写入守卫）。
   tagOutOfScope,
 }
+
+enum RenameResult { success, invalid, duplicate, persistenceFailure }
 
 sealed class EntrySaveResult {
   const EntrySaveResult();

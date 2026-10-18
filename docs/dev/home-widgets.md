@@ -30,6 +30,10 @@ Veri Fin 提供四个固定模板的 Android 桌面小组件：快速记账（`q
   （预览渲染、实例计数、打开应用）、`WidgetConfigurationActivity.kt`、`QuickWidgetContent.kt`
   （快速记账横条的 RemoteViews 叶子，TextView 自动缩放、保留完整金额）。
 
+启用应用锁时，独立 `WidgetConfigurationActivity` 先读取设备 KV 中的锁配置并显示同一套
+PIN/图案验证页，验证前不加载账本列表或真实预览；原生窗口同时设置 `FLAG_SECURE`。配置损坏时
+按锁定处理，可通过「打开 Veri Fin」回主应用处理。
+
 ## 数据契约（home_widget 共享存储，设备本地、不进备份）
 
 | key | 内容 |
@@ -60,7 +64,7 @@ Veri Fin 提供四个固定模板的 Android 桌面小组件：快速记账（`q
 
 ## 外观与金额口径
 
-- 外观是**实例级**设置：`system`（默认，跟随设备深色模式）/`light`/`dark`。设备级主题推送已删除。
+- 外观是**实例级**设置：`system`（默认，跟随设备深色模式）/`light`/`dark`。
 - 表面色与设计令牌镜像：浅色 `#FFFFFF` + 描边 `#E5E7EB`，深色 `#1A1F27` + 描边 `#30353D`。
 - 金额单位按**实例所属账本**判定：单币种账本 + 「单币种隐藏单位」时省略单位，多币种账本照常显示；
   不再读活动账本的全局闸门。
@@ -75,8 +79,8 @@ Veri Fin 提供四个固定模板的 Android 桌面小组件：快速记账（`q
   （数据变更触发时）→ 连投影都不算；③推送内容与上次完全相同 → 不写共享存储、不刷 Provider、不排闹钟。
 - 冷启动与回前台强制推一次，保证用户之后新添加的实例第一次渲染就能读到数据。
 - 投影是纯函数：一次遍历得到逐日支出与账户余额增量，净资产曲线按「期初余额 + 逐日前缀和」推进，
-  复杂度 `O(交易数 + 账户数 × 天数)`。护栏见 `test/widget_projection_perf_test.dart`
-  （20 账户 × 5000 笔，四模板合计上限 40 ms；旧实现同机 145 ms）。
+  复杂度 `O(交易数 + 账户数 × 天数)`。`test/widget_projection_perf_test.dart`
+  以 20 账户 × 5000 笔数据约束四模板合计投影时间不超过 40 ms。
 - 跨天：Flutter 每次推送用 `HomeWidget.scheduleWidgetUpdates` 重新安排下一次本地午夜，
   插件的 Receiver 负责闹钟、开机与应用更新后的重排；原生渲染按快照日期把「今日支出」直接归零。
 
