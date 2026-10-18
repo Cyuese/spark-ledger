@@ -522,7 +522,12 @@ class _AppLockScreenState extends State<AppLockScreen> {
       return;
     }
     // 顺序不能反：先关锁会让本页在对话框还开着时就被移除。
-    controller.resetAllData();
+    if (!await controller.resetAllData()) {
+      if (mounted) {
+        setState(() => _error = l10n.saveFailed);
+      }
+      return;
+    }
     if (!await controller.disableAppLock()) {
       // 密钥没删掉就解锁，只会在下次回前台再次上锁，而用户仍然进不去。
       if (mounted) {

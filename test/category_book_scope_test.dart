@@ -214,7 +214,7 @@ void main() {
     expect(controller.categoriesForBook(travelBookId), isNotEmpty);
     expect(controller.tagsForBook(travelBookId), isNotEmpty);
 
-    expect(controller.deleteLedgerBook(travelBookId), isTrue);
+    expect(await controller.deleteLedgerBook(travelBookId), isTrue);
     expect(controller.categoriesForBook(travelBookId), isEmpty);
     expect(controller.tagsForBook(travelBookId), isEmpty);
     // 默认账本的分类与标签保持原样。

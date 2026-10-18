@@ -263,6 +263,18 @@ class _LedgerBookRow extends StatelessWidget {
     if (!context.mounted || !confirmed) {
       return;
     }
-    VeriFinScope.of(context).deleteLedgerBook(book.id);
+    final deleted = await VeriFinScope.of(context).deleteLedgerBook(book.id);
+    if (!context.mounted || deleted) {
+      return;
+    }
+    unawaited(
+      VeriFeedbackHost.of(context).showMessage(
+        message: AppLocalizations.of(context).saveFailed,
+        tone: VeriFeedbackTone.error,
+        duration: VeriFeedbackDuration.long,
+        priority: VeriFeedbackPriority.high,
+        dedupeKey: 'ledger-book-delete',
+      ),
+    );
   }
 }

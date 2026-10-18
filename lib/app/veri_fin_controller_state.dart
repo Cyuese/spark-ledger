@@ -1141,13 +1141,6 @@ mixin _ControllerState on ChangeNotifier {
     );
   }
 
-  void _persistExchangeRates() {
-    _trackWrite(
-      _repository.saveExchangeRates(List<ExchangeRate>.of(_exchangeRates)),
-    );
-    _markWidgetProjectionChanged();
-  }
-
   void _persistBudgets() {
     _trackWrite(
       _repository.saveMonthlyBudgets(Map<String, double>.of(_monthlyBudgets)),

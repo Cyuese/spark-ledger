@@ -109,7 +109,7 @@ void main() {
     controller.setAiChatHistory(<Map<String, Object?>>[
       <String, Object?>{'role': 'user', 'content': '记得我'},
     ]);
-    controller.resetAllData();
+    await controller.resetAllData();
     expect(controller.aiChatHistory.length, 1);
     expect(controller.aiChatHistory.first['content'], '记得我');
     controller.dispose();

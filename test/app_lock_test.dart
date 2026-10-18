@@ -165,7 +165,7 @@ void main() {
     test('reset keeps the app lock configured', () async {
       final controller = await makeController();
       await controller.setAppLock(kind: AppLockKind.pin, secret: '135790');
-      controller.resetAllData();
+      await controller.resetAllData();
       expect(controller.appLockEnabled, isTrue);
       expect(controller.verifyAppLock('135790'), isTrue);
     });
