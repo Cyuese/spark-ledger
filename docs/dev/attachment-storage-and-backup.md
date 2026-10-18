@@ -50,7 +50,8 @@ target footprint 268435456, growth limit 268435456
 2. **不按体积拒绝备份**：删除 `MAX_BACKUP_BYTES`、旧版 `maxBackupArchiveBytes`、
    `_maxWebdavDownloadBytes` 等按字节数拒绝的阈值；保留 `maxBackupAttachmentCount` /
    `maxBackupArchiveFileCount`（已从 2000/2048 提到 200000）作为「条目数明显不合理」的
-   结构上限，其余交给流式结构校验与可用磁盘空间检查。
+   结构上限。单条 ZIP 条目另设 64 MiB 解压上限以阻断伪造 header 的 ZIP 炸弹；合法备份的
+   总量仍不设固定上限。
 3. **不丢数据**：存量库内 base64 附件必须完整迁移到文件；迁移可中断、可重试、幂等。
 4. **可观测**：备份、导出、恢复、迁移都有百分比进度，可取消；成功、失败、文件损坏分别有明确提示。
 5. **可校验**：写入后校验完整性，恢复时校验结构，损坏必须在落库前被拦下并报错。
@@ -176,9 +177,10 @@ class NewAttachmentDraft extends AttachmentDraft { final String id; final Uint8L
 
 ### 打包（导出/备份）
 
-保持 **v3 zip 容器形状不变**（`backup.json` + `attachments/<id>`），另外附加校验字段：
+保持 **v3 zip 容器形状不变**（`backup.json` + `attachments/<id>`），并附加实际字节数：
 
-- `backup.json` 的附件项新增 `size` 与 `sha256`；旧版本读取时会忽略未知字段，仍可导入。
+- `backup.json` 的附件项新增 `byteSize`；旧版本读取时会忽略未知字段，仍可导入。
+- 每个附件另有 ZIP CRC-32；导出包整体在写盘后计算 SHA-256，由原生写入端再次计算并比对。
 - 附件条目用 **store**（不压缩，JPEG 已压缩），`backup.json` 用 deflate。
 
 实现走 `archive` 的磁盘流式编码器：`ZipFileEncoder` + `InputFileStream` +
@@ -211,11 +213,12 @@ Android 侧用 `ContentResolver.openInputStream/openOutputStream` 边读边写�
 ### 完整性校验
 
 - 打包时流式计算产物 SHA-256；原生写入时再次流式计算；两侧不一致即判定写坏，报「备份校验失败」。
-- 恢复时校验每个附件的 `size` 与 `sha256`（若备份提供），以及结构完整性（存在 `backup.json`、
-  版本可识别、附件引用可解析）。
-- `archive` 4.x 的 `ZipDecoder(verify: ...)` 校验分支已被注释掉，**不能依赖它做 CRC 校验**，
-  完整性以备份内 `sha256` 为准。
-- zip 炸弹防护改为：逐条目声明尺寸合理性检查 + 可用磁盘空间检查；不再用固定总量上限拒绝合法备份。
+- 恢复时校验 `backup.json` 存在、附件 id/entryId 与重复 id、`byteSize` 和实际解出字节数，
+  以及每条附件的 CRC-32。
+- `archive` 4.x 的 `ZipDecoder(verify: ...)` 校验分支已被注释掉，因此解包层自行比对 CRC；
+  每个条目先检查声明尺寸，再通过限流输出流把实际解压上限硬限制在 64 MiB。
+- 当前没有跨平台的可用磁盘预检；暂存写入失败会在数据库提交前中止，现有账目保持不变。
+  磁盘不足的具体错误由文件 I/O 返回，界面统一提示导入失败。
 
 ### 恢复（导入）流程
 
@@ -232,15 +235,17 @@ Android 侧用 `ContentResolver.openInputStream/openOutputStream` 边读边写�
   `VERIFIN-ENC2\n` + 一行 JSON 参数（`kdf` / `iter` / `salt` / `nonce`）+ `\n`
   + AES-GCM 密文 + 16 字节 MAC；密文里就是上面那个 zip。加解密走
   `cryptography` 的 `encryptStream` / `decryptStream`，按分块处理，不整卷进内存。
-  口令错误或篡改由 GCM 认证失败捕获，映射为可读错误并允许重试。
+  口令错误或篡改由 GCM 认证失败捕获，映射为可读错误并允许重试。解密先写同目录
+  `.partial`，认证成功后才原子改名为最终 zip；失败或取消会同时清理两者。
 - **旧格式**：现有 JSON 信封继续可解密导入（口令仍在设备 KV）；该路径仍需整份读入
   内存，作为历史格式记入 [已知限制 L8](known-limitations.md)。
 - 文件名后缀用 `.verifin`：备份目录列表、文件选择器与 WebDAV 列表的过滤规则同步包含它。
 
 ### WebDAV
 
-上传改为把缓存 zip 文件流式写入请求体；下载改为流式写入缓存文件。移除
-`_maxWebdavDownloadBytes` 的固定上限，改由磁盘空间与结构校验保护。
+上传把缓存 zip 文件流式写入请求体，下载流式写入缓存文件；手动上传/下载接受取消回调，
+在分块之间检查并在断开时强制关闭客户端。上传等待响应与下载空闲读取使用超时；下载失败
+或取消会删除本次缓存文件。移除 `_maxWebdavDownloadBytes` 的固定上限，由结构校验保护。
 
 ### 旧格式兼容
 
@@ -346,7 +351,7 @@ class BackupProgress { final BackupPhase phase; final int done; final int total;
 | 迁移完成后的列回收（去掉 `data_url` + `VACUUM`） | 已实现 |
 | 恢复入口改为自带 SAF 选择器（不再经 `file_selector`） | 已实现 |
 | 进度条、取消、成功/失败/损坏提示 | 已实现 |
-| WebDAV 流式上传/下载 | 已实现 |
+| WebDAV 流式上传/下载（可取消、响应/空闲超时、失败清理） | 已实现 |
 | Android 真机验收（debug APK，模拟器） | 已执行：见下方「真机验收记录」 |
 | CI 构建 | 已通过（v1.19.6 的 APK/AAB 由 CI 构建并创建预发布） |
 | release APK 真机验收 | 待维护者执行（release 包只含 arm64-v8a，本地 x86_64 模拟器装不上） |

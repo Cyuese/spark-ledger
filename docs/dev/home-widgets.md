@@ -30,6 +30,10 @@ Veri Fin 提供四个固定模板的 Android 桌面小组件：快速记账（`q
   （预览渲染、实例计数、打开应用）、`WidgetConfigurationActivity.kt`、`QuickWidgetContent.kt`
   （快速记账横条的 RemoteViews 叶子，TextView 自动缩放、保留完整金额）。
 
+启用应用锁时，独立 `WidgetConfigurationActivity` 先读取设备 KV 中的锁配置并显示同一套
+PIN/图案验证页，验证前不加载账本列表或真实预览；原生窗口同时设置 `FLAG_SECURE`。配置损坏时
+按锁定处理，可通过「打开 Veri Fin」回主应用处理。
+
 ## 数据契约（home_widget 共享存储，设备本地、不进备份）
 
 | key | 内容 |

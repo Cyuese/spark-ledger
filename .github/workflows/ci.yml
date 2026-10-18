@@ -62,5 +62,4 @@ jobs:
 # 放行 /dev/kvm 后模拟器约 32 秒即可启动，但会在 Gradle 构建期间被系统杀掉
 # （device offline / emulator not found）；换镜像、加内存、预构建 APK 三次调整均未通过，
 # 故撤掉，避免长期红着的无效任务。需要时按 docs/dev/android-development.md 手动执行：
-#   flutter test integration_test/ -d <device> --flavor diagnostic \
-#     --dart-define=UNIFIED_DESIGN_PREVIEW=true
+#   flutter test integration_test/ -d <device> --flavor diagnostic
