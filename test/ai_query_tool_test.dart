@@ -191,6 +191,22 @@ void main() {
     expect(d.entryIds, <String>['a']);
   });
 
+  test('queryTransactions 不指定类型时排除退款', () {
+    final ctx = _ctx(<LedgerEntry>[
+      _e(id: 'expense', amount: 100),
+      _e(id: 'income', type: EntryType.income, amount: 200),
+      _e(id: 'refund', type: EntryType.refund, amount: 50),
+    ]);
+
+    final result = _tool(
+      'queryTransactions',
+    ).run(ctx, const <String, Object?>{});
+    final display = result.display! as AiTransactionsDisplay;
+
+    expect(display.entryIds, containsAll(<String>['expense', 'income']));
+    expect(display.entryIds, isNot(contains('refund')));
+  });
+
   test('queryTransactions 转账摘要展示两端金额而不是本位币 0', () {
     const cny = Account(
       id: 'cny',

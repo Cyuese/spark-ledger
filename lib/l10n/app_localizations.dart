@@ -5786,6 +5786,18 @@ abstract class AppLocalizations {
   /// **'清空对话'**
   String get aiChatClearCurrent;
 
+  /// No description provided for @aiSendQuestion.
+  ///
+  /// In zh, this message translates to:
+  /// **'发送'**
+  String get aiSendQuestion;
+
+  /// No description provided for @aiStopGenerating.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止生成'**
+  String get aiStopGenerating;
+
   /// No description provided for @aiChatCurrentBook.
   ///
   /// In zh, this message translates to:
@@ -5797,6 +5809,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'先配置 AI，才能开始对话查询账目'**
   String get aiChatUnconfiguredHint;
+
+  /// No description provided for @aiChatReadOnlyNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'只读查询账目，不会修改任何数据'**
+  String get aiChatReadOnlyNote;
+
+  /// No description provided for @aiChatPrivateNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'问题只发送到你配置的 AI 端点'**
+  String get aiChatPrivateNote;
+
+  /// No description provided for @aiChatLedgerScopeNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换账本只影响之后的问题'**
+  String get aiChatLedgerScopeNote;
 
   /// No description provided for @aiChatGoConfigure.
   ///
@@ -7525,6 +7555,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'无法解析服务器响应'**
   String get aiErrBadResponse;
+
+  /// No description provided for @aiErrResponseTooLarge.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 返回内容过长，已停止处理'**
+  String get aiErrResponseTooLarge;
 
   /// No description provided for @aiErrModelListUnsupported.
   ///

@@ -159,6 +159,10 @@ class _RankingCard extends StatelessWidget {
               values: values,
               xLabels: labels,
               yLabels: _yLabels(context, values),
+              color: veriSemantic(
+                context,
+                display.isExpense ? veriExpense : veriIncome,
+              ),
               tooltipOf: (index) => ChartTooltip(
                 title: labels[index],
                 lines: <ChartTooltipLine>[
@@ -237,7 +241,7 @@ class _TrendCard extends StatelessWidget {
             height: 172,
             child: InteractiveTrendChart(
               color: display.isExpense
-                  ? Theme.of(context).colorScheme.primary
+                  ? veriSemantic(context, veriExpense)
                   : veriSemantic(context, veriIncome),
               values: display.values,
               xLabels: display.labels,
@@ -328,7 +332,7 @@ class _TableCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final headerBg = isDark ? Colors.white10 : veriSurfaceAltLight;
+    final headerBg = isDark ? veriSurfaceAltDark : veriSurfaceAltLight;
     final divider = theme.colorScheme.onSurface.withValues(alpha: 0.07);
     final headerStyle = theme.textTheme.bodyMedium?.copyWith(
       fontWeight: FontWeight.w700,

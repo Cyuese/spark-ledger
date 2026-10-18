@@ -144,9 +144,14 @@ class AiStatItem {
 
 /// 排行 / 占比（分类、标签），渲染为柱状图 + 明细。
 class AiRankingDisplay extends AiResultDisplay {
-  const AiRankingDisplay({required this.title, required this.rows});
+  const AiRankingDisplay({
+    required this.title,
+    required this.rows,
+    this.isExpense = false,
+  });
   final String title;
   final List<AiRankingRow> rows;
+  final bool isExpense;
 }
 
 class AiRankingRow {
@@ -505,6 +510,7 @@ class CategoryRankingTool extends AiQueryTool {
               ),
             )
             .toList(),
+        isExpense: type == EntryType.expense,
       ),
     );
   }
@@ -576,6 +582,7 @@ class TagRankingTool extends AiQueryTool {
               ),
             )
             .toList(),
+        isExpense: type == EntryType.expense,
       ),
     );
   }
@@ -631,10 +638,11 @@ class QueryTransactionsTool extends AiQueryTool {
     final l10n = ctx.l10n;
     final window = _window(args, ctx.now, fallback: null);
     final typeStr = _str(args, 'type');
-    final types = <EntryType>{
-      if (typeStr == 'expense') EntryType.expense,
-      if (typeStr == 'income') EntryType.income,
-      if (typeStr == 'transfer') EntryType.transfer,
+    final types = switch (typeStr) {
+      'expense' => <EntryType>{EntryType.expense},
+      'income' => <EntryType>{EntryType.income},
+      'transfer' => <EntryType>{EntryType.transfer},
+      _ => <EntryType>{EntryType.expense, EntryType.income, EntryType.transfer},
     };
     final sortBy = _str(args, 'sortBy') == 'amount'
         ? LedgerSortField.amount
