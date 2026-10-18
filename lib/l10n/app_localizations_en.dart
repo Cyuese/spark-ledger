@@ -3139,9 +3139,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiProviderDescCustom => 'Any OpenAI-compatible endpoint';
 
   @override
-  String get aiProviderBaseUrlLocked => 'The endpoint is fixed for this preset';
-
-  @override
   String get aiProviderCustomBaseUrlHint =>
       'Enter through /v1, or a full /chat/completions URL';
 
@@ -3154,10 +3151,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiProviderApiKeyLabel => 'API Key (optional)';
-
-  @override
-  String get aiProviderApiKeyHint =>
-      'Can be empty; some providers will return an auth error';
 
   @override
   String get aiProviderModelLabel => 'Model';
@@ -3207,10 +3200,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatClearHistory => 'Clear chat history';
 
   @override
-  String get aiChatHistoryLocalOnly =>
-      'Chats stay on this device and are not included in backups';
-
-  @override
   String get aiChatClearMessage =>
       'This deletes the current conversation and cannot be undone.';
 
@@ -3257,10 +3246,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiConfigCleared => 'Configuration cleared';
-
-  @override
-  String get aiSettingsIntro =>
-      'Choose a preset provider or use a custom OpenAI-compatible endpoint. The API key can be empty. Your input is only sent to the service configured here; the config stays on this device and is not backed up.';
 
   @override
   String get aiBaseUrlLabel => 'Request URL (base)';
@@ -3322,10 +3307,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiActualProtocolAuto => 'Active protocol: automatic detection';
-
-  @override
-  String get aiCapabilityProbeNotice =>
-      'Capability detection sends a few small test requests without any financial data.';
 
   @override
   String get aiStepRunning => 'Running';
@@ -3452,10 +3433,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiPrivacyNotice =>
       'AI features send your text and the read-only financial summaries needed to answer your questions to your configured third-party service. The configuration and full ledger remain on this device.';
-
-  @override
-  String get aiOptionalNotice =>
-      'AI is optional — recording, reports and backups all work without it.';
 
   @override
   String get aiEntryTitle => 'AI entry';

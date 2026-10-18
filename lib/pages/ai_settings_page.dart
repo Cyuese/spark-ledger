@@ -38,6 +38,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
   final TextEditingController _apiKeyController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
   final TextEditingController _modelListUrlController = TextEditingController();
+  final TextEditingController _toolModeController = TextEditingController();
   bool _seeded = false;
   late AiSettings _initialSettings;
   bool _obscureKey = true;
@@ -62,6 +63,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       _modelListUrlController.text = settings.modelListUrl;
       _providerId = aiProviderPresetFor(settings.providerId).id;
       _toolCallMode = settings.toolCallMode;
+      _toolModeController.text = _toolModeLabel(settings.toolCallMode);
       final cached = VeriFinScope.of(context).aiCapabilityProfile;
       if (cached?.matches(settings) == true) {
         _detectedProfile = cached;
@@ -77,6 +79,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     _apiKeyController.dispose();
     _modelController.dispose();
     _modelListUrlController.dispose();
+    _toolModeController.dispose();
     super.dispose();
   }
 
@@ -154,6 +157,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     _fetchToken += 1;
     _fetchingModels = false;
     _toolCallMode = AiToolCallMode.auto;
+    _toolModeController.text = _toolModeLabel(AiToolCallMode.auto);
     _detectedProfile = null;
     _initialSettings = const AiSettings();
     FocusScope.of(context).unfocus();
@@ -186,6 +190,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       _modelController.clear();
       _modelListUrlController.clear();
       _toolCallMode = AiToolCallMode.auto;
+      _toolModeController.text = _toolModeLabel(AiToolCallMode.auto);
       _detectedProfile = null;
       _statusIsError = false;
       _statusText = null;
@@ -366,6 +371,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
   void _selectToolCallMode(AiToolCallMode selected) {
     setState(() {
       _toolCallMode = selected;
+      _toolModeController.text = _toolModeLabel(selected);
       final profile = _detectedProfile;
       if (profile != null) {
         _statusText = _capabilityStatus(profile, _current());
@@ -417,6 +423,44 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     });
   }
 
+  InputDecoration _configInputDecoration({
+    required String label,
+    String? hint,
+    String? helper,
+    Widget? suffixIcon,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(veriRadiusMd),
+      borderSide: BorderSide(color: isDark ? Colors.white24 : veriLine),
+    );
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      helperText: helper,
+      helperMaxLines: 2,
+      filled: true,
+      fillColor: isDark ? veriSurfaceAltDark : veriSurfaceAltLight,
+      contentPadding: EdgeInsets.fromLTRB(
+        14,
+        14,
+        suffixIcon == null ? 14 : 6,
+        14,
+      ),
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.4),
+      ),
+      disabledBorder: border.copyWith(
+        borderSide: BorderSide(
+          color: (isDark ? Colors.white12 : veriLine).withValues(alpha: 0.7),
+        ),
+      ),
+      suffixIcon: suffixIcon,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -456,17 +500,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
                           : null,
                     ),
                   ],
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    l10n.aiSettingsIntro,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: muted,
-                      height: 1.5,
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 12),
                 Semantics(
@@ -541,15 +574,12 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
                             : null,
                         keyboardType: TextInputType.url,
                         autocorrect: false,
-                        decoration: InputDecoration(
-                          labelText: l10n.aiBaseUrlLabel,
-                          hintText: _provider.isCustom
-                              ? l10n.aiBaseUrlHint
-                              : null,
-                          helperText: _provider.isCustom
+                        decoration: _configInputDecoration(
+                          label: l10n.aiBaseUrlLabel,
+                          hint: _provider.isCustom ? l10n.aiBaseUrlHint : null,
+                          helper: _provider.isCustom
                               ? l10n.aiProviderCustomBaseUrlHint
-                              : l10n.aiProviderBaseUrlLocked,
-                          helperMaxLines: 2,
+                              : null,
                           suffixIcon: _provider.isCustom
                               ? null
                               : const Icon(Icons.lock_outline),
@@ -562,10 +592,9 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
                           onChanged: (_) => _onConfigChanged(),
                           keyboardType: TextInputType.url,
                           autocorrect: false,
-                          decoration: InputDecoration(
-                            labelText: l10n.aiProviderModelListUrlLabel,
-                            helperText: l10n.aiProviderModelListUrlHint,
-                            helperMaxLines: 2,
+                          decoration: _configInputDecoration(
+                            label: l10n.aiProviderModelListUrlLabel,
+                            helper: l10n.aiProviderModelListUrlHint,
                           ),
                         ),
                       ],
@@ -576,10 +605,8 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
                         obscureText: _obscureKey,
                         autocorrect: false,
                         enableSuggestions: false,
-                        decoration: InputDecoration(
-                          labelText: l10n.aiProviderApiKeyLabel,
-                          helperText: l10n.aiProviderApiKeyHint,
-                          helperMaxLines: 2,
+                        decoration: _configInputDecoration(
+                          label: l10n.aiProviderApiKeyLabel,
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureKey
@@ -596,9 +623,9 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
                         controller: _modelController,
                         onChanged: (_) => _onConfigChanged(),
                         autocorrect: false,
-                        decoration: InputDecoration(
-                          labelText: l10n.aiProviderModelLabel,
-                          hintText: l10n.aiProviderModelHint,
+                        decoration: _configInputDecoration(
+                          label: l10n.aiProviderModelLabel,
+                          hint: l10n.aiProviderModelHint,
                           suffixIcon: IconButton(
                             tooltip: _fetchingModels
                                 ? l10n.aiProviderFetchingModels
@@ -630,25 +657,17 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
                         },
                         onSelected: _selectToolCallMode,
                         semanticLabel: l10n.aiToolModeTitle,
-                        builder: (context, openMenu, menuOpen) => Material(
-                          color: Colors.transparent,
-                          child: ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(l10n.aiToolModeTitle),
-                            subtitle: Text(
-                              '${_toolModeLabel(_toolCallMode)} · '
-                              '${_toolModeHint(_toolCallMode)}',
-                            ),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: _testing ? null : openMenu,
+                        builder: (context, openMenu, menuOpen) => TextField(
+                          key: const Key('ai_tool_mode_field'),
+                          controller: _toolModeController,
+                          readOnly: true,
+                          showCursor: false,
+                          enableInteractiveSelection: false,
+                          onTap: _testing ? null : openMenu,
+                          decoration: _configInputDecoration(
+                            label: l10n.aiToolModeTitle,
+                            suffixIcon: const Icon(Icons.expand_more),
                           ),
-                        ),
-                      ),
-                      Text(
-                        l10n.aiCapabilityProbeNotice,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: muted,
-                          height: 1.4,
                         ),
                       ),
                       if (_statusText != null) ...<Widget>[
@@ -688,35 +707,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
                                 )
                               : const Icon(Icons.wifi_tethering, size: 18),
                           label: Text(l10n.aiDetectCapabilities),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(
-                      alpha: 0.4,
-                    ),
-                    borderRadius: BorderRadius.circular(veriRadiusMd),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Icon(Icons.privacy_tip_outlined, size: 16, color: muted),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${l10n.aiOptionalNotice}\n\n${l10n.aiPrivacyNotice}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: muted,
-                            height: 1.5,
-                          ),
                         ),
                       ),
                     ],
