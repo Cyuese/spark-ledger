@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_lock_session.dart';
 import '../app/models.dart';
 import '../app/feedback.dart';
 import '../app/platform_bridge.dart';
@@ -14,7 +15,6 @@ import '../app/root_navigation_styles.dart';
 import '../app/veri_fin_scope.dart';
 import '../l10n/app_localizations.dart';
 import 'ai_entry_sheet.dart';
-import 'app_lock_gate.dart';
 import 'assets_pages.dart';
 import 'capture_entry.dart';
 import 'entry_detail_page.dart';
