@@ -66,10 +66,6 @@ class _AiChatPageState extends State<AiChatPage> {
   final ScrollController _scroll = ScrollController();
   final AiAgentEngine _engine = AiAgentEngine(tools: buildAiQueryTools());
   bool _streaming = false;
-  bool _restored = false;
-
-  /// 落库的历史消息上限，防止 KV 无限增长。
-  static const int _historyLimit = 40;
 
   @override
   void initState() {
@@ -81,40 +77,6 @@ class _AiChatPageState extends State<AiChatPage> {
   void _onInputChanged() => setState(() {});
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_restored) {
-      return;
-    }
-    _restored = true;
-    // 重开时恢复历史文字与结果卡片（displays 已序列化落库）。
-    for (final message in VeriFinScope.of(context).aiChatHistory) {
-      final rawDisplays = message['displays'];
-      final displays = <AiResultDisplay>[
-        if (rawDisplays is List)
-          for (final d in rawDisplays.whereType<Map>())
-            if (aiResultDisplayFromJson(Map<String, Object?>.from(d))
-                case final AiResultDisplay display)
-              display,
-      ];
-      final rawSteps = message['steps'];
-      final steps = <AiAgentStep>[
-        if (rawSteps is List)
-          for (final rawStep in rawSteps)
-            if (AiAgentStep.fromJson(rawStep) case final AiAgentStep step) step,
-      ];
-      _messages.add(
-        _ChatMessage(
-          role: message['role'] == 'user' ? _Role.user : _Role.assistant,
-          text: message['content']?.toString() ?? '',
-          displays: displays,
-          steps: steps,
-        ),
-      );
-    }
-  }
-
-  @override
   void dispose() {
     _input.removeListener(_onInputChanged);
     _input.dispose();
@@ -123,44 +85,6 @@ class _AiChatPageState extends State<AiChatPage> {
   }
 
   bool get _canSend => !_streaming && _input.text.trim().isNotEmpty;
-
-  /// 把当前对话落库（可见文本、完成步骤和结果卡片）。
-  void _saveHistory() {
-    final all = <Map<String, Object?>>[
-      for (final m in _messages)
-        if (m.status != _MsgStatus.streaming &&
-            (m.text.trim().isNotEmpty ||
-                m.displays.isNotEmpty ||
-                m.steps.any(
-                  (step) =>
-                      step.status == AiAgentStepStatus.succeeded ||
-                      step.status == AiAgentStepStatus.failed,
-                )))
-          <String, Object?>{
-            'role': m.role == _Role.user ? 'user' : 'assistant',
-            'content': m.text.trim(),
-            if (m.displays.isNotEmpty)
-              'displays': m.displays.map((d) => d.toJson()).toList(),
-            if (m.steps.any(
-              (step) =>
-                  step.status == AiAgentStepStatus.succeeded ||
-                  step.status == AiAgentStepStatus.failed,
-            ))
-              'steps': m.steps
-                  .where(
-                    (step) =>
-                        step.status == AiAgentStepStatus.succeeded ||
-                        step.status == AiAgentStepStatus.failed,
-                  )
-                  .map((step) => step.toJson())
-                  .toList(),
-          },
-    ];
-    final trimmed = all.length > _historyLimit
-        ? all.sublist(all.length - _historyLimit)
-        : all;
-    VeriFinScope.of(context).setAiChatHistory(trimmed);
-  }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -344,7 +268,6 @@ class _AiChatPageState extends State<AiChatPage> {
             assistant.errorText = l10n.aiErrUnknown;
           }
         });
-        _saveHistory();
       }
     }
   }
@@ -385,7 +308,6 @@ class _AiChatPageState extends State<AiChatPage> {
     );
     if (confirmed && mounted) {
       setState(_messages.clear);
-      VeriFinScope.of(context).clearAiChatHistory();
     }
   }
 

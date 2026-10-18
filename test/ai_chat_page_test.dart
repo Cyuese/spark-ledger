@@ -201,81 +201,66 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('重开时从历史还原结果卡片（图表不再丢失）', (tester) async {
+  testWidgets('离开并重开页面后不恢复旧对话', (tester) async {
     final controller = await makeController()
       ..setAiSettings(
         const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
-      )
-      ..setAiChatHistory(<Map<String, Object?>>[
-        <String, Object?>{'role': 'user', 'content': '分类排行'},
-        <String, Object?>{
-          'role': 'assistant',
-          'content': '这是排行',
-          'displays': <Map<String, Object?>>[
-            <String, Object?>{
-              'kind': 'ranking',
-              'title': '本月 · 支出分类排行',
-              'rows': <Map<String, Object?>>[
-                <String, Object?>{
-                  'label': '餐饮',
-                  'amount': 400,
-                  'percent': 0.8,
-                  'count': 3,
-                },
-              ],
-            },
-          ],
-          'steps': <Map<String, Object?>>[
-            <String, Object?>{
-              'id': 'call_1',
-              'tool': 'categoryRanking',
-              'status': 'succeeded',
-              'args': <String, Object?>{
-                'range': 'thisMonth',
-                'type': 'expense',
-              },
-              'summary': '得到 1 项结果',
-            },
-          ],
-        },
-      ]);
+      );
+    final transport = _scripted(<List<AiCompletionEvent>>[
+      _answer('这次回答只在当前页面保留'),
+    ]);
 
     await tester.pumpWidget(
       VeriFinScope(
         controller: controller,
-        child: zhMaterialApp(home: const AiChatPage()),
+        child: zhMaterialApp(home: AiChatPage(debugTransport: transport)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '分类排行');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('这次回答只在当前页面保留'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: AiChatPage(debugTransport: transport)),
       ),
     );
     await tester.pumpAndSettle();
 
-    // 历史文字与还原的结果卡片都在。
-    expect(find.text('分类排行'), findsOneWidget);
-    expect(find.textContaining('支出分类排行'), findsOneWidget);
-    expect(find.text('餐饮'), findsWidgets);
-    expect(find.text('查询分类排行'), findsOneWidget);
-    controller.dispose();
+    expect(find.text('分类排行'), findsNothing);
+    expect(find.text('这次回答只在当前页面保留'), findsNothing);
+    addTearDown(controller.dispose);
   });
 
   testWidgets('Markdown 远程图片不会触发网络加载', (tester) async {
     final controller = await makeController()
       ..setAiSettings(
         const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
-      )
-      ..setAiChatHistory(<Map<String, Object?>>[
-        <String, Object?>{'role': 'user', 'content': '看看图片'},
-        <String, Object?>{
-          'role': 'assistant',
-          'content': '![remote](https://example.com/tracker.png)',
-        },
-      ]);
+      );
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
       VeriFinScope(
         controller: controller,
-        child: zhMaterialApp(home: const AiChatPage()),
+        child: zhMaterialApp(
+          home: AiChatPage(
+            debugTransport: _scripted(<List<AiCompletionEvent>>[
+              _answer('![remote](https://example.com/tracker.png)'),
+            ]),
+          ),
+        ),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '看看图片');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('出于隐私考虑，未加载图片'), findsOneWidget);
