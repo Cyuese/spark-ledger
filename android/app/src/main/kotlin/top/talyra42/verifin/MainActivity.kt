@@ -49,6 +49,9 @@ class MainActivity : FlutterFragmentActivity() {
         rememberWidgetRouteIntent(intent)
         rememberCaptureIntent(intent)
         super.onCreate(savedInstanceState)
+        if (AppLockPreferences.isEnabled(this)) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

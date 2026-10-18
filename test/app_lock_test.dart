@@ -44,6 +44,44 @@ void main() {
     controller.dispose();
   });
 
+  testWidgets('外部入口等待锁屏解除后才继续', (tester) async {
+    final controller = await makeController();
+    await controller.setAppLock(kind: AppLockKind.pin, secret: '123456');
+    late BuildContext childContext;
+    var resumed = false;
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(
+          home: AppLockGate(
+            child: Builder(
+              builder: (context) {
+                childContext = context;
+                return const Scaffold(body: Text('locked-content'));
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final waiting = AppLockSessionScope.waitUntilUnlocked(childContext).then((
+      _,
+    ) {
+      resumed = true;
+    });
+    await tester.pump();
+    expect(AppLockSessionScope.isLocked(childContext), isTrue);
+    expect(resumed, isFalse);
+
+    await _enterPin(tester, '123456');
+    expect(AppLockSessionScope.isLocked(childContext), isFalse);
+    await waiting;
+    expect(resumed, isTrue);
+    controller.dispose();
+  });
+
   testWidgets('锁屏「忘记密码」两步确认后清空数据并关闭应用锁', (tester) async {
     final store = LocalKeyValueStore();
     final controller = await makeController(store);
@@ -100,6 +138,13 @@ void main() {
       const config = AppLockConfig.none();
       expect(config.enabled, isFalse);
       expect(config.verify('123456'), isFalse);
+    });
+
+    test('corrupt storage fails closed for standalone entry points', () {
+      final config = AppLockConfig.fromStorage('{not-json');
+      expect(config.enabled, isTrue);
+      expect(config.verify('123456'), isFalse);
+      expect(AppLockConfig.fromStorage(null).enabled, isFalse);
     });
   });
 
