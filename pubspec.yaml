@@ -122,6 +122,7 @@ flutter:
 
   assets:
     - assets/account_icons/
+    - assets/ai_providers/
     - assets/credits/
     - assets/import_icons/
 
