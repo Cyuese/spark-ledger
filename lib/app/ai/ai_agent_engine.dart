@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'ai_agent_event.dart';
 import 'ai_agent_message.dart';
@@ -44,7 +45,12 @@ class AiAgentEngine {
     this.maxPriorMessages = 12,
     this.maxPriorCharacters = 12000,
     this.maxToolSummaryCharacters = 4000,
-    this.maxAnswerCharacters = 200000,
+    this.maxAnswerCharacters = 50000,
+    this.maxUserInputCharacters = 8000,
+    this.maxToolArgumentsCharacters = 32000,
+    this.maxToolArgumentsTotalCharacters = 64000,
+    this.maxReasoningCharacters = 64000,
+    this.maxTurnRequestCharacters = 256000,
   });
 
   final List<AiQueryTool> tools;
@@ -54,6 +60,11 @@ class AiAgentEngine {
   final int maxPriorCharacters;
   final int maxToolSummaryCharacters;
   final int maxAnswerCharacters;
+  final int maxUserInputCharacters;
+  final int maxToolArgumentsCharacters;
+  final int maxToolArgumentsTotalCharacters;
+  final int maxReasoningCharacters;
+  final int maxTurnRequestCharacters;
 
   Stream<AiAgentEvent> run({
     required AiToolCallMode mode,
@@ -64,6 +75,12 @@ class AiAgentEngine {
     required String userInput,
     AiAgentCancellation? cancellation,
   }) async* {
+    if (userInput.length > maxUserInputCharacters) {
+      yield AiAgentFailed(
+        AiException(AiErrorCode.requestTooLarge, detail: 'user input too long'),
+      );
+      return;
+    }
     final initialProtocol = mode == AiToolCallMode.prompt
         ? _AgentProtocol.prompt
         : _AgentProtocol.native;
@@ -92,7 +109,10 @@ class AiAgentEngine {
       }
     }
 
-    yield const AiAgentRetrying(attempt: 1, reason: 'protocolFallback');
+    yield const AiAgentRetrying(
+      attempt: 1,
+      reason: AiAgentRetryReason.protocolFallback,
+    );
     try {
       await for (final event in _runProtocol(
         protocol: _AgentProtocol.prompt,
@@ -131,12 +151,16 @@ class AiAgentEngine {
       AiTextMessage.user(userInput),
     ];
     var toolCallCount = 0;
+    var successfulToolCallCount = 0;
     var retryUsed = false;
     var answerCharacters = 0;
+    var toolArgumentCharacters = 0;
+    var reasoningCharacters = 0;
     var anyToolExecuted = false;
 
     for (var round = 0; round <= maxToolRounds; round += 1) {
       if (cancellation?.isCancelled == true) return;
+      _ensureRequestFits(messages, nativeDefinitions);
       final accumulator = AiNativeCompletionAccumulator();
       var visibleAnswerWritten = false;
       late AiCompletionResult response;
@@ -189,7 +213,10 @@ class AiAgentEngine {
           rethrow;
         }
         retryUsed = true;
-        yield const AiAgentRetrying(attempt: 1, reason: 'network');
+        yield const AiAgentRetrying(
+          attempt: 1,
+          reason: AiAgentRetryReason.network,
+        );
         response = await completeTransport(messages, nativeDefinitions);
         if (cancellation?.isCancelled == true) return;
       }
@@ -200,7 +227,10 @@ class AiAgentEngine {
           !visibleAnswerWritten &&
           !anyToolExecuted) {
         retryUsed = true;
-        yield const AiAgentRetrying(attempt: 1, reason: 'upstreamResource');
+        yield const AiAgentRetrying(
+          attempt: 1,
+          reason: AiAgentRetryReason.upstreamResource,
+        );
         response = await completeTransport(messages, nativeDefinitions);
         if (cancellation?.isCancelled == true) return;
       }
@@ -212,6 +242,13 @@ class AiAgentEngine {
         _checkAnswerLength(answerCharacters);
         visibleAnswerWritten = true;
         yield AiAgentAnswerDelta(response.content);
+      }
+      reasoningCharacters += response.reasoningContent.length;
+      if (reasoningCharacters > maxReasoningCharacters) {
+        throw AiException(
+          AiErrorCode.responseTooLarge,
+          detail: 'reasoning too large',
+        );
       }
 
       if (protocol == _AgentProtocol.native && response.toolCalls.isNotEmpty) {
@@ -236,7 +273,12 @@ class AiAgentEngine {
             toolCalls: response.toolCalls,
           ),
         );
-        for (final call in response.toolCalls) {
+        for (
+          var callIndex = 0;
+          callIndex < response.toolCalls.length;
+          callIndex += 1
+        ) {
+          final call = response.toolCalls[callIndex];
           if (cancellation?.isCancelled == true) return;
           toolCallCount += 1;
           if (toolCallCount > maxToolCalls) {
@@ -245,10 +287,16 @@ class AiAgentEngine {
               detail: 'tool call limit exceeded',
             );
           }
+          toolArgumentCharacters += call.arguments.length;
+          _checkToolArgumentSize(
+            call.arguments.length,
+            cumulative: toolArgumentCharacters,
+          );
           final decodedArguments = call.decodeArguments();
           final arguments = decodedArguments ?? <String, Object?>{};
+          final stepId = 'native-$round-${callIndex + 1}';
           yield AiAgentToolStarted(
-            stepId: call.id,
+            stepId: stepId,
             toolName: call.name,
             arguments: arguments,
           );
@@ -261,7 +309,7 @@ class AiAgentEngine {
           anyToolExecuted = true;
           if (execution.result == null) {
             yield AiAgentToolFailed(
-              stepId: call.id,
+              stepId: stepId,
               toolName: call.name,
               arguments: arguments,
               reason: execution.failureReason!,
@@ -273,8 +321,9 @@ class AiAgentEngine {
               ),
             );
           } else {
+            successfulToolCallCount += 1;
             yield AiAgentToolCompleted(
-              stepId: call.id,
+              stepId: stepId,
               toolName: call.name,
               arguments: arguments,
               result: execution.result!,
@@ -292,6 +341,12 @@ class AiAgentEngine {
       }
 
       if (protocol == _AgentProtocol.prompt) {
+        if (response.content.length > maxAnswerCharacters) {
+          throw AiException(
+            AiErrorCode.responseTooLarge,
+            detail: 'prompt response too large',
+          );
+        }
         final parsed = parsePromptResponse(
           response.content,
           knownTools: tools.map((tool) => tool.name).toSet(),
@@ -305,6 +360,12 @@ class AiAgentEngine {
             );
           }
           final stepId = 'prompt-$round-$toolCallCount';
+          final argumentText = jsonEncode(parsed.arguments);
+          toolArgumentCharacters += argumentText.length;
+          _checkToolArgumentSize(
+            argumentText.length,
+            cumulative: toolArgumentCharacters,
+          );
           yield AiAgentToolStarted(
             stepId: stepId,
             toolName: parsed.name,
@@ -326,6 +387,7 @@ class AiAgentEngine {
               ),
             );
           } else {
+            successfulToolCallCount += 1;
             yield AiAgentToolCompleted(
               stepId: stepId,
               toolName: parsed.name,
@@ -344,7 +406,12 @@ class AiAgentEngine {
         }
         if (parsed is AiPromptAnswer) {
           if (cancellation?.isCancelled == true) return;
-          yield* _answerEvents(parsed.text, response.finishReason);
+          yield* _answerEvents(
+            parsed.text,
+            response.finishReason,
+            attemptedToolCalls: toolCallCount,
+            successfulToolCalls: successfulToolCallCount,
+          );
           return;
         }
       } else {
@@ -367,7 +434,11 @@ class AiAgentEngine {
           );
           return;
         }
-        yield AiAgentCompleted(answer);
+        yield AiAgentCompleted(
+          answer,
+          attemptedToolCalls: toolCallCount,
+          successfulToolCalls: successfulToolCallCount,
+        );
         return;
       }
     }
@@ -382,10 +453,39 @@ class AiAgentEngine {
     }
   }
 
+  void _checkToolArgumentSize(int characters, {required int cumulative}) {
+    if (characters > maxToolArgumentsCharacters ||
+        cumulative > maxToolArgumentsTotalCharacters) {
+      throw AiException(
+        AiErrorCode.requestTooLarge,
+        detail: 'tool arguments too large',
+      );
+    }
+  }
+
+  void _ensureRequestFits(
+    List<AiAgentMessage> messages,
+    List<Map<String, Object?>> tools,
+  ) {
+    final messageCharacters = messages.fold<int>(
+      0,
+      (sum, message) => sum + jsonEncode(message.toJson()).length,
+    );
+    final toolCharacters = tools.isEmpty ? 0 : jsonEncode(tools).length;
+    if (messageCharacters + toolCharacters > maxTurnRequestCharacters) {
+      throw AiException(
+        AiErrorCode.requestTooLarge,
+        detail: 'agent request too large',
+      );
+    }
+  }
+
   Stream<AiAgentEvent> _answerEvents(
     String rawAnswer,
-    AiFinishReason finishReason,
-  ) async* {
+    AiFinishReason finishReason, {
+    required int attemptedToolCalls,
+    required int successfulToolCalls,
+  }) async* {
     final answer = rawAnswer.trim();
     if (answer.isEmpty) {
       throw AiException(AiErrorCode.badResponse, detail: 'empty answer');
@@ -409,7 +509,11 @@ class AiAgentEngine {
       );
       return;
     }
-    yield AiAgentCompleted(answer);
+    yield AiAgentCompleted(
+      answer,
+      attemptedToolCalls: attemptedToolCalls,
+      successfulToolCalls: successfulToolCalls,
+    );
   }
 
   List<AiTextMessage> _boundedPrior(List<AiTextMessage> priorMessages) {
@@ -440,15 +544,18 @@ class AiAgentEngine {
         modelMessage: '工具不存在，请选择已提供的工具。',
       );
     }
-    if (tool.schema.validate(arguments).isNotEmpty) {
-      return const _ToolExecution.failed(
+    final validation = tool.schema.validateArguments(arguments);
+    if (!validation.isValid) {
+      return _ToolExecution.failed(
         reason: 'invalidArguments',
-        modelMessage: '工具参数无效，请修正参数后重试。',
+        modelMessage:
+            '工具参数无效：${validation.issues.take(5).join('；')}。'
+            '请修正参数后重试。',
       );
     }
     final stopwatch = Stopwatch()..start();
     try {
-      final result = tool.run(context, arguments);
+      final result = tool.run(context, validation.normalizedArguments);
       stopwatch.stop();
       return _ToolExecution.succeeded(result, stopwatch.elapsed);
     } catch (_) {

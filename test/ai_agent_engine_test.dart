@@ -7,30 +7,31 @@ import 'package:verifin/app/ai/ai_agent_event.dart';
 import 'package:verifin/app/ai/ai_agent_message.dart';
 import 'package:verifin/app/ai/ai_completion_event.dart';
 import 'package:verifin/app/ai/ai_error.dart';
+import 'package:verifin/app/ai/ai_ledger_snapshot.dart';
 import 'package:verifin/app/ai/ai_query_tool.dart';
 import 'package:verifin/app/ai/ai_settings.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/l10n/app_localizations.dart';
 
 AiToolContext _context() {
+  final entries = <LedgerEntry>[
+    LedgerEntry(
+      id: 'e1',
+      bookId: 'b',
+      type: EntryType.expense,
+      amount: 300,
+      categoryId: 'food',
+      accountId: 'acc',
+      note: '午餐',
+      occurredAt: DateTime(2026, 6, 10),
+    ),
+  ];
   return AiToolContext(
-    entries: <LedgerEntry>[
-      LedgerEntry(
-        id: 'e1',
-        bookId: 'b',
-        type: EntryType.expense,
-        amount: 300,
-        categoryId: 'food',
-        accountId: 'acc',
-        note: '午餐',
-        occurredAt: DateTime(2026, 6, 10),
-      ),
-    ],
-    accounts: const <Account>[],
-    categories: const <Category>[],
-    tags: const <Tag>[],
-    balanceOf: (_) => 0,
-    baseCurrencyCode: 'CNY',
+    ledger: AiLedgerSnapshot.forTesting(
+      bookId: 'b',
+      entries: entries,
+      balanceOf: (_) => 0,
+    ),
     now: DateTime(2026, 6, 20),
     l10n: lookupAppLocalizations(const Locale('zh')),
   );
@@ -74,6 +75,7 @@ Future<List<AiAgentEvent>> _run(
   AiToolCallMode mode = AiToolCallMode.native,
   AiAgentCompleteTransport? completeTransport,
   List<AiTextMessage> priorMessages = const <AiTextMessage>[],
+  String userInput = '本月花了多少',
 }) {
   return engine
       .run(
@@ -82,7 +84,7 @@ Future<List<AiAgentEvent>> _run(
         completeTransport: completeTransport,
         context: _context(),
         priorMessages: priorMessages,
-        userInput: '本月花了多少',
+        userInput: userInput,
       )
       .toList();
 }
@@ -124,10 +126,11 @@ void main() {
       expect(events.whereType<AiAgentToolStarted>(), hasLength(2));
       expect(events.whereType<AiAgentToolCompleted>(), hasLength(2));
       expect(events.whereType<AiAgentToolFailed>(), isEmpty);
-      expect(
-        events.whereType<AiAgentCompleted>().single.answer,
-        '本月支出 300 元，最大一笔也是 300 元。',
-      );
+      final completed = events.whereType<AiAgentCompleted>().single;
+      expect(completed.answer, '本月支出 300 元，最大一笔也是 300 元。');
+      expect(completed.attemptedToolCalls, 2);
+      expect(completed.successfulToolCalls, 2);
+      expect(completed.usedLedgerData, isTrue);
       expect(
         events.whereType<AiAgentAnswerDelta>().single.text,
         isNot(contains('private reasoning')),
@@ -160,7 +163,10 @@ void main() {
     final events = await _run(engine, transport, mode: AiToolCallMode.prompt);
 
     expect(events.whereType<AiAgentToolCompleted>(), hasLength(1));
-    expect(events.whereType<AiAgentCompleted>().single.answer, '本月支出 300 元。');
+    final completed = events.whereType<AiAgentCompleted>().single;
+    expect(completed.answer, '本月支出 300 元。');
+    expect(completed.attemptedToolCalls, 1);
+    expect(completed.successfulToolCalls, 1);
     final visible = events
         .whereType<AiAgentAnswerDelta>()
         .map((event) => event.text)
@@ -168,6 +174,60 @@ void main() {
     expect(visible, isNot(contains('{"tool"')));
     expect(visible, isNot(contains('<think>')));
     expect(transport.toolDefinitions.every((tools) => tools.isEmpty), isTrue);
+  });
+
+  test('native tool arguments are normalized before execution', () async {
+    final transport = _ScriptedTransport(<Object>[
+      <AiCompletionEvent>[
+        const AiToolCallDelta(
+          index: 0,
+          id: 'call_normalized',
+          name: 'largestTransactions',
+          arguments: '{"range":"all","limit":"1"}',
+        ),
+        const AiCompletionFinished(AiFinishReason.toolCalls),
+        const AiStreamDone(),
+      ],
+      _answer('已找到一笔。'),
+    ]);
+
+    final events = await _run(engine, transport);
+
+    expect(events.whereType<AiAgentToolCompleted>(), hasLength(1));
+    expect(events.whereType<AiAgentToolFailed>(), isEmpty);
+    final completed = events.whereType<AiAgentCompleted>().single;
+    expect(completed.successfulToolCalls, 1);
+  });
+
+  test('duplicate provider call ids keep distinct UI step ids', () async {
+    final transport = _ScriptedTransport(<Object>[
+      <AiCompletionEvent>[
+        const AiToolCallDelta(
+          index: 0,
+          id: 'duplicate',
+          name: 'summary',
+          arguments: '{"range":"all"}',
+        ),
+        const AiToolCallDelta(
+          index: 1,
+          id: 'duplicate',
+          name: 'largestTransactions',
+          arguments: '{"range":"all","limit":1}',
+        ),
+        const AiCompletionFinished(AiFinishReason.toolCalls),
+        const AiStreamDone(),
+      ],
+      _answer('完成。'),
+    ]);
+
+    final events = await _run(engine, transport);
+    final ids = events
+        .whereType<AiAgentToolStarted>()
+        .map((event) => event.stepId)
+        .toList();
+
+    expect(ids, <String>['native-0-1', 'native-0-2']);
+    expect(ids.toSet(), hasLength(2));
   });
 
   test(
@@ -182,7 +242,7 @@ void main() {
 
       expect(
         events.whereType<AiAgentRetrying>().single.reason,
-        'protocolFallback',
+        AiAgentRetryReason.protocolFallback,
       );
       expect(events.whereType<AiAgentCompleted>().single.answer, '兼容模式回答。');
       expect(transport.toolDefinitions[0], isNotEmpty);
@@ -223,7 +283,10 @@ void main() {
         },
       );
 
-      expect(events.whereType<AiAgentRetrying>().single.reason, 'network');
+      expect(
+        events.whereType<AiAgentRetrying>().single.reason,
+        AiAgentRetryReason.network,
+      );
       expect(events.whereType<AiAgentCompleted>().single.answer, '重试成功。');
       expect(completeCalls, 1);
     },
@@ -378,5 +441,80 @@ void main() {
 
     final failure = events.whereType<AiAgentFailed>().single;
     expect((failure.error as AiException).code, AiErrorCode.responseTooLarge);
+  });
+
+  test('user input limit fails before contacting the transport', () async {
+    final limited = AiAgentEngine(
+      tools: buildAiQueryTools(),
+      maxUserInputCharacters: 3,
+    );
+    var contacted = false;
+    final events = await limited
+        .run(
+          mode: AiToolCallMode.native,
+          streamTransport: (_, _) async* {
+            contacted = true;
+            yield const AiContentDelta('不应触达');
+            yield const AiCompletionFinished(AiFinishReason.stop);
+            yield const AiStreamDone();
+          },
+          context: _context(),
+          priorMessages: const <AiTextMessage>[],
+          userInput: 'too long',
+        )
+        .toList();
+
+    expect(contacted, isFalse);
+    final failure = events.whereType<AiAgentFailed>().single;
+    expect((failure.error as AiException).code, AiErrorCode.requestTooLarge);
+  });
+
+  test('oversized tool arguments fail with a request limit error', () async {
+    final limited = AiAgentEngine(
+      tools: buildAiQueryTools(),
+      maxToolArgumentsCharacters: 5,
+    );
+    final transport = _ScriptedTransport(<Object>[
+      <AiCompletionEvent>[
+        const AiToolCallDelta(
+          index: 0,
+          id: 'call',
+          name: 'summary',
+          arguments: '{"range":"thisMonth"}',
+        ),
+        const AiCompletionFinished(AiFinishReason.toolCalls),
+        const AiStreamDone(),
+      ],
+    ]);
+
+    final events = await _run(limited, transport);
+
+    final failure = events.whereType<AiAgentFailed>().single;
+    expect((failure.error as AiException).code, AiErrorCode.requestTooLarge);
+    expect(events.whereType<AiAgentToolStarted>(), isEmpty);
+  });
+
+  test('turn request character limit fails before transport', () async {
+    final limited = AiAgentEngine(
+      tools: buildAiQueryTools(),
+      maxTurnRequestCharacters: 1,
+    );
+    var contacted = false;
+    final events = await limited
+        .run(
+          mode: AiToolCallMode.native,
+          streamTransport: (_, _) async* {
+            contacted = true;
+            yield const AiCompletionFinished(AiFinishReason.stop);
+          },
+          context: _context(),
+          priorMessages: const <AiTextMessage>[],
+          userInput: 'q',
+        )
+        .toList();
+
+    expect(contacted, isFalse);
+    final failure = events.whereType<AiAgentFailed>().single;
+    expect((failure.error as AiException).code, AiErrorCode.requestTooLarge);
   });
 }

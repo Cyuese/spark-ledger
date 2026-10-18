@@ -16,71 +16,45 @@ import '../currency_math.dart';
 import '../../l10n/app_localizations.dart';
 import '../ledger_math.dart';
 import '../report_analysis.dart';
+import 'ai_ledger_snapshot.dart';
 import 'ai_tool_schema.dart';
 import 'ledger_query.dart';
 
-/// 预算查询的只读回调集合。预算键月、单期覆盖等口径留在 controller，
-/// 工具只消费结果，避免两处各写一套 key 规则。
-class AiBudgetContext {
-  const AiBudgetContext({
-    required this.keyMonthOf,
-    required this.windowOf,
-    required this.monthlyBudgetOf,
-    required this.categoryBudgetOf,
-  });
-
-  /// 某日期所属预算期的键月。
-  final DateTime Function(DateTime date) keyMonthOf;
-
-  /// 某键月对应的预算窗口。
-  final DateWindow Function(DateTime keyMonth) windowOf;
-
-  /// 某键月的账本总预算。
-  final double Function(DateTime keyMonth) monthlyBudgetOf;
-
-  /// 某键月某分类的预算（单期覆盖优先，否则默认值）。
-  final double Function(DateTime keyMonth, String categoryId) categoryBudgetOf;
-}
-
-/// 工具执行的只读数据快照。均为「当前活动账本」范围（分类 / 标签为全局），由上层从
-/// controller 组装后传入，工具内不再触达 controller，保持纯粹可测。
+/// 工具执行的只读数据快照。
+///
+/// 账本、交易、账户、分类、标签、汇率、余额和预算全部来自发送时冻结的
+/// [AiLedgerSnapshot]；工具内不再触达 Controller，也不持有可写回调。
 class AiToolContext {
   const AiToolContext({
-    required this.entries,
-    required this.accounts,
-    required this.categories,
-    required this.tags,
-    required this.balanceOf,
-    required this.baseCurrencyCode,
+    required this.ledger,
     required this.now,
     required this.l10n,
-    this.exchangeRates = const <ExchangeRate>[],
-    this.bookId = '',
-    this.budget,
     this.currencyDisplay = MoneyCodeDisplay.code,
   });
+
+  final AiLedgerSnapshot ledger;
 
   /// 当前语言的文案：卡片标题、统计项标签、表头与回喂模型的 summary 都用它解析。
   /// 工具层没有 [BuildContext]，由上层传入。
   final AppLocalizations l10n;
 
   /// 当前账本交易（时间倒序或任意序均可，工具自行排序）。
-  final List<LedgerEntry> entries;
+  List<LedgerEntry> get entries => ledger.entries;
 
   /// 当前账本账户。
-  final List<Account> accounts;
+  List<Account> get accounts => ledger.accounts;
 
   /// 当前账本的分类。
-  final List<Category> categories;
+  List<Category> get categories => ledger.categories;
 
   /// 当前账本的标签。
-  final List<Tag> tags;
+  List<Tag> get tags => ledger.tags;
 
   /// 账户当前余额查询（含初始余额与全部交易累积）。
-  final double Function(Account account) balanceOf;
+  double balanceOf(Account account) => ledger.balanceOf(account);
 
   /// 统计、筛选与工具回传金额使用的当前账本本位币。
-  final String baseCurrencyCode;
+  String get baseCurrencyCode => ledger.baseCurrencyCode;
 
   /// summary 与卡片里金额的货币标识显示方式，由上层按当前偏好解析后传入。
   ///
@@ -94,13 +68,13 @@ class AiToolContext {
   final MoneyCodeDisplay currencyDisplay;
 
   /// 当前账本本地汇率快照；只用于转账等非收支记录的只读本位币比较。
-  final List<ExchangeRate> exchangeRates;
+  List<ExchangeRate> get exchangeRates => ledger.exchangeRates;
 
   /// 当前账本 id：汇率按账本隔离，折算账户余额时需要它定位汇率记录。
-  final String bookId;
+  String get bookId => ledger.bookId;
 
-  /// 预算查询回调；未注入时 `budgetStatus` 工具会说明「没有预算数据」。
-  final AiBudgetContext? budget;
+  /// 预算只读快照；未注入时 `budgetStatus` 工具会说明「没有预算数据」。
+  AiBudgetSnapshot? get budget => ledger.budget;
 
   /// 当前时间（相对时间窗如「本月」的基准）。
   final DateTime now;
@@ -183,11 +157,26 @@ class AiTrendDisplay extends AiResultDisplay {
   final bool isExpense;
 }
 
-/// 一组具体交易，渲染为**可点击**的交易列表（点击进详情页）。
+/// 一组具体交易，渲染为只读交易列表。
 class AiTransactionsDisplay extends AiResultDisplay {
-  const AiTransactionsDisplay({required this.title, required this.entryIds});
+  AiTransactionsDisplay({
+    required this.title,
+    required Iterable<LedgerEntry> entries,
+    required Iterable<Account> accounts,
+    required Iterable<Category> categories,
+    required Iterable<Tag> tags,
+  }) : entries = List<LedgerEntry>.unmodifiable(entries),
+       accounts = List<Account>.unmodifiable(accounts),
+       categories = List<Category>.unmodifiable(categories),
+       tags = List<Tag>.unmodifiable(tags);
+
   final String title;
-  final List<String> entryIds;
+  final List<LedgerEntry> entries;
+  final List<Account> accounts;
+  final List<Category> categories;
+  final List<Tag> tags;
+
+  List<String> get entryIds => entries.map((entry) => entry.id).toList();
 }
 
 /// 通用表格（模型自定义多列数据时）。
@@ -588,7 +577,7 @@ class TagRankingTool extends AiQueryTool {
   }
 }
 
-/// 交易筛选：按类型 / 时间 / 金额区间 / 关键词等条件查具体交易，返回可点击列表。
+/// 交易筛选：按类型 / 时间 / 金额区间 / 关键词等条件查具体交易，返回只读列表。
 class QueryTransactionsTool extends AiQueryTool {
   const QueryTransactionsTool();
 
@@ -596,7 +585,7 @@ class QueryTransactionsTool extends AiQueryTool {
   String get name => 'queryTransactions';
 
   @override
-  String get description => '按条件筛选具体交易并列出（可点击查看）。用于「最近某类花费」「含某关键词的交易」等。';
+  String get description => '按条件筛选具体交易并以只读列表列出。用于「最近某类花费」「含某关键词的交易」等。';
 
   @override
   AiToolSchema get schema => const AiToolSchema(
@@ -670,12 +659,10 @@ class QueryTransactionsTool extends AiQueryTool {
       if (entry.type != EntryType.transfer) {
         return _baseMoney(ctx, entry.netBaseAmount);
       }
-      final from = ctx.accounts
-          .where((account) => account.id == entry.accountId)
-          .firstOrNull;
-      final to = ctx.accounts
-          .where((account) => account.id == entry.toAccountId)
-          .firstOrNull;
+      final from = ctx.ledger.accountById(entry.accountId);
+      final to = entry.toAccountId == null
+          ? null
+          : ctx.ledger.accountById(entry.toAccountId!);
       final fromCode = from?.currencyCode ?? entry.currencyCode;
       final fromAmount = entry.accountAmount ?? entry.amount;
       final fromText = formatMoney(
@@ -711,7 +698,10 @@ class QueryTransactionsTool extends AiQueryTool {
       summary: summaryText,
       display: AiTransactionsDisplay(
         title: l10n.aiTitleTransactions(results.length),
-        entryIds: results.map((e) => e.id).toList(),
+        entries: results,
+        accounts: ctx.accounts,
+        categories: ctx.categories,
+        tags: ctx.tags,
       ),
     );
   }
@@ -794,7 +784,10 @@ class LargestTransactionsTool extends AiQueryTool {
           typeLabel,
           results.length,
         ),
-        entryIds: results.map((e) => e.id).toList(),
+        entries: results,
+        accounts: ctx.accounts,
+        categories: ctx.categories,
+        tags: ctx.tags,
       ),
     );
   }
@@ -1121,25 +1114,27 @@ class CreditCardBillTool extends AiQueryTool {
             : formatCurrencyNumber(available, card.currencyCode),
         bill == null ? '—' : formatCurrencyNumber(bill, card.currencyCode),
       ]);
+      final usedText = formatMoney(
+        used,
+        card.currencyCode,
+        display: ctx.currencyDisplay,
+      );
+      final availableText = available == null
+          ? null
+          : formatMoney(
+              available,
+              card.currencyCode,
+              display: ctx.currencyDisplay,
+            );
+      final billText = bill == null
+          ? null
+          : formatMoney(bill, card.currencyCode, display: ctx.currencyDisplay);
       parts.add(
-        l10n.aiCardDebtLine(
-              card.name,
-              formatCurrencyNumber(used, card.currencyCode),
-              // 单币种账本不留币种代码；这里的空串会自然充当后半句之间的分隔空格。
-              ctx.currencyDisplay == MoneyCodeDisplay.none
-                  ? ''
-                  : card.currencyCode,
-            ) +
-            (available == null
+        l10n.aiCardDebtLine(card.name, usedText) +
+            (availableText == null
                 ? ''
-                : l10n.aiCardAvailableLine(
-                    formatCurrencyNumber(available, card.currencyCode),
-                  )) +
-            (bill == null
-                ? ''
-                : l10n.aiCardBillLine(
-                    formatCurrencyNumber(bill, card.currencyCode),
-                  )) +
+                : l10n.aiCardAvailableLine(availableText)) +
+            (billText == null ? '' : l10n.aiCardBillLine(billText)) +
             (card.dueDay == null
                 ? ''
                 : l10n.aiCardDueLine(

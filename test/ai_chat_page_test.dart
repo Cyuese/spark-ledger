@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:verifin/app/ai/ai_agent_engine.dart';
 import 'package:verifin/app/ai/ai_completion_event.dart';
 import 'package:verifin/app/ai/ai_error.dart';
@@ -93,6 +94,27 @@ void main() {
     expect(find.text('AI 设置'), findsOneWidget);
   });
 
+  testWidgets('Composer 输入限制为 8000 字符', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: const AiChatPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'a' * 8001);
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller?.text.length, 8000);
+  });
+
   testWidgets('底部输入区为单块 Composer，账本与发送位于同一操作行', (tester) async {
     tester.view.physicalSize = const Size(393, 852);
     tester.view.devicePixelRatio = 1;
@@ -170,16 +192,48 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
     await tester.pump();
     await _pumpAsync(tester);
+    await _pumpAsync(tester);
 
     // 用户气泡
     expect(find.text('本月花了多少'), findsOneWidget);
     // summary 工具的结果卡（标题含「收支汇总」）
     expect(find.textContaining('收支汇总'), findsWidgets);
     expect(find.text('查询收支汇总'), findsOneWidget);
+    expect(find.byKey(const Key('ai_answer_provenance')), findsOneWidget);
+    expect(find.text('基于账本查询 · 1 次'), findsOneWidget);
     expect(find.textContaining('{"tool"'), findsNothing);
     // 统计卡里的净额/支出行
     expect(find.text('支出'), findsWidgets);
     controller.dispose();
+  });
+
+  testWidgets('零工具金额回答显示未查询账本警告', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(
+          home: AiChatPage(
+            debugTransport: _scripted(<List<AiCompletionEvent>>[
+              _answer('本月支出 1200 元。'),
+            ]),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '本月花了多少');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
+    await tester.pump();
+    await _pumpAsync(tester);
+
+    expect(find.text('未查询账本，请勿据此判断账目'), findsOneWidget);
   });
 
   testWidgets('对话账本按页面选择，不改变全局活动账本', (tester) async {
@@ -324,6 +378,10 @@ void main() {
     await tester.tap(find.text('不可点击午餐'));
     await tester.pumpAndSettle();
     expect(find.byType(TransactionDetailPage), findsNothing);
+
+    await controller.deleteEntries(<String>{'readonly-entry'});
+    await tester.pumpAndSettle();
+    expect(find.text('不可点击午餐'), findsOneWidget);
   });
 
   testWidgets('清空聊天记录', (tester) async {
@@ -431,8 +489,9 @@ void main() {
 
     expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
     stream.add(const AiContentDelta('已经收到的正文'));
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
     expect(find.text('已经收到的正文'), findsOneWidget);
+    expect(find.byType(GptMarkdown), findsNothing);
 
     await tester.tap(find.byIcon(Icons.stop_rounded));
     await tester.pump();
@@ -440,6 +499,7 @@ void main() {
     expect(find.byIcon(Icons.arrow_upward_rounded), findsOneWidget);
     expect(find.byIcon(Icons.stop_rounded), findsNothing);
     expect(find.text('已经收到的正文'), findsOneWidget);
+    expect(find.byType(GptMarkdown), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
     unawaited(stream.close());
