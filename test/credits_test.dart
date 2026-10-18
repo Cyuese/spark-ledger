@@ -69,13 +69,19 @@ void main() {
   });
 
   group('名单分组', () {
-    testWidgets('Rise0223 使用随包发布的头像资源', (tester) async {
-      final supporter = creditsSupporters.singleWhere(
-        (supporter) => supporter.name == 'Rise0223',
-      );
-      expect(supporter.avatarAsset, 'assets/credits/rise0223.png');
-      final avatar = await rootBundle.load(supporter.avatarAsset!);
-      expect(avatar.lengthInBytes, greaterThan(0));
+    testWidgets('提供真实头像的支持者使用随包发布的头像资源', (tester) async {
+      const avatars = <String, String>{
+        'Rise0223': 'assets/credits/rise0223.png',
+        '懒得不想玩': 'assets/credits/landebuxiangwan.jpg',
+      };
+      for (final entry in avatars.entries) {
+        final supporter = creditsSupporters.singleWhere(
+          (supporter) => supporter.name == entry.key,
+        );
+        expect(supporter.avatarAsset, entry.value);
+        final avatar = await rootBundle.load(supporter.avatarAsset!);
+        expect(avatar.lengthInBytes, greaterThan(0));
+      }
     });
 
     test('默认组不产生组标题，且保持传入顺序', () {
