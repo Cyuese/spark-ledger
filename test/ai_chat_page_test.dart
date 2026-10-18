@@ -378,6 +378,10 @@ void main() {
     await tester.tap(find.text('不可点击午餐'));
     await tester.pumpAndSettle();
     expect(find.byType(TransactionDetailPage), findsNothing);
+
+    await controller.deleteEntries(<String>{'readonly-entry'});
+    await tester.pumpAndSettle();
+    expect(find.text('不可点击午餐'), findsOneWidget);
   });
 
   testWidgets('清空聊天记录', (tester) async {

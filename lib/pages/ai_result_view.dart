@@ -8,8 +8,7 @@ import '../app/chart_painters.dart';
 import '../app/common_widgets.dart';
 import '../app/currency_math.dart';
 import '../app/ledger_math.dart';
-import '../app/models.dart';
-import '../app/veri_fin_scope.dart';
+import '../app/models.dart' show MoneyCodeDisplay;
 import '../l10n/app_localizations.dart';
 
 /// 把一条 [AiResultDisplay] 渲染成卡片。
@@ -17,13 +16,11 @@ class AiResultView extends StatelessWidget {
   const AiResultView({
     super.key,
     required this.display,
-    required this.bookId,
     required this.baseCurrencyCode,
     required this.moneyCodeDisplay,
   });
 
   final AiResultDisplay display;
-  final String bookId;
   final String baseCurrencyCode;
   final MoneyCodeDisplay moneyCodeDisplay;
 
@@ -43,7 +40,6 @@ class AiResultView extends StatelessWidget {
       ),
       final AiTransactionsDisplay d => _TransactionsCard(
         d,
-        bookId: bookId,
         baseCurrencyCode: baseCurrencyCode,
         moneyCodeDisplay: moneyCodeDisplay,
       ),
@@ -332,25 +328,16 @@ class _TrendCard extends StatelessWidget {
 class _TransactionsCard extends StatelessWidget {
   const _TransactionsCard(
     this.display, {
-    required this.bookId,
     required this.baseCurrencyCode,
     required this.moneyCodeDisplay,
   });
   final AiTransactionsDisplay display;
-  final String bookId;
   final String baseCurrencyCode;
   final MoneyCodeDisplay moneyCodeDisplay;
 
   @override
   Widget build(BuildContext context) {
-    final controller = VeriFinScope.of(context);
-    final byId = <String, LedgerEntry>{
-      for (final entry in controller.entriesForBook(bookId)) entry.id: entry,
-    };
-    final entries = display.entryIds
-        .map((id) => byId[id])
-        .whereType<LedgerEntry>()
-        .toList();
+    final entries = display.entries;
     if (entries.isEmpty) {
       return VeriCard(
         child: Column(
@@ -384,9 +371,9 @@ class _TransactionsCard extends StatelessWidget {
         ),
         TransactionListCard(
           entries: entries,
-          accounts: controller.accountsForBook(bookId),
-          categories: controller.categoriesForBook(bookId),
-          tags: controller.tagsForBook(bookId),
+          accounts: display.accounts,
+          categories: display.categories,
+          tags: display.tags,
           baseCurrencyCode: baseCurrencyCode,
           moneyDisplay: moneyCodeDisplay,
         ),

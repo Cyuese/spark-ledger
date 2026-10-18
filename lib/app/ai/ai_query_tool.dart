@@ -159,9 +159,24 @@ class AiTrendDisplay extends AiResultDisplay {
 
 /// 一组具体交易，渲染为只读交易列表。
 class AiTransactionsDisplay extends AiResultDisplay {
-  const AiTransactionsDisplay({required this.title, required this.entryIds});
+  AiTransactionsDisplay({
+    required this.title,
+    required Iterable<LedgerEntry> entries,
+    required Iterable<Account> accounts,
+    required Iterable<Category> categories,
+    required Iterable<Tag> tags,
+  }) : entries = List<LedgerEntry>.unmodifiable(entries),
+       accounts = List<Account>.unmodifiable(accounts),
+       categories = List<Category>.unmodifiable(categories),
+       tags = List<Tag>.unmodifiable(tags);
+
   final String title;
-  final List<String> entryIds;
+  final List<LedgerEntry> entries;
+  final List<Account> accounts;
+  final List<Category> categories;
+  final List<Tag> tags;
+
+  List<String> get entryIds => entries.map((entry) => entry.id).toList();
 }
 
 /// 通用表格（模型自定义多列数据时）。
@@ -683,7 +698,10 @@ class QueryTransactionsTool extends AiQueryTool {
       summary: summaryText,
       display: AiTransactionsDisplay(
         title: l10n.aiTitleTransactions(results.length),
-        entryIds: results.map((e) => e.id).toList(),
+        entries: results,
+        accounts: ctx.accounts,
+        categories: ctx.categories,
+        tags: ctx.tags,
       ),
     );
   }
@@ -766,7 +784,10 @@ class LargestTransactionsTool extends AiQueryTool {
           typeLabel,
           results.length,
         ),
-        entryIds: results.map((e) => e.id).toList(),
+        entries: results,
+        accounts: ctx.accounts,
+        categories: ctx.categories,
+        tags: ctx.tags,
       ),
     );
   }

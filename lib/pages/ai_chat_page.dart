@@ -910,7 +910,6 @@ class _MessageView extends StatelessWidget {
           for (final display in message.displays) ...<Widget>[
             AiResultView(
               display: display,
-              bookId: message.bookId,
               baseCurrencyCode: message.baseCurrencyCode,
               moneyCodeDisplay: message.moneyCodeDisplay,
             ),
