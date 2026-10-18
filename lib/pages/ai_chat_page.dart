@@ -17,6 +17,7 @@ import '../app/ai/ai_capabilities.dart';
 import '../app/ai/ai_client.dart';
 import '../app/ai/ai_query_tool.dart';
 import '../app/ai/ai_settings.dart';
+import '../app/ai/ai_streaming_text_buffer.dart';
 import '../app/ai/ai_tool_presentation.dart';
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
@@ -86,7 +87,9 @@ class _AiChatPageState extends State<AiChatPage> {
   String? _selectedBookId;
   _ChatMessage? _activeAssistant;
   AiAgentCancellation? _activeCancellation;
+  AiStreamingTextBuffer? _activeStreamBuffer;
   int _requestSerial = 0;
+  bool _scrollScheduled = false;
   bool _streaming = false;
 
   @override
@@ -111,6 +114,7 @@ class _AiChatPageState extends State<AiChatPage> {
   void dispose() {
     _requestSerial += 1;
     _activeCancellation?.cancel();
+    _activeStreamBuffer?.dispose();
     _input.removeListener(_onInputChanged);
     _inputFocus.removeListener(_onInputFocusChanged);
     _inputFocus.dispose();
@@ -135,9 +139,15 @@ class _AiChatPageState extends State<AiChatPage> {
     setState(() => _selectedBookId = bookId);
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool force = false}) {
+    if (_scrollScheduled) return;
+    _scrollScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollScheduled = false;
       if (_scroll.hasClients) {
+        final distance =
+            _scroll.position.maxScrollExtent - _scroll.position.pixels;
+        if (!force && distance > 96) return;
         _scroll.animateTo(
           _scroll.position.maxScrollExtent,
           duration: const Duration(milliseconds: 200),
@@ -208,6 +218,14 @@ class _AiChatPageState extends State<AiChatPage> {
     final requestId = ++_requestSerial;
     final cancellation = AiAgentCancellation();
     _activeCancellation = cancellation;
+    final streamBuffer = AiStreamingTextBuffer(
+      onFlush: (chunk) {
+        if (!mounted || requestId != _requestSerial) return;
+        setState(() => assistant.text += chunk);
+        _scrollToBottom();
+      },
+    );
+    _activeStreamBuffer = streamBuffer;
     setState(() {
       _input.clear();
       _selectedBookId = book.id;
@@ -225,7 +243,7 @@ class _AiChatPageState extends State<AiChatPage> {
       _streaming = true;
     });
     _activeAssistant = assistant;
-    _scrollToBottom();
+    _scrollToBottom(force: true);
 
     _engine
         .run(
@@ -242,6 +260,11 @@ class _AiChatPageState extends State<AiChatPage> {
             if (!mounted || requestId != _requestSerial) {
               return;
             }
+            if (event is AiAgentAnswerDelta) {
+              streamBuffer.add(event.text);
+              return;
+            }
+            streamBuffer.flush();
             setState(() {
               if (event is AiAgentFailed) {
                 _finishRetrySteps(assistant, succeeded: false);
@@ -302,8 +325,8 @@ class _AiChatPageState extends State<AiChatPage> {
                       summary: e.reason,
                     ),
                   );
-                case final AiAgentAnswerDelta e:
-                  assistant.text += e.text;
+                case AiAgentAnswerDelta():
+                  break;
                 case final AiAgentCompleted e:
                   if (assistant.text.trim().isEmpty) {
                     assistant.text = e.answer;
@@ -338,6 +361,8 @@ class _AiChatPageState extends State<AiChatPage> {
             if (!mounted || requestId != _requestSerial) {
               return;
             }
+            streamBuffer.flush();
+            streamBuffer.dispose();
             setState(() {
               _finishRetrySteps(assistant, succeeded: false);
               assistant.status = _MsgStatus.error;
@@ -352,6 +377,7 @@ class _AiChatPageState extends State<AiChatPage> {
               _streaming = false;
               _activeAssistant = null;
               _activeCancellation = null;
+              _activeStreamBuffer = null;
             });
             scope.logger?.error('AI Agent 回答失败', source: 'ai', error: error);
             _scrollToBottom();
@@ -360,10 +386,13 @@ class _AiChatPageState extends State<AiChatPage> {
             if (!mounted || requestId != _requestSerial) {
               return;
             }
+            streamBuffer.flush();
+            streamBuffer.dispose();
             setState(() {
               _streaming = false;
               _activeAssistant = null;
               _activeCancellation = null;
+              _activeStreamBuffer = null;
               if (assistant.status == _MsgStatus.streaming) {
                 assistant.status = _MsgStatus.done;
               }
@@ -375,6 +404,9 @@ class _AiChatPageState extends State<AiChatPage> {
 
   void _stopGeneration() {
     final assistant = _activeAssistant;
+    _activeStreamBuffer?.flush();
+    _activeStreamBuffer?.dispose();
+    _activeStreamBuffer = null;
     _requestSerial += 1;
     _activeAssistant = null;
     _activeCancellation?.cancel();
@@ -883,17 +915,27 @@ class _MessageView extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           if (message.text.trim().isNotEmpty)
-            GptMarkdown(
-              message.text,
-              style: TextStyle(
-                fontSize: 15.5,
-                height: 1.6,
-                color: theme.colorScheme.onSurface,
-              ),
-              // Markdown 来自模型输出，不能让它凭一个远程 URL 触发网络请求，
-              // 从而在用户不知情时暴露 IP、阅读时间或账目上下文。
-              imageBuilder: (context, _, _, _) => const _BlockedMarkdownImage(),
-            ),
+            message.status == _MsgStatus.streaming
+                ? Text(
+                    message.text,
+                    style: TextStyle(
+                      fontSize: 15.5,
+                      height: 1.6,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  )
+                : GptMarkdown(
+                    message.text,
+                    style: TextStyle(
+                      fontSize: 15.5,
+                      height: 1.6,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    // Markdown 来自模型输出，不能让它凭一个远程 URL 触发网络请求，
+                    // 从而在用户不知情时暴露 IP、阅读时间或账目上下文。
+                    imageBuilder: (context, _, _, _) =>
+                        const _BlockedMarkdownImage(),
+                  ),
           if (message.provenance case final AiAnswerProvenance provenance)
             _AnswerProvenanceLine(
               provenance: provenance,
