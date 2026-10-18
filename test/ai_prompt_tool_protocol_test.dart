@@ -2,9 +2,9 @@ import 'dart:ui' show Locale;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/ai/ai_error.dart';
+import 'package:verifin/app/ai/ai_ledger_snapshot.dart';
 import 'package:verifin/app/ai/ai_prompt_tool_protocol.dart';
 import 'package:verifin/app/ai/ai_query_tool.dart';
-import 'package:verifin/app/models.dart';
 import 'package:verifin/l10n/app_localizations.dart';
 
 void main() {
@@ -76,12 +76,7 @@ void main() {
 
   test('system prompt follows the active UI language', () {
     AiToolContext context(Locale locale) => AiToolContext(
-      entries: const <LedgerEntry>[],
-      accounts: const <Account>[],
-      categories: const <Category>[],
-      tags: const <Tag>[],
-      balanceOf: (_) => 0,
-      baseCurrencyCode: 'CNY',
+      ledger: AiLedgerSnapshot.forTesting(bookId: 'b', balanceOf: (_) => 0),
       now: DateTime(2026, 10, 18),
       l10n: lookupAppLocalizations(locale),
     );

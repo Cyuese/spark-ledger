@@ -1,8 +1,9 @@
 import 'dart:ui' show Locale;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:verifin/app/ai/ai_ledger_snapshot.dart';
 import 'package:verifin/app/ai/ai_query_tool.dart';
-import 'package:verifin/app/ledger_math.dart';
+import 'package:verifin/app/ai/ai_tool_schema.dart';
 import 'package:verifin/app/models.dart';
 import 'package:verifin/l10n/app_localizations.dart';
 
@@ -35,22 +36,31 @@ AiToolContext _ctx(
   List<Account> accounts = const <Account>[],
   List<ExchangeRate> exchangeRates = const <ExchangeRate>[],
   DateTime? now,
+  String baseCurrencyCode = 'CNY',
+  double Function(Account account)? balanceOf,
+  MoneyCodeDisplay currencyDisplay = MoneyCodeDisplay.code,
+  AiBudgetSnapshot? budget,
 }) {
   return AiToolContext(
-    entries: entries,
-    accounts: accounts,
-    categories: categories,
-    tags: tags,
-    balanceOf: (_) => 0,
-    baseCurrencyCode: 'CNY',
-    exchangeRates: exchangeRates,
+    ledger: AiLedgerSnapshot.forTesting(
+      bookId: 'b',
+      baseCurrencyCode: baseCurrencyCode,
+      entries: entries,
+      accounts: accounts,
+      categories: categories,
+      tags: tags,
+      exchangeRates: exchangeRates,
+      balanceOf: balanceOf ?? (_) => 0,
+      budget: budget,
+    ),
     now: now ?? DateTime(2026, 6, 20),
     l10n: lookupAppLocalizations(const Locale('zh')),
+    currencyDisplay: currencyDisplay,
   );
 }
 
 Category _cat(String id, String label) => Category(
-  bookId: defaultLedgerBookId,
+  bookId: 'b',
   id: id,
   label: label,
   type: EntryType.expense,
@@ -86,6 +96,7 @@ void main() {
     for (final t in tools) {
       expect(t.name.trim(), isNotEmpty);
       expect(t.description.trim(), isNotEmpty);
+      expect(t.description, isNot(contains('可点击')));
       // 无参工具（账户一览 / 净资产 / 信用卡账单）的参数说明本来就为空。
       if (t.schema.properties.isNotEmpty) {
         expect(t.schema.promptDescription, isNotEmpty);
@@ -105,20 +116,43 @@ void main() {
     expect(parameters['type'], 'object');
     expect(parameters['additionalProperties'], isFalse);
     expect(properties.keys, containsAll(<String>['range', 'start', 'end']));
+    final valid = tool.schema.validateArguments(<String, Object?>{
+      'range': 'thisMonth',
+      'limit': '20',
+    });
+    expect(valid.isValid, isTrue);
+    expect(valid.normalizedArguments['limit'], 20);
+    final invalid = tool.schema.validateArguments(<String, Object?>{
+      'range': 'not-a-range',
+      'unknown': true,
+    });
+    expect(invalid.issues, hasLength(2));
     expect(
-      tool.schema.validate(<String, Object?>{
-        'range': 'thisMonth',
-        'limit': 20,
-      }),
-      isEmpty,
+      invalid.issues.map((issue) => issue.field),
+      containsAll(['range', 'unknown']),
     );
-    expect(
-      tool.schema.validate(<String, Object?>{
-        'range': 'not-a-range',
-        'unknown': true,
-      }),
-      hasLength(2),
+  });
+
+  test('prompt schema keeps enum, range and required constraints', () {
+    final tool = _tool('categoryRanking');
+    expect(tool.schema.promptDescription, contains('expense/income'));
+    expect(tool.schema.promptDescription, contains('integer'));
+    expect(tool.schema.promptDescription, contains('最小 1'));
+
+    const schema = AiToolSchema(
+      properties: <String, AiToolParameter>{
+        'type': AiToolParameter(
+          type: AiToolParameterType.string,
+          description: '类型',
+          enumValues: <Object>['expense', 'income'],
+        ),
+      },
+      required: <String>{'type'},
     );
+    final validation = schema.validateArguments(const <String, Object?>{});
+    expect(validation.isValid, isFalse);
+    expect(validation.issues.single.field, 'type');
+    expect(schema.promptDescription, contains('必填：type'));
   });
 
   test('summary 汇总当月收支净额', () {
@@ -285,15 +319,10 @@ void main() {
   });
 
   test('accountsOverview 列出账户与余额', () {
-    final ctx = AiToolContext(
-      entries: const <LedgerEntry>[],
+    final ctx = _ctx(
+      const <LedgerEntry>[],
       accounts: <Account>[_account(id: 'a1', name: '现金')],
-      categories: const <Category>[],
-      tags: const <Tag>[],
       balanceOf: (_) => 123.5,
-      baseCurrencyCode: 'CNY',
-      now: DateTime(2026, 6, 20),
-      l10n: lookupAppLocalizations(const Locale('zh')),
     );
     final result = _tool(
       'accountsOverview',
@@ -305,15 +334,10 @@ void main() {
   });
 
   test('单币种隐藏单位时账户表去掉币种列，摘要也不写币种代码', () {
-    final ctx = AiToolContext(
-      entries: const <LedgerEntry>[],
+    final ctx = _ctx(
+      const <LedgerEntry>[],
       accounts: <Account>[_account(id: 'a1', name: '现金')],
-      categories: const <Category>[],
-      tags: const <Tag>[],
       balanceOf: (_) => 123.5,
-      baseCurrencyCode: 'CNY',
-      now: DateTime(2026, 6, 20),
-      l10n: lookupAppLocalizations(const Locale('zh')),
       currencyDisplay: MoneyCodeDisplay.none,
     );
     final result = _tool(
@@ -378,17 +402,12 @@ void main() {
   });
 
   test('netWorth 缺汇率时不给部分和', () {
-    final ctx = AiToolContext(
-      entries: const <LedgerEntry>[],
+    final ctx = _ctx(
+      const <LedgerEntry>[],
       accounts: <Account>[
         _account(id: 'a1', name: '美元账户', currencyCode: 'USD'),
       ],
-      categories: const <Category>[],
-      tags: const <Tag>[],
       balanceOf: (_) => 100,
-      baseCurrencyCode: 'CNY',
-      now: DateTime(2026, 6, 20),
-      l10n: lookupAppLocalizations(const Locale('zh')),
     );
     final result = _tool('netWorth').run(ctx, const <String, Object?>{});
     expect(result.display, isNull);
@@ -411,17 +430,10 @@ void main() {
       statementDay: 5,
       dueDay: 20,
     );
-    final ctx = AiToolContext(
-      entries: <LedgerEntry>[
-        _e(id: 'c', amount: 300, at: DateTime(2026, 6, 6)),
-      ],
+    final ctx = _ctx(
+      <LedgerEntry>[_e(id: 'c', amount: 300, at: DateTime(2026, 6, 6))],
       accounts: <Account>[card],
-      categories: const <Category>[],
-      tags: const <Tag>[],
       balanceOf: (_) => -300,
-      baseCurrencyCode: 'CNY',
-      now: DateTime(2026, 6, 20),
-      l10n: lookupAppLocalizations(const Locale('zh')),
     );
     final result = _tool('creditCardBill').run(ctx, const <String, Object?>{});
     final display = result.display! as AiTableDisplay;
@@ -445,23 +457,41 @@ void main() {
       statementDay: 5,
       dueDay: 20,
     );
-    final ctx = AiToolContext(
-      entries: <LedgerEntry>[
-        _e(id: 'c', amount: 300, at: DateTime(2026, 6, 6)),
-      ],
+    final ctx = _ctx(
+      <LedgerEntry>[_e(id: 'c', amount: 300, at: DateTime(2026, 6, 6))],
       accounts: <Account>[card],
-      categories: const <Category>[],
-      tags: const <Tag>[],
       balanceOf: (_) => -300,
-      baseCurrencyCode: 'CNY',
-      now: DateTime(2026, 6, 20),
-      l10n: lookupAppLocalizations(const Locale('zh')),
       currencyDisplay: MoneyCodeDisplay.none,
     );
     final result = _tool('creditCardBill').run(ctx, const <String, Object?>{});
     // 卡片表格本来就没有币种列，摘要句是这张卡唯一的币种来源；隐藏单位时它也不能写代码。
     expect(result.summary, isNot(contains('CNY')));
     expect(result.summary, contains('300'));
+  });
+
+  test('信用卡摘要跟随 symbol 单位样式', () {
+    const card = Account(
+      id: 'acc',
+      bookId: 'b',
+      name: '信用卡',
+      type: AccountType.creditCard,
+      groupId: null,
+      initialBalance: 0,
+      iconCode: 'bank',
+      note: '',
+      includeInAssets: true,
+      hidden: false,
+      creditLimit: 10000,
+    );
+    final ctx = _ctx(
+      <LedgerEntry>[_e(id: 'c', amount: 300, at: DateTime(2026, 6, 6))],
+      accounts: const <Account>[card],
+      balanceOf: (_) => -300,
+      currencyDisplay: MoneyCodeDisplay.symbol,
+    );
+    final result = _tool('creditCardBill').run(ctx, const <String, Object?>{});
+    expect(result.summary, contains('¥'));
+    expect(result.summary, isNot(contains('CNY')));
   });
 
   test('多币种信用卡表格保留币种列，避免金额无法辨认', () {
@@ -481,15 +511,10 @@ void main() {
     );
     final usd = cny.copyWith(id: 'usd-card', name: '美元卡', currencyCode: 'USD');
     final result = _tool('creditCardBill').run(
-      AiToolContext(
-        entries: const <LedgerEntry>[],
+      _ctx(
+        const <LedgerEntry>[],
         accounts: <Account>[cny, usd],
-        categories: const <Category>[],
-        tags: const <Tag>[],
         balanceOf: (account) => account.id == usd.id ? -200 : -100,
-        baseCurrencyCode: 'CNY',
-        now: DateTime(2026, 6, 20),
-        l10n: lookupAppLocalizations(const Locale('zh')),
       ),
       const <String, Object?>{},
     );
@@ -502,25 +527,15 @@ void main() {
   });
 
   test('budgetStatus 汇总预算执行并列出需要关注的分类', () {
-    final ctx = AiToolContext(
-      entries: <LedgerEntry>[
-        _e(id: 'a', amount: 900, at: DateTime(2026, 6, 3)),
-      ],
-      accounts: const <Account>[],
+    final ctx = _ctx(
+      <LedgerEntry>[_e(id: 'a', amount: 900, at: DateTime(2026, 6, 3))],
       categories: <Category>[_cat('food', '餐饮')],
-      tags: const <Tag>[],
-      balanceOf: (_) => 0,
-      baseCurrencyCode: 'CNY',
-      now: DateTime(2026, 6, 20),
-      l10n: lookupAppLocalizations(const Locale('zh')),
-      budget: AiBudgetContext(
-        keyMonthOf: (date) => DateTime(date.year, date.month),
-        windowOf: (keyMonth) => DateWindow(
-          start: DateTime(keyMonth.year, keyMonth.month, 1),
-          end: DateTime(keyMonth.year, keyMonth.month + 1, 0),
-        ),
-        monthlyBudgetOf: (_) => 1000,
-        categoryBudgetOf: (_, _) => 500,
+      budget: AiBudgetSnapshot(
+        cycleStartDay: 1,
+        monthlyBudgetByMonth: const <String, double>{},
+        defaultMonthlyBudget: 1000,
+        categoryBudgetByMonthAndCategory: const <String, double>{},
+        defaultCategoryBudgetByCategory: const <String, double>{'food': 500},
       ),
     );
     final result = _tool('budgetStatus').run(ctx, const <String, Object?>{});

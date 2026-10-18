@@ -4778,8 +4778,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiCardDebtLine(String name, String amount, String currency) {
-    return '$name 当前欠款 $amount $currency';
+  String aiCardDebtLine(String name, String amount) {
+    return '$name 当前欠款 $amount';
   }
 
   @override
@@ -4833,6 +4833,20 @@ class AppLocalizationsZh extends AppLocalizations {
   ) {
     return '$period 预算 $budget，已花 $spent，剩余 $remaining$daily。$attention';
   }
+
+  @override
+  String aiAnswerProvenanceQueried(int count) {
+    return '基于账本查询 · $count 次';
+  }
+
+  @override
+  String get aiAnswerProvenanceNoQuery => '未查询账本';
+
+  @override
+  String get aiAnswerProvenanceUnverified => '未查询账本，请勿据此判断账目';
+
+  @override
+  String get aiErrRequestTooLarge => '输入或请求内容过长，请精简后重试';
 
   @override
   String get widgetPreviewFailed => '小组件预览暂时不可用';

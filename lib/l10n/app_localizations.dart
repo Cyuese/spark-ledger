@@ -8599,8 +8599,8 @@ abstract class AppLocalizations {
   /// No description provided for @aiCardDebtLine.
   ///
   /// In zh, this message translates to:
-  /// **'{name} 当前欠款 {amount} {currency}'**
-  String aiCardDebtLine(String name, String amount, String currency);
+  /// **'{name} 当前欠款 {amount}'**
+  String aiCardDebtLine(String name, String amount);
 
   /// No description provided for @aiCardAvailableLine.
   ///
@@ -8661,6 +8661,30 @@ abstract class AppLocalizations {
     String daily,
     String attention,
   );
+
+  /// No description provided for @aiAnswerProvenanceQueried.
+  ///
+  /// In zh, this message translates to:
+  /// **'基于账本查询 · {count} 次'**
+  String aiAnswerProvenanceQueried(int count);
+
+  /// No description provided for @aiAnswerProvenanceNoQuery.
+  ///
+  /// In zh, this message translates to:
+  /// **'未查询账本'**
+  String get aiAnswerProvenanceNoQuery;
+
+  /// No description provided for @aiAnswerProvenanceUnverified.
+  ///
+  /// In zh, this message translates to:
+  /// **'未查询账本，请勿据此判断账目'**
+  String get aiAnswerProvenanceUnverified;
+
+  /// No description provided for @aiErrRequestTooLarge.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入或请求内容过长，请精简后重试'**
+  String get aiErrRequestTooLarge;
 
   /// No description provided for @widgetPreviewFailed.
   ///

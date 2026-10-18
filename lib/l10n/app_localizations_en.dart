@@ -4922,8 +4922,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String aiCardDebtLine(String name, String amount, String currency) {
-    return '$name owes $amount $currency';
+  String aiCardDebtLine(String name, String amount) {
+    return '$name owes $amount';
   }
 
   @override
@@ -4977,6 +4977,22 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return '$period budget $budget, spent $spent, remaining $remaining$daily. $attention';
   }
+
+  @override
+  String aiAnswerProvenanceQueried(int count) {
+    return 'Based on $count ledger queries';
+  }
+
+  @override
+  String get aiAnswerProvenanceNoQuery => 'No ledger data queried';
+
+  @override
+  String get aiAnswerProvenanceUnverified =>
+      'No ledger data was queried; do not rely on this for account facts';
+
+  @override
+  String get aiErrRequestTooLarge =>
+      'The input or request is too large. Shorten it and try again.';
 
   @override
   String get widgetPreviewFailed => 'Widget preview unavailable';
