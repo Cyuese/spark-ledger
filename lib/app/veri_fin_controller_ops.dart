@@ -4396,8 +4396,25 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     final importedTags = _decodeModelList<Tag>(data['tags'], Tag.fromJson);
     var nextCategories = importedCategories;
     var nextTags = importedTags;
+    final importedAttachments = _decodeModelList<Attachment>(
+      data['attachments'],
+      Attachment.fromJson,
+    );
+    final importedEntryIds = <String>{
+      for (final entry in nextEntries) entry.id,
+    };
+    final importedAttachmentIds = <String>{};
+    for (final attachment in importedAttachments) {
+      if (!isValidAttachmentId(attachment.id) ||
+          !importedAttachmentIds.add(attachment.id) ||
+          attachment.entryId.isEmpty ||
+          !importedEntryIds.contains(attachment.entryId) ||
+          attachment.byteSize < 0) {
+        throw const FormatException('备份附件元数据不合法');
+      }
+    }
     final nextAttachments = await _materializeImportedAttachments(
-      _decodeModelList<Attachment>(data['attachments'], Attachment.fromJson),
+      importedAttachments,
       readStagedAttachment,
     );
     var nextRecurringRules = _decodeModelList<RecurringRule>(
