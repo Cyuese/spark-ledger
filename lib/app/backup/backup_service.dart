@@ -210,11 +210,15 @@ class BackupService {
     required AttachmentStore sink,
     BackupProgressCallback? onProgress,
     bool Function()? isCancelled,
-  }) {
+  }) async {
     onProgress?.call(const BackupProgress(phase: BackupPhase.unpacking));
+    final availableBytes = await availableBackupStorageBytes(
+      File(cachePath).parent.path,
+    );
     return unpackBackupArchiveFile(
       archivePath: cachePath,
       sink: sink,
+      availableBytes: availableBytes,
       onProgress: (done, total) => onProgress?.call(
         BackupProgress(
           phase: BackupPhase.unpacking,
