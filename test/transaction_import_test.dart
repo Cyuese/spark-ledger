@@ -318,7 +318,7 @@ void main() {
       final controller = await makeController();
       final beforeEntries = controller.entries.length;
       final beforeAccounts = controller.accounts.length;
-      final plan = controller.importTransactionsFromCsv(
+      final plan = await controller.importTransactionsFromCsv(
         '日期,类型,金额,分类,账户,转入账户,备注\n'
         '2026-01-05,支出,23.5,夜宵,钱包A,,宵夜\n'
         '2026-01-06,收入,100,红包,钱包A,,压岁钱',
@@ -335,7 +335,7 @@ void main() {
 
     test('导入的模板自身可被解析导入', () async {
       final controller = await makeController();
-      final plan = controller.importTransactionsFromCsv(
+      final plan = await controller.importTransactionsFromCsv(
         transactionCsvTemplate(),
       );
       expect(plan.importedCount, 3);

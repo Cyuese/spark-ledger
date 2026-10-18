@@ -75,7 +75,7 @@ void main() {
       NavigationStylePreference.docked,
     );
 
-    restarted.resetAllData();
+    await restarted.resetAllData();
     expect(
       restarted.navigationStylePreference,
       NavigationStylePreference.docked,
