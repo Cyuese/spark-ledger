@@ -4172,6 +4172,12 @@ abstract class AppLocalizations {
   /// **'分类名称'**
   String get categoryNameLabel;
 
+  /// No description provided for @categoryNameDuplicate.
+  ///
+  /// In zh, this message translates to:
+  /// **'同一父分类下已存在同名分类'**
+  String get categoryNameDuplicate;
+
   /// No description provided for @viewCategoryEntries.
   ///
   /// In zh, this message translates to:
@@ -4273,6 +4279,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'重命名分类'**
   String get renameCategoryTitle;
+
+  /// No description provided for @tagNameDuplicate.
+  ///
+  /// In zh, this message translates to:
+  /// **'已存在同名标签'**
+  String get tagNameDuplicate;
 
   /// No description provided for @pickIconTitle.
   ///

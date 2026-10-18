@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:anchored_menu/anchored_menu.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
 import '../app/common_widgets.dart';
+import '../app/feedback.dart';
 import '../l10n/app_localizations.dart';
 import '../app/models.dart';
 import '../app/veri_fin_controller.dart';
@@ -236,7 +239,18 @@ class _TagManagementPageState extends State<TagManagementPage> {
     if (!mounted || label == null) {
       return;
     }
-    VeriFinScope.of(context).renameTag(tag.id, label);
+    final controller = VeriFinScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final result = await controller.renameTag(tag.id, label);
+    if (!mounted || result != RenameResult.duplicate) {
+      return;
+    }
+    unawaited(
+      VeriFeedbackHost.of(context).showMessage(
+        message: l10n.tagNameDuplicate,
+        tone: VeriFeedbackTone.warning,
+      ),
+    );
   }
 
   Future<void> _deleteTag(Tag tag) async {

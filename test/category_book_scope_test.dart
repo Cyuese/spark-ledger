@@ -92,7 +92,7 @@ void main() {
     );
 
     // 在旅行账本改名/换图标，不影响日常账本。
-    controller.renameCategory(diningInTravel.id, '美食');
+    await controller.renameCategory(diningInTravel.id, '美食');
     controller.updateCategoryIcon(diningInTravel.id, 'coffee');
     expect(_categoryIn(controller, travelBookId, 'dining').label, '美食');
     expect(_categoryIn(controller, defaultBookId, 'dining').label, '餐饮');
@@ -319,7 +319,7 @@ void main() {
     source.addLedgerBook('旅行');
     final travelBookId = source.activeBook.id;
     final travelDining = source.categoryByKey(travelBookId, 'dining')!;
-    source.renameCategory(travelDining.id, '美食');
+    await source.renameCategory(travelDining.id, '美食');
     final backup = source.exportDataJson();
 
     final target = await createTestController(

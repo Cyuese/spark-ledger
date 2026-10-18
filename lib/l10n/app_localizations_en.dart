@@ -2328,6 +2328,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryNameLabel => 'Category name';
 
   @override
+  String get categoryNameDuplicate =>
+      'A category with this name already exists under the same parent';
+
+  @override
   String get viewCategoryEntries => 'View transactions';
 
   @override
@@ -2385,6 +2389,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get renameCategoryTitle => 'Rename category';
+
+  @override
+  String get tagNameDuplicate => 'A tag with this name already exists';
 
   @override
   String get pickIconTitle => 'Choose icon';
