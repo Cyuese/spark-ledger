@@ -34,7 +34,6 @@ void main() {
                     ),
                   ],
                 ),
-                bookId: controller.activeBook.id,
                 baseCurrencyCode: controller.activeBook.baseCurrencyCode,
                 moneyCodeDisplay: MoneyCodeDisplay.none,
               ),
