@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.20.8] - 2026-10-18
+
 ### 新增
 
 - AI 设置新增 DeepSeek、火山方舟、Kimi、智谱 GLM、阿里云百炼、OpenAI、OpenRouter 与 Ollama 渠道预设，并提供自定义 OpenAI 兼容入口；渠道选择使用带 Logo、说明、搜索与分组筛选的宫格弹层。
