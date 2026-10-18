@@ -4846,6 +4846,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiAnswerProvenanceUnverified => '未查询账本，请勿据此判断账目';
 
   @override
+  String get aiErrRequestTooLarge => '输入或请求内容过长，请精简后重试';
+
+  @override
   String get widgetPreviewFailed => '小组件预览暂时不可用';
 
   @override

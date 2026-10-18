@@ -8680,6 +8680,12 @@ abstract class AppLocalizations {
   /// **'未查询账本，请勿据此判断账目'**
   String get aiAnswerProvenanceUnverified;
 
+  /// No description provided for @aiErrRequestTooLarge.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入或请求内容过长，请精简后重试'**
+  String get aiErrRequestTooLarge;
+
   /// No description provided for @widgetPreviewFailed.
   ///
   /// In zh, this message translates to:

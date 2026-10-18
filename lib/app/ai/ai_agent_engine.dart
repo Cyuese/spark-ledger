@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'ai_agent_event.dart';
 import 'ai_agent_message.dart';
@@ -44,7 +45,12 @@ class AiAgentEngine {
     this.maxPriorMessages = 12,
     this.maxPriorCharacters = 12000,
     this.maxToolSummaryCharacters = 4000,
-    this.maxAnswerCharacters = 200000,
+    this.maxAnswerCharacters = 50000,
+    this.maxUserInputCharacters = 8000,
+    this.maxToolArgumentsCharacters = 32000,
+    this.maxToolArgumentsTotalCharacters = 64000,
+    this.maxReasoningCharacters = 64000,
+    this.maxTurnRequestCharacters = 256000,
   });
 
   final List<AiQueryTool> tools;
@@ -54,6 +60,11 @@ class AiAgentEngine {
   final int maxPriorCharacters;
   final int maxToolSummaryCharacters;
   final int maxAnswerCharacters;
+  final int maxUserInputCharacters;
+  final int maxToolArgumentsCharacters;
+  final int maxToolArgumentsTotalCharacters;
+  final int maxReasoningCharacters;
+  final int maxTurnRequestCharacters;
 
   Stream<AiAgentEvent> run({
     required AiToolCallMode mode,
@@ -64,6 +75,12 @@ class AiAgentEngine {
     required String userInput,
     AiAgentCancellation? cancellation,
   }) async* {
+    if (userInput.length > maxUserInputCharacters) {
+      yield AiAgentFailed(
+        AiException(AiErrorCode.requestTooLarge, detail: 'user input too long'),
+      );
+      return;
+    }
     final initialProtocol = mode == AiToolCallMode.prompt
         ? _AgentProtocol.prompt
         : _AgentProtocol.native;
@@ -134,10 +151,13 @@ class AiAgentEngine {
     var successfulToolCallCount = 0;
     var retryUsed = false;
     var answerCharacters = 0;
+    var toolArgumentCharacters = 0;
+    var reasoningCharacters = 0;
     var anyToolExecuted = false;
 
     for (var round = 0; round <= maxToolRounds; round += 1) {
       if (cancellation?.isCancelled == true) return;
+      _ensureRequestFits(messages, nativeDefinitions);
       final accumulator = AiNativeCompletionAccumulator();
       var visibleAnswerWritten = false;
       late AiCompletionResult response;
@@ -214,6 +234,13 @@ class AiAgentEngine {
         visibleAnswerWritten = true;
         yield AiAgentAnswerDelta(response.content);
       }
+      reasoningCharacters += response.reasoningContent.length;
+      if (reasoningCharacters > maxReasoningCharacters) {
+        throw AiException(
+          AiErrorCode.responseTooLarge,
+          detail: 'reasoning too large',
+        );
+      }
 
       if (protocol == _AgentProtocol.native && response.toolCalls.isNotEmpty) {
         if (response.finishReason == AiFinishReason.length) {
@@ -246,6 +273,11 @@ class AiAgentEngine {
               detail: 'tool call limit exceeded',
             );
           }
+          toolArgumentCharacters += call.arguments.length;
+          _checkToolArgumentSize(
+            call.arguments.length,
+            cumulative: toolArgumentCharacters,
+          );
           final decodedArguments = call.decodeArguments();
           final arguments = decodedArguments ?? <String, Object?>{};
           yield AiAgentToolStarted(
@@ -294,6 +326,12 @@ class AiAgentEngine {
       }
 
       if (protocol == _AgentProtocol.prompt) {
+        if (response.content.length > maxAnswerCharacters) {
+          throw AiException(
+            AiErrorCode.responseTooLarge,
+            detail: 'prompt response too large',
+          );
+        }
         final parsed = parsePromptResponse(
           response.content,
           knownTools: tools.map((tool) => tool.name).toSet(),
@@ -307,6 +345,12 @@ class AiAgentEngine {
             );
           }
           final stepId = 'prompt-$round-$toolCallCount';
+          final argumentText = jsonEncode(parsed.arguments);
+          toolArgumentCharacters += argumentText.length;
+          _checkToolArgumentSize(
+            argumentText.length,
+            cumulative: toolArgumentCharacters,
+          );
           yield AiAgentToolStarted(
             stepId: stepId,
             toolName: parsed.name,
@@ -390,6 +434,33 @@ class AiAgentEngine {
       throw AiException(
         AiErrorCode.responseTooLarge,
         detail: 'answer too large',
+      );
+    }
+  }
+
+  void _checkToolArgumentSize(int characters, {required int cumulative}) {
+    if (characters > maxToolArgumentsCharacters ||
+        cumulative > maxToolArgumentsTotalCharacters) {
+      throw AiException(
+        AiErrorCode.requestTooLarge,
+        detail: 'tool arguments too large',
+      );
+    }
+  }
+
+  void _ensureRequestFits(
+    List<AiAgentMessage> messages,
+    List<Map<String, Object?>> tools,
+  ) {
+    final messageCharacters = messages.fold<int>(
+      0,
+      (sum, message) => sum + jsonEncode(message.toJson()).length,
+    );
+    final toolCharacters = tools.isEmpty ? 0 : jsonEncode(tools).length;
+    if (messageCharacters + toolCharacters > maxTurnRequestCharacters) {
+      throw AiException(
+        AiErrorCode.requestTooLarge,
+        detail: 'agent request too large',
       );
     }
   }

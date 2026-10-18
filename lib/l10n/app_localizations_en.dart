@@ -4991,6 +4991,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'No ledger data was queried; do not rely on this for account facts';
 
   @override
+  String get aiErrRequestTooLarge =>
+      'The input or request is too large. Shorten it and try again.';
+
+  @override
   String get widgetPreviewFailed => 'Widget preview unavailable';
 
   @override
