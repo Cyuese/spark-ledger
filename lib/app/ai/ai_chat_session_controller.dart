@@ -445,7 +445,9 @@ class AiChatSessionController extends ChangeNotifier {
             role: message.role == AiChatRole.user
                 ? AiMessageRole.user
                 : AiMessageRole.assistant,
-            content: message.text.trim(),
+            content:
+                '${message.bookName.trim().isEmpty ? '' : '[book: ${message.bookName.trim()}] '}'
+                '${message.text.trim()}',
           ),
     ];
   }
