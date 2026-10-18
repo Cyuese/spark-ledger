@@ -62,6 +62,11 @@ PIN/图案验证页，验证前不加载账本列表或真实预览；原生窗�
 以及 data 里带实例 id（`Intent` 的 extras 不参与 `filterEquals`，只有 data 不同才能保证每个实例的
 `PendingIntent` 互不覆盖）。已配置组件的点击继续沿用 `verifin://widget/<id>/<route>?bookId=…` 路由。
 
+该自定义 URI **只由原生入口解析**：`MainActivity` 与 `WidgetConfigurationActivity` 都显式设置
+`flutter_deeplinking_enabled=false`，避免 Flutter 嵌入层把 `/id/route` 再推给没有命名路由的
+Navigator。主应用在隐私同意、新手引导或应用锁期间尚未挂载壳层时，磁贴与组件入口保持
+pending，等 Shell 的处理器就绪后再由 Dart 消费；不能“发出即清空”。
+
 ## 外观与金额口径
 
 - 外观是**实例级**设置：`system`（默认，跟随设备深色模式）/`light`/`dark`。
@@ -115,3 +120,6 @@ Receiver 清理对应配置。
    「点击进入配置」。
 5. 桌面无实例时改账目：不产生 Provider 刷新与闹钟重排（`test/widget_service_test.dart` 的闸门用例）。
 6. 运行 `dart run scripts/widget_previews.dart`：仪器测试全绿并重导出 16 张预览图。
+7. 强停后从磁贴记账并立即回桌面：小组件在离开应用前完成刷新，不依赖下次回前台补推。
+8. 冷启动与运行中点击已配置组件、进入未配置组件的配置页、重新配置组件：均正常打开目标页面，
+   日志不出现 `onUnknownRoute` / `Null check operator used on a null value`。

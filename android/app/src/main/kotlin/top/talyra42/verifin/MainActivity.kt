@@ -159,18 +159,18 @@ class MainActivity : FlutterFragmentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         if (intent.action == ACTION_QUICK_ENTRY) {
-            if (channel == null) {
-                pendingQuickEntryIntent = true
-            } else {
-                channel?.invokeMethod("openQuickEntry", null)
-            }
+            // Keep the event pending until Dart acknowledges it. The shell may
+            // not be mounted yet (consent/onboarding/app lock), in which case
+            // the inbound method call has no registered handler and must not
+            // consume the one-shot entry.
+            pendingQuickEntryIntent = true
+            channel?.invokeMethod("openQuickEntry", null)
         }
         if (isWidgetRouteIntent(intent)) {
             rememberWidgetRouteIntent(intent)
-            if (channel != null) {
-                channel?.invokeMethod("openWidgetRoute", pendingWidgetRoute)
-                pendingWidgetRoute = null
-            }
+            // Same one-shot rule as quick entry: only the Dart dispatcher that
+            // actually has a shell route handler consumes this value.
+            channel?.invokeMethod("openWidgetRoute", pendingWidgetRoute)
         }
         if (intent.action == ACTION_CAPTURE_IMAGE || intent.action == ACTION_CAPTURE_TEXT) {
             rememberCaptureIntent(intent)
