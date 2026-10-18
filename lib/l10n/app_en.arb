@@ -1958,6 +1958,7 @@
   "aiAnswerProvenanceQueried": "Based on {count} ledger queries",
   "aiAnswerProvenanceNoQuery": "No ledger data queried",
   "aiAnswerProvenanceUnverified": "No ledger data was queried; do not rely on this for account facts",
+  "aiErrRequestTooLarge": "The input or request is too large. Shorten it and try again.",
   "widgetPreviewFailed": "Widget preview unavailable",
   "widgetConfigurationFailed": "Could not load this widget. Return to the home screen and try again."
 }

@@ -75,6 +75,7 @@ Future<List<AiAgentEvent>> _run(
   AiToolCallMode mode = AiToolCallMode.native,
   AiAgentCompleteTransport? completeTransport,
   List<AiTextMessage> priorMessages = const <AiTextMessage>[],
+  String userInput = '本月花了多少',
 }) {
   return engine
       .run(
@@ -83,7 +84,7 @@ Future<List<AiAgentEvent>> _run(
         completeTransport: completeTransport,
         context: _context(),
         priorMessages: priorMessages,
-        userInput: '本月花了多少',
+        userInput: userInput,
       )
       .toList();
 }
@@ -383,5 +384,80 @@ void main() {
 
     final failure = events.whereType<AiAgentFailed>().single;
     expect((failure.error as AiException).code, AiErrorCode.responseTooLarge);
+  });
+
+  test('user input limit fails before contacting the transport', () async {
+    final limited = AiAgentEngine(
+      tools: buildAiQueryTools(),
+      maxUserInputCharacters: 3,
+    );
+    var contacted = false;
+    final events = await limited
+        .run(
+          mode: AiToolCallMode.native,
+          streamTransport: (_, _) async* {
+            contacted = true;
+            yield const AiContentDelta('不应触达');
+            yield const AiCompletionFinished(AiFinishReason.stop);
+            yield const AiStreamDone();
+          },
+          context: _context(),
+          priorMessages: const <AiTextMessage>[],
+          userInput: 'too long',
+        )
+        .toList();
+
+    expect(contacted, isFalse);
+    final failure = events.whereType<AiAgentFailed>().single;
+    expect((failure.error as AiException).code, AiErrorCode.requestTooLarge);
+  });
+
+  test('oversized tool arguments fail with a request limit error', () async {
+    final limited = AiAgentEngine(
+      tools: buildAiQueryTools(),
+      maxToolArgumentsCharacters: 5,
+    );
+    final transport = _ScriptedTransport(<Object>[
+      <AiCompletionEvent>[
+        const AiToolCallDelta(
+          index: 0,
+          id: 'call',
+          name: 'summary',
+          arguments: '{"range":"thisMonth"}',
+        ),
+        const AiCompletionFinished(AiFinishReason.toolCalls),
+        const AiStreamDone(),
+      ],
+    ]);
+
+    final events = await _run(limited, transport);
+
+    final failure = events.whereType<AiAgentFailed>().single;
+    expect((failure.error as AiException).code, AiErrorCode.requestTooLarge);
+    expect(events.whereType<AiAgentToolStarted>(), isEmpty);
+  });
+
+  test('turn request character limit fails before transport', () async {
+    final limited = AiAgentEngine(
+      tools: buildAiQueryTools(),
+      maxTurnRequestCharacters: 1,
+    );
+    var contacted = false;
+    final events = await limited
+        .run(
+          mode: AiToolCallMode.native,
+          streamTransport: (_, _) async* {
+            contacted = true;
+            yield const AiCompletionFinished(AiFinishReason.stop);
+          },
+          context: _context(),
+          priorMessages: const <AiTextMessage>[],
+          userInput: 'q',
+        )
+        .toList();
+
+    expect(contacted, isFalse);
+    final failure = events.whereType<AiAgentFailed>().single;
+    expect((failure.error as AiException).code, AiErrorCode.requestTooLarge);
   });
 }

@@ -94,6 +94,27 @@ void main() {
     expect(find.text('AI 设置'), findsOneWidget);
   });
 
+  testWidgets('Composer 输入限制为 8000 字符', (tester) async {
+    final controller = await makeController()
+      ..setAiSettings(
+        const AiSettings(baseUrl: 'http://x/v1', apiKey: 'k', model: 'm'),
+      );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(home: const AiChatPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'a' * 8001);
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller?.text.length, 8000);
+  });
+
   testWidgets('底部输入区为单块 Composer，账本与发送位于同一操作行', (tester) async {
     tester.view.physicalSize = const Size(393, 852);
     tester.view.devicePixelRatio = 1;
