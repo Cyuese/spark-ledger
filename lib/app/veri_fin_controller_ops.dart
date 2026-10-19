@@ -2677,14 +2677,12 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return sum;
   }
 
-  /// 某笔支出「剩余可退」额 = 原金额 − 已挂退款（含待到账），钳到 `[0, amount]`。
-  /// 决策 D：禁止超额，退款上限为原金额。
+  /// 某笔支出「剩余可退」额 = 原金额 − 已挂退款（含待到账），钳到 `[0, amount]`，
+  /// 并按原币 minor unit 归一化。决策 D：禁止超额，退款上限为原金额。
   double remainingRefundable(String expenseId) {
     final expense = _entryOrNull(expenseId);
     if (expense == null || expense.type != EntryType.expense) return 0;
-    return (expense.amount - refundedTotalFor(expenseId))
-        .clamp(0.0, expense.amount)
-        .toDouble();
+    return remainingRefundableAmount(expense, _entries);
   }
 
   /// 给某笔支出添加一笔退款。金额自动截到「剩余可退」（决策 D：禁止超额）。
@@ -2703,7 +2701,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   }) {
     final expense = _entryOrNull(expenseId);
     if (expense == null || expense.type != EntryType.expense) return null;
-    final capped = amount.clamp(0.0, remainingRefundable(expenseId)).toDouble();
+    final capped = amount
+        .clamp(0.0, remainingRefundableAmount(expense, _entries))
+        .toDouble();
     if (capped <= 0) return null;
     final book = _ledgerBooks
         .where((book) => book.id == expense.bookId)
@@ -2798,19 +2798,18 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     if (index == -1) return;
     final expenseId = refund.refundOf ?? _entries[index].refundOf;
     final expense = expenseId == null ? null : _entryOrNull(expenseId);
-    var otherSum = 0.0;
-    for (final e in _entries) {
-      if (e.id != refund.id &&
-          e.type == EntryType.refund &&
-          e.refundOf == expenseId) {
-        otherSum += e.amount;
-      }
-    }
-    final cap = expense == null
+    final cap = expense == null || expense.type != EntryType.expense
         ? refund.amount
-        : (expense.amount - otherSum).clamp(0.0, expense.amount).toDouble();
+        : remainingRefundableAmount(
+            expense,
+            _entries,
+            excludeRefundId: refund.id,
+          );
     _entries[index] = refund.copyWith(
-      amount: refund.amount.clamp(0.0, cap).toDouble(),
+      amount: normalizeCurrencyAmount(
+        refund.amount.clamp(0.0, cap),
+        refund.currencyCode,
+      ),
     );
     _entries.sort(_compareEntriesLatestFirst);
     _syncRefundCache();

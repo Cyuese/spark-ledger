@@ -94,6 +94,79 @@ void main() {
     reloaded.dispose();
   });
 
+  testWidgets('已有部分退款时，默认剩余金额可保存', (WidgetTester tester) async {
+    final store = LocalKeyValueStore();
+    final controller = await makeController(store);
+    final bookId = controller.activeBook.id;
+    controller
+      ..addAccount(
+        Account(
+          id: 'cash',
+          bookId: bookId,
+          name: '现金',
+          type: AccountType.cash,
+          groupId: null,
+          initialBalance: 1000,
+          iconCode: 'cash',
+          note: '',
+          includeInAssets: true,
+          hidden: false,
+        ),
+      )
+      ..addEntry(
+        LedgerEntry(
+          id: 'partial-refund-expense',
+          bookId: bookId,
+          type: EntryType.expense,
+          amount: 250.89,
+          categoryId: 'dining',
+          accountId: 'cash',
+          note: '',
+          occurredAt: DateTime(2026, 7, 4),
+        ),
+      );
+    for (final amount in <double>[50, 50, 51, 51]) {
+      controller.addRefund(
+        expenseId: 'partial-refund-expense',
+        amount: amount,
+        accountId: 'cash',
+        initiatedAt: DateTime(2026, 7, 4),
+        settledAt: DateTime(2026, 7, 5),
+      );
+    }
+
+    await tester.binding.setSurfaceSize(const Size(460, 2600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      VeriFinScope(
+        controller: controller,
+        child: zhMaterialApp(
+          theme: buildVeriFinTheme(Brightness.light),
+          home: const TransactionDetailPage(entryId: 'partial-refund-expense'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 默认剩余可退必须是 48.89，而不是 48.889999…；直接保存后交易页保存成功。
+    await tester.tap(find.text('添加退款'));
+    await tester.pumpAndSettle();
+    expect(find.text('+48.89'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, '保存'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('保存'));
+    await tester.pumpAndSettle();
+
+    expect(controller.refundsForEntry('partial-refund-expense').length, 5);
+    expect(
+      controller.entries
+          .firstWhere((entry) => entry.id == 'partial-refund-expense')
+          .netAmount,
+      0,
+    );
+    expect(find.text('交易金额、币种或关联数据不完整，请检查后重试。'), findsNothing);
+  });
+
   testWidgets('退款不在普通类型选择器里出现', (WidgetTester tester) async {
     final store = LocalKeyValueStore();
     final controller = await makeController(store);
