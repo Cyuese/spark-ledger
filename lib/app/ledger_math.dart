@@ -61,6 +61,34 @@ bool entryTouchesAccount(LedgerEntry entry, String accountId) {
   return entry.accountId == accountId || entry.toAccountId == accountId;
 }
 
+/// 某笔支出按原币计的剩余可退金额。
+///
+/// 计入该支出下所有退款（含待到账）；编辑已有退款时用 [excludeRefundId] 排除自身。
+/// 浮点减法的结果必须先按 [expense.currencyCode] 的 minor unit 归一化，再用于显示、
+/// 数字键盘上限或草稿金额——`250.89 - 202.0` 会得到 `48.889999999999986`，直接写入
+/// `LedgerEntry.amount` 会被保存校验判为未归一化金额。
+double remainingRefundableAmount(
+  LedgerEntry expense,
+  Iterable<LedgerEntry> entries, {
+  String? excludeRefundId,
+}) {
+  if (expense.type != EntryType.expense) {
+    return 0;
+  }
+  var refunded = 0.0;
+  for (final entry in entries) {
+    if (entry.bookId != expense.bookId ||
+        entry.type != EntryType.refund ||
+        entry.refundOf != expense.id ||
+        entry.id == excludeRefundId) {
+      continue;
+    }
+    refunded += entry.amount;
+  }
+  final remaining = (expense.amount - refunded).clamp(0.0, expense.amount);
+  return normalizeCurrencyAmount(remaining.toDouble(), expense.currencyCode);
+}
+
 Color colorForType(BuildContext context, EntryType type) {
   switch (type) {
     case EntryType.expense:

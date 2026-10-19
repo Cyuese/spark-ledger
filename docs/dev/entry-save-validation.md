@@ -1,6 +1,6 @@
 # 交易聚合保存与退款金额精度
 
-本文记录交易（含退款、附件）聚合保存的金额精度、校验错误码、日志与用户提示契约，以及部分退款场景下的当前缺陷和验收要求。执行规则以 [AGENTS.md](../../AGENTS.md) 为准；判断当前实现仍以源码、测试、Gradle 和工作流为准。
+本文记录交易（含退款、附件）聚合保存的金额精度、校验错误码、日志与用户提示契约，以及验收要求。执行规则以 [AGENTS.md](../../AGENTS.md) 为准；判断当前实现仍以源码、测试、Gradle 和工作流为准。
 
 关联文档：[退款与报销](refund.md)、[多币种与汇率](multi-currency.md)、[技术决策](tech-decisions.md)、[短反馈系统](feedback-system.md)、[统一设计规范](../design/design-system.md)、[组件清单](../design/components.md)。
 
@@ -48,7 +48,7 @@ remaining = normalizeCurrencyAmount(remaining, expense.currencyCode)
 - **计入待到账退款**：待到账退款已经占用可退额度，不能因为尚未到账就重复退；
 - 编辑某笔已有退款时，计算上限要排除该笔自身；
 - 结果按原支出币种归一化，再用于显示、数字键盘上限和草稿金额；
-- 这个计算不允许在 UI 和 Controller 各写一份，统一使用纯函数 `remainingRefundableAmount`（实现要求见下文）。
+- 这个计算不允许在 UI 和 Controller 各写一份，统一使用纯函数 `remainingRefundableAmount`（约束见下文）。
 
 ### 三层金额
 
@@ -78,8 +78,8 @@ remaining = normalizeCurrencyAmount(remaining, expense.currencyCode)
 | `refundExceedsExpense` | 退款总额超过原支出金额 | 是 | 提示不能超过原支出金额 |
 | `invalidAttachments` | 附件 `entryId` 与交易不一致 | 是 | 提示重新添加附件 |
 | `invalidRememberedRate` | 记住汇率的币种、数值或生效日不合法 | 是 | 提示检查汇率或取消记住汇率 |
-| `categoryOutOfScope` | 引用了不属于该账本的分类 | 否 | 通用提示 + 日志 |
-| `tagOutOfScope` | 引用了不属于该账本的标签 | 否 | 通用提示 + 日志 |
+| `categoryOutOfScope` | 引用了不属于该账本的分类 | 是（重新选择） | 提示重新选择分类或标签 + 日志 |
+| `tagOutOfScope` | 引用了不属于该账本的标签 | 是（重新选择） | 提示重新选择分类或标签 + 日志 |
 
 注意：`invalidAmounts` 是聚合后的兜底分类，底层可能是 `LedgerDataValidationCode.invalidAmount`、`invalidEntryShape` 或 `missingAccount`。日志应保留底层 code；用户提示不需要暴露这些内部术语。
 
@@ -130,64 +130,18 @@ Entry save validation failed: <EntryValidationCode>[ (ledger: <LedgerDataValidat
   - `EntryDetailPage`（快速记账）；
   - `TransactionDetailPage`（交易详情/退款聚合）；
   - `CreditRepaymentPage`（信用卡还款）。
-- 对可操作 code 使用具体文案；`invalidAmounts` 和内部 scope code 保留现有 `entrySaveValidationFailed` 兜底；
+- 对可操作 code 使用具体文案；`invalidAmounts` 保留现有 `entrySaveValidationFailed` 兜底，scope code 提示重新选择分类/标签；
 - 新增文案同时写入 `lib/l10n/app_zh.arb` 与 `app_en.arb`，不手改生成文件；
 - 提示仍使用根级 `VeriFeedbackHost`、`VeriFeedbackTone.warning`，不新增旧式 Material 横条或 Toast；
 - 持久化失败（`EntrySavePersistenceFailure`）继续由 `onPersistError` 统一记录和反馈，提示“保存失败”并保留草稿，不并入校验提示。
 
 映射 helper 放在 UI 层（例如 `lib/app/entry_save_feedback.dart`），不要把 `AppLocalizations` 依赖塞进 Controller。
 
-## 当前缺陷：部分退款后默认金额无法保存
-
-### 复现
-
-一笔金额 `250.89` 的支出已有 4 笔已到账退款，合计 `202.00`：
-
-1. 打开交易详情；
-2. 点「添加退款」，不修改默认金额；
-3. 保存退款弹层；
-4. 保存交易详情。
-
-结果：交易详情保存失败，界面显示通用提示“交易金额、币种或关联数据不完整，请检查后重试。”，退款没有落库。
-
-用 Issue 39 附件数据在当前实现上可复现三笔支出，剩余金额分别是：
-
-- `10.3 - 5.0 = 5.300000000000001`
-- `84.99 - 30.9 = 54.089999999999996`
-- `250.89 - 202.0 = 48.889999999999986`
-
-### 根因
-
-```text
-_RefundSheetState._maxRefund 返回未归一化的浮点减法结果
-  → 新建退款时 _amount 直接取 _maxRefund
-  → _buildRefund 的 amount 只做 clamp，没有 normalize
-  → baseAmount / accountAmount 已 normalize，只有 amount 带尾差
-  → validateLedgerEntries(requireMinorUnitNormalization: true) 判 invalidAmount
-  → saveEntryAggregateDraftResult 映射成 EntryValidationCode.invalidAmounts
-  → 页面只显示通用 entrySaveValidationFailed
-```
-
-相关符号：
-
-- `RefundSection._remaining`、`_RefundSheetState._maxRefund`、`_buildRefund`（`lib/pages/refund_editor.dart`）；
-- `VeriFinController.remainingRefundable`、`updateRefund`（`lib/app/veri_fin_controller_ops.dart`）；
-- `validateLedgerEntries` 的 minor-unit 校验（`lib/app/ledger_data_validation.dart`）；
-- `saveEntryAggregateDraftResult` 的聚合校验映射（`lib/app/veri_fin_controller_ops.dart`）。
-
-### 为什么现有测试没发现
-
-现有“添加退款”测试使用 `200 - 50 = 150` 这类整数，不产生浮点尾差；没有覆盖“已有部分退款 + 非整数剩余金额”的组合。
-
-### 临时绕过
-
-手动点开退款金额，输入两位小数的剩余值（如 `48.89`）再保存；金额输入路径会归一化。该绕过只用于确认根因，不是修复方案。
-
 ## 统一口径与实现约束
 
 ### 1. 共享剩余可退金额纯函数
 
-在 `lib/app/ledger_math.dart` 增加纯函数（若实现时该文件继续膨胀，再拆到 `refund_math.dart`，不得复制逻辑）：
+剩余可退金额统一使用 `lib/app/ledger_math.dart` 的纯函数，不得在 UI 和 Controller 各写一份；如果该文件继续膨胀，再拆到 `refund_math.dart`，但不得复制逻辑：
 
 ```dart
 double remainingRefundableAmount(
@@ -199,7 +153,7 @@ double remainingRefundableAmount(
 
 行为：
 
-- 只统计 `type == EntryType.refund`、`refundOf == expense.id`、`id != excludeRefundId` 的条目；
+- 只统计同一账本内 `type == EntryType.refund`、`refundOf == expense.id`、`id != excludeRefundId` 的条目；
 - 包含待到账退款；
 - 先 clamp 到 `[0, expense.amount]`，再按 `expense.currencyCode` 归一化；
 - `expense` 不是支出时返回 0；
@@ -223,34 +177,33 @@ double remainingRefundableAmount(
 
 ### 3. 校验失败日志
 
-- 增加私有 helper，统一记录 outer code 和底层 ledger code；
-- 替换 `saveEntryAggregateDraftResult` 中所有 early return；
-- 补 `AppLogger` 测试：level、source、message、无敏感内容；
+- 私有 helper 统一记录 outer code 和底层 ledger code；所有 early return 都经它返回；
+- `AppLogger` 测试覆盖 level、source、message 和无敏感内容；
 - 不改变 `EntrySaveResult` 的公开语义。
 
 ### 4. 用户提示
 
-- 先补字段级校验；
-- 增加可操作 code 的本地化映射和三个页面共用的 helper；
-- 保留 `entrySaveValidationFailed` 作为兜底；
-- 补中英文 ARB 和至少一个 widget 测试。
+- 字段级校验优先；
+- 可操作 code 使用本地化映射，三个页面共用同一个 helper；
+- `entrySaveValidationFailed` 保留为兜底；
+- 中英文 ARB 与至少一个 widget 测试覆盖映射和提示。
 
 ## 验收与测试
 
 ### 行为验收
 
-- [ ] 已有部分退款的支出，使用默认剩余金额新增退款并保存成功；
-- [ ] 默认金额显示、数字键盘上限和实际落库金额三者一致（按币种精度）；
-- [ ] 手动输入合法的较小金额仍按用户输入保存；
-- [ ] 退款总额超过原支出时被拦截，提示具体原因；
-- [ ] 待到账退款计入剩余可退，不会重复退；
-- [ ] 已有退款编辑时排除自身，不会把自己的旧值重复扣减；
-- [ ] 保存成功后 `refundedBaseAmount` 等于已到账退款 `baseAmount` 之和；
-- [ ] 冷启动/重载后金额和退款关系一致；
-- [ ] SQLite 写入失败时停留在原页、保留草稿、记录日志并提示；
-- [ ] 校验失败日志只含 code，不含金额、备注、名称或 id；
-- [ ] 可操作 code 显示具体提示，通用 code 仍显示兜底提示；
-- [ ] 全屏编辑页的返回/未保存拦截行为不变。
+- 已有部分退款的支出，使用默认剩余金额新增退款并保存成功；
+- 默认金额显示、数字键盘上限和实际落库金额三者一致（按币种精度）；
+- 手动输入合法的较小金额仍按用户输入保存；
+- 退款总额超过原支出时被拦截，提示具体原因；
+- 待到账退款计入剩余可退，不会重复退；
+- 已有退款编辑时排除自身，不会把自己的旧值重复扣减；
+- 保存成功后 `refundedBaseAmount` 等于已到账退款 `baseAmount` 之和；
+- 冷启动/重载后金额和退款关系一致；
+- SQLite 写入失败时停留在原页、保留草稿、记录日志并提示；
+- 校验失败日志只含 code，不含金额、备注、名称或 id；
+- 可操作 code 显示具体提示，通用 code 仍显示兜底提示；
+- 全屏编辑页的返回/未保存拦截行为不变。
 
 ### 测试矩阵
 
