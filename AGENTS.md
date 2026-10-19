@@ -41,6 +41,7 @@
 - `docs/dev/category-budget-override.md`：分类默认预算与单期覆盖的职责与验收范围。
 - `docs/dev/multi-currency.md`：多币种、离线汇率、跨币种交易/退款与迁移的当前依据。
 - `docs/dev/refund.md`：退款（关联条目、待到账/已到账、多币种冲减）的当前口径。
+- `docs/dev/entry-save-validation.md`：交易聚合保存的金额精度、校验错误码、失败日志与用户提示契约。
 - `docs/dev/auto-capture.md`、`docs/dev/i18n-verification.md`、`docs/product/automation.md`：截图识账与外部意图接口、多语言、自动化接入的当前约定与验收资料。
 - `docs/dev/android-development.md`：真机开发、工具链检测和缺失时自动安装、日志、隔离验收及测试应用清理。
 - `docs/dev/feedback-system.md`：根级轻提示 Host 的调用、时长、操作结果、去重与优先级队列规范；新增或替换短反馈前必读。
