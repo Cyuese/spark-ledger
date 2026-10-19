@@ -2790,6 +2790,12 @@
   "accountCurrencyLocked": "账户已有余额、信用额度或交易记录，币种已锁定。",
   "entryCurrencyLockedByRefund": "交易已有退款，原币不可修改。请先处理关联退款。",
   "entrySaveValidationFailed": "交易金额、币种或关联数据不完整，请检查后重试。",
+  "entrySaveStaleDraft": "这笔交易已在别处修改或删除，请返回后重新打开。",
+  "entrySaveInvalidRefund": "退款数据不完整，请检查退款金额和到账账户后重试。",
+  "entrySaveRefundExceedsExpense": "退款总额不能超过原支出金额。",
+  "entrySaveInvalidAttachments": "附件数据异常，请重新添加附件后重试。",
+  "entrySaveInvalidRememberedRate": "汇率无效，请检查汇率或取消“记住为当日汇率”后重试。",
+  "entrySaveInvalidScope": "分类或标签不属于当前账本，请重新选择。",
   "importValidationFailed": "导入数据的金额、币种或关联关系不完整，未写入任何账目。",
   "entryConversionRateTrace": "使用 {date} 生效的本地汇率{status}",
   "@entryConversionRateTrace": {
