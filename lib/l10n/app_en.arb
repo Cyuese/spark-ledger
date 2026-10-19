@@ -1733,6 +1733,12 @@
   "accountCurrencyLocked": "The account currency is locked because it has a balance, credit limit, or transaction history.",
   "entryCurrencyLockedByRefund": "The original currency is locked because this transaction has refunds. Resolve the linked refunds first.",
   "entrySaveValidationFailed": "The transaction amounts, currencies, or linked data are incomplete. Review them and try again.",
+  "entrySaveStaleDraft": "This transaction was changed or deleted elsewhere. Go back and reopen it.",
+  "entrySaveInvalidRefund": "The refund data is incomplete. Check the refund amount and receiving account, then try again.",
+  "entrySaveRefundExceedsExpense": "Total refunds cannot exceed the original expense amount.",
+  "entrySaveInvalidAttachments": "The attachment data is invalid. Re-add the attachments and try again.",
+  "entrySaveInvalidRememberedRate": "The exchange rate is invalid. Check it or turn off Remember as rate for this date, then try again.",
+  "entrySaveInvalidScope": "The category or tag does not belong to the current ledger. Select it again.",
   "importValidationFailed": "The imported amounts, currencies, or links are incomplete. No ledger data was written.",
   "entryConversionRateTrace": "Using local rates effective {date}{status}",
   "@entryConversionRateTrace": {

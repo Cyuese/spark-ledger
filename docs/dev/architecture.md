@@ -15,7 +15,7 @@ Controller 经 repository 写库。`VeriFinController.create()` 是生产初始�
 | 模型 | `lib/app/models/`；`models.dart` 稳定导出；JSON/SQLite 映射须同步 |
 | 页面与弹窗 | `lib/pages/`、`pages/sheets.dart`、`app/entry_sheets.dart`；[组件目录](../design/components.md) |
 | 共享绘制、锚点菜单、图表 | `common_widgets.dart`、`chart_painters.dart`、`root_navigation.dart`、`veri_bottom_bar.dart`；锚点菜单直接使用 `package:anchored_menu`，视觉令牌在 `app_theme.dart` 桥接；[统一设计](../design/design-system.md) |
-| 多币种、预算、退款 | [多币种](multi-currency.md)、[单期预算](category-budget-override.md)、[退款](refund.md) |
+| 多币种、预算、退款 | [多币种](multi-currency.md)、[单期预算](category-budget-override.md)、[退款](refund.md)、[交易保存校验与退款金额精度](entry-save-validation.md) |
 | 导入、备份 | `lib/app/backup/import/`、`lib/app/backup/`；只在预览确认后落库，字节格式仅由 BackupService 编解码 |
 | 图片附件 | `lib/app/attachments/attachment_store.dart` 是字节唯一入口（文件存储、暂存、孤儿回收、迁移期物化）；SQLite 只存元数据；`image_picker_cleanup_io.dart` 只删除选择器缓存副本；[设计](attachment-storage-and-backup.md) |
 | AI | `lib/app/ai/`：`ai_chat_session_controller.dart` 管页面内会话，`ai_ledger_snapshot.dart` 冻结账本/余额/预算，`ai_agent_engine.dart` 管协议轮次，`ai_query_tool.dart` 注册只读工具；[渠道预设与模型发现](ai-provider-presets.md)、[只读查询工具](ai-tools.md)、[截图识别与外部采集](auto-capture.md) |

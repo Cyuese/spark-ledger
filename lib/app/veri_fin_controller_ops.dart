@@ -2046,6 +2046,21 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     onEntryAdded?.call();
   }
 
+  /// 统一的交易聚合保存校验失败出口：记录隐私友好的错误码后返回结果。
+  ///
+  /// 只记录错误码和底层 ledger code，不记录金额、备注、分类/账户/标签名称或 id。
+  EntrySaveValidationFailure _entrySaveValidationFailure(
+    EntryValidationCode code, {
+    LedgerDataValidationCode? ledgerCode,
+  }) {
+    _logger?.warning(
+      'Entry save validation failed: ${code.name}'
+      '${ledgerCode == null ? '' : ' (ledger: ${ledgerCode.name})'}',
+      source: 'entry_save',
+    );
+    return EntrySaveValidationFailure(code);
+  }
+
   /// Atomically persists an entry together with its refunds and attachments.
   ///
   /// [entry.refundedBaseAmount] is ignored and derived again from the settled
@@ -2062,18 +2077,16 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   }) async {
     final currentIndex = _entries.indexWhere((item) => item.id == entry.id);
     if ((isNew && currentIndex != -1) || (!isNew && currentIndex == -1)) {
-      return const EntrySaveValidationFailure(EntryValidationCode.staleDraft);
+      return _entrySaveValidationFailure(EntryValidationCode.staleDraft);
     }
     if (!isNew && _entries[currentIndex].bookId != entry.bookId) {
-      return const EntrySaveValidationFailure(EntryValidationCode.staleDraft);
+      return _entrySaveValidationFailure(EntryValidationCode.staleDraft);
     }
     final book = ledgerBooks
         .where((item) => item.id == entry.bookId)
         .firstOrNull;
     if (book == null || !_validEntryCurrencyAmounts(entry, book)) {
-      return const EntrySaveValidationFailure(
-        EntryValidationCode.invalidAmounts,
-      );
+      return _entrySaveValidationFailure(EntryValidationCode.invalidAmounts);
     }
     // 分类按账本隔离：交易/退款只能引用自己账本的分类。跨账本引用会被展示层回退成
     // 「已删除分类」，还会污染另一个账本的分类笔数，所以在写入前拦下。
@@ -2083,7 +2096,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
           (category) => category.id == categoryId && category.bookId == bookId,
         );
     if (!categoryInBook(entry.categoryId, entry.bookId)) {
-      return const EntrySaveValidationFailure(
+      return _entrySaveValidationFailure(
         EntryValidationCode.categoryOutOfScope,
       );
     }
@@ -2093,9 +2106,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     bool tagInBook(String tagId, String bookId) =>
         _tags.any((tag) => tag.id == tagId && tag.bookId == bookId);
     if (entry.tagIds.any((tagId) => !tagInBook(tagId, entry.bookId))) {
-      return const EntrySaveValidationFailure(
-        EntryValidationCode.tagOutOfScope,
-      );
+      return _entrySaveValidationFailure(EntryValidationCode.tagOutOfScope);
     }
     if (refunds.any(
       (refund) =>
@@ -2108,12 +2119,10 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
           refund.tagIds.any((tagId) => !tagInBook(tagId, refund.bookId)) ||
           !_validEntryCurrencyAmounts(refund, book),
     )) {
-      return const EntrySaveValidationFailure(
-        EntryValidationCode.invalidRefund,
-      );
+      return _entrySaveValidationFailure(EntryValidationCode.invalidRefund);
     }
     if (attachments.any((attachment) => attachment.entryId != entry.id)) {
-      return const EntrySaveValidationFailure(
+      return _entrySaveValidationFailure(
         EntryValidationCode.invalidAttachments,
       );
     }
@@ -2124,7 +2133,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     final refundTolerance = currencyAmountTolerance(entry.currencyCode);
     if (entry.type != EntryType.expense && refunds.isNotEmpty ||
         refundTotal > entry.amount + refundTolerance) {
-      return const EntrySaveValidationFailure(
+      return _entrySaveValidationFailure(
         EntryValidationCode.refundExceedsExpense,
       );
     }
@@ -2178,14 +2187,14 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       requireMinorUnitNormalization: true,
     );
     if (aggregateIssue != null) {
-      return EntrySaveValidationFailure(
-        aggregateIssue.code == LedgerDataValidationCode.invalidRefund ||
-                aggregateIssue.code ==
-                    LedgerDataValidationCode.refundExceedsExpense ||
-                aggregateIssue.code == LedgerDataValidationCode.staleRefundCache
-            ? EntryValidationCode.invalidRefund
-            : EntryValidationCode.invalidAmounts,
-      );
+      final code =
+          aggregateIssue.code == LedgerDataValidationCode.invalidRefund ||
+              aggregateIssue.code ==
+                  LedgerDataValidationCode.refundExceedsExpense ||
+              aggregateIssue.code == LedgerDataValidationCode.staleRefundCache
+          ? EntryValidationCode.invalidRefund
+          : EntryValidationCode.invalidAmounts;
+      return _entrySaveValidationFailure(code, ledgerCode: aggregateIssue.code);
     }
     nextEntries.sort(_compareEntriesLatestFirst);
 
@@ -2210,7 +2219,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
       if (rememberRateCurrencyCode == null ||
           rememberRateToBase == null ||
           rememberRateEffectiveDate == null) {
-        return const EntrySaveValidationFailure(
+        return _entrySaveValidationFailure(
           EntryValidationCode.invalidRememberedRate,
         );
       }
@@ -2220,7 +2229,7 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
           !CurrencyCatalog.isSupported(code) ||
           code == baseCode ||
           !isValidExchangeRate(rememberRateToBase)) {
-        return const EntrySaveValidationFailure(
+        return _entrySaveValidationFailure(
           EntryValidationCode.invalidRememberedRate,
         );
       }
@@ -2677,14 +2686,12 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     return sum;
   }
 
-  /// 某笔支出「剩余可退」额 = 原金额 − 已挂退款（含待到账），钳到 `[0, amount]`。
-  /// 决策 D：禁止超额，退款上限为原金额。
+  /// 某笔支出「剩余可退」额 = 原金额 − 已挂退款（含待到账），钳到 `[0, amount]`，
+  /// 并按原币 minor unit 归一化。决策 D：禁止超额，退款上限为原金额。
   double remainingRefundable(String expenseId) {
     final expense = _entryOrNull(expenseId);
     if (expense == null || expense.type != EntryType.expense) return 0;
-    return (expense.amount - refundedTotalFor(expenseId))
-        .clamp(0.0, expense.amount)
-        .toDouble();
+    return remainingRefundableAmount(expense, _entries);
   }
 
   /// 给某笔支出添加一笔退款。金额自动截到「剩余可退」（决策 D：禁止超额）。
@@ -2703,7 +2710,9 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
   }) {
     final expense = _entryOrNull(expenseId);
     if (expense == null || expense.type != EntryType.expense) return null;
-    final capped = amount.clamp(0.0, remainingRefundable(expenseId)).toDouble();
+    final capped = amount
+        .clamp(0.0, remainingRefundableAmount(expense, _entries))
+        .toDouble();
     if (capped <= 0) return null;
     final book = _ledgerBooks
         .where((book) => book.id == expense.bookId)
@@ -2798,19 +2807,18 @@ mixin _ControllerOps on ChangeNotifier, _ControllerState {
     if (index == -1) return;
     final expenseId = refund.refundOf ?? _entries[index].refundOf;
     final expense = expenseId == null ? null : _entryOrNull(expenseId);
-    var otherSum = 0.0;
-    for (final e in _entries) {
-      if (e.id != refund.id &&
-          e.type == EntryType.refund &&
-          e.refundOf == expenseId) {
-        otherSum += e.amount;
-      }
-    }
-    final cap = expense == null
+    final cap = expense == null || expense.type != EntryType.expense
         ? refund.amount
-        : (expense.amount - otherSum).clamp(0.0, expense.amount).toDouble();
+        : remainingRefundableAmount(
+            expense,
+            _entries,
+            excludeRefundId: refund.id,
+          );
     _entries[index] = refund.copyWith(
-      amount: refund.amount.clamp(0.0, cap).toDouble(),
+      amount: normalizeCurrencyAmount(
+        refund.amount.clamp(0.0, cap),
+        refund.currencyCode,
+      ),
     );
     _entries.sort(_compareEntriesLatestFirst);
     _syncRefundCache();

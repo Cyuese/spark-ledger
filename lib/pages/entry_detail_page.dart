@@ -13,6 +13,7 @@ import '../app/common_widgets.dart';
 import '../app/currency_catalog.dart';
 import '../app/currency_math.dart';
 import '../app/entry_currency_draft.dart';
+import '../app/entry_save_feedback.dart';
 import '../app/feedback.dart';
 import '../app/model_lookup.dart';
 import '../app/ledger_math.dart';
@@ -1911,7 +1912,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       if (result is EntrySaveValidationFailure && mounted) {
         unawaited(
           VeriFeedbackHost.of(context).showMessage(
-            message: AppLocalizations.of(context).entrySaveValidationFailed,
+            message: entrySaveValidationMessage(
+              AppLocalizations.of(context),
+              result.code,
+            ),
             tone: VeriFeedbackTone.warning,
             duration: VeriFeedbackDuration.long,
           ),

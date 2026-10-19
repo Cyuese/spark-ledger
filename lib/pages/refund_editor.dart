@@ -5,6 +5,7 @@ import '../app/common_widgets.dart';
 import '../app/currency_catalog.dart';
 import '../app/currency_math.dart';
 import '../app/entry_currency_draft.dart';
+import '../app/ledger_math.dart';
 import '../app/model_lookup.dart';
 import '../app/models.dart';
 import '../app/veri_fin_scope.dart';
@@ -33,10 +34,7 @@ class RefundSection extends StatelessWidget {
   final List<LedgerEntry> refunds;
   final ValueChanged<List<LedgerEntry>> onChanged;
 
-  double get _remaining {
-    final total = refunds.fold<double>(0, (sum, refund) => sum + refund.amount);
-    return (expense.amount - total).clamp(0.0, expense.amount).toDouble();
-  }
+  double get _remaining => remainingRefundableAmount(expense, refunds);
 
   double get _settledBaseTotal => refunds
       .where((refund) => refund.isSettledRefund)
@@ -347,14 +345,11 @@ class _RefundSheetState extends State<_RefundSheet> {
     }
   }
 
-  double get _maxRefund {
-    final otherTotal = widget.refunds
-        .where((refund) => refund.id != widget.existing?.id)
-        .fold<double>(0, (sum, refund) => sum + refund.amount);
-    return (widget.expense.amount - otherTotal)
-        .clamp(0.0, widget.expense.amount)
-        .toDouble();
-  }
+  double get _maxRefund => remainingRefundableAmount(
+    widget.expense,
+    widget.refunds,
+    excludeRefundId: widget.existing?.id,
+  );
 
   Account? get _selectedAccount {
     if (_accountId.isEmpty) return null;
@@ -575,7 +570,10 @@ class _RefundSheetState extends State<_RefundSheet> {
     id: _refundId,
     bookId: widget.expense.bookId,
     type: EntryType.refund,
-    amount: _amount.clamp(0.0, _maxRefund).toDouble(),
+    amount: normalizeCurrencyAmount(
+      _amount.clamp(0.0, _maxRefund).toDouble(),
+      widget.expense.currencyCode,
+    ),
     currencyCode: widget.expense.currencyCode,
     accountAmount: _accountId.isEmpty ? null : _accountAmount,
     baseAmount: _baseAmount,
@@ -589,7 +587,12 @@ class _RefundSheetState extends State<_RefundSheet> {
   );
 
   Future<bool> _save() async {
-    if (_amount <= 0 ||
+    final amount = normalizeCurrencyAmount(
+      _amount,
+      widget.expense.currencyCode,
+    );
+    if (amount <= 0 ||
+        amount > _maxRefund ||
         _maxRefund <= 0 ||
         _baseAmount <= 0 ||
         (_accountId.isNotEmpty && (_accountAmount ?? 0) <= 0)) {

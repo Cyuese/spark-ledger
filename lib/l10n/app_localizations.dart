@@ -7856,6 +7856,42 @@ abstract class AppLocalizations {
   /// **'交易金额、币种或关联数据不完整，请检查后重试。'**
   String get entrySaveValidationFailed;
 
+  /// No description provided for @entrySaveStaleDraft.
+  ///
+  /// In zh, this message translates to:
+  /// **'这笔交易已在别处修改或删除，请返回后重新打开。'**
+  String get entrySaveStaleDraft;
+
+  /// No description provided for @entrySaveInvalidRefund.
+  ///
+  /// In zh, this message translates to:
+  /// **'退款数据不完整，请检查退款金额和到账账户后重试。'**
+  String get entrySaveInvalidRefund;
+
+  /// No description provided for @entrySaveRefundExceedsExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'退款总额不能超过原支出金额。'**
+  String get entrySaveRefundExceedsExpense;
+
+  /// No description provided for @entrySaveInvalidAttachments.
+  ///
+  /// In zh, this message translates to:
+  /// **'附件数据异常，请重新添加附件后重试。'**
+  String get entrySaveInvalidAttachments;
+
+  /// No description provided for @entrySaveInvalidRememberedRate.
+  ///
+  /// In zh, this message translates to:
+  /// **'汇率无效，请检查汇率或取消“记住为当日汇率”后重试。'**
+  String get entrySaveInvalidRememberedRate;
+
+  /// No description provided for @entrySaveInvalidScope.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类或标签不属于当前账本，请重新选择。'**
+  String get entrySaveInvalidScope;
+
   /// No description provided for @importValidationFailed.
   ///
   /// In zh, this message translates to:

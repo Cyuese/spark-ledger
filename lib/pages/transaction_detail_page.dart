@@ -9,6 +9,7 @@ import '../app/common_widgets.dart';
 import '../app/currency_catalog.dart';
 import '../app/currency_math.dart';
 import '../app/entry_currency_draft.dart';
+import '../app/entry_save_feedback.dart';
 import '../app/feedback.dart';
 import '../app/model_lookup.dart';
 import '../app/ledger_math.dart';
@@ -1293,8 +1294,20 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       );
       return false;
     }
-    if (_refundTotal > _amount + currencyAmountTolerance(_currencyCode) ||
+    final refundExceedsExpense =
+        _refundTotal > _amount + currencyAmountTolerance(_currencyCode);
+    if (refundExceedsExpense ||
         (_type != EntryType.expense && _refunds.isNotEmpty)) {
+      final l10n = AppLocalizations.of(context);
+      unawaited(
+        VeriFeedbackHost.of(context).showMessage(
+          message: refundExceedsExpense
+              ? l10n.entrySaveRefundExceedsExpense
+              : l10n.entrySaveInvalidRefund,
+          tone: VeriFeedbackTone.warning,
+          duration: VeriFeedbackDuration.long,
+        ),
+      );
       return false;
     }
     _saving = true;
@@ -1313,7 +1326,10 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     if (result is EntrySaveValidationFailure && mounted) {
       unawaited(
         VeriFeedbackHost.of(context).showMessage(
-          message: AppLocalizations.of(context).entrySaveValidationFailed,
+          message: entrySaveValidationMessage(
+            AppLocalizations.of(context),
+            result.code,
+          ),
           tone: VeriFeedbackTone.warning,
           duration: VeriFeedbackDuration.long,
         ),
