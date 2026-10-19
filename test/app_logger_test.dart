@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:verifin/app/logging/app_logger.dart';
+import 'package:verifin/app/models.dart';
+import 'package:verifin/app/veri_fin_controller.dart';
 import 'package:verifin/local_storage/local_storage.dart';
 
 import 'support/in_memory_ledger_repository.dart';
@@ -97,6 +99,47 @@ void main() {
     expect(succeeded, isFalse);
     expect(reported, isNotNull);
     expect(logger.records.any((r) => r.source == 'persist'), isTrue);
+    controller.dispose();
+  });
+
+  test('交易保存校验失败记录错误码且不写入账目内容', () async {
+    final store = LocalKeyValueStore();
+    final logger = AppLogger(store);
+    final controller = await createTestController(
+      store,
+      repository: InMemoryLedgerRepository(),
+      logger: logger,
+    );
+    logger.clear();
+    final categoryId = controller.categoriesForType(EntryType.expense).first.id;
+
+    final result = await controller.saveEntryAggregateDraftResult(
+      entry: LedgerEntry(
+        id: 'invalid-normalization',
+        bookId: controller.activeBook.id,
+        type: EntryType.expense,
+        amount: 10.001,
+        baseAmount: 10.001,
+        categoryId: categoryId,
+        accountId: '',
+        note: 'private note',
+        occurredAt: DateTime(2026, 7, 4),
+      ),
+      isNew: true,
+    );
+
+    expect(result, isA<EntrySaveValidationFailure>());
+    expect(
+      (result as EntrySaveValidationFailure).code,
+      EntryValidationCode.invalidAmounts,
+    );
+    final record = logger.records.single;
+    expect(record.level, AppLogLevel.warning);
+    expect(record.source, 'entry_save');
+    expect(record.message, contains('invalidAmounts'));
+    expect(record.message, contains('ledger: invalidAmount'));
+    expect(record.message, isNot(contains('private note')));
+    expect(record.message, isNot(contains('10.001')));
     controller.dispose();
   });
 }
