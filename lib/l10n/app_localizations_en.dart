@@ -4426,6 +4426,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'The transaction amounts, currencies, or linked data are incomplete. Review them and try again.';
 
   @override
+  String get entrySaveStaleDraft =>
+      'This transaction was changed or deleted elsewhere. Go back and reopen it.';
+
+  @override
+  String get entrySaveInvalidRefund =>
+      'The refund data is incomplete. Check the refund amount and receiving account, then try again.';
+
+  @override
+  String get entrySaveRefundExceedsExpense =>
+      'Total refunds cannot exceed the original expense amount.';
+
+  @override
+  String get entrySaveInvalidAttachments =>
+      'The attachment data is invalid. Re-add the attachments and try again.';
+
+  @override
+  String get entrySaveInvalidRememberedRate =>
+      'The exchange rate is invalid. Check it or turn off Remember as rate for this date, then try again.';
+
+  @override
+  String get entrySaveInvalidScope =>
+      'The category or tag does not belong to the current ledger. Select it again.';
+
+  @override
   String get importValidationFailed =>
       'The imported amounts, currencies, or links are incomplete. No ledger data was written.';
 

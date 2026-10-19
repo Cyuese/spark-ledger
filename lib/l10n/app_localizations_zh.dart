@@ -4293,6 +4293,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get entrySaveValidationFailed => '交易金额、币种或关联数据不完整，请检查后重试。';
 
   @override
+  String get entrySaveStaleDraft => '这笔交易已在别处修改或删除，请返回后重新打开。';
+
+  @override
+  String get entrySaveInvalidRefund => '退款数据不完整，请检查退款金额和到账账户后重试。';
+
+  @override
+  String get entrySaveRefundExceedsExpense => '退款总额不能超过原支出金额。';
+
+  @override
+  String get entrySaveInvalidAttachments => '附件数据异常，请重新添加附件后重试。';
+
+  @override
+  String get entrySaveInvalidRememberedRate => '汇率无效，请检查汇率或取消“记住为当日汇率”后重试。';
+
+  @override
+  String get entrySaveInvalidScope => '分类或标签不属于当前账本，请重新选择。';
+
+  @override
   String get importValidationFailed => '导入数据的金额、币种或关联关系不完整，未写入任何账目。';
 
   @override
