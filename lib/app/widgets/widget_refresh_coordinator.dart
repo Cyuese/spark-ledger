@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'widget_service.dart';
+
 /// Schedules widget projection updates and guarantees that app backgrounding
 /// flushes the latest ledger state before the process may be suspended.
 class WidgetRefreshCoordinator {
@@ -18,8 +20,15 @@ class WidgetRefreshCoordinator {
   bool _disposed = false;
 
   /// Debounces a data/locale change while the app remains interactive.
+  ///
+  /// **必须在这里推进数据版本**：`pushWidgetProjection` 的第一道闸门按「同一版本
+  /// 已推送」跳过重复推送。以前的接线只在 `main.dart` 里接了 `schedule`，没有人调
+  /// `markWidgetDataChanged`，于是每一次普通数据变化都在闸门处被静默丢弃，桌面组件
+  /// 只剩冷启动 / 回前台 / 切后台三次强制推送——表现就是「记完账桌面数字不变，
+  /// 除非再打开一次应用」。把推进放在 `schedule` 内部，任何调用点都不会再漏。
   void schedule() {
     if (_disposed) return;
+    markWidgetDataChanged();
     _timer?.cancel();
     _timer = Timer(debounce, () {
       _timer = null;

@@ -13,6 +13,7 @@ import '../app/platform_bridge.dart';
 import '../app/root_navigation.dart';
 import '../app/root_navigation_styles.dart';
 import '../app/veri_fin_scope.dart';
+import '../app/widgets/widget_refresh_scope.dart';
 import '../l10n/app_localizations.dart';
 import 'ai_entry_sheet.dart';
 import 'assets_pages.dart';
@@ -34,6 +35,10 @@ class _VeriFinShellState extends State<VeriFinShell> {
   int _index = 0;
   int? _programmaticPageTarget;
   DateTime? _lastBackPressedAt;
+
+  /// 已经进入退出流程（等待最后一次桌面投影冲刷）。期间再按返回键直接忽略，
+  /// 避免重复冲刷或重复调用 `SystemNavigator.pop()`。
+  bool _exiting = false;
   final PageController _pageController = PageController();
 
   /// 最近一次滚动更新时的位置与帧时间戳，用于在打断切页动画时估算当前速度。
@@ -309,7 +314,7 @@ class _VeriFinShellState extends State<VeriFinShell> {
         if (didPop) {
           return;
         }
-        _handleRootBack();
+        unawaited(_handleRootBack());
       },
       child: Scaffold(
         key: const Key('main_shell_scaffold'),
@@ -406,7 +411,10 @@ class _VeriFinShellState extends State<VeriFinShell> {
     );
   }
 
-  void _handleRootBack() {
+  Future<void> _handleRootBack() async {
+    if (_exiting) {
+      return;
+    }
     if (_index != 0) {
       _goToTab(0);
       return;
@@ -416,7 +424,16 @@ class _VeriFinShellState extends State<VeriFinShell> {
         _lastBackPressedAt != null &&
         now.difference(_lastBackPressedAt!) < const Duration(seconds: 2);
     if (shouldExit) {
-      SystemNavigator.pop();
+      _exiting = true;
+      await _flushWidgetProjectionBeforeExit();
+      if (!mounted) {
+        return;
+      }
+      await SystemNavigator.pop();
+      if (mounted) {
+        // 平台没有真正关闭（异常返回）时恢复可退出状态，避免把用户卡在应用里。
+        _exiting = false;
+      }
       return;
     }
     _lastBackPressedAt = now;
@@ -427,6 +444,37 @@ class _VeriFinShellState extends State<VeriFinShell> {
         dedupeKey: 'root-exit',
       ),
     );
+  }
+
+  /// 退出前把桌面投影冲刷完。
+  ///
+  /// `SystemNavigator.pop()` 会 finish Activity，Flutter 引擎随之下线：挂在
+  /// `hidden` / `paused` 上的异步冲刷会被直接掐断，用户「记完账立刻按返回退出」时
+  /// 桌面快照就停在上一笔，而且不会自愈——直到下次冷启动的强制推送才补上。
+  /// 这里在真正关闭前等一次发布完成。
+  ///
+  /// 退出优先：平台通道异常或迟迟不返回时按超时放过，未完成的发布由下次冷启动补推，
+  /// 绝不因为刷新失败把用户卡在应用里。
+  Future<void> _flushWidgetProjectionBeforeExit() async {
+    final coordinator = WidgetRefreshScope.maybeOf(context);
+    if (coordinator == null) {
+      return;
+    }
+    try {
+      await coordinator.flush().timeout(const Duration(milliseconds: 600));
+    } on TimeoutException {
+      // 见方法注释：超时直接退出。
+    } on Object catch (error, stackTrace) {
+      if (!mounted) {
+        return;
+      }
+      VeriFinScope.of(context).logger?.error(
+        'Widget projection flush on exit failed',
+        source: 'widgets',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<void> _startQuickEntry(

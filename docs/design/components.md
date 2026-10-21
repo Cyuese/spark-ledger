@@ -29,6 +29,10 @@ Veri Fin 已有的**可复用 widget / 弹窗 helper / 对话框 / 纯函数**�
 （分享、快捷记账、小组件路由）的统一排队点。
 `AppLockScreen` 支持可选 `config`，供独立小组件配置引擎在读取账本前完成 PIN/图案验证。
 
+`WidgetRefreshScope`（`app/widgets/widget_refresh_scope.dart`）把桌面投影的刷新协调器暴露给页面层，
+只服务**退出路径**：Shell 在 `SystemNavigator.pop()` 之前等一次 `flush()`，避免引擎随 Activity
+关闭而掐断未完成的发布（详见 [home-widgets.md](../dev/home-widgets.md)「刷新管线」）。
+
 公共骨架只有一套已评审密度：16dp **有效**页边距（页面容器写 14dp，`VeriPage` 再补 2dp）、
 56dp Header 最小高度、16dp 卡片圆角，`VeriCard` 默认内边距横向 14dp、纵向 12dp。
 `VeriCard.padding` 显式传入时优先。`compact` 是分段控件等局部交互组件的尺寸参数，不是页面级构建开关。
