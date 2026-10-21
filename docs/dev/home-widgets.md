@@ -81,6 +81,12 @@ pending，等 Shell 的处理器就绪后再由 Dart 消费；不能“发出即
   交易、账户、账本、汇率、预算、预算周期，以及语言偏好（桌面文案随语言）。
   **不挂在整个 `notifyListeners()` 上**——改主题、折叠分区这类无关变化不再重算。
   `test/widget_projection_signal_test.dart` 逐条走过这些入口，防止新增写入点漏通知。
+- **版本号在 `WidgetRefreshCoordinator.schedule()` 内部推进**（`markWidgetDataChanged()`）。
+  闸门①按「同一数据版本」跳过重复推送，所以「排一次防抖」与「推进版本」必须成对发生；
+  把它放在 `schedule` 里，接线处（`main.dart` 的数据变化与语言监听）只挂 `schedule` 就不会漏。
+  历史上版本推进只写在测试里，导致普通数据变化全部在闸门①被静默丢弃、组件只剩冷启动 /
+  回前台 / 切后台三次强制推送（表现为「记完账桌面数字不变，除非再打开一次应用」）；
+  `test/widget_refresh_wiring_test.dart` 按正式接法守住这条链路。
 - 三道闸门，按代价从低到高：①同一数据版本已推送过 → 直接返回；②桌面上没有任何实例
   （数据变更触发时）→ 连投影都不算；③推送内容与上次完全相同 → 不写共享存储、不刷 Provider、不排闹钟。
 - 冷启动与回前台强制推一次，保证用户之后新添加的实例第一次渲染就能读到数据。
@@ -88,6 +94,11 @@ pending，等 Shell 的处理器就绪后再由 Dart 消费；不能“发出即
   不依赖后台计时器在进程被缓存前恰好执行。即使桌面上暂时没有实例，这一步也准备最新快照，
   供之后新增的组件直接读取；内容指纹不变时仍不重复写入。多次刷新进入同一串行队列，且在
   推送开始时捕获数据版本，避免较旧的 payload 覆盖较新的快照。
+- **退出应用前同步冲刷**：根壳层连按返回退出时，`SystemNavigator.pop()` 会 finish Activity、
+  Flutter 引擎随之下线，挂在 `hidden` / `paused` 上的异步冲刷会被直接掐断。因此 Shell 在
+  关闭前经 `WidgetRefreshScope` 等一次 `WidgetRefreshCoordinator.flush()`（600ms 超时兜底，
+  超时仍退出，未完成的发布由下次冷启动补推）。`test/widget_exit_flush_test.dart` 断言
+  「冲刷完成前不关闭 Activity」与超时路径。
 - 投影是纯函数：一次遍历得到逐日支出与账户余额增量，净资产曲线按「期初余额 + 逐日前缀和」推进，
   复杂度 `O(交易数 + 账户数 × 天数)`。`test/widget_projection_perf_test.dart`
   以 20 账户 × 5000 笔数据约束四模板合计投影时间不超过 40 ms。
@@ -125,6 +136,7 @@ Receiver 清理对应配置。
    「点击进入配置」。
 5. 桌面无实例时改账目：不产生 Provider 刷新与闹钟重排（`test/widget_service_test.dart` 的闸门用例）。
 6. 运行 `dart run scripts/widget_previews.dart`：仪器测试全绿并重导出 16 张预览图。
-7. 强停后从磁贴记账并立即回桌面：小组件在离开应用前完成刷新，不依赖下次回前台补推。
+7. 强停后从磁贴记账并立即离开：小组件在离开应用前完成刷新，不依赖下次回前台补推。两条退出路径都要验：
+   按 Home（切后台冲刷）与连按返回退出（`SystemNavigator.pop`，退出前同步冲刷）。
 8. 冷启动与运行中点击已配置组件、进入未配置组件的配置页、重新配置组件：均正常打开目标页面，
    日志不出现 `onUnknownRoute` / `Null check operator used on a null value`。

@@ -21,6 +21,7 @@ import 'app/veri_fin_controller.dart';
 import 'app/veri_fin_scope.dart';
 import 'app/widgets/widget_service.dart';
 import 'app/widgets/widget_refresh_coordinator.dart';
+import 'app/widgets/widget_refresh_scope.dart';
 import 'data/app_database.dart';
 import 'data/ledger_repository.dart';
 import 'l10n/app_localizations.dart';
@@ -366,53 +367,56 @@ class _VeriFinAppState extends State<VeriFinApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return VeriFinScope(
       controller: _controller,
-      child: ValueListenableBuilder<ThemePreference>(
-        valueListenable: _controller.themePreferenceListenable,
-        builder: (context, themePreference, _) {
-          return ValueListenableBuilder<ThemeColorPreference>(
-            valueListenable: _controller.themeColorPreferenceListenable,
-            builder: (context, themeColorPreference, _) {
-              return ValueListenableBuilder<LocalePreference>(
-                valueListenable: _controller.localePreferenceListenable,
-                builder: (context, localePreference, _) {
-                  return MaterialApp(
-                    onGenerateTitle: (context) =>
-                        AppLocalizations.of(context).appTitle,
-                    debugShowCheckedModeBanner: false,
-                    // null 表示跟随系统语言（按 supportedLocales 解析，找不到回落中文）。
-                    locale: localePreference.locale,
-                    supportedLocales: AppLocalizations.supportedLocales,
-                    localizationsDelegates:
-                        AppLocalizations.localizationsDelegates,
-                    themeMode: themePreference.themeMode,
-                    theme: buildVeriFinTheme(
-                      Brightness.light,
-                      colorPreference: themeColorPreference,
-                    ),
-                    darkTheme: buildVeriFinTheme(
-                      Brightness.dark,
-                      colorPreference: themeColorPreference,
-                    ),
-                    builder: (context, child) => Material(
-                      type: MaterialType.transparency,
-                      child: PrivacyConsentGate(
-                        child: AppLockGate(
-                          child: OnboardingGate(
-                            child: VeriFeedbackHost(
-                              controller: _feedbackController,
-                              child: child ?? const SizedBox.shrink(),
+      child: WidgetRefreshScope(
+        coordinator: _widgetRefresh,
+        child: ValueListenableBuilder<ThemePreference>(
+          valueListenable: _controller.themePreferenceListenable,
+          builder: (context, themePreference, _) {
+            return ValueListenableBuilder<ThemeColorPreference>(
+              valueListenable: _controller.themeColorPreferenceListenable,
+              builder: (context, themeColorPreference, _) {
+                return ValueListenableBuilder<LocalePreference>(
+                  valueListenable: _controller.localePreferenceListenable,
+                  builder: (context, localePreference, _) {
+                    return MaterialApp(
+                      onGenerateTitle: (context) =>
+                          AppLocalizations.of(context).appTitle,
+                      debugShowCheckedModeBanner: false,
+                      // null 表示跟随系统语言（按 supportedLocales 解析，找不到回落中文）。
+                      locale: localePreference.locale,
+                      supportedLocales: AppLocalizations.supportedLocales,
+                      localizationsDelegates:
+                          AppLocalizations.localizationsDelegates,
+                      themeMode: themePreference.themeMode,
+                      theme: buildVeriFinTheme(
+                        Brightness.light,
+                        colorPreference: themeColorPreference,
+                      ),
+                      darkTheme: buildVeriFinTheme(
+                        Brightness.dark,
+                        colorPreference: themeColorPreference,
+                      ),
+                      builder: (context, child) => Material(
+                        type: MaterialType.transparency,
+                        child: PrivacyConsentGate(
+                          child: AppLockGate(
+                            child: OnboardingGate(
+                              child: VeriFeedbackHost(
+                                controller: _feedbackController,
+                                child: child ?? const SizedBox.shrink(),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    home: const VeriFinShell(),
-                  );
-                },
-              );
-            },
-          );
-        },
+                      home: const VeriFinShell(),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
